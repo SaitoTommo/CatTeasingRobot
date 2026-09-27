@@ -1,8 +1,8 @@
 // ESP32 decision policy. This module accepts observations and emits behavior decisions;
 // it has no DOM, canvas, serial, or cat-scene dependency.
 export const DEFAULT_RESPONSE_POLICY = Object.freeze({
-  touchFlashPercent: 20, touchPreyPercent: 20, touchSoundLightPercent: 20,
-  touchSlowEscapePercent: 30, touchFastEscapePercent: 30,
+  explorationBranchPercent: 20,
+  touchPreyPercent: 20, touchSlowEscapePercent: 40, touchFastEscapePercent: 40,
   catFollowProbePercent: 5, catFollowObservePercent: 35, catFollowPatrolPercent: 60,
   endingAfterRounds: 3, endingInactivitySeconds: 12,
   endingPatrolPercent: 40, endingSilentPercent: 30, endingSignalPercent: 30,
@@ -19,12 +19,12 @@ export const DEFAULT_RESPONSE_POLICY = Object.freeze({
   slowApproachCm: 9, slowApproachPwm: 95,
   probeStep1Cm: 3, probeStep2Cm: 4, probeStep3Cm: 3,
   probePause1Ms: 700, probePause2Ms: 900, probePause3Ms: 600, probePwm: 90,
-  signalFlashMs: 1400, signalBeepMs: 180, touchSoundLightBeepMs: 180,
+  signalFlashMs: 1400, signalBeepMs: 180,
   escapeDistanceCm: 26, slowEscapePwm: 95, fastEscapePwm: 210,
 });
 
 export const RESPONSE_POLICY_LIMITS = Object.freeze({
-  touchFlashPercent: [0, 100], touchPreyPercent: [0, 100], touchSoundLightPercent: [0, 100],
+  explorationBranchPercent: [0, 100], touchPreyPercent: [0, 100],
   touchSlowEscapePercent: [0, 100], touchFastEscapePercent: [0, 100],
   catFollowProbePercent: [0, 100], catFollowObservePercent: [0, 100], catFollowPatrolPercent: [0, 100],
   endingAfterRounds: [0, 20], endingInactivitySeconds: [0, 120],
@@ -44,9 +44,15 @@ export const RESPONSE_POLICY_LIMITS = Object.freeze({
   probeStep1Cm: [1, 20], probeStep2Cm: [1, 20], probeStep3Cm: [1, 20],
   probePause1Ms: [0, 3000], probePause2Ms: [0, 3000], probePause3Ms: [0, 3000],
   probePwm: [50, 255], signalFlashMs: [100, 5000], signalBeepMs: [0, 1000],
-  touchSoundLightBeepMs: [100, 1000],
   escapeDistanceCm: [1, 60], slowEscapePwm: [50, 255], fastEscapePwm: [50, 255],
 });
+
+export const EXPLORATION_SOUND_LIGHT_PATTERNS = Object.freeze([
+  Object.freeze({ name: "STEADY", command: "LED ON", beepMs: 120, durationMs: 1800 }),
+  Object.freeze({ name: "FAST_FLASH", command: "LED FLASH 120 2400", beepMs: 180, durationMs: 2400 }),
+  Object.freeze({ name: "SLOW_FLASH", command: "LED FLASH 600 3600", beepMs: 240, durationMs: 3600 }),
+  Object.freeze({ name: "VERY_SLOW_FLASH", command: "LED FLASH 1400 5600", beepMs: 360, durationMs: 5600 }),
+]);
 
 export function validateResponsePolicy(policy) {
   if (!policy || typeof policy !== "object" || Array.isArray(policy))
@@ -55,23 +61,24 @@ export function validateResponsePolicy(policy) {
   const migrated = { ...policy };
   if (policy.signalPercent !== undefined && policy.touchSignalPercent === undefined && policy.touchPreyPercent === undefined) {
     migrated.touchPreyPercent = policy.signalPercent;
-    if (policy.touchFlashPercent === undefined) migrated.touchFlashPercent = policy.signalPercent;
     migrated.touchSlowEscapePercent = Math.round((100 - policy.signalPercent) *
       (policy.slowEscapePercent ?? 50) / 100);
     migrated.touchFastEscapePercent = 100 - migrated.touchPreyPercent - migrated.touchSlowEscapePercent;
   }
-  // The former post-release signal share becomes the caught/prey share. Keep
-  // the same value for the independent contact-light draw on saved policies.
+  // The former post-release signal share becomes the caught/prey share.
   if (policy.touchSignalPercent !== undefined) {
     if (policy.touchPreyPercent === undefined) migrated.touchPreyPercent = policy.touchSignalPercent;
-    if (policy.touchFlashPercent === undefined) migrated.touchFlashPercent = policy.touchSignalPercent;
   }
-  // Saved three-way touch policies keep their old odds; only fresh settings
-  // receive the new sound-and-light outcome by default.
-  if (policy.touchSoundLightPercent === undefined &&
-      ["touchPreyPercent", "touchSlowEscapePercent", "touchFastEscapePercent",
-        "touchSignalPercent", "signalPercent"].some(key => policy[key] !== undefined))
-    migrated.touchSoundLightPercent = 0;
+  // The previous version mixed sound-light into the caught-response draw.
+  // Its share now returns to slow/fast escape in their existing ratio.
+  if (policy.touchSoundLightPercent > 0) {
+    const slow = migrated.touchSlowEscapePercent ?? DEFAULT_RESPONSE_POLICY.touchSlowEscapePercent;
+    const fast = migrated.touchFastEscapePercent ?? DEFAULT_RESPONSE_POLICY.touchFastEscapePercent;
+    const extraSlow = slow + fast > 0
+      ? Math.round(policy.touchSoundLightPercent * slow / (slow + fast)) : 0;
+    migrated.touchSlowEscapePercent = slow + extraSlow;
+    migrated.touchFastEscapePercent = fast + policy.touchSoundLightPercent - extraSlow;
+  }
   if (policy.probePercent !== undefined && policy.robotFarProbePercent === undefined) {
     migrated.robotFarProbePercent = policy.probePercent;
     migrated.robotFarApproachPercent = 100 - policy.probePercent;
@@ -96,7 +103,7 @@ export function validateResponsePolicy(policy) {
   if (resolved.farCatThresholdCm >= resolved.catLeaveDistanceCm)
     throw new Error("INVALID_RESPONSE_POLICY distance_order");
   for (const keys of [
-    ["touchPreyPercent", "touchSoundLightPercent", "touchSlowEscapePercent", "touchFastEscapePercent"],
+    ["touchPreyPercent", "touchSlowEscapePercent", "touchFastEscapePercent"],
     ["catFollowProbePercent", "catFollowObservePercent", "catFollowPatrolPercent"],
     ["robotFarApproachPercent", "robotFarProbePercent"],
     ["robotNearSignalPercent", "robotNearObservePercent", "robotNearStayPercent"],
@@ -112,23 +119,18 @@ export function validateResponsePolicy(policy) {
 
 export function touchResponsePlan(area, random = Math.random, policy = DEFAULT_RESPONSE_POLICY) {
   if (!["TOP", "LEFT", "RIGHT", "REAR"].includes(area)) throw new Error("INVALID_TOUCH_AREA");
-  const { touchFlashPercent, touchPreyPercent, touchSoundLightPercent,
-    touchSlowEscapePercent } = validateResponsePolicy(policy);
-  const flashDraw = random();
+  const { touchPreyPercent, touchSlowEscapePercent } = validateResponsePolicy(policy);
   const draw = random();
   const response = draw < touchPreyPercent / 100 ? "PREY_STILL"
-    : draw < (touchPreyPercent + touchSoundLightPercent) / 100 ? "SOUND_LIGHT_RESPONSE"
-      : draw < (touchPreyPercent + touchSoundLightPercent + touchSlowEscapePercent) / 100
-        ? "SLOW_STRAIGHT_ESCAPE" : "FAST_STRAIGHT_ESCAPE";
+    : draw < (touchPreyPercent + touchSlowEscapePercent) / 100
+      ? "SLOW_STRAIGHT_ESCAPE" : "FAST_STRAIGHT_ESCAPE";
   return {
     area,
     direction: area === "LEFT" ? -1 : 1,
     sweepLimitDeg: 360,
     response,
-    flashDuringTouch: flashDraw < touchFlashPercent / 100,
-    flashDraw,
     draw,
-    escapeDraw: response.endsWith("ESCAPE") ? draw : null,
+    escapeDraw: response === "PREY_STILL" ? null : draw,
   };
 }
 
@@ -227,6 +229,10 @@ export class Esp32DecisionSystem {
     this.lastCatTouchAt = null;
     this.catInteractionRounds = 0;
     this.endingOutcome = null;
+    this.touchBranch = null;
+    this.touchBranchDraw = null;
+    this.explorationPatternBag = [];
+    this.lastExplorationPattern = null;
   }
 
   chooseRobotAction(camera, now) {
@@ -266,10 +272,57 @@ export class Esp32DecisionSystem {
     this.catInteractionRounds = 0;
     this.endingOutcome = null;
     this.catAbsentSince = 0;
+    this.touchBranch = null;
+    this.touchBranchDraw = null;
   }
 
-  onTouchPress(area, now = 0, newEpisode = true) {
-    const plan = touchResponsePlan(area, this.random, this.responsePolicy);
+  chooseTouchBranch() {
+    if (this.touchBranch) return this.touchBranch;
+    const draw = this.random();
+    this.touchBranchDraw = draw;
+    this.touchBranch = draw < this.responsePolicy.explorationBranchPercent / 100
+      ? "EXPLORE" : "HUNT";
+    return this.touchBranch;
+  }
+
+  chooseExplorationPattern() {
+    if (!this.explorationPatternBag.length) {
+      this.explorationPatternBag = EXPLORATION_SOUND_LIGHT_PATTERNS.map((_, index) => index);
+      if (this.lastExplorationPattern !== null && this.explorationPatternBag.length > 1) {
+        const previous = this.explorationPatternBag.splice(this.lastExplorationPattern, 1)[0];
+        this.explorationPatternBag.push(previous);
+        // The previous pattern remains in this cycle, but cannot be first.
+        const nextIndex = Math.floor(this.random() * (this.explorationPatternBag.length - 1));
+        const selected = this.explorationPatternBag.splice(nextIndex, 1)[0];
+        this.lastExplorationPattern = selected;
+        return EXPLORATION_SOUND_LIGHT_PATTERNS[selected];
+      }
+    }
+    const nextIndex = Math.floor(this.random() * this.explorationPatternBag.length);
+    const selected = this.explorationPatternBag.splice(nextIndex, 1)[0];
+    this.lastExplorationPattern = selected;
+    return EXPLORATION_SOUND_LIGHT_PATTERNS[selected];
+  }
+
+  onExplorationTouch(area, now = 0, newEpisode = true) {
+    if (!["TOP", "LEFT", "RIGHT", "REAR"].includes(area)) throw new Error("INVALID_TOUCH_AREA");
+    this.attackCount += 1;
+    this.catWasNear = true;
+    this.searchAttempted = true;
+    if (this.initiator !== "CAT_TOUCH") this.catInteractionRounds = 0;
+    this.initiator = "CAT_TOUCH";
+    this.lastCatTouchAt = now;
+    this.catAbsentSince = 0;
+    if (!newEpisode) return null;
+    this.catInteractionRounds += 1;
+    this.catFollowUpStage = "PENDING";
+    const pattern = this.chooseExplorationPattern();
+    return { action: "EXPLORE_SOUND_LIGHT", pattern,
+      reason: `explore_touch_${area} count=${this.attackCount} interaction_round=${this.catInteractionRounds} pattern=${pattern.name}` };
+  }
+
+  onTouchPress(area, now = 0, newEpisode = true, drawResponse = true) {
+    const plan = drawResponse ? touchResponsePlan(area, this.random, this.responsePolicy) : null;
     this.attackCount += 1;
     this.catWasNear = true;
     this.searchAttempted = true;
@@ -285,15 +338,13 @@ export class Esp32DecisionSystem {
       action: "ATTACK_RESPONSE",
       plan,
       reason: `attack_touch_${area} count=${this.attackCount} interaction_round=${this.catInteractionRounds}` +
-        ` random=${plan.draw.toFixed(3)}` +
-        ` escape_random=${plan.escapeDraw === null ? "NONE" : plan.escapeDraw.toFixed(3)}` +
-        ` contact_flash_random=${plan.flashDraw.toFixed(3)} contact_flash=${plan.flashDuringTouch}` +
-        ` touch_flash_pct=${this.responsePolicy.touchFlashPercent}` +
-        ` touch_prey_pct=${this.responsePolicy.touchPreyPercent}` +
-        ` touch_sound_light_pct=${this.responsePolicy.touchSoundLightPercent}` +
-        ` touch_slow_escape_pct=${this.responsePolicy.touchSlowEscapePercent}` +
-        ` touch_fast_escape_pct=${this.responsePolicy.touchFastEscapePercent}` +
-        ` response=${plan.response} direction=${plan.direction < 0 ? "LEFT" : "RIGHT"} sweep_limit_deg=${plan.sweepLimitDeg}`,
+        (plan ? ` random=${plan.draw.toFixed(3)}` +
+          ` escape_random=${plan.escapeDraw === null ? "NONE" : plan.escapeDraw.toFixed(3)}` +
+          ` touch_prey_pct=${this.responsePolicy.touchPreyPercent}` +
+          ` touch_slow_escape_pct=${this.responsePolicy.touchSlowEscapePercent}` +
+          ` touch_fast_escape_pct=${this.responsePolicy.touchFastEscapePercent}` +
+          ` response=${plan.response} direction=${plan.direction < 0 ? "LEFT" : "RIGHT"} sweep_limit_deg=${plan.sweepLimitDeg}`
+          : " response=COUNT_ONLY"),
     };
   }
 
@@ -307,7 +358,7 @@ export class Esp32DecisionSystem {
   }
 
   tick({ phase, now, autoBusy, nextDecisionAt, obstacleBlockedUntil,
-    sessionElapsedMs, sessionLimitSeconds, camera }) {
+    sessionElapsedMs, sessionLimitSeconds, camera, touchActive = false }) {
     if (phase === "PATROL") {
       if (!autoBusy && now >= nextDecisionAt && now >= obstacleBlockedUntil)
         return { action: "PATROL", reason: "patrol_no_alert" };
@@ -326,6 +377,7 @@ export class Esp32DecisionSystem {
       return { action: "END_SESSION", endingOutcome: "CONTINUE_PATROL",
         reason: `session_limit_${limitSeconds}` };
     if (this.initiator === "CAT_TOUCH") {
+      if (touchActive) return null;
       if (this.catFollowUpStage === "FAILED")
         return { action: "END_SESSION", endingOutcome: "CONTINUE_PATROL",
           reason: "cat_touch_response_failed" };

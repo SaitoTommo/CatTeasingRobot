@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   chooseCatInitiatedFollowUp, chooseEndingOutcome, chooseRobotInitiatedAction, decideScanProgress,
-  Esp32DecisionSystem, touchResponsePlan, validateResponsePolicy,
+  Esp32DecisionSystem, EXPLORATION_SOUND_LIGHT_PATTERNS, touchResponsePlan, validateResponsePolicy,
 } from "./decision-system.mjs";
 
 test("search stops at one full turn", () => {
@@ -12,24 +12,49 @@ test("search stops at one full turn", () => {
     limitDeg: 360, timedOut: false }), "FULL_SWEEP");
 });
 
-test("contact light draw is independent of prey or escape", () => {
+test("hunting branch draws only prey, slow escape, or fast escape", () => {
   assert.equal(touchResponsePlan("TOP", () => .1).response, "PREY_STILL");
-  assert.equal(touchResponsePlan("LEFT", () => .3).response, "SOUND_LIGHT_RESPONSE");
   assert.equal(touchResponsePlan("LEFT", () => .5).response, "SLOW_STRAIGHT_ESCAPE");
   assert.equal(touchResponsePlan("RIGHT", () => .9).response, "FAST_STRAIGHT_ESCAPE");
   assert.equal(touchResponsePlan("LEFT", () => .5).direction, -1);
   assert.equal(touchResponsePlan("LEFT", () => .3).sweepLimitDeg, 360);
-  let draws = [.1, .9];
-  const litEscape = touchResponsePlan("RIGHT", () => draws.shift());
-  assert.equal(litEscape.flashDuringTouch, true);
-  assert.equal(litEscape.response, "FAST_STRAIGHT_ESCAPE");
-  draws = [.9, .1];
-  const quietPrey = touchResponsePlan("TOP", () => draws.shift());
-  assert.equal(quietPrey.flashDuringTouch, false);
-  assert.equal(quietPrey.response, "PREY_STILL");
-  const signalOnly = touchResponsePlan("TOP", () => .3);
-  assert.equal(signalOnly.flashDuringTouch, false);
-  assert.equal(signalOnly.escapeDraw, null);
+  assert.equal(touchResponsePlan("TOP", () => .1).escapeDraw, null);
+});
+
+test("a touch counted during an active hunting response does not draw again", () => {
+  let draws = 0;
+  const system = new Esp32DecisionSystem(() => { draws += 1; return .9; });
+  system.chooseTouchBranch();
+  system.onTouchPress("TOP", 1000, true);
+  assert.equal(draws, 2);
+  const counted = system.onTouchPress("LEFT", 2000, true, false);
+  assert.equal(counted.plan, null);
+  assert.match(counted.reason, /response=COUNT_ONLY/);
+  assert.equal(draws, 2);
+  assert.equal(system.attackCount, 2);
+});
+
+test("interaction branch is sampled once and exploration cycles through distinct sound-light patterns", () => {
+  const explore = new Esp32DecisionSystem(() => 0,
+    { explorationBranchPercent: 100, endingAfterRounds: 0 });
+  assert.equal(explore.chooseTouchBranch(), "EXPLORE");
+  assert.equal(explore.chooseTouchBranch(), "EXPLORE");
+  const firstCycle = Array.from({ length: EXPLORATION_SOUND_LIGHT_PATTERNS.length }, (_, index) =>
+    explore.onExplorationTouch("TOP", index * 2000).pattern.name);
+  assert.equal(new Set(firstCycle).size, EXPLORATION_SOUND_LIGHT_PATTERNS.length);
+  assert.ok(EXPLORATION_SOUND_LIGHT_PATTERNS.every(pattern => pattern.command.startsWith("LED ") && pattern.beepMs > 0));
+  const next = explore.onExplorationTouch("TOP", 10000).pattern.name;
+  assert.notEqual(next, firstCycle.at(-1));
+  const base = { phase: "INTERACTION", autoBusy: false, nextDecisionAt: 0,
+    obstacleBlockedUntil: 0, sessionElapsedMs: 1000,
+    camera: { detected: true, distanceCm: 55 } };
+  assert.equal(explore.tick({ ...base, now: 11000, touchActive: true }), null);
+  assert.equal(explore.tick({ ...base, now: 11000 }).action, "PROBE_APPROACH");
+  assert.equal(explore.tick({ ...base, now: 23000 }).action, "END_SESSION");
+  explore.finishInteraction();
+  assert.equal(explore.touchBranch, null);
+  const hunt = new Esp32DecisionSystem(() => .5, { explorationBranchPercent: 0 });
+  assert.equal(hunt.chooseTouchBranch(), "HUNT");
 });
 
 test("cat-initiated follow-up is independent from robot search probabilities", () => {
@@ -77,8 +102,6 @@ test("old browser settings migrate and each probability group sums to 100", () =
   const legacy = validateResponsePolicy({ signalPercent: 20, slowEscapePercent: 75,
     probePercent: 10, nearObservePercent: 50 });
   assert.equal(legacy.touchPreyPercent, 20);
-  assert.equal(legacy.touchFlashPercent, 20);
-  assert.equal(legacy.touchSoundLightPercent, 0);
   assert.equal(legacy.touchSlowEscapePercent, 60);
   assert.equal(legacy.touchFastEscapePercent, 20);
   assert.equal(legacy.robotFarProbePercent, 10);
@@ -89,13 +112,16 @@ test("old browser settings migrate and each probability group sums to 100", () =
   const saved = validateResponsePolicy({ touchSignalPercent: 30,
     touchSlowEscapePercent: 30, touchFastEscapePercent: 40 });
   assert.equal(saved.touchPreyPercent, 30);
-  assert.equal(saved.touchFlashPercent, 30);
-  assert.equal(saved.touchSoundLightPercent, 0);
+  assert.equal(saved.touchSlowEscapePercent, 30);
+  const previousFourWay = validateResponsePolicy({ touchPreyPercent: 20,
+    touchSoundLightPercent: 20, touchSlowEscapePercent: 30, touchFastEscapePercent: 30 });
+  assert.equal(previousFourWay.touchSlowEscapePercent, 40);
+  assert.equal(previousFourWay.touchFastEscapePercent, 40);
   const fresh = validateResponsePolicy({});
-  assert.equal(fresh.touchSoundLightPercent, 20);
-  assert.equal(fresh.touchPreyPercent + fresh.touchSoundLightPercent +
-    fresh.touchSlowEscapePercent + fresh.touchFastEscapePercent, 100);
-  assert.throws(() => validateResponsePolicy({ touchSoundLightPercent: 100 }), /sum_/);
+  assert.equal(fresh.explorationBranchPercent, 20);
+  assert.equal(fresh.touchPreyPercent + fresh.touchSlowEscapePercent +
+    fresh.touchFastEscapePercent, 100);
+  assert.throws(() => validateResponsePolicy({ explorationBranchPercent: 101 }), /explorationBranchPercent/);
   assert.equal(validateResponsePolicy({ initialLookSeconds: 8,
     postEscapeWaitSeconds: 20 }).postEscapeWaitSeconds, 20);
   assert.throws(() => validateResponsePolicy({ catFollowProbePercent: 20 }), /sum_/);

@@ -127,14 +127,16 @@
           <div class="inline-actions"><button id="startPatrol" class="button" type="button">启动巡游决策</button><button id="stopPatrol" class="button danger" type="button">停止决策与运动</button></div>
           <p class="hint">决策系统只接收触碰、摄像头观测、告警和时钟输入。TX 命令是决策执行后送给 Uno 的输出；“可取景”只依据模拟摄像头。</p>
           <div class="decision-priority-card">
-            <h3>① 猫主动找机器人：触碰后的回应</h3>
-            <p class="hint">Uno 回报触碰按下时，独立抽取是否立即闪光，再抽取当场装死／声光回应／松开后慢逃／松开后快逃。声光回应会在接触中停车、闪灯并鸣叫，松开后观察猫；装死时不转动或移动，等猫离开后续巡。四种回应须合计 100%；接触中闪光概率单独设置。</p>
+            <h3>① 猫主动找机器人：两种互动分支</h3>
+            <p class="hint">猫首次触碰时，按概率抽取声光探索或捕猎，并在这一轮连续互动中保持该分支。声光探索停车后同时使用 LED 和蜂鸣器，四种节奏轮换、连续两次不会相同；捕猎再抽取装死／慢逃／快逃。两种分支共用观察、结束互动和恢复巡游流程。</p>
             <div class="inject-row">
-              <label>接触中闪光 % <input id="touchFlashPercent" type="number" min="0" max="100" step="1" value="20"></label>
+              <label>声光探索分支 % <input id="explorationBranchPercent" type="number" min="0" max="100" step="1" value="20"></label>
+              <span class="hint">捕猎分支占剩余比例</span>
+            </div>
+            <div class="inject-row">
               <label>被抓住后装死 % <input id="touchPreyPercent" type="number" min="0" max="100" step="1" value="20"></label>
-              <label>被抓住后声光回应 % <input id="touchSoundLightPercent" type="number" min="0" max="100" step="1" value="20"></label>
-              <label>触碰后慢逃 % <input id="touchSlowEscapePercent" type="number" min="0" max="100" step="1" value="30"></label>
-              <label>触碰后快逃 % <input id="touchFastEscapePercent" type="number" min="0" max="100" step="1" value="30"></label>
+              <label>触碰后慢逃 % <input id="touchSlowEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
+              <label>触碰后快逃 % <input id="touchFastEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
             </div>
             <div class="inject-row">
               <label>回应后走停试探 % <input id="catFollowProbePercent" type="number" min="0" max="100" step="1" value="5"></label>
@@ -148,7 +150,7 @@
               <label>连击合并窗口 ms <input id="touchDebounceMs" type="number" min="0" max="5000" step="50" value="1000"></label>
               <button id="applyResponsePolicy" class="button secondary" type="button">应用触碰回应概率</button>
             </div>
-            <p class="hint">接触中闪光不启动轮子；抽中装死会立即停车并保持静止。逃跑不等待预先取景，触碰松开后立即向安全方向移动，停下后再找猫并对准。首次触碰立即触发回应，合并窗口只用于把后续连击算作同一轮。</p>
+            <p class="hint">探索声光在触碰时启动且不启动轮子；抽中装死会立即停车。逃跑在触碰松开后向安全方向移动。首次触碰立即触发回应，合并窗口只用于把后续连击算作同一轮。</p>
             <p id="responsePolicyStatus" class="hint" aria-live="polite"></p>
           </div>
           <div class="decision-priority-card">
@@ -221,7 +223,6 @@
               <div class="inject-row">
                 <label>闪灯时长 ms <input id="signalFlashMs" type="number" min="100" max="5000" step="1" value="1400"></label>
                 <label>蜂鸣时长 ms <input id="signalBeepMs" type="number" min="0" max="1000" step="1" value="180"></label>
-                <label>被抓声光回应蜂鸣 ms <input id="touchSoundLightBeepMs" type="number" min="100" max="1000" step="1" value="180"></label>
                 <label>被捕获闪灯时长 ms <input id="captureCueFlashMs" type="number" min="1000" max="5000" step="1" value="2200"></label>
                 <label>被捕获第二声蜂鸣 ms <input id="captureCueBeepMs" type="number" min="100" max="1000" step="1" value="360"></label>
                 <label>逃跑距离 cm <input id="escapeDistanceCm" type="number" min="1" max="60" step="1" value="26"></label>

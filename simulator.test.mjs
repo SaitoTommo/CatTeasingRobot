@@ -2,20 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { touchResponsePlan } from "./decision-system.mjs";
 
-test("each touch area can choose a flash and a separate prey, sound-light, or escape response", () => {
+test("each touch area can choose prey or escape within the hunting branch", () => {
   for (const area of ["TOP", "LEFT", "RIGHT", "REAR"]) {
     const prey = touchResponsePlan(area, () => .1);
-    const signal = touchResponsePlan(area, () => .3);
     const escape = touchResponsePlan(area, () => .9);
     assert.equal(prey.response, "PREY_STILL");
-    assert.equal(prey.flashDuringTouch, true);
-    assert.equal(signal.response, "SOUND_LIGHT_RESPONSE");
     assert.equal(escape.response, "FAST_STRAIGHT_ESCAPE");
-    assert.equal(escape.flashDuringTouch, false);
   }
 });
 
-test("contact light precedes release; escape waits for release; prey collapses on contact and resumes patrol", async () => {
+test("branch choice separates hunting motion from sound-light exploration", async () => {
   const elements = new Map();
   const archivedMessages = [];
   const drawing = new Proxy({}, { get: () => () => {} });
@@ -93,9 +89,8 @@ test("contact light precedes release; escape waits for release; prey collapses o
       assert.ok(predicate(), messages().slice(-45).join(" | "));
     };
 
-    elements.get("touchFlashPercent").value = "100";
+    elements.get("explorationBranchPercent").value = "0";
     elements.get("touchPreyPercent").value = "0";
-    elements.get("touchSoundLightPercent").value = "0";
     elements.get("touchSlowEscapePercent").value = "100";
     elements.get("touchFastEscapePercent").value = "0";
     elements.get("postEscapeWaitSeconds").value = "0";
@@ -104,13 +99,11 @@ test("contact light precedes release; escape waits for release; prey collapses o
     elements.get("startPatrol").click();
     const escapeStart = messages().length;
     touchButton.click();
-    await runFramesUntil(() => messages().slice(escapeStart).some(m => m.includes("CONTACT_LIGHT area=TOP flash=true")));
+    await runFramesUntil(() => messages().slice(escapeStart).some(m => m.includes("TOUCH_BRANCH_SELECT branch=HUNT")));
     const early = messages().slice(escapeStart);
     const press = early.findIndex(m => m.includes("TOUCH area=TOP phase=PRESS"));
-    const flash = early.findIndex(m => /CMD \d+ LED FLASH 220 /.test(m));
     const release = early.findIndex(m => m.includes("TOUCH area=TOP phase=RELEASE"));
-    assert.ok(press >= 0 && flash > press && release < 0,
-      `LED must flash while contact is held: ${early.join(" | ")}`);
+    assert.ok(press >= 0 && release < 0);
     assert.ok(!early.some(m => /CMD \d+ (DRIVE|ROTATE) /.test(m)),
       "escape wheels must not start while touch is held");
     await runFramesUntil(() => messages().slice(escapeStart).some(m => m.includes("ATTACK_RESPONSE_PHASE escape_immediate")));
@@ -131,7 +124,7 @@ test("contact light precedes release; escape waits for release; prey collapses o
     touchButton.click();
     await runFramesUntil(() => messages().slice(preyStart).some(m => m.includes("ENDING_OUTCOME_START outcome=PREY_STILL")));
     const preyLog = messages().slice(preyStart);
-    assert.ok(preyLog.some(m => m.includes("CONTACT_LIGHT area=TOP flash=true")));
+    assert.ok(preyLog.some(m => m.includes("TOUCH_BRANCH_SELECT branch=HUNT")));
     assert.ok(!preyLog.some(m => m.includes("TOUCH area=TOP phase=RELEASE")),
       "prey collapse must begin while the cat is still touching");
     await runFramesUntil(() => messages().slice(preyStart).some(m => m.includes("PATROL_RESUME target_tag=")), 5000);
@@ -139,25 +132,29 @@ test("contact light precedes release; escape waits for release; prey collapses o
       "after collapse the Uno session must reopen for patrol");
     elements.get("stopPatrol").click();
 
-    elements.get("touchFlashPercent").value = "0";
-    elements.get("touchPreyPercent").value = "0";
-    elements.get("touchSoundLightPercent").value = "100";
-    elements.get("touchSlowEscapePercent").value = "0";
-    elements.get("touchFastEscapePercent").value = "0";
+    elements.get("explorationBranchPercent").value = "100";
+    elements.get("initialLookSeconds").value = "0";
     elements.get("applyResponsePolicy").click();
+    elements.get("endingInactivitySeconds").value = "1";
+    elements.get("applyEndingPolicy").click();
     elements.get("startPatrol").click();
     const signalStart = messages().length;
     touchButton.click();
-    await runFramesUntil(() => messages().slice(signalStart).some(m => m.includes("ATTACK_RESPONSE_PHASE sound_light_on_contact")));
+    await runFramesUntil(() => messages().slice(signalStart).some(m => m.includes("EXPLORATION_CUE_START")));
     const signalLog = messages().slice(signalStart);
     const signalPress = signalLog.findIndex(m => m.includes("TOUCH area=TOP phase=PRESS"));
-    const signalFlash = signalLog.findIndex(m => /CMD \d+ LED FLASH 220 /.test(m));
-    const signalBeep = signalLog.findIndex(m => /CMD \d+ BEEP 180/.test(m));
+    const signalFlash = signalLog.findIndex(m => /CMD \d+ LED (ON|FLASH)/.test(m));
+    const signalBeep = signalLog.findIndex(m => /CMD \d+ BEEP \d+/.test(m));
     assert.ok(signalPress >= 0 && signalFlash > signalPress && signalBeep > signalPress,
       `sound and light must begin on contact: ${signalLog.join(" | ")}`);
-    assert.ok(!signalLog.some(m => m.includes("TOUCH area=TOP phase=RELEASE")));
+    assert.ok(signalLog.some(m => m.includes("TOUCH_BRANCH_SELECT branch=EXPLORE")));
+    assert.ok(!signalLog.some(m => m.includes("TOUCH area=TOP phase=RELEASE")),
+      `sound-light cue must start before release: ${signalLog.join(" | ")}`);
     assert.ok(!signalLog.some(m => /CMD \d+ (DRIVE|ROTATE) /.test(m)),
       "sound-light response must keep the wheels stopped during contact");
+    await runFramesUntil(() => messages().slice(signalStart).some(m => m.includes("PATROL_RESUME target_tag=")), 12000);
+    assert.ok(messages().slice(signalStart).some(m => m.includes("EXPLORATION_CUE_DONE")));
+    assert.ok(messages().slice(signalStart).some(m => m.includes("DONE") && m.includes("SESSION_STARTED")));
     elements.get("stopPatrol").click();
   } finally {
     Math.random = previousRandom;

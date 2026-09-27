@@ -80,6 +80,7 @@ const unoTouches = new Set();
 let faceReady = false;
 const BEHAVIOR_LABELS = {
   PATROL: "巡游", STAY: "保持静止", STAY_SIGNAL: "静止＋声光回应", SLOW_APPROACH: "缓慢接近",
+  EXPLORE_SOUND_LIGHT: "声光探索",
   PROBE_APPROACH: "走停试探", FAST_FORWARD: "快速前进",
   SLOW_STRAIGHT_ESCAPE: "缓慢直线逃跑", FAST_STRAIGHT_ESCAPE: "快速直线逃跑",
   CAPTURE_WIGGLE: "原地轻摇，模拟被抓",
@@ -87,17 +88,20 @@ const BEHAVIOR_LABELS = {
 };
 
 function explainReason(reason) {
+  if (reason.startsWith("explore_touch_")) {
+    const area = /^explore_touch_(TOP|LEFT|RIGHT|REAR)/.exec(reason)?.[1] || "未知位置";
+    const pattern = /pattern=([^ ]+)/.exec(reason)?.[1] || "?";
+    return `Uno 回报触碰（${area}）；声光探索样式 ${pattern}，本轮只停车、闪灯和鸣叫`;
+  }
   if (reason.startsWith("attack_touch_")) {
     const area = /^attack_touch_(TOP|LEFT|RIGHT|REAR)/.exec(reason)?.[1] || "未知位置";
     const count = /count=(\d+)/.exec(reason)?.[1] || "?";
     const draw = /random=([\d.]+)/.exec(reason)?.[1];
-    const response = /response=(PREY_STILL|SOUND_LIGHT_RESPONSE|SLOW_STRAIGHT_ESCAPE|FAST_STRAIGHT_ESCAPE)/.exec(reason)?.[1];
+    const response = /response=(PREY_STILL|SLOW_STRAIGHT_ESCAPE|FAST_STRAIGHT_ESCAPE)/.exec(reason)?.[1];
     const action = response === "SLOW_STRAIGHT_ESCAPE" ? "缓慢逃跑再面向猫"
       : "快速逃跑再面向猫";
     return response === "PREY_STILL"
       ? `Uno 回报第 ${count} 次触碰（${area}）；被抓住后立即停车装死，等待猫离开${draw ? `；随机数 ${draw}` : ""}`
-      : response === "SOUND_LIGHT_RESPONSE"
-        ? `Uno 回报第 ${count} 次触碰（${area}）；停车并立即闪灯、蜂鸣，松开后观察猫${draw ? `；随机数 ${draw}` : ""}`
       : `Uno 回报第 ${count} 次触碰（${area}）；松开后立即向远离猫的安全方向${action}${draw ? `；随机数 ${draw}` : ""}`;
   }
   if (reason.startsWith("mood_alert_")) return `外部猫状态告警：${reason.endsWith("CAMERA_NEGATIVE") ? "摄像头判断" : "HTTP 判断"}`;
@@ -1229,6 +1233,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   const token = behaviorToken;
   if (name === "ATTACK_RESPONSE") touchDuringBehavior = false;
   let skipFinalFacing = name === "SEARCH_CAT_START" || name === "OBSERVE" || name === "STAY" ||
+    name === "EXPLORE_SOUND_LIGHT" ||
     (name === "END_SESSION" && (endingOutcome?.startsWith("PREY_") || !cameraObservation(world).detected));
   if (name === "END_SESSION" && endingActiveSession && !endingOutcome?.startsWith("PREY_") &&
       !cameraObservation(world).detected)
@@ -1236,7 +1241,8 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   let attackFailureReason = null;
   try {
     if (source === "ESP32_AUTO" && interactionPhase === "INTERACTION" &&
-        initialLookPending && name !== "ATTACK_RESPONSE" && name !== "SEARCH_CAT_START" &&
+        initialLookPending && name !== "ATTACK_RESPONSE" && name !== "EXPLORE_SOUND_LIGHT" &&
+        name !== "SEARCH_CAT_START" &&
         name !== "END_SESSION" &&
         cameraObservation(world).detected) {
       if (!await finishFacingCat(token, name)) {
@@ -1271,6 +1277,27 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       }
       if (token !== behaviorToken) return;
       await signalToCat(token);
+    } else if (name === "EXPLORE_SOUND_LIGHT") {
+      const pattern = details.lightPattern;
+      if (!pattern) throw new Error("INVALID_EXPLORATION_PATTERN");
+      initialLookPending = false;
+      send("STOP");
+      send(pattern.command);
+      send(`BEEP ${pattern.beepMs}`);
+      addLog("event", `EXPLORATION_CUE_START pattern=${pattern.name} light=${pattern.command} beep_ms=${pattern.beepMs} stationary=true`, "ESP32·SIM");
+      if (!await behaviorPause(pattern.durationMs, token)) return;
+      if (token !== behaviorToken) return;
+      send("LED OFF");
+      addLog("event", `EXPLORATION_CUE_DONE pattern=${pattern.name}`, "ESP32·SIM");
+      if (!await waitForTouchRelease(token, decisionSystem.responsePolicy.touchReleaseTimeoutMs)) {
+        if (token !== behaviorToken) return;
+        addLog("event", "EXPLORATION_OBSERVE_WAIT reason=TOUCH_HELD", "ESP32·SIM");
+        return;
+      }
+      const faced = await finishFacingCat(token, name);
+      if (token !== behaviorToken) return;
+      if (faced) await holdCatView(token);
+      addLog(faced ? "event" : "error", `POST_EXPLORATION_OBSERVE_${faced ? "DONE" : "FAILED"}`, "ESP32·SIM");
     } else if (name === "OBSERVE") {
       send("STOP");
       logCamera();
@@ -1280,24 +1307,8 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       const plan = details.attackPlan;
       if (!plan) throw new Error("INVALID_ATTACK_PLAN");
       initialLookPending = false;
-      if (!["SOUND_LIGHT_RESPONSE", "SLOW_STRAIGHT_ESCAPE", "FAST_STRAIGHT_ESCAPE"].includes(plan.response))
+      if (!["SLOW_STRAIGHT_ESCAPE", "FAST_STRAIGHT_ESCAPE"].includes(plan.response))
         throw new Error("INVALID_ATTACK_PLAN");
-      if (plan.response === "SOUND_LIGHT_RESPONSE") {
-        addLog("event", "ATTACK_RESPONSE_PHASE sound_light_on_contact stationary=true", "ESP32·SIM");
-        // The LED and buzzer were started on PRESS; keep the cue complete before
-        // switching it off. No wheel command is issued while touch is active.
-        if (!await behaviorPause(decisionSystem.responsePolicy.signalFlashMs, token)) return;
-        if (!await waitForTouchRelease(token, decisionSystem.responsePolicy.touchReleaseTimeoutMs)) {
-          if (token !== behaviorToken) return;
-          throw new Error("TOUCH_HELD");
-        }
-        send("LED OFF");
-        const faced = await finishFacingCat(token, name);
-        if (token !== behaviorToken) return;
-        if (faced) await holdCatView(token);
-        addLog(faced ? "event" : "error", `POST_SIGNAL_OBSERVE_${faced ? "DONE" : "FAILED"}`, "ESP32·SIM");
-        return;
-      }
       // Uno forbids wheel motion while the touch switch is held. Start the
       // response on PRESS and move as soon as the switch is released.
       if (!await waitForTouchRelease(token, decisionSystem.responsePolicy.touchReleaseTimeoutMs)) {
@@ -1494,7 +1505,7 @@ function catInputConfiguration() {
   };
 }
 
-const CAT_POLICY_KEYS = ["touchFlashPercent", "touchPreyPercent", "touchSoundLightPercent",
+const CAT_POLICY_KEYS = ["explorationBranchPercent", "touchPreyPercent",
   "touchSlowEscapePercent", "touchFastEscapePercent",
   "catFollowProbePercent", "catFollowObservePercent", "catFollowPatrolPercent",
   "catProbeCooldownSeconds", "initialLookSeconds", "postEscapeWaitSeconds", "touchDebounceMs"];
@@ -1513,7 +1524,7 @@ function showResponsePolicy(group = null) {
     : group === "robot" ? ROBOT_POLICY_KEYS
     : group === "advanced" ? ADVANCED_POLICY_KEYS : Object.keys(DEFAULT_RESPONSE_POLICY);
   for (const key of keys) $(key).value = String(policy[key]);
-  $("responsePolicyStatus").textContent = `已应用：接触中独立闪光 ${policy.touchFlashPercent}%；被抓住后装死／声光回应／慢逃／快逃 ${policy.touchPreyPercent}/${policy.touchSoundLightPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；逃跑后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；逃跑后等待追击 ${policy.postEscapeWaitSeconds} 秒，连击合并窗口 ${policy.touchDebounceMs} 毫秒。`;
+  $("responsePolicyStatus").textContent = `已应用：每轮互动先抽声光探索 ${policy.explorationBranchPercent}%／捕猎 ${100 - policy.explorationBranchPercent}%；捕猎分支装死／慢逃／快逃 ${policy.touchPreyPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；声光探索四种节奏轮换且每次不重复；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；连击合并窗口 ${policy.touchDebounceMs} 毫秒。`;
   $("endingPolicyStatus").textContent = `已应用：第 ${policy.endingAfterRounds} 轮抓住时抽取直接巡游／安静装死／声光装死 ${policy.endingPatrolPercent}/${policy.endingSilentPercent}/${policy.endingSignalPercent}%；${policy.endingInactivitySeconds} 秒无新触碰时直接结束；装死后最多等待 ${policy.captureWaitMaxSeconds} 秒。0 表示关闭对应触发条件。`;
   $("robotPolicyStatus").textContent = `已应用：远处接近／试探 ${policy.robotFarApproachPercent}/${policy.robotFarProbePercent}%；近处声光／观察／静止 ${policy.robotNearSignalPercent}/${policy.robotNearObservePercent}/${policy.robotNearStayPercent}%。`;
   $("advancedPolicyStatus").textContent = "高级动作参数已应用；下次相应动作生效。";
@@ -1570,6 +1581,7 @@ function stopController(reason) {
   resumePatrolAfterInteraction = false;
   initialLookPending = false;
   resetTouchBurst();
+  decisionSystem.finishInteraction();
   autoDecisionVersion += 1;
   autoBusy = false;
   cancelBehavior(reason);
@@ -1600,9 +1612,14 @@ function launchAutoDecision(action, reason, force = false, sensorTriggered = fal
 function onUnoTouchPress(area) {
   if (paused || interactionPhase === "ENDING") return;
   const newEpisode = pendingTouchBurst === null;
+  const newBranch = decisionSystem.touchBranch === null;
+  const branch = decisionSystem.chooseTouchBranch();
   const responseAlreadyActive = autoBusy && activeAutoAction === "ATTACK_RESPONSE";
-  const decision = decisionSystem.onTouchPress(area, performance.now(), newEpisode);
-  addLog("event", `ATTACK_EVIDENCE source=UNO_TOUCH area=${area} count=${decisionSystem.attackCount}`, "ESP32·AUTO");
+  const decision = branch === "EXPLORE"
+    ? decisionSystem.onExplorationTouch(area, performance.now(), newEpisode)
+    : decisionSystem.onTouchPress(area, performance.now(), newEpisode, !responseAlreadyActive && newEpisode);
+  if (newBranch) addLog("event", `TOUCH_BRANCH_SELECT branch=${branch} draw=${decisionSystem.touchBranchDraw.toFixed(3)} exploration_pct=${decisionSystem.responsePolicy.explorationBranchPercent}`, "ESP32·AUTO");
+  addLog("event", `ATTACK_EVIDENCE source=UNO_TOUCH area=${area} count=${decisionSystem.attackCount} branch=${branch}`, "ESP32·AUTO");
   if (interactionPhase === "PATROL") {
     interactionPhase = "INTERACTION";
     initialLookPending = true;
@@ -1620,10 +1637,13 @@ function onUnoTouchPress(area) {
     addLog("event", `CAT_CAPTURE_TRIGGER area=${area} rounds=${decisionSystem.catInteractionRounds} outcome=${ending.endingOutcome}`, "ESP32·AUTO");
     launchAutoDecision("END_SESSION", ending.reason, true, true,
       { endingOutcome: ending.endingOutcome });
-  } else if (newEpisode && decision.plan.response === "PREY_STILL") {
+  } else if (branch === "HUNT" && newEpisode && !responseAlreadyActive && decision.plan.response === "PREY_STILL") {
     addLog("event", `CAT_CAPTURE_TRIGGER area=${area} rounds=${decisionSystem.catInteractionRounds} outcome=PREY_STILL reason=TOUCH_RESPONSE`, "ESP32·AUTO");
     launchAutoDecision("END_SESSION", `${decision.reason} prey_on_contact`, true, true,
       { endingOutcome: "PREY_STILL" });
+  } else if (branch === "EXPLORE" && newEpisode) {
+    addLog("event", `TOUCH_BURST_COMMIT action=EXPLORE_SOUND_LIGHT quiet_ms=${decisionSystem.responsePolicy.touchDebounceMs}`, "ESP32·AUTO");
+    launchAutoDecision(decision.action, decision.reason, true, true, { lightPattern: decision.pattern });
   } else if (responseAlreadyActive) {
     // Touch during an active response joins the current burst: it can end a waiting
     // phase (see waitForCatPursuit) but never schedules a second response.
@@ -1632,16 +1652,6 @@ function onUnoTouchPress(area) {
   } else if (newEpisode) {
     addLog("event", `TOUCH_BURST_COMMIT action=${decision.action} quiet_ms=${decisionSystem.responsePolicy.touchDebounceMs}`, "ESP32·AUTO");
     launchAutoDecision(decision.action, decision.reason, true, true, { attackPlan: decision.plan });
-  }
-  // Independent of the prey/escape draw. FLASH is allowed by Uno during touch;
-  // wheel motion remains blocked until RELEASE by the firmware interlock.
-  if (newEpisode) {
-    const soundLightResponse = !responseAlreadyActive && decision.plan.response === "SOUND_LIGHT_RESPONSE" &&
-      (roundLimit === 0 || decisionSystem.catInteractionRounds < roundLimit);
-    const flash = decision.plan.flashDuringTouch || soundLightResponse;
-    addLog("event", `CONTACT_LIGHT area=${area} flash=${flash} draw=${decision.plan.flashDraw.toFixed(3)} response_signal=${soundLightResponse}`, "ESP32·AUTO");
-    if (flash) send(`LED FLASH 220 ${decisionSystem.responsePolicy.signalFlashMs}`);
-    if (soundLightResponse) send(`BEEP ${decisionSystem.responsePolicy.touchSoundLightBeepMs}`);
   }
   if (touchBurstTimer) clearTimeout(touchBurstTimer);
   const quietMs = decisionSystem.responsePolicy.touchDebounceMs;
@@ -1687,6 +1697,7 @@ function tickAutoDecision(now) {
     autoBusy, nextDecisionAt: nextAutoDecisionAt, obstacleBlockedUntil,
     sessionElapsedMs: sessionStartedAt === null ? null : Date.now() - sessionStartedAt,
     sessionLimitSeconds: decisionSystem.responsePolicy.sessionLimitSeconds, camera: cameraObservation(world),
+    touchActive: unoTouches.size > 0,
   });
   if (!decision) return;
   launchAutoDecision(decision.action, decision.reason,
