@@ -70,7 +70,12 @@ let nextAutoDecisionAt = 0;
 let obstacleBlockedUntil = 0;
 let resumePatrolAfterInteraction = false;
 let initialLookPending = false;
-let pendingTouchDecision = null;
+// Touch-burst debouncing: a cat lands several swipes per attack episode; each press is
+// still recorded as evidence, but the RESPONSE waits for a quiet window so one burst
+// produces exactly one response instead of a response per swipe.
+let pendingTouchBurst = null;
+let touchBurstTimer = null;
+let touchDuringBehavior = false;
 let nextObstacleStatusQueryAt = 0;
 const unoTouches = new Set();
 let faceReady = false;
@@ -868,10 +873,10 @@ async function waitForCatPursuit(token) {
   $("faceCatStatus").textContent = `逃跑后停下，等待猫再次触碰（最多 ${seconds} 秒）`;
   addLog("event", `CHASE_WAIT_START duration_s=${seconds} stationary=true`, "ESP32·SIM");
   const deadline = performance.now() + seconds * 1000;
-  while (token === behaviorToken && !pendingTouchDecision && performance.now() < deadline)
+  while (token === behaviorToken && !touchDuringBehavior && performance.now() < deadline)
     await new Promise(resolve => setTimeout(resolve, 100));
   if (token === behaviorToken)
-    addLog("event", `CHASE_WAIT_DONE reason=${pendingTouchDecision ? "TOUCH" : "TIMEOUT"}`, "ESP32·SIM");
+    addLog("event", `CHASE_WAIT_DONE reason=${touchDuringBehavior ? "TOUCH" : "TIMEOUT"}`, "ESP32·SIM");
 }
 
 async function waitForTouchRelease(token, timeoutMs) {
@@ -1198,6 +1203,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   const endingOutcome = name === "END_SESSION" ? details.endingOutcome : null;
   if (name !== "END_SESSION" && name !== "PATROL" && sessionStartedAt === null) startSession(false);
   const token = behaviorToken;
+  if (name === "ATTACK_RESPONSE") touchDuringBehavior = false;
   let skipFinalFacing = name === "SEARCH_CAT_START" || name === "OBSERVE" || name === "STAY" ||
     (name === "END_SESSION" && !cameraObservation(world).detected);
   if (name === "END_SESSION" && endingActiveSession && !cameraObservation(world).detected)
@@ -1276,7 +1282,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
         await waitForCatPursuit(token);
         if (token !== behaviorToken) return;
         // 逃跑后猫没有追上来：保持不动、面向猫凝视观察一段时间，再进入互动收尾。
-        if (!pendingTouchDecision && cameraObservation(world).detected) {
+        if (!touchDuringBehavior && cameraObservation(world).detected) {
           if (await finishFacingCat(token, name) && token === behaviorToken) await holdCatView(token);
           addLog("event", "POST_ESCAPE_OBSERVE_DONE", "ESP32·SIM");
         }
@@ -1418,7 +1424,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       sessionStartedAt = null;
       decisionSystem.finishInteraction();
       initialLookPending = false;
-      pendingTouchDecision = null;
+      resetTouchBurst();
       if (autoControlEnabled || resumePatrolAfterInteraction) {
         const target = PATROL_TAGS[patrolWaypointIndex];
         interactionPhase = "PATROL";
@@ -1434,16 +1440,10 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
     }
     if (token === behaviorToken && name === "ATTACK_RESPONSE") {
       if (attackFailureReason) {
-        pendingTouchDecision = null;
+        resetTouchBurst();
         addLog("event", `CAT_TOUCH_FALLBACK reason=${attackFailureReason} action=RETURN_TO_PATROL`, "ESP32·AUTO");
         launchAutoDecision("END_SESSION", `cat_touch_response_failed_${attackFailureReason}`,
           true, true, { endingOutcome: "CONTINUE_PATROL" });
-      } else if (pendingTouchDecision) {
-        const nextTouch = pendingTouchDecision;
-        pendingTouchDecision = null;
-        addLog("event", `ATTACK_TOUCH_QUEUED_START area=${nextTouch.plan.area}`, "ESP32·AUTO");
-        launchAutoDecision(nextTouch.action, nextTouch.reason, true, true,
-          { attackPlan: nextTouch.plan });
       } else if (!autoControlEnabled) {
         const ending = decisionSystem.chooseCatEnding("standalone_response_finished");
         await runBehavior("END_SESSION", "ESP32_AUTO", ending.reason,
@@ -1465,7 +1465,7 @@ function catInputConfiguration() {
 
 const CAT_POLICY_KEYS = ["touchSignalPercent", "touchSlowEscapePercent", "touchFastEscapePercent",
   "catFollowProbePercent", "catFollowObservePercent", "catFollowPatrolPercent",
-  "catProbeCooldownSeconds", "initialLookSeconds", "postEscapeWaitSeconds"];
+  "catProbeCooldownSeconds", "initialLookSeconds", "postEscapeWaitSeconds", "touchDebounceMs"];
 const ENDING_POLICY_KEYS = ["endingAfterRounds", "endingInactivitySeconds",
   "endingPatrolPercent", "endingSilentPercent", "endingSignalPercent", "captureWaitMaxSeconds"];
 const ROBOT_POLICY_KEYS = ["robotFarApproachPercent", "robotFarProbePercent",
@@ -1481,7 +1481,7 @@ function showResponsePolicy(group = null) {
     : group === "robot" ? ROBOT_POLICY_KEYS
     : group === "advanced" ? ADVANCED_POLICY_KEYS : Object.keys(DEFAULT_RESPONSE_POLICY);
   for (const key of keys) $(key).value = String(policy[key]);
-  $("responsePolicyStatus").textContent = `已应用：触碰后声光／慢逃／快逃 ${policy.touchSignalPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；初次取景 ${policy.initialLookSeconds} 秒，逃跑后等待追击 ${policy.postEscapeWaitSeconds} 秒。`;
+  $("responsePolicyStatus").textContent = `已应用：触碰后声光／慢逃／快逃 ${policy.touchSignalPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；初次取景 ${policy.initialLookSeconds} 秒，逃跑后等待追击 ${policy.postEscapeWaitSeconds} 秒，连击静默 ${policy.touchDebounceMs} 毫秒（0 关闭）。`;
   $("endingPolicyStatus").textContent = `已应用：${policy.endingAfterRounds} 轮触碰或 ${policy.endingInactivitySeconds} 秒无新触碰后结束；直接巡游／安静倒下／声光倒下 ${policy.endingPatrolPercent}/${policy.endingSilentPercent}/${policy.endingSignalPercent}%；倒下后最多等待 ${policy.captureWaitMaxSeconds} 秒。0 表示关闭对应触发条件。`;
   $("robotPolicyStatus").textContent = `已应用：远处接近／试探 ${policy.robotFarApproachPercent}/${policy.robotFarProbePercent}%；近处声光／观察／静止 ${policy.robotNearSignalPercent}/${policy.robotNearObservePercent}/${policy.robotNearStayPercent}%。`;
   $("advancedPolicyStatus").textContent = "高级动作参数已应用；下次相应动作生效。";
@@ -1537,7 +1537,7 @@ function stopController(reason) {
   interactionPhase = "IDLE";
   resumePatrolAfterInteraction = false;
   initialLookPending = false;
-  pendingTouchDecision = null;
+  resetTouchBurst();
   autoDecisionVersion += 1;
   autoBusy = false;
   cancelBehavior(reason);
@@ -1580,11 +1580,37 @@ function onUnoTouchPress(area) {
     initialLookPending = true;
   }
   if (autoBusy && activeAutoAction === "ATTACK_RESPONSE") {
-    pendingTouchDecision = decision;
-    addLog("event", `ATTACK_TOUCH_DURING_RESPONSE area=${area} action=QUEUE_NEXT`, "ESP32·AUTO");
+    // Touch during an active response joins the current burst: it can end a waiting
+    // phase (see waitForCatPursuit) but never schedules a second response.
+    touchDuringBehavior = true;
+    addLog("event", `ATTACK_TOUCH_DURING_RESPONSE area=${area} action=COUNT_ONLY`, "ESP32·AUTO");
     return;
   }
-  launchAutoDecision(decision.action, decision.reason, true, true, { attackPlan: decision.plan });
+  pendingTouchBurst = decision;
+  if (touchBurstTimer) clearTimeout(touchBurstTimer);
+  const quietMs = decisionSystem.responsePolicy.touchDebounceMs;
+  if (quietMs === 0) { flushTouchBurst(); return; }
+  touchBurstTimer = setTimeout(flushTouchBurst, quietMs);
+}
+
+function flushTouchBurst() {
+  touchBurstTimer = null;
+  const burst = pendingTouchBurst;
+  pendingTouchBurst = null;
+  if (!burst || paused || interactionPhase === "ENDING") return;
+  if (autoBusy && activeAutoAction === "ATTACK_RESPONSE") {
+    touchDuringBehavior = true;
+    return;
+  }
+  addLog("event", `TOUCH_BURST_COMMIT action=${burst.action} quiet_ms=${decisionSystem.responsePolicy.touchDebounceMs}`, "ESP32·AUTO");
+  launchAutoDecision(burst.action, burst.reason, true, true, { attackPlan: burst.plan });
+}
+
+function resetTouchBurst() {
+  if (touchBurstTimer) clearTimeout(touchBurstTimer);
+  touchBurstTimer = null;
+  pendingTouchBurst = null;
+  touchDuringBehavior = false;
 }
 
 function injectMoodAlert(source) {
@@ -2078,7 +2104,7 @@ $("startPatrol").addEventListener("click", () => {
   decisionSystem.reset();
   resumePatrolAfterInteraction = false;
   initialLookPending = false;
-  pendingTouchDecision = null;
+  resetTouchBurst();
   obstacleBlockedUntil = 0;
   autoDecisionVersion += 1;
   autoBusy = false;

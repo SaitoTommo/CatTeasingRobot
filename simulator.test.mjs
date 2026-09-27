@@ -96,6 +96,7 @@ test("patrol continues until touch, then top signals after facing and left escap
   elements.get("catFollowPatrolPercent").value = "70";
   elements.get("initialLookSeconds").value = "1";
   elements.get("postEscapeWaitSeconds").value = "1";
+  elements.get("touchDebounceMs").value = "0";
   elements.get("endingInactivitySeconds").value = "8";
   elements.get("applyEndingPolicy").click();
   elements.get("applyResponsePolicy").click();
@@ -441,7 +442,17 @@ test("patrol continues until touch, then top signals after facing and left escap
   topTouchButton.click();
   const queuedTouchDeadline = performance.now() + 2500;
   while (performance.now() < queuedTouchDeadline &&
-      !messages().slice(slowEscapeStart).some(message => message.includes("ATTACK_TOUCH_QUEUED_START area=TOP"))) {
+      !messages().slice(slowEscapeStart).some(message => message.includes("CHASE_WAIT_DONE reason=TOUCH"))) {
+    const frame = nextFrame;
+    assert.ok(frame);
+    nextFrame = null;
+    frame(performance.now());
+    await new Promise(resolve => setTimeout(resolve, 16));
+  }
+  // The touch joins the CURRENT burst: it ends the pursuit wait but must never
+  // schedule a second response. Let the round run out before counting responses.
+  const noSecondStart = performance.now() + 6000;
+  while (performance.now() < noSecondStart) {
     const frame = nextFrame;
     assert.ok(frame);
     nextFrame = null;
@@ -449,9 +460,12 @@ test("patrol continues until touch, then top signals after facing and left escap
     await new Promise(resolve => setTimeout(resolve, 16));
   }
   const queuedTouchLog = messages().slice(slowEscapeStart);
-  assert.ok(queuedTouchLog.some(message => message.includes("CHASE_WAIT_DONE reason=TOUCH")) &&
-    queuedTouchLog.some(message => message.includes("ATTACK_TOUCH_QUEUED_START area=TOP")),
-  `a new touch during pursuit wait should start a new response: ${queuedTouchLog.filter(message => /CHASE_WAIT|ATTACK_TOUCH/.test(message)).slice(-20).join(" | ")}`);
+  assert.ok(queuedTouchLog.some(message => message.includes("CHASE_WAIT_DONE reason=TOUCH")),
+    "a new touch during pursuit wait should end the wait");
+  assert.ok(!queuedTouchLog.some(message => message.includes("ATTACK_TOUCH_QUEUED_START")),
+    `a touch during an active response must not schedule a second response: ${queuedTouchLog.filter(message => /CHASE_WAIT|ATTACK_TOUCH|BEHAVIOR ATTACK/.test(message)).slice(-20).join(" | ")}`);
+  assert.equal(queuedTouchLog.filter(message => message.includes("BEHAVIOR ATTACK_RESPONSE")).length, 1,
+    "exactly one response ran despite the extra touch");
   elements.get("stopMotion").click();
 
   elements.get("resetScene").click();
@@ -549,6 +563,48 @@ test("patrol continues until touch, then top signals after facing and left escap
   const resumeAfterFault = faultLog.findIndex(message => message.includes("PATROL_RESUME target_tag="));
   assert.ok(resumeAfterFault > stopDone,
     `patrol should resume after the retried session stop: ${faultLog.filter(m => /PATROL_RESUME|SESSION_/.test(m)).slice(-10).join(" | ")}`);
+  elements.get("stopPatrol").click();
+
+  // --- Touch burst debounce: five fast swipes are ONE attack episode --------------
+  elements.get("resetScene").click();
+  elements.get("touchDebounceMs").value = "800";
+  elements.get("touchSignalPercent").value = "100";
+  elements.get("touchSlowEscapePercent").value = "0";
+  elements.get("touchFastEscapePercent").value = "0";
+  elements.get("initialLookSeconds").value = "0";
+  elements.get("postEscapeWaitSeconds").value = "0";
+  elements.get("applyResponsePolicy").click();
+  randomValue = .1;
+  const burstStart = messages().length;
+  for (let swipe = 0; swipe < 5; swipe++) {
+    topTouchButton.click();
+    const gapEnd = performance.now() + 300;
+    while (performance.now() < gapEnd) {
+      const frame = nextFrame;
+      assert.ok(frame);
+      nextFrame = null;
+      frame(performance.now());
+      await new Promise(resolve => setTimeout(resolve, 16));
+    }
+  }
+  const burstDeadline = performance.now() + 25000;
+  while (performance.now() < burstDeadline &&
+      !messages().slice(burstStart).some(message => message.includes("SESSION_ENDED duration_s="))) {
+    const frame = nextFrame;
+    assert.ok(frame);
+    nextFrame = null;
+    frame(performance.now());
+    await new Promise(resolve => setTimeout(resolve, 16));
+  }
+  const burstLog = messages().slice(burstStart);
+  assert.ok(burstLog.some(message => message.includes("ATTACK_EVIDENCE source=UNO_TOUCH area=TOP count=5")),
+    `every swipe stays recorded as evidence: ${burstLog.filter(m => /ATTACK_EVIDENCE|TOUCH_BURST/.test(m)).slice(0, 15).join(" | ")}`);
+  assert.equal(burstLog.filter(message => message.includes("TOUCH_BURST_COMMIT")).length, 1,
+    "the burst must commit exactly once, after the quiet window following the LAST swipe");
+  assert.equal(burstLog.filter(message => message.includes("BEHAVIOR ATTACK_RESPONSE")).length, 1,
+    "five fast swipes should produce exactly one response round");
+  assert.ok(burstLog.some(message => message.includes("SESSION_ENDED duration_s=")),
+    `the committed response should run and end normally: ${burstLog.filter(m => /ATTACK_|TOUCH_BURST|SESSION_|BEHAVIOR/.test(m)).slice(-20).join(" | ")}`);
   elements.get("stopPatrol").click();
   Math.random = previousRandom;
 });
