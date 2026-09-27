@@ -409,5 +409,36 @@ test("patrol continues until touch, then top signals after facing and left escap
   assert.ok(messages().slice(slowEscapeStart).some(message => message.includes("ESCAPE_PHASE pace=SLOW straight_distance_cm=26 pwm=95")),
     `the slow setting should change the executed escape speed: ${messages().slice(slowEscapeStart).filter(message => /ATTACK_|ESCAPE_PHASE|BEHAVIOR_ABORTED/.test(message)).slice(-25).join(" | ")}`);
   elements.get("stopMotion").click();
+
+  elements.get("resetScene").click();
+  arena.dispatch("pointerdown", { clientX: 675, clientY: 255, pointerId: 5 });
+  arena.dispatch("pointermove", { clientX: 100, clientY: 315, pointerId: 5 });
+  arena.dispatch("pointerup", { pointerId: 5 });
+  elements.get("searchTimeoutMs").value = "1000";
+  elements.get("applyAdvancedPolicy").click();
+  elements.get("startPatrol").click();
+  const unseenTouchStart = messages().length;
+  topTouchButton.click();
+  const unseenTouchDeadline = performance.now() + 8000;
+  while (performance.now() < unseenTouchDeadline &&
+      !messages().slice(unseenTouchStart).some(message => message.includes("PATROL_RESUME target_tag=A"))) {
+    const frame = nextFrame;
+    assert.ok(frame);
+    nextFrame = null;
+    frame(performance.now());
+    await new Promise(resolve => setTimeout(resolve, 16));
+  }
+  const unseenTouchLog = messages().slice(unseenTouchStart);
+  const fallback = unseenTouchLog.findIndex(message => message.includes("CAT_TOUCH_FALLBACK"));
+  const stopped = unseenTouchLog.findIndex((message, index) => index > fallback && /DONE \d+ SESSION_STOPPED/.test(message));
+  const resumed = unseenTouchLog.findIndex((message, index) => index > stopped && message.includes("PATROL_RESUME target_tag=A"));
+  const reopened = unseenTouchLog.findIndex((message, index) => index > resumed && /DONE \d+ SESSION_STARTED/.test(message));
+  assert.ok(unseenTouchLog.some(message => message.includes("SEARCH_CAT_STOP reason=TIMEOUT")),
+    `a human touch with no visible cat should exhaust the bounded search: ${unseenTouchLog.filter(message => /SEARCH_CAT|FACE_CAT|CAT_TOUCH_FALLBACK|SESSION_/.test(message)).slice(-35).join(" | ")}`);
+  assert.ok(fallback >= 0 && stopped > fallback && resumed > stopped && reopened > resumed,
+    `search failure should stop the interaction and reopen Uno motion before patrol: ${unseenTouchLog.filter(message => /CAT_TOUCH_FALLBACK|SESSION_|PATROL_RESUME/.test(message)).slice(-35).join(" | ")}`);
+  assert.ok(!unseenTouchLog.some(message => /ENDING_OUTCOME_START outcome=PREY_/.test(message)),
+    "a failed search must not draw a prey-like ending");
+  elements.get("stopPatrol").click();
   Math.random = previousRandom;
 });

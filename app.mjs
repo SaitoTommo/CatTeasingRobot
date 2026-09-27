@@ -1072,6 +1072,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   const token = behaviorToken;
   let skipFinalFacing = name === "SEARCH_CAT_START" || name === "OBSERVE" || name === "STAY" ||
     (name === "END_SESSION" && (Boolean(endingOutcome) || !cameraObservation(world).detected));
+  let attackFailureReason = null;
   try {
     if (name === "END_SESSION") {
       send("STOP");
@@ -1173,7 +1174,10 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
     skipFinalFacing = true;
     if (token === behaviorToken) {
       if (name === "ATTACK_RESPONSE") send("STOP");
-      if (name === "ATTACK_RESPONSE") decisionSystem.abortCatFollowUp();
+      if (name === "ATTACK_RESPONSE") {
+        attackFailureReason = error.message;
+        decisionSystem.abortCatFollowUp();
+      }
       $("decisionAction").textContent = `${BEHAVIOR_LABELS[name] || name} · 执行中止`;
       $("decisionReason").textContent += `；执行失败：${error.message}`;
       if (name === "PATROL") {
@@ -1239,10 +1243,16 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
         if (!endingActiveSession) $("faceCatStatus").textContent = "互动未开始，无需取景";
       }
     }
-    if (token === behaviorToken && name === "ATTACK_RESPONSE" && !autoControlEnabled) {
-      const ending = decisionSystem.chooseCatEnding("standalone_response_finished");
-      await runBehavior("END_SESSION", "ESP32_AUTO", ending.reason,
-        { endingOutcome: ending.endingOutcome });
+    if (token === behaviorToken && name === "ATTACK_RESPONSE") {
+      if (attackFailureReason) {
+        addLog("event", `CAT_TOUCH_FALLBACK reason=${attackFailureReason} action=RETURN_TO_PATROL`, "ESP32·AUTO");
+        launchAutoDecision("END_SESSION", `cat_touch_response_failed_${attackFailureReason}`,
+          true, true, { endingOutcome: "CONTINUE_PATROL" });
+      } else if (!autoControlEnabled) {
+        const ending = decisionSystem.chooseCatEnding("standalone_response_finished");
+        await runBehavior("END_SESSION", "ESP32_AUTO", ending.reason,
+          { endingOutcome: ending.endingOutcome });
+      }
     }
   }
 }
