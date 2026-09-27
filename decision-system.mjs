@@ -360,12 +360,12 @@ export class Esp32DecisionSystem {
   }
 
   onMoodAlert(source, { phase, camera, now = 0 }) {
-    if (phase !== "PATROL" || !["CAMERA_NEGATIVE", "HTTP_NEGATIVE"].includes(source)) return null;
+    if (phase !== "PATROL" || source !== "CAMERA_DETECTED" || !camera.detected) return null;
     this.initiator = "ROBOT_SEARCH";
     this.catFollowUpStage = null;
     this.catInteractionRounds = 0;
     const choice = this.chooseRobotAction(camera, now);
-    return { action: choice.action, reason: `mood_alert_${source} next=${choice.action}`, enterInteraction: true };
+    return { action: choice.action, reason: `camera_detection next=${choice.action}`, enterInteraction: true };
   }
 
   tick({ phase, now, autoBusy, nextDecisionAt, obstacleBlockedUntil,
@@ -411,7 +411,7 @@ export class Esp32DecisionSystem {
       this.catWasNear = true;
       this.searchAttempted = false;
     }
-    if (this.catWasNear && (!camera.detected || camera.distanceCm > policy.catLeaveDistanceCm)) {
+    if (this.catWasNear && camera.detected && camera.distanceCm > policy.catLeaveDistanceCm) {
       if (!this.catAbsentSince) this.catAbsentSince = now;
     } else this.catAbsentSince = 0;
     if (this.catAbsentSince && now - this.catAbsentSince >= policy.catLeaveSeconds * 1000)

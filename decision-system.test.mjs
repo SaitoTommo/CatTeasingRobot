@@ -95,7 +95,7 @@ test("cat follow-up runs once and inactivity returns to patrol", () => {
 test("robot-initiated far and near probabilities and cooldown remain separate", () => {
   const system = new Esp32DecisionSystem(() => .1);
   const camera = { detected: true, distanceCm: 55 };
-  system.onMoodAlert("CAMERA_NEGATIVE", { phase: "PATROL", camera, now: 1000 });
+  system.onMoodAlert("CAMERA_DETECTED", { phase: "PATROL", camera, now: 1000 });
   const base = { phase: "INTERACTION", autoBusy: false, nextDecisionAt: 0,
     obstacleBlockedUntil: 0, sessionElapsedMs: 1000, camera };
   assert.equal(system.tick({ ...base, now: 2000 }).action, "SLOW_APPROACH");

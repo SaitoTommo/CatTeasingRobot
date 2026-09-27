@@ -72,7 +72,7 @@ export class CatMotionInput {
 
   // null means no cat contact now; undefined uses geometric contact.
   touchOverride() {
-    return this.running && this.behavior === "ATTACK" ? this.activeTouch : undefined;
+    return undefined; // Contact is measured from geometry, never from the scripted phase.
   }
 
   step(now, elapsedSeconds) {

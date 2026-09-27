@@ -8,7 +8,7 @@ test("simulated camera detects distant cat and route tag within its viewing angl
   world.cat = { x: 960, y: 300 };
   assert.equal(cameraObservation(world).detected, true);
   assert.ok(cameraObservation(world).distanceCm > 130);
-  assert.equal(cameraTargetObservation(world, { x: 950, y: 300 }).detected, true);
+  assert.equal(cameraTargetObservation(world, { x: 850, y: 300 }).detected, true);
   world.cat.y = 590;
   assert.equal(cameraObservation(world).detected, true);
   world.cat.y = 0;
@@ -107,14 +107,14 @@ test("one continuous overlap emits one press until the cat separates and returns
   world.robot.heading = Math.PI;
   uno.step(500);
   uno.step(5000);
-  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* PRESS/.test(line)).length, 1);
-  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* RELEASE/.test(line)).length, 0);
+  assert.equal(lines.filter(line => /EVENT SIM_CONTACT TOUCH .* PRESS/.test(line)).length, 1);
+  assert.equal(lines.filter(line => /EVENT SIM_CONTACT TOUCH .* RELEASE/.test(line)).length, 0);
   world.cat.y = world.robot.y + 150;
   uno.step(5050);
   uno.step(5100);
-  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* RELEASE/.test(line)).length, 1);
+  assert.equal(lines.filter(line => /EVENT SIM_CONTACT TOUCH .* RELEASE/.test(line)).length, 1);
   world.cat.y = world.robot.y + 30;
   uno.step(5150);
   uno.step(5200);
-  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* PRESS/.test(line)).length, 2);
+  assert.equal(lines.filter(line => /EVENT SIM_CONTACT TOUCH .* PRESS/.test(line)).length, 2);
 });

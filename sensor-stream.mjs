@@ -1,6 +1,5 @@
 const CAMERA_REFRESH_MS = 350; // Uno rejects CAMERA_FRONT after 500 ms.
 const SIDE_UPDATE_MS = 250;
-const SIDE_CHANGE_CM = 3;
 const FRONT_STOP_CM = 15;
 const DEFAULT_SIDE_SAFE_CM = 5;
 
@@ -36,8 +35,7 @@ export class SceneSensorPublisher {
       const value = sides[side];
       const previous = this.sideValues[side];
       const urgent = previous === null || crossesStopBoundary(Number(previous), Number(value), sideSafeCm[side]);
-      const changed = previous === null || urgent || Math.abs(Number(value) - Number(previous)) >= SIDE_CHANGE_CM;
-      if (!changed || (!urgent && now - this.sideAt[side] < SIDE_UPDATE_MS)) continue;
+      if (!beforeMotion && !urgent && now - this.sideAt[side] < SIDE_UPDATE_MS) continue;
       commands.push(`DEBUG_INJECT SONAR ${side} ${value}`);
       this.sideValues[side] = value;
       this.sideAt[side] = now;

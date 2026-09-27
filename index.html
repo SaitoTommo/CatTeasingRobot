@@ -11,7 +11,7 @@
     <div>
       <p class="eyebrow">CAT ROBOT / FIRMWARE LAB</p>
       <h1>Uno × 猫互动测试台</h1>
-      <p class="subtitle">网页暂代 ESP32 规划动作；Arduino Uno 只负责执行和本地安全判断。</p>
+      <p class="subtitle">网页模拟机器人传感器与 ESP32 决策；Arduino Uno 执行动作并检查本地安全。</p>
     </div>
     <div class="connection">
       <span id="modeBadge" class="badge">本地模拟</span>
@@ -68,7 +68,7 @@
 
         <section class="panel scenario-panel">
           <div class="section-heading"><div><p class="eyebrow">CAT INPUT</p><h2>猫的动作输入</h2></div></div>
-          <p class="hint">这里仅设置猫如何移动和接触机器人。独立的决策模块读取触碰、摄像头观测、一次性告警和时间，再决定巡游或互动动作。</p>
+          <p class="hint">这里仅设置猫如何移动和接触机器人。独立的决策模块读取触碰、摄像头观测和时间，再决定巡游或互动动作。</p>
           <div class="scenario-fields">
             <label>猫的行为
               <select id="catScenarioBehavior">
@@ -97,7 +97,7 @@
             <button id="stopCatMotion" class="button secondary" type="button">停止猫动作</button>
             <span id="systemStatus" class="muted" aria-live="polite">猫动作未开始</span>
           </div>
-          <p class="hint">可随时选择“远离机器人”让猫离开。猫状态告警是一次性输入，请在右侧“传感器注入”中发送。</p>
+          <p class="hint">可随时选择“远离机器人”让猫离开。测量随当前场景变化更新；场景设置本身不直接指定机器人动作。</p>
         </section>
 
         <section class="panel log-panel">
@@ -125,7 +125,7 @@
             <span class="decision-label">面向猫 / 取景</span><strong id="faceCatStatus">未开始</strong>
           </div>
           <div class="inline-actions"><button id="startPatrol" class="button" type="button">启动巡游决策</button><button id="stopPatrol" class="button danger" type="button">停止决策与运动</button></div>
-          <p class="hint">决策系统只接收触碰、摄像头观测、告警和时钟输入。TX 命令是决策执行后送给 Uno 的输出；“可取景”只依据模拟摄像头。</p>
+          <p class="hint">决策系统只接收触碰、摄像头观测和时钟输入。TX 命令是决策执行后送给 Uno 的输出；“可取景”只依据模拟摄像头。</p>
           <div class="decision-priority-card">
             <h3>① 猫主动找机器人：两种互动分支</h3>
             <p class="hint">猫首次触碰时，按概率抽取声光探索或捕猎，并在这一轮连续互动中保持该分支。声光探索每次触摸都同时使用 LED 和蜂鸣器，四种节奏轮换；捕猎抽取装死／慢逃／快逃，还可独立抽取触摸时的声光反馈。两种分支共用观察、结束互动和恢复巡游流程。</p>
@@ -172,7 +172,7 @@
           </div>
           <div class="decision-priority-card">
             <h3>③ 机器人主动找猫：独立决策</h3>
-            <p class="hint">巡游收到一次性猫状态告警后进入此分支；远处选缓慢接近／走停试探，近处选声光／观察／静止。不会读取上面“猫主动”概率。每组概率须合计 100%。</p>
+            <p class="hint">巡游中摄像头实际检测到猫后进入此分支；远处选缓慢接近／走停试探，近处选声光／观察／静止。不会读取上面“猫主动”概率。每组概率须合计 100%。</p>
             <div class="inject-row">
               <label>远处缓慢接近 % <input id="robotFarApproachPercent" type="number" min="0" max="100" step="1" value="85"></label>
               <label>远处走停试探 % <input id="robotFarProbePercent" type="number" min="0" max="100" step="1" value="15"></label>
@@ -238,19 +238,12 @@
           </details>
         </section>
         <section class="panel interaction-controls-panel">
-          <div class="section-heading"><div><p class="eyebrow">SENSOR INPUTS</p><h2>传感器注入</h2></div></div>
+          <div class="section-heading"><div><p class="eyebrow">SENSOR INPUTS</p><h2>碰撞与观测测试</h2></div></div>
           <p class="hint">输入经 Uno 事件和摄像头观测进入决策系统；这里没有预设机器人互动动作。</p>
           <div class="inline-actions"><span id="sessionValue" class="muted">互动未开始</span></div>
-          <div class="control-subsection">
-            <h3>一次性猫状态告警</h3>
-            <div class="inline-actions">
-              <button data-mood-alert="CAMERA_NEGATIVE" class="button secondary" type="button">注入摄像头告警</button>
-              <button data-mood-alert="HTTP_NEGATIVE" class="button secondary" type="button">注入 HTTP 告警</button>
-            </div>
-            <p class="hint">每点击一次只向独立决策模块提交一条告警事件；“HTTP 告警”是手动模拟的一次 HTTP 判断结果，不会发起 HTTP 请求，也不会预设机器人动作。请先启动巡游决策。</p>
-          </div>
+          <p class="hint">巡游中由当前摄像头检测到猫或实际接触触发互动；不接收手工 HTTP／情绪告警。</p>
           <div class="control-subsection" aria-labelledby="sensorInjectionHeading">
-            <h3 id="sensorInjectionHeading">传感器注入</h3>
+            <h3 id="sensorInjectionHeading">场景输入与实测读数</h3>
             <div class="inline-actions">
               <button id="prepareBoardSimulation" class="button" type="button">准备空板模拟</button>
               <button data-command="DEBUG_MODE ON" class="button secondary" type="button">开启固件调试</button>
@@ -263,20 +256,15 @@
               <button data-touch="RIGHT" class="button secondary touch-button" type="button" aria-pressed="false">右侧</button>
               <button data-touch="REAR" class="button secondary touch-button" type="button" aria-pressed="false">后部</button>
             </div>
-            <p class="hint">点击一次发送 250 ms 触碰脉冲（按下后自动松开）。Uno 的触碰回报进入同一决策模块，和猫动作输入无关；拖动猫接触机器人也会生成触碰数据。</p>
+            <p class="hint">点击将猫放到对应接触位置约 350 ms，再还原位置；触碰开关由车体接触检测和去抖生成。拖动猫与猫动作脚本使用同一检测。</p>
             <label class="check-row"><input id="streamSceneSensors" type="checkbox"> 空板模式按需注入模拟传感器（静止时不重复发送）</label>
             <div class="inject-row">
-              <label>前向摄像头模拟距离 cm <input id="injectDistance" type="number" min="0" max="400" value="12"></label>
-              <button id="setDistance" class="button secondary" type="button">注入</button>
-              <button id="clearDistance" class="button secondary" type="button">恢复模拟摄像头</button>
-              <button data-command="CAMERA_FRONT INVALID" class="button secondary" type="button">注入无效读数</button>
+              <label>障碍物目标前向间距 cm <input id="injectDistance" type="number" min="0" max="400" value="12"></label>
+              <button id="setDistance" class="button secondary" type="button">放置障碍物</button>
+              <button id="clearDistance" class="button secondary" type="button">刷新当前测量</button>
             </div>
-            <p class="hint">距离和编码器是状态输入：注入后会影响正在执行或后续的动作与安全判断，不会让待命的机器自行启动。触碰脉冲会触发找猫决策。</p>
-            <div class="inject-row">
-              <label>左编码器脉冲 <input id="injectLeftEncoder" type="number" min="0" max="10000" value="10"></label>
-              <label>右编码器脉冲 <input id="injectRightEncoder" type="number" min="0" max="10000" value="10"></label>
-              <button id="injectEncoder" class="button secondary" type="button">注入脉冲</button>
-            </div>
+            <p class="hint">输入改变障碍物位置；最终读数由当前方向的射线与猫、障碍物、墙的最近交点产生。编码器由车轮运动产生，不可手填。</p>
+
             <div class="control-subsection">
               <h3>左右转向安全距离</h3>
               <p class="hint">左右两只超声波各自测距，默认安全净空都是 5 cm；通过串口可分别设置左转、右转所需的最小净空。前方由摄像头判定。侧面读数无效时仍会拒绝转向；配置只在本次上电期间有效。</p>
@@ -290,7 +278,7 @@
             </div>
             <details class="debug-help">
               <summary>空板模式与安全说明</summary>
-              <p class="hint">只有 Uno 板、没有传感器和电机时，连接串口后点“准备空板模拟”：网页按需提供模拟摄像头的前方距离，并在数值变化时注入左右超声波、触碰；固件产生虚拟编码器脉冲。静止时不反复发送相同数据，前进时仍按固件读数有效期刷新前向输入。空板模式抑制电机、灯和蜂鸣器输出引脚的真实电平；避障、停转、超时和运动反馈照常执行。前方摄像头判定阈值为 15 cm，左右超声波默认各 5 cm；读数失效时仍会拒绝动作。巡游时会优先尝试另一安全转向；按触碰方向找猫时不会违背该方向或绕过安全判断。LIVE 模式不接收网页的虚拟摄像头读数；未接真实摄像头数据源时，前进会被固件拒绝。</p>
+              <p class="hint">只有 Uno 板、没有传感器和电机时，连接串口后点“准备空板模拟”：网页按需提供模拟摄像头的前方距离，并持续更新左右超声波测量、按接触变化报告触碰；固件产生虚拟编码器脉冲。静止时不反复发送相同数据，运动时仍按固件读数有效期刷新前向与侧面输入。空板模式抑制电机、灯和蜂鸣器输出引脚的真实电平；避障、停转、超时和运动反馈照常执行。前方摄像头判定阈值为 15 cm，左右超声波默认各 5 cm；读数失效时仍会拒绝动作。巡游时会优先尝试另一安全转向；按触碰方向找猫时不会违背该方向或绕过安全判断。LIVE 模式不接收网页的虚拟摄像头读数；未接真实摄像头数据源时，前进会被固件拒绝。</p>
             </details>
           </div>
         </section>

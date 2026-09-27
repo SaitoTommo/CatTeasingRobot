@@ -1,6 +1,6 @@
 import {
   ARENA, MockUno, cameraObservation, cameraTargetObservation, clamp, contactArea,
-  cameraFrontDistanceCm, forwardPathClearanceCm, degrees, initialWorld, radians, sideSonarDistanceCm, wrapAngle,
+  cameraFrontDistanceCm, degrees, initialWorld, radians, sideSonarDistanceCm, wrapAngle,
 } from "./core.mjs";
 import { CatMotionInput } from "./cat-input.mjs";
 import {
@@ -8,8 +8,8 @@ import {
   decideTargetAlignment, turnObstacleReason,
 } from "./decision-system.mjs";
 import { SceneSensorPublisher } from "./sensor-stream.mjs";
-import { planSceneDetour } from "./route-planner.mjs";
-import { planSimulatedEscapeRoute } from "./escape-planner.mjs";
+import { decideLocalAvoidance } from "./route-planner.mjs";
+import { escapeTurn, observedTravelCm } from "./escape-planner.mjs";
 
 const $ = id => document.getElementById(id);
 const canvas = $("arena");
@@ -45,14 +45,15 @@ let lastTouchAt = 0;
 let lastSerialAutoArea = null;
 const manualTouchAreas = new Set();
 const manualTouchTimers = new Map();
-let manualFrontInput = null;
 let toastTimer;
 let realState = "未连接";
 let realDistanceText = "未读取";
 let realLeftDistanceText = "未读取";
 let realRightDistanceText = "未读取";
+let serialFirmwareVerified = false;
 let serialDryRunConfirmed = false;
 let serialTrackConfigured = false;
+let serialGeometry = { wheelMm: 65, trackMm: 120 };
 const serialSafeSideCm = { LEFT: 5, RIGHT: 5 };
 let patrolWaypointIndex = 0;
 const PATROL_TAGS = ["A", "B", "C", "D"];
@@ -104,7 +105,6 @@ function explainReason(reason) {
       ? `Uno 回报第 ${count} 次触碰（${area}）；被抓住后立即停车装死，等待猫离开${draw ? `；随机数 ${draw}` : ""}`
       : `Uno 回报第 ${count} 次触碰（${area}）；松开后立即向远离猫的安全方向${action}${draw ? `；随机数 ${draw}` : ""}`;
   }
-  if (reason.startsWith("mood_alert_")) return `外部猫状态告警：${reason.endsWith("CAMERA_NEGATIVE") ? "摄像头判断" : "HTTP 判断"}`;
   if (reason.startsWith("cat_left_for_")) return `猫自行离开，并持续远离 ${/cat_left_for_(\d+)s/.exec(reason)?.[1] || "?"} 秒`;
   if (reason.startsWith("cat_inactive_for_")) return `猫在 ${/cat_inactive_for_(\d+)s/.exec(reason)?.[1] || "?"} 秒内没有再次触碰，恢复巡游`;
   if (reason === "cat_inactive_after_touch") return "猫停止触碰，结束互动并恢复巡游";
@@ -118,7 +118,7 @@ function explainReason(reason) {
   }
   if (reason.startsWith("cat_touch_follow_up")) return "猫主动触碰后的独立后续回应概率";
   if (reason.startsWith("session_limit_")) return `达到设定的互动时长：${reason.split("_").at(-1)} 秒`;
-  if (reason.startsWith("patrol_no_alert")) return "尚无猫状态告警或 Uno 触碰，继续巡游";
+  if (reason.startsWith("patrol_no_alert")) return "尚未检测到猫或 Uno 触碰，继续巡游";
   if (reason.startsWith("cat_visible_distance_cm=")) {
     const distance = /^cat_visible_distance_cm=([\d.]+)/.exec(reason)?.[1] || "?";
     const roll = /random=([\d.]+)/.exec(reason)?.[1];
@@ -128,13 +128,13 @@ function explainReason(reason) {
   if (reason.startsWith("cat_visible_near_distance_cm=")) return `模拟摄像头发现近处的猫，距离约 ${reason.split("=")[1]} cm`;
   return ({ cat_outside_camera: "猫不在模拟摄像头视野内", cat_retreated_for_5s: "猫持续远离 5 秒",
     session_limit_60s: "互动达到 60 秒上限", uno_obstacle_or_invalid_distance: "Uno 回报障碍物或距离无效",
-    manual_button: "用户点击顶层动作", manual_cloud_stub: "人工注入的云端 HTTP 建议" })[reason] || reason;
+    manual_button: "用户点击顶层动作" })[reason] || reason;
 }
 
 function showDecision(action, source, reason) {
   faceReady = false;
   $("decisionInput").textContent = source === "ESP32_AUTO" ? "传感器与状态数据"
-    : source === "SIM_HTTP" ? "模拟 HTTP 建议" : "人工指令";
+    : "人工指令";
   $("decisionAction").textContent = `${BEHAVIOR_LABELS[action] || action} (${action})`;
   $("decisionReason").textContent = explainReason(reason);
   $("faceCatStatus").textContent = action === "PATROL" ? "巡游中；尚未进入互动取景" : "动作进行中，等待收尾对准猫";
@@ -279,11 +279,15 @@ function sceneMotionFromCommand(command) {
   return null;
 }
 
+function measuredGeometry() {
+  return mode === "mock" ? { wheelMm: mock.wheelDiameterMm, trackMm: mock.trackWidthMm ?? 120 } : serialGeometry;
+}
+
 function stepSerialSceneMotion(elapsedSeconds) {
   if (!activeSceneMotion || activeSceneMotion.haltedByCommand) return;
   const seconds = clamp(elapsedSeconds, 0, .05);
-  const wheelMm = Number($("wheelDiameterMm").value) || 65;
-  const trackMm = Number($("trackWidthMm").value) || 120;
+  const wheelMm = measuredGeometry().wheelMm;
+  const trackMm = measuredGeometry().trackMm;
   const fullSpeedPxS = 200 / 60 * Math.PI * wheelMm / 10 * ARENA.pxPerCm;
   const leftSpeed = activeSceneMotion.left * fullSpeedPxS;
   const rightSpeed = activeSceneMotion.right * fullSpeedPxS;
@@ -300,8 +304,8 @@ function reconcileSceneMotion(motion, line, completed) {
   if (!motion || motion.manualRobotRevision !== manualRobotRevision ||
       (motion.kind !== "DRIVE" && motion.kind !== "ROTATE")) return;
   const counts = /\bLEFT_PULSES=(\d+) RIGHT_PULSES=(\d+)/.exec(line);
-  const wheelCm = (Number($("wheelDiameterMm").value) || 65) / 10;
-  const trackCm = (Number($("trackWidthMm").value) || 120) / 10;
+  const wheelCm = (measuredGeometry().wheelMm) / 10;
+  const trackCm = (measuredGeometry().trackMm) / 10;
   let leftCm;
   let rightCm;
   if (counts) {
@@ -335,6 +339,8 @@ function receiveLine(rawLine, source) {
   if (!line) return;
   let type = line.startsWith("ERROR") ? "error" : line.startsWith("EVENT") ? "event" : "response";
   addLog(type, line, source);
+  const encoderData = /^DATA \d+ ENCODER (\d+) (\d+)/.exec(line);
+  if (encoderData && source !== "SIM_UNO") serialEncoder = { left: Number(encoderData[1]), right: Number(encoderData[2]) };
   const motionDone = /^EVENT MOTION_DONE (\d+)/.exec(line);
   const motionAborted = /^EVENT MOTION_ABORTED (\d+) (\S+)/.exec(line);
   const commandDone = /^DONE (\d+)(?: (\S+))?/.exec(line);
@@ -362,11 +368,11 @@ function receiveLine(rawLine, source) {
     if (line.startsWith("READY ")) {
       resetSerialOutputs();
       resetSerialSafeDistances();
-      if (!/^READY UNO_CAT_V5(\.\d+)?$/.test(line)) {
-        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.1", "SYSTEM");
-        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.1。");
-      } else if (line === "READY UNO_CAT_V5") {
-        addLog("event", "FIRMWARE_LEGACY note=建议烧录 V5.1（串口收发包互不阻塞加固）", "SYSTEM");
+      serialFirmwareVerified = line === "READY UNO_CAT_V5.2";
+      if (!serialFirmwareVerified) {
+        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.2", "SYSTEM");
+        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.2。");
+
       }
       unoTouches.clear();
       clearManualTouchPulses();
@@ -396,7 +402,7 @@ function receiveLine(rawLine, source) {
     if (state) {
       realState = state[1];
       const wasDryRunConfirmed = serialDryRunConfirmed;
-      serialDryRunConfirmed = /DEBUG=ON/.test(line) && /MOTOR_MODE=DRY_RUN/.test(line);
+      serialDryRunConfirmed = serialFirmwareVerified && /DEBUG=ON/.test(line) && /MOTOR_MODE=DRY_RUN/.test(line);
       if (!wasDryRunConfirmed && serialDryRunConfirmed && $("streamSceneSensors").checked) {
         sceneSensors.reset();
         streamSceneSensors(performance.now(), true);
@@ -404,6 +410,7 @@ function receiveLine(rawLine, source) {
       }
     }
     if (config) {
+      serialGeometry = { wheelMm: Number(config[1]), trackMm: Number(config[2]) || 120 };
       serialTrackConfigured = Number(config[2]) > 0;
       $("wheelDiameterMm").value = config[1];
       if (serialTrackConfigured) $("trackWidthMm").value = config[2];
@@ -414,7 +421,7 @@ function receiveLine(rawLine, source) {
       $("safeLeftCm").value = safeConfig[1];
       $("safeRightCm").value = safeConfig[2];
     }
-    if (/^DONE \d+ GEOMETRY_SET$/.test(line)) serialTrackConfigured = true;
+    if (/^DONE \d+ GEOMETRY_SET$/.test(line)) send("GET_CONFIG");
     if (commandDone) {
       const id = Number(commandDone[1]);
       const pending = pendingSafeDistance.get(id);
@@ -568,6 +575,10 @@ function send(command, preflight = true) {
     showToast("命令为空、过长或包含换行。");
     return null;
   }
+  if (preflight && /^(CAMERA_FRONT|DEBUG_INJECT)\b/.test(normalized)) {
+    showToast("传感器由当前场景测量生成；请移动猫或障碍物进行测试。");
+    return null;
+  }
   if (paused && sceneMotionFromCommand(normalized) && normalized !== "MOTOR 0 0") {
     resumeSimulation("MOTION_COMMAND");
   }
@@ -639,11 +650,26 @@ function cancelBehavior(reason = "USER_STOP") {
   for (const [id] of pendingMotion) settleMotion(id, new Error(reason));
 }
 
+// Sensor adapter: only current measurements cross into control routines.
+function simulatedSensorsEnabled() {
+  return mode === "mock" || (serialDryRunConfirmed && $("streamSceneSensors").checked);
+}
+function robotCamera(name = null) {
+  if (!simulatedSensorsEnabled()) return { detected: false, centerX: null, relativeDeg: null, distanceCm: null };
+  return name === null ? cameraObservation(world) : cameraTargetObservation(world, world.tags[name]);
+}
+function robotFrontCm() {
+  if (!simulatedSensorsEnabled()) return null;
+  return cameraFrontDistanceCm(world);
+}
+let serialEncoder = { left: 0, right: 0 };
+function robotEncoder() { return mode === "mock" ? { ...mock.encoder } : { ...serialEncoder }; }
+
 function logCamera() {
-  const camera = cameraObservation(world);
+  const camera = robotCamera();
   const description = camera.detected
     ? `cat_detected=true center_x=${camera.centerX.toFixed(2)} distance_est_cm=${camera.distanceCm.toFixed(1)} bbox=${camera.bboxSize.toFixed(2)}`
-    : `cat_detected=false relative_bearing_deg=${camera.relativeDeg.toFixed(1)}`;
+    : "cat_detected=false";
   addLog("event", `SIM_CAMERA ${description}`, "ESP32·SIM");
 }
 
@@ -661,9 +687,12 @@ function sceneTurnBlockReason(direction) {
 
 async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeoutMs = Infinity,
   maxSweepDeg = 360, active = () => true, allowReverse = true } = {}) {
+  if (mode === "serial") await sendAndWaitDone("GET_ENCODER", "");
+  if (token !== behaviorToken) return { found: false, reason: "CANCELLED", sweptDeg: 0 };
   const scan = { commandIds: new Set(), abortReason: null };
   activeScanMotion = scan;
-  let lastHeading = world.robot.heading;
+  let lastEncoder = robotEncoder();
+  let lastEncoderQueryAt = -Infinity;
   let swept = 0;
   let lastCommandAt = -Infinity;
   let motorStarted = false;
@@ -674,8 +703,15 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
   try {
     while (token === behaviorToken && active()) {
       const now = performance.now();
-      swept += Math.abs(wrapAngle(world.robot.heading - lastHeading));
-      lastHeading = world.robot.heading;
+      const encoder = robotEncoder();
+      const pulses = Math.max(0, encoder.left - lastEncoder.left) + Math.max(0, encoder.right - lastEncoder.right);
+      swept += pulses * Math.PI * (measuredGeometry().wheelMm) / 20 /
+        (measuredGeometry().trackMm);
+      lastEncoder = encoder;
+      if (mode === "serial" && now - lastEncoderQueryAt >= 150) {
+        send("GET_ENCODER", false);
+        lastEncoderQueryAt = now;
+      }
       if (scan.abortReason) {
         if (scan.abortReason === "TOUCH") {
           scan.abortReason = null;
@@ -754,7 +790,7 @@ async function searchCat(token, timeoutMs = decisionSystem.responsePolicy.search
   const scanDirection = direction ?? (lastTouchSide === "LEFT" ? -1 : 1);
   addLog("event", `SEARCH_CAT_START camera=SIM_CAMERA sweep_limit_deg=${sweepLimitDeg} direction=${scanDirection < 0 ? "LEFT" : "RIGHT"}`, "ESP32·SIM");
   try {
-    const result = await scanUntilVisible(token, () => cameraObservation(world), {
+    const result = await scanUntilVisible(token, () => robotCamera(), {
       direction: scanDirection, pwm: decisionSystem.responsePolicy.searchPwm,
       timeoutMs, maxSweepDeg: sweepLimitDeg,
       allowReverse: direction === null,
@@ -807,7 +843,7 @@ async function alignToCat(token) {
         await new Promise(resolve => setTimeout(resolve, 25));
         continue;
       }
-      const camera = cameraObservation(world);
+      const camera = robotCamera();
       const alignment = decideTargetAlignment(camera, decisionSystem.responsePolicy.centerTolerancePercent / 100);
       if (alignment.action === "LOST") {
         if (turnDirection) send("STOP");
@@ -862,7 +898,7 @@ async function holdCatView(token) {
   addLog("event", `CAT_VIEW_HOLD_START duration_s=${seconds} stationary=true`, "ESP32·SIM");
   const deadline = performance.now() + seconds * 1000;
   while (token === behaviorToken && performance.now() < deadline) {
-    if (!cameraObservation(world).detected) {
+    if (!robotCamera().detected) {
       addLog("error", "CAT_VIEW_HOLD_STOP reason=CAT_LOST", "ESP32·SIM");
       return false;
     }
@@ -896,7 +932,7 @@ async function waitForTouchRelease(token, timeoutMs) {
 }
 
 function tagObservation(name) {
-  return cameraTargetObservation(world, world.tags[name]);
+  return robotCamera(name);
 }
 
 async function alignToTag(name, token) {
@@ -959,57 +995,19 @@ async function scanForRouteTag(name, token) {
   return true;
 }
 
-async function alignToDetourPoint(point, token) {
-  const turn = { commandIds: new Set(), abortReason: null };
-  activeScanMotion = turn;
-  let turning = false;
-  let lastCommandAt = -Infinity;
-  const deadline = performance.now() + 5000;
-  try {
-    while (token === behaviorToken && interactionPhase === "PATROL" && performance.now() < deadline) {
-      if (document.visibilityState === "hidden") throw new Error("PAGE_HIDDEN");
-      if (turn.abortReason) throw new Error(turn.abortReason);
-      const desired = Math.atan2(point.y - world.robot.y, point.x - world.robot.x);
-      const difference = wrapAngle(desired - world.robot.heading);
-      if (Math.abs(difference) <= radians(4)) return true;
-      const direction = difference > 0 ? 1 : -1;
-      const blockedReason = sceneTurnBlockReason(direction);
-      if (blockedReason) throw new Error(blockedReason);
-      if (performance.now() - lastCommandAt >= 350) {
-        turn.commandIds.add(nextCommandId);
-        send(`MOTOR ${direction * 55} ${-direction * 55}`);
-        turning = true;
-        lastCommandAt = performance.now();
-      }
-      await new Promise(resolve => setTimeout(resolve, 25));
+async function avoidObservedObstacle(token) {
+  const direction = !sceneTurnBlockReason(-1) ? -1 : !sceneTurnBlockReason(1) ? 1 : 0;
+  if (!direction) throw new Error("BOTH_SIDES_BLOCKED");
+  for (let step = 0; step < 6 && token === behaviorToken; step++) {
+    await sendMotion(`ROTATE ${direction * 30} 90`);
+    if (token !== behaviorToken) return false;
+    const distanceCm = observedTravelCm(robotFrontCm(), 12);
+    if (distanceCm >= 5) {
+      await sendMotion(`DRIVE ${distanceCm} 105`);
+      return true;
     }
-    if (token === behaviorToken && interactionPhase === "PATROL") throw new Error("DETOUR_TURN_TIMEOUT");
-    return false;
-  } finally {
-    if (activeScanMotion === turn) activeScanMotion = null;
-    if (turning && token === behaviorToken) send("STOP");
   }
-}
-
-async function followDetourPath(path, token, tagName) {
-  addLog("event", `PATROL_DETOUR_START tag=${tagName} around=${path.around || "OPEN_SPACE"} side=${path.side} waypoints=${path.points.length}`, "ESP32·SIM");
-  $("routeStatus").textContent = `标签 ${tagName} 前方受阻，正在绕行（${path.side === "LEFT" ? "左侧" : path.side === "RIGHT" ? "右侧" : "空旷路线"}）`;
-  for (const [index, point] of path.points.entries()) {
-    for (let step = 0; step < 30; step++) {
-      if (token !== behaviorToken || interactionPhase !== "PATROL") return false;
-      if (document.visibilityState === "hidden") throw new Error("PAGE_HIDDEN");
-      const remainingPx = Math.hypot(point.x - world.robot.x, point.y - world.robot.y);
-      if (remainingPx <= 8) break;
-      if (!await alignToDetourPoint(point, token)) return false;
-      if (token !== behaviorToken || interactionPhase !== "PATROL") return false;
-      const stepCm = Math.min(6, remainingPx / ARENA.pxPerCm);
-      await sendMotion(`DRIVE ${stepCm.toFixed(1)} 105`);
-      if (step === 29) throw new Error("DETOUR_STEP_LIMIT");
-    }
-    addLog("event", `PATROL_DETOUR_WAYPOINT tag=${tagName} index=${index + 1} x=${world.robot.x.toFixed(1)} y=${world.robot.y.toFixed(1)}`, "ESP32·SIM");
-  }
-  addLog("event", `PATROL_DETOUR_DONE tag=${tagName}`, "ESP32·SIM");
-  return true;
+  throw new Error("DETOUR_NO_OBSERVED_CLEARANCE");
 }
 
 async function followFixedPatrol(token) {
@@ -1029,20 +1027,6 @@ async function followFixedPatrol(token) {
       announcedTag = name;
     }
     const stopCm = clamp(Number($("tagStopCm").value) || 20, 15, 50);
-    const simulatedScene = mode === "mock" ||
-      (mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked);
-    if (simulatedScene && tag.distanceCm > stopCm + 1) {
-      const detour = planSceneDetour({ start: world.robot, target: world.tags[name],
-        stopRadiusPx: stopCm * ARENA.pxPerCm, arena: ARENA, robotRadius: ARENA.robotRadius,
-        pxPerCm: ARENA.pxPerCm,
-        obstacles: [{ ...world.cat, radius: ARENA.catRadius, name: "CAT" },
-          { ...world.obstacle, name: "OBSTACLE" }] });
-      if (detour.blocked) {
-        if (!detour.paths.length) throw new Error("DETOUR_NO_PATH");
-        if (!await followDetourPath(detour.paths[0], token, name)) return;
-        continue;
-      }
-    }
     if (!await alignToTag(name, token)) continue;
     if (token !== behaviorToken || interactionPhase !== "PATROL") return;
     const centered = tagObservation(name);
@@ -1050,7 +1034,13 @@ async function followFixedPatrol(token) {
       distanceCm: centered.distanceCm, targetCm: stopCm });
     if (routeDecision.action === "SCAN") continue;
     if (routeDecision.action === "APPROACH") {
-      const stepCm = routeDecision.stepCm;
+      const local = decideLocalAvoidance({ frontCm: robotFrontCm(), requestedCm: routeDecision.stepCm });
+      if (local.action === "STOP") throw new Error("FRONT_OBSTACLE_OR_CAMERA_INVALID");
+      if (local.action === "SCAN") {
+        if (!await avoidObservedObstacle(token)) return;
+        continue;
+      }
+      const stepCm = local.distanceCm;
       addLog("event", `PATROL_APPROACH tag=${name} distance_cm=${centered.distanceCm.toFixed(1)} target_cm=${stopCm} step_cm=${stepCm.toFixed(1)}`, "ESP32·SIM");
       await sendMotion(`DRIVE ${stepCm.toFixed(1)} 105`);
       continue;
@@ -1080,7 +1070,7 @@ async function finishFacingCat(token, action, { forceSearch = false, searchLimit
   }
   for (let attempt = 1; attempt <= 2; attempt++) {
     $("faceCatStatus").textContent = `${phase}：寻找猫`;
-    const search = (attempt > 1 || !forceSearch) && cameraObservation(world).detected
+    const search = (attempt > 1 || !forceSearch) && robotCamera().detected
       ? { found: true, reason: "CAT_DETECTED" }
       : await searchCat(token, forceSearch ? decisionSystem.responsePolicy.searchTimeoutMs
         : decisionSystem.responsePolicy.finalSearchTimeoutMs, searchLimitDeg, searchDirection);
@@ -1094,7 +1084,7 @@ async function finishFacingCat(token, action, { forceSearch = false, searchLimit
     $("faceCatStatus").textContent = `${phase}：对准猫`;
     const aligned = await alignToCat(token);
     if (token !== behaviorToken) return false;
-    const camera = cameraObservation(world);
+    const camera = robotCamera();
     const ready = aligned && camera.detected &&
       Math.abs(camera.centerX - .5) <= decisionSystem.responsePolicy.centerTolerancePercent / 100;
     if (ready) {
@@ -1133,16 +1123,23 @@ async function fleeFromFacingCat(token, pace = "FAST") {
   let resumedAfterTouch = false;
   for (;;) {
     try {
-      const route = planSimulatedEscapeRoute(world, escapeDistanceCm,
-        direction => !sceneTurnBlockReason(direction));
-      if (!route) throw new Error("ESCAPE_NO_SAFE_ROUTE");
-      addLog("event", `ESCAPE_ROUTE angle_deg=${route.angle} planned_cm=${route.distanceCm} projected_front_cm=${route.frontClearanceCm.toFixed(1)}`, "ESP32·SIM");
-      if (route.angle !== 0) await sendMotionWithTransportRetry(`ROTATE ${route.angle} 110`);
+      let angle = escapeTurn(robotCamera(), lastTouchSide);
+      if (angle && sceneTurnBlockReason(Math.sign(angle))) {
+        angle = -angle;
+        if (sceneTurnBlockReason(Math.sign(angle))) throw new Error("BOTH_SIDES_BLOCKED");
+      }
+      if (angle) await sendMotionWithTransportRetry(`ROTATE ${angle} 110`);
       if (token !== behaviorToken) return;
-      const currentFrontCm = cameraFrontDistanceCm(world);
-      const safeDistanceCm = currentFrontCm < 15 ? 0
-        : Math.min(route.distanceCm, Math.floor(forwardPathClearanceCm(world) - 15));
-      if (safeDistanceCm < 5) throw new Error("ESCAPE_FRONT_BLOCKED_AFTER_TURN");
+      let safeDistanceCm = observedTravelCm(robotFrontCm(), escapeDistanceCm);
+      for (let attempt = 0; safeDistanceCm < 5 && attempt < 3; attempt++) {
+        const direction = !sceneTurnBlockReason(1) ? 1 : !sceneTurnBlockReason(-1) ? -1 : 0;
+        if (!direction) break;
+        await sendMotionWithTransportRetry(`ROTATE ${direction * 60} 110`);
+        if (token !== behaviorToken) return;
+        safeDistanceCm = observedTravelCm(robotFrontCm(), escapeDistanceCm);
+      }
+      if (safeDistanceCm < 5) throw new Error("ESCAPE_NO_OBSERVED_CLEARANCE");
+      addLog("event", `ESCAPE_ROUTE source=CURRENT_CAMERA planned_cm=${safeDistanceCm}`, "ESP32·SIM");
       addLog("event", `ESCAPE_PHASE pace=${pace} straight_distance_cm=${safeDistanceCm} pwm=${pwm}`, "ESP32·SIM");
       await sendMotionWithTransportRetry(`DRIVE ${safeDistanceCm} ${pwm}`);
       if (token === behaviorToken) send("STOP");
@@ -1186,12 +1183,9 @@ async function showEndingOutcome(token, outcome) {
   let awaySince = null;
   let waitReason = "MAX_WAIT";
   while (token === behaviorToken && performance.now() < deadline) {
-    // A collapsed robot may point its camera away while the cat is still next
-    // to it. Use scene distance so loss of sight is not mistaken for departure.
-    const catDistanceCm = Math.hypot(world.robot.x - world.cat.x,
-      world.robot.y - world.cat.y) / ARENA.pxPerCm;
+    const camera = robotCamera();
     const now = performance.now();
-    if (!unoTouches.size && catDistanceCm > catLeaveDistanceCm) {
+    if (!unoTouches.size && camera.detected && camera.distanceCm > catLeaveDistanceCm) {
       if (awaySince === null) awaySince = now;
       if (now - awaySince >= catLeaveSeconds * 1000) {
         waitReason = "CAT_LEFT";
@@ -1234,9 +1228,9 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   if (name === "ATTACK_RESPONSE") touchDuringBehavior = false;
   let skipFinalFacing = name === "SEARCH_CAT_START" || name === "OBSERVE" || name === "STAY" ||
     name === "EXPLORE_SOUND_LIGHT" ||
-    (name === "END_SESSION" && (endingOutcome?.startsWith("PREY_") || !cameraObservation(world).detected));
+    (name === "END_SESSION" && (endingOutcome?.startsWith("PREY_") || !robotCamera().detected));
   if (name === "END_SESSION" && endingActiveSession && !endingOutcome?.startsWith("PREY_") &&
-      !cameraObservation(world).detected)
+      !robotCamera().detected)
     addLog("error", "FACE_CAT_RESULT action=END_SESSION status=FAILED reason=CAT_NOT_DETECTED", "ESP32·SIM");
   let attackFailureReason = null;
   try {
@@ -1244,7 +1238,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
         initialLookPending && name !== "ATTACK_RESPONSE" && name !== "EXPLORE_SOUND_LIGHT" &&
         name !== "SEARCH_CAT_START" &&
         name !== "END_SESSION" &&
-        cameraObservation(world).detected) {
+        robotCamera().detected) {
       if (!await finishFacingCat(token, name)) {
         skipFinalFacing = true;
         return;
@@ -1349,7 +1343,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
         [policy.probeStep3Cm, policy.probePause3Ms],
       ]) {
         if (token !== behaviorToken) return;
-        if (!cameraObservation(world).detected) {
+        if (!robotCamera().detected) {
           addLog("event", "PROBE_APPROACH stopped: cat outside camera view", "ESP32·SIM");
           return;
         }
@@ -1677,32 +1671,24 @@ function resetTouchBurst() {
   touchDuringBehavior = false;
 }
 
-function injectMoodAlert(source) {
-  const origin = source === "HTTP_NEGATIVE" ? "HTTP·SIM" : "CAMERA·SIM";
-  addLog("event", `SENSOR_INPUT mood_alert=${source}`, origin);
-  if (!autoControlEnabled || paused || interactionPhase !== "PATROL") {
-    addLog("event", `MOOD_ALERT_IGNORED source=${source} phase=${interactionPhase}`, "ESP32·SIM");
-    showToast("请先启动巡游决策，再注入一次性猫状态告警。");
-    return;
-  }
-  const decision = decisionSystem.onMoodAlert(source, {
-    phase: interactionPhase, camera: cameraObservation(world), now: performance.now(),
-  });
-  if (!decision) return;
-  interactionPhase = "INTERACTION";
-  initialLookPending = true;
-  $("routeStatus").textContent = `巡游在标签 ${PATROL_TAGS[patrolWaypointIndex]} 前中断：收到猫状态告警`;
-  addLog("event", `INTERACTION_TRIGGER source=${source}`, "ESP32·AUTO");
-  launchAutoDecision(decision.action, decision.reason, true, true);
-}
 
 function tickAutoDecision(now) {
   if (!autoControlEnabled || paused) return;
+  const camera = robotCamera();
+  if (interactionPhase === "PATROL" && camera.detected) {
+    const choice = decisionSystem.onMoodAlert("CAMERA_DETECTED", { phase: interactionPhase, camera, now });
+    if (choice) {
+      interactionPhase = "INTERACTION";
+      initialLookPending = true;
+      launchAutoDecision(choice.action, "cat_visible_distance_cm=" + camera.distanceCm.toFixed(1), true, true);
+      return;
+    }
+  }
   const decision = decisionSystem.tick({
     phase: interactionPhase, now,
     autoBusy, nextDecisionAt: nextAutoDecisionAt, obstacleBlockedUntil,
     sessionElapsedMs: sessionStartedAt === null ? null : Date.now() - sessionStartedAt,
-    sessionLimitSeconds: decisionSystem.responsePolicy.sessionLimitSeconds, camera: cameraObservation(world),
+    sessionLimitSeconds: decisionSystem.responsePolicy.sessionLimitSeconds, camera: robotCamera(),
     touchActive: unoTouches.size > 0,
   });
   if (!decision) return;
@@ -1738,6 +1724,7 @@ async function connectSerial() {
     return;
   }
   try {
+    serialFirmwareVerified = false;
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
     writer = port.writable.getWriter();
@@ -1909,7 +1896,7 @@ function drawScene(visual, now) {
   ctx.fillStyle = "rgba(35, 155, 135, .11)";
   ctx.fill();
 
-  const distance = mode === "mock" ? mock.distanceCm() : cameraFrontDistanceCm(world);
+  const distance = robotFrontCm();
   if (distance !== null) {
     const length = Math.min(distance * ARENA.pxPerCm, 440);
     ctx.strokeStyle = "#bf8046";
@@ -2026,17 +2013,17 @@ function drawScene(visual, now) {
 }
 
 function updateTelemetry(now, visual) {
-  const camera = cameraObservation(world);
+  const camera = robotCamera();
   if (faceReady && (!camera.detected || Math.abs(camera.centerX - .5) > decisionSystem.responsePolicy.centerTolerancePercent / 100)) {
     faceReady = false;
     $("faceCatStatus").textContent = "猫或机器人已移动，模拟取景需重新对准";
     addLog("event", "SIM_CAMERA CAPTURE_READY_INVALIDATED", "ESP32·SIM");
   }
   const touch = [...unoTouches];
-  const distance = mode === "mock" ? mock.distanceCm() : cameraFrontDistanceCm(world);
+  const distance = robotFrontCm();
   $("distanceValue").textContent = mode === "serial"
     ? `模拟摄像头 ${cameraFrontDistanceCm(world).toFixed(1)} cm / Uno 最近回报 ${realDistanceText}`
-    : distance === null ? "无效 / 停机" : `${distance.toFixed(1)} cm`;
+    : distance === null ? "无有效测量" : `${distance.toFixed(1)} cm`;
   const mockSideText = side => {
     const value = mock.sideDistanceCm(side);
     return value === null ? "无效" : `${value.toFixed(1)} cm`;
@@ -2047,7 +2034,7 @@ function updateTelemetry(now, visual) {
   $("rightSonarValue").textContent = mode === "serial"
     ? `模拟 ${sideSonarDistanceCm(world, "RIGHT").toFixed(1)} cm / Uno ${realRightDistanceText}`
     : mockSideText("RIGHT");
-  $("cameraValue").textContent = camera.detected ? `发现猫 · x=${camera.centerX.toFixed(2)}` : "视野外";
+  $("cameraValue").textContent = camera.detected ? `发现猫 · 画面 x=${camera.centerX.toFixed(2)} · ${camera.distanceCm.toFixed(1)} cm` : "未检测到猫";
   $("touchValue").textContent = touch.length ? touch.join("、") : "无";
   $("motionValue").textContent = mode === "mock" ? mock.state : realState;
   $("ledValue").textContent = visual.led === "FLASH" ? "闪烁" : visual.led === "ON" ? "常亮" : "关闭";
@@ -2070,7 +2057,7 @@ function sceneSensorCommands(now, force = false, requestedMotion = null) {
     ((motion.left > 0 && motion.right >= 0) || (motion.right > 0 && motion.left >= 0));
   return sceneSensors.plan({
     now,
-    cameraValue: manualFrontInput === null ? cameraFrontDistanceCm(world).toFixed(1) : manualFrontInput,
+    cameraValue: cameraFrontDistanceCm(world).toFixed(1),
     sides: emptyBoard ? {
       LEFT: sideSonarDistanceCm(world, "LEFT").toFixed(1),
       RIGHT: sideSonarDistanceCm(world, "RIGHT").toFixed(1),
@@ -2087,13 +2074,14 @@ function streamSceneSensors(now, force = false, requestedMotion = null) {
   if (commands === null) return;
   for (const command of commands) send(command, false);
   const emptyBoard = mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked;
-  if (!emptyBoard || manualTouchAreas.size) return;
-  const override = catInput.touchOverride();
-  const area = override === undefined ? contactArea(world) : override;
+  if (!emptyBoard) return;
+  let area = contactArea(world);
+  const overlapping = Math.hypot(world.cat.x - world.robot.x, world.cat.y - world.robot.y) <= ARENA.robotRadius + ARENA.catRadius;
+  if (lastSerialAutoArea && overlapping) area = lastSerialAutoArea;
   if (area !== lastSerialAutoArea) {
-    if (lastSerialAutoArea) send(`DEBUG_INJECT TOUCH ${lastSerialAutoArea} RELEASE`);
+    if (lastSerialAutoArea) send(`DEBUG_INJECT TOUCH ${lastSerialAutoArea} RELEASE`, false);
     lastSerialAutoArea = area;
-    if (area) send(`DEBUG_INJECT TOUCH ${area} PRESS`);
+    if (area) send(`DEBUG_INJECT TOUCH ${area} PRESS`, false);
   }
 }
 
@@ -2105,7 +2093,6 @@ function frame(now) {
     for (const event of catInput.step(now, elapsedSeconds)) {
       addLog("event", `SIM_CAT ${event.type} area=${event.area}`, "CAT·SIM");
     }
-    mock.touchInputOverride = manualTouchAreas.size ? null : catInput.touchOverride();
     if (mode === "mock") mock.step(now);
   }
   streamSceneSensors(now);
@@ -2152,6 +2139,10 @@ $("resetScene").addEventListener("click", () => {
   addLog("event", "SCENE_RESET", "SYSTEM");
 });
 $("startPatrol").addEventListener("click", () => {
+  if (mode === "serial" && !serialDryRunConfirmed) {
+    showToast("当前自主控制需要模拟传感器或空板模拟；尚未接入实体视觉观测。");
+    return;
+  }
   if (mode === "serial" && !serialTrackConfigured) {
     showToast("请先设置车轮直径和左右轮中心距，确认 Uno 已回报 GEOMETRY_SET。");
     send("GET_CONFIG");
@@ -2177,7 +2168,7 @@ $("startPatrol").addEventListener("click", () => {
   faceReady = false;
   $("decisionInput").textContent = "巡游启动；等待摄像头与 Uno 观测";
   $("decisionAction").textContent = "巡游待命";
-  $("decisionReason").textContent = "等待猫状态告警或 Uno 触碰";
+  $("decisionReason").textContent = "等待摄像头检测或 Uno 触碰";
   $("faceCatStatus").textContent = "巡游中；尚未进入互动取景";
   if (mode === "serial" && serialDryRunConfirmed) {
     $("streamSceneSensors").checked = true;
@@ -2209,8 +2200,6 @@ for (const id of ["catScenarioBehavior", "attackArea", "catSpeedCmS", "attackHol
     addLog("event", `CAT_INPUT behavior=${catInput.behavior} attack_area=${catInput.attackArea} speed_cm_s=${catInput.speedCmS}`, "CAT·SIM");
   });
 }
-document.querySelectorAll("[data-mood-alert]").forEach(button => button.addEventListener("click", () =>
-  injectMoodAlert(button.dataset.moodAlert)));
 function setSafeDistance(side) {
   const input = $(side === "LEFT" ? "safeLeftCm" : "safeRightCm");
   const cm = Number(input.value);
@@ -2236,7 +2225,6 @@ document.querySelectorAll("[data-command]").forEach(button => button.addEventLis
   send(button.dataset.command);
   if (button.dataset.command === "CAMERA_FRONT INVALID" &&
       (mode === "mock" || serialDryRunConfirmed)) {
-    manualFrontInput = "INVALID";
     streamSceneSensors(performance.now(), true);
   }
   if (mode === "serial" && button.dataset.command === "DEBUG_MOTOR_MODE DRY_RUN") {
@@ -2279,50 +2267,44 @@ $("prepareBoardSimulation").addEventListener("click", () => {
 $("prepareScenarioBoard").addEventListener("click", () => $("prepareBoardSimulation").click());
 document.querySelectorAll("[data-touch]").forEach(button => button.addEventListener("click", () => {
   if (mode === "serial" && !serialDryRunConfirmed) {
-    showToast("手动触碰注入需要先启用空板模式；实体模式使用真实触碰开关。");
+    showToast("场景接触测试需要先启用空板模式；实体模式使用真实触碰开关。");
     return;
   }
   const area = button.dataset.touch;
-  if (manualTouchAreas.has(area)) return;
-  if (mode === "serial" && lastSerialAutoArea) {
-    send(`DEBUG_INJECT TOUCH ${lastSerialAutoArea} RELEASE`);
-    lastSerialAutoArea = null;
-  }
-  manualTouchAreas.add(area);
+  const previous = { ...world.cat };
+  const offset = ({ TOP: 0, LEFT: -Math.PI / 2, RIGHT: Math.PI / 2, REAR: Math.PI })[area];
+  const radius = area === "TOP" ? 0 : ARENA.robotRadius + ARENA.catRadius - 2;
+  world.cat.x = world.robot.x + Math.cos(world.robot.heading + offset) * radius;
+  world.cat.y = world.robot.y + Math.sin(world.robot.heading + offset) * radius;
   button.setAttribute("aria-pressed", "true");
-  send(`DEBUG_INJECT TOUCH ${area} PRESS`);
-  const timer = setTimeout(() => {
-    manualTouchTimers.delete(area);
-    if (!manualTouchAreas.delete(area)) return;
-    send(`DEBUG_INJECT TOUCH ${area} RELEASE`);
+  setTimeout(() => {
+    Object.assign(world.cat, previous);
     button.setAttribute("aria-pressed", "false");
-    streamSceneSensors(performance.now());
-  }, 250);
-  manualTouchTimers.set(area, timer);
+  }, 350);
 }));
 $("setDistance").addEventListener("click", () => {
   const distance = Number($("injectDistance").value);
   if (!Number.isFinite(distance) || distance < 0 || distance > 400) return showToast("距离须在 0–400 cm。");
-  if (mode === "serial" && !serialDryRunConfirmed) return showToast("LIVE 模式不能注入模拟摄像头距离。");
-  manualFrontInput = distance.toFixed(1);
-  send(`CAMERA_FRONT ${manualFrontInput}`);
-  send("GET_DISTANCE");
-  showToast("前向读数已送入 Uno。距离只参与行驶安全判断；静止时不会自行发起移动。");
+  if (mode === "serial" && !serialDryRunConfirmed) return showToast("LIVE 模式不使用场景传感器；请先启用空板模式。");
+  // Place a physical obstacle at the requested forward range; raycast it normally.
+  const offset = ARENA.robotRadius + world.obstacle.radius + distance * ARENA.pxPerCm;
+  world.obstacle.x = clamp(world.robot.x + Math.cos(world.robot.heading) * offset, world.obstacle.radius, ARENA.width - world.obstacle.radius);
+  world.obstacle.y = clamp(world.robot.y + Math.sin(world.robot.heading) * offset, world.obstacle.radius, ARENA.height - world.obstacle.radius);
+  streamSceneSensors(performance.now(), true);
+  showToast("已移动障碍物；实际读数由当前射线碰撞计算，可能受墙或猫遮挡。");
 });
 $("clearDistance").addEventListener("click", () => {
-  if (mode === "serial" && !serialDryRunConfirmed) return showToast("LIVE 模式不能注入模拟摄像头距离。");
-  manualFrontInput = null;
-  send(`CAMERA_FRONT ${cameraFrontDistanceCm(world).toFixed(1)}`);
+  if (mode === "serial" && !serialDryRunConfirmed) return showToast("LIVE 模式不使用场景传感器；请先启用空板模式。");
+  send(`CAMERA_FRONT ${cameraFrontDistanceCm(world).toFixed(1)}`, false);
   send("GET_DISTANCE");
 });
 $("streamSceneSensors").addEventListener("change", event => {
   if (event.target.checked || mode !== "serial") return;
-  if (lastSerialAutoArea) send(`DEBUG_INJECT TOUCH ${lastSerialAutoArea} RELEASE`);
-  send("CAMERA_FRONT INVALID");
+  if (lastSerialAutoArea) send(`DEBUG_INJECT TOUCH ${lastSerialAutoArea} RELEASE`, false);
+  send("CAMERA_FRONT INVALID", false);
   lastSerialAutoArea = null;
   sceneSensors.reset();
 });
-$("injectEncoder").addEventListener("click", () => send(`DEBUG_INJECT ENCODER ${$("injectLeftEncoder").value} ${$("injectRightEncoder").value}`));
 $("openCameraStream").addEventListener("click", () => {
   let url;
   try { url = new URL($("cameraStreamUrl").value.trim()); }

@@ -1,25 +1,12 @@
-import { cameraFrontDistanceCm, forwardPathClearanceCm, radians, wrapAngle } from "./core.mjs";
-
-// Choose a heading that leaves room to drive and then stop before an obstacle.
-export function chooseEscapeRoute(candidates, requestedDistanceCm, marginCm = 15) {
-  const viable = candidates
-    .filter(candidate => candidate.turnAllowed && Number.isFinite(candidate.frontClearanceCm))
-    .map(candidate => ({ ...candidate,
-      distanceCm: Math.min(requestedDistanceCm, Math.floor(candidate.frontClearanceCm - marginCm)) }))
-    .filter(candidate => candidate.distanceCm >= 5);
-  viable.sort((a, b) => b.distanceCm - a.distanceCm || a.priority - b.priority);
-  return viable[0] ?? null;
+// Only current observations. No coordinates or hypothetical raycasts.
+export function observedTravelCm(frontCm, requestedCm, marginCm = 15) {
+  if (!Number.isFinite(frontCm) || !Number.isFinite(requestedCm)) return 0;
+  return Math.max(0, Math.min(requestedCm, Math.floor(frontCm - marginCm)));
 }
-
-export function planSimulatedEscapeRoute(world, requestedDistanceCm, canTurn = () => true) {
-  const awayHeading = Math.atan2(world.robot.y - world.cat.y, world.robot.x - world.cat.x);
-  const candidates = [0, -90, 90].map((offset, priority) => {
-    const angle = Math.round(wrapAngle(awayHeading + radians(offset) - world.robot.heading) * 180 / Math.PI);
-    const orientedWorld = { ...world,
-      robot: { ...world.robot, heading: wrapAngle(world.robot.heading + radians(angle)) } };
-    return { angle, priority,
-      turnAllowed: (angle === 0 || canTurn(angle < 0 ? -1 : 1)) && cameraFrontDistanceCm(orientedWorld) >= 15,
-      frontClearanceCm: forwardPathClearanceCm(orientedWorld) };
-  });
-  return chooseEscapeRoute(candidates, requestedDistanceCm);
+export function escapeTurn(camera, touchArea) {
+  if (camera.detected && Number.isFinite(camera.relativeDeg)) {
+    const away = camera.relativeDeg + 180;
+    return Math.round(away > 180 ? away - 360 : away);
+  }
+  return ({ LEFT: 90, RIGHT: -90, REAR: 0, TOP: 180 })[touchArea] ?? 180;
 }

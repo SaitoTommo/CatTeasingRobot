@@ -17,11 +17,11 @@ test("attack input stays in the same contact until the cat physically leaves", (
   input.step(110, .05);
   input.step(1000, .05);
   assert.equal(input.attackCount, 1);
-  assert.equal(input.touchOverride(), "TOP");
+  assert.equal(input.touchOverride(), undefined);
   assert.equal(input.phase, "RETREAT");
   world.cat.x = world.robot.x - 150;
   assert.deepEqual(input.step(1050, .05), [{ type: "ATTACK_RELEASE", area: "TOP" }]);
-  assert.equal(input.touchOverride(), null);
+  assert.equal(input.touchOverride(), undefined);
   input.step(1100, .05);
   assert.equal(input.phase, "APPROACH");
 });

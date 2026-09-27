@@ -24,6 +24,7 @@ function rayCircleDistance(origin, angle, circle) {
   const dy = Math.sin(angle);
   const ox = origin.x - circle.x;
   const oy = origin.y - circle.y;
+  if (ox * ox + oy * oy <= circle.radius * circle.radius) return 0;
   const b = 2 * (ox * dx + oy * dy);
   const c = ox * ox + oy * oy - circle.radius * circle.radius;
   const discriminant = b * b - 4 * c;
@@ -64,23 +65,6 @@ export function cameraFrontDistanceCm(world) {
   return clamp(nearest / ARENA.pxPerCm, 0, 400);
 }
 
-// Narrow corridor estimate for planning a straight escape. Uno still checks its
-// own wider CAMERA_FRONT input before and during the actual motion.
-export function forwardPathClearanceCm(world) {
-  const origin = {
-    x: world.robot.x + Math.cos(world.robot.heading) * ARENA.robotRadius,
-    y: world.robot.y + Math.sin(world.robot.heading) * ARENA.robotRadius,
-  };
-  let nearest = Infinity;
-  for (const offset of [-radians(8), 0, radians(8)]) {
-    const ray = world.robot.heading + offset;
-    nearest = Math.min(nearest, rayWallDistance(origin, ray));
-    for (const object of [{ ...world.cat, radius: ARENA.catRadius }, world.obstacle])
-      nearest = Math.min(nearest, rayCircleDistance(origin, ray, object));
-  }
-  return clamp(nearest / ARENA.pxPerCm, 0, 400);
-}
-
 export function sideSonarDistanceCm(world, side) {
   const direction = side === "LEFT" ? -1 : 1;
   const angle = world.robot.heading + direction * Math.PI / 2;
@@ -103,12 +87,16 @@ export function cameraTargetObservation(world, target) {
   const dy = target.y - world.robot.y;
   const distancePx = Math.hypot(dx, dy);
   const relative = wrapAngle(Math.atan2(dy, dx) - world.robot.heading);
-  const visible = Math.abs(relative) <= radians(38);
+  const blockers = [world.obstacle];
+  if (target !== world.cat) blockers.push({ ...world.cat, radius: ARENA.catRadius });
+  const occluded = blockers.some(object =>
+    rayCircleDistance(world.robot, Math.atan2(dy, dx), object) < distancePx);
+  const visible = distancePx <= 400 * ARENA.pxPerCm && Math.abs(relative) <= radians(38) && !occluded;
   return {
     detected: visible,
     centerX: visible ? clamp(.5 + relative / radians(76), 0, 1) : null,
-    relativeDeg: degrees(relative),
-    distanceCm: distancePx / ARENA.pxPerCm,
+    relativeDeg: visible ? degrees(relative) : null,
+    distanceCm: visible ? distancePx / ARENA.pxPerCm : null,
   };
 }
 
@@ -160,6 +148,7 @@ export class MockUno {
     this.cameraFrontAt = -Infinity;
     this.now = now;
     this.sideOverrides = { LEFT: undefined, RIGHT: undefined };
+    this.sideOverrideAt = { LEFT: -Infinity, RIGHT: -Infinity };
     this.safeSideCm = { LEFT: 5, RIGHT: 5 };
     this.touch = Object.fromEntries(TOUCH_AREAS.map(area => [area, false]));
     this.touchStarted = {};
@@ -167,7 +156,6 @@ export class MockUno {
     this.pendingAutoArea = null;
     this.pendingAutoSince = now;
     this.encoder = { left: 0, right: 0 };
-    this.touchInputOverride = undefined;
     this.debugEnabled = true;
     this.dryRunMotors = true;
     this.wheelDiameterMm = 65;
@@ -184,6 +172,7 @@ export class MockUno {
   }
 
   sideDistanceCm(side) {
+    if (this.sideOverrides[side] !== undefined && this.now - this.sideOverrideAt[side] > 500) return null;
     return this.sideOverrides[side] === undefined ? sideSonarDistanceCm(this.world, side) : this.sideOverrides[side];
   }
 
@@ -248,12 +237,11 @@ export class MockUno {
   }
 
   updateAutomaticTouch(now) {
-    const nextArea = this.touchInputOverride === undefined
-      ? contactArea(this.world) : this.touchInputOverride;
+    const nextArea = contactArea(this.world);
     // One continuous overlap is one contact, even if the robot turns and the
     // geometric contact label changes while the bodies remain touching.
     const stillOverlapping = Math.hypot(this.world.cat.x - this.world.robot.x,
-      this.world.cat.y - this.world.robot.y) <= ARENA.robotRadius + ARENA.catRadius + 8;
+      this.world.cat.y - this.world.robot.y) <= ARENA.robotRadius + ARENA.catRadius;
     if (this.autoArea && (nextArea || stillOverlapping)) {
       this.pendingAutoArea = this.autoArea;
       this.pendingAutoSince = now;
@@ -265,7 +253,7 @@ export class MockUno {
       return;
     }
     if (nextArea === this.autoArea || now - this.pendingAutoSince < 45) return;
-    const source = this.touchInputOverride === undefined ? "SIM_POSITION" : "SIM_CAT_INPUT";
+    const source = "SIM_CONTACT";
     if (this.autoArea) this.injectTouch(this.autoArea, "RELEASE", now, source);
     this.autoArea = nextArea;
     if (nextArea) this.injectTouch(nextArea, "PRESS", now, source);
@@ -394,7 +382,8 @@ export class MockUno {
       const angle = numberArg(a, -360, 360);
       const pwm = numberArg(b, 1, 255);
       if (angle === null || angle === 0 || pwm === null) return this.error(id, "INVALID_ARGUMENT");
-      const duration = Math.abs(radians(angle)) / (2.5 * pwm / 255) * 1000;
+      const angularSpeed = 2 * 120 * pwm / 255 / (ARENA.pxPerCm * (this.trackWidthMm ?? 120) / 10);
+      const duration = Math.abs(radians(angle)) / angularSpeed * 1000;
       if (duration > 10000) return this.error(id, "DURATION_LIMIT");
       const speed = Math.sign(angle) * pwm / 255;
       return this.startMotion(id, speed, -speed, duration, "ROTATE", now, true);
@@ -457,6 +446,7 @@ export class MockUno {
         const distance = c === "AUTO" ? undefined : (c === "INVALID" ? null : numberArg(c, 0, 400));
         if (distance === null && c !== "INVALID") return this.error(id, "INVALID_ARGUMENT");
         this.sideOverrides[b] = distance;
+        this.sideOverrideAt[b] = now;
         this.ack(id);
         this.output(`EVENT DEBUG_INJECT SONAR ${b} ${distance === undefined ? "AUTO" : distance === null ? "INVALID" : distance.toFixed(1)}`);
         return this.done(id);
@@ -494,7 +484,7 @@ export class MockUno {
         const left = motion.left;
         const right = motion.right;
         const average = (left + right) / 2;
-        const omega = (left - right) / 2 * 2.5;
+        const omega = (left - right) * 120 / (ARENA.pxPerCm * (this.trackWidthMm ?? 120) / 10);
         const travel = average * 120 * dt;
         const nextHeading = wrapAngle(this.world.robot.heading + omega * dt);
         this.world.robot.heading = nextHeading;
