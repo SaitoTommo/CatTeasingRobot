@@ -103,12 +103,10 @@ export class CatMotionInput {
     if (this.behavior !== "ATTACK") return [];
     if (this.phase === "HOLD") {
       if (now < this.phaseUntil) return [];
-      this.activeTouch = null;
       this.phase = "RETREAT";
       this.nextAttackAt = now + this.intervalMs;
       this.topApproachReady = false;
       this.topApproachWaypoint = null;
-      return [{ type: "ATTACK_RELEASE", area: this.attackArea }];
     }
     if (this.phase === "RETREAT") {
       if (distance < 140) {
@@ -118,7 +116,12 @@ export class CatMotionInput {
           y: robot.y + Math.sin(bearing) * 145,
         }, speed);
       }
-      if (now >= this.nextAttackAt) this.phase = "APPROACH";
+      if (this.activeTouch && Math.hypot(cat.x - robot.x, cat.y - robot.y) >
+          ARENA.robotRadius + ARENA.catRadius + 8) {
+        this.activeTouch = null;
+        return [{ type: "ATTACK_RELEASE", area: this.attackArea }];
+      }
+      if (now >= this.nextAttackAt && !this.activeTouch) this.phase = "APPROACH";
       return [];
     }
     if (this.attackArea === "TOP" && !this.topApproachReady) {

@@ -69,6 +69,10 @@ test("old browser settings migrate and each probability group sums to 100", () =
   assert.equal(legacy.touchFastEscapePercent, 20);
   assert.equal(legacy.robotFarProbePercent, 10);
   assert.equal(legacy.robotNearObservePercent, 40);
+  assert.equal(legacy.initialLookSeconds, 5);
+  assert.equal(legacy.postEscapeWaitSeconds, 10);
+  assert.equal(validateResponsePolicy({ initialLookSeconds: 8,
+    postEscapeWaitSeconds: 20 }).postEscapeWaitSeconds, 20);
   assert.throws(() => validateResponsePolicy({ catFollowProbePercent: 20 }), /sum_/);
   assert.throws(() => validateResponsePolicy({ farCatThresholdCm: 69, catLeaveDistanceCm: 50 }),
     /distance_order/);

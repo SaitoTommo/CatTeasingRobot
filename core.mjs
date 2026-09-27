@@ -250,6 +250,15 @@ export class MockUno {
   updateAutomaticTouch(now) {
     const nextArea = this.touchInputOverride === undefined
       ? contactArea(this.world) : this.touchInputOverride;
+    // One continuous overlap is one contact, even if the robot turns and the
+    // geometric contact label changes while the bodies remain touching.
+    const stillOverlapping = Math.hypot(this.world.cat.x - this.world.robot.x,
+      this.world.cat.y - this.world.robot.y) <= ARENA.robotRadius + ARENA.catRadius + 8;
+    if (this.autoArea && (nextArea || stillOverlapping)) {
+      this.pendingAutoArea = this.autoArea;
+      this.pendingAutoSince = now;
+      return;
+    }
     if (nextArea !== this.pendingAutoArea) {
       this.pendingAutoArea = nextArea;
       this.pendingAutoSince = now;

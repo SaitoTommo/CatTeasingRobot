@@ -69,6 +69,8 @@ let activeAutoAction = null;
 let nextAutoDecisionAt = 0;
 let obstacleBlockedUntil = 0;
 let resumePatrolAfterInteraction = false;
+let initialLookPending = false;
+let pendingTouchDecision = null;
 let nextObstacleStatusQueryAt = 0;
 const unoTouches = new Set();
 let faceReady = false;
@@ -347,9 +349,11 @@ function receiveLine(rawLine, source) {
     if (line.startsWith("READY ")) {
       resetSerialOutputs();
       resetSerialSafeDistances();
-      if (line !== "READY UNO_CAT_V5") {
-        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5", "SYSTEM");
-        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5。");
+      if (!/^READY UNO_CAT_V5(\.\d+)?$/.test(line)) {
+        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.1", "SYSTEM");
+        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.1。");
+      } else if (line === "READY UNO_CAT_V5") {
+        addLog("event", "FIRMWARE_LEGACY note=建议烧录 V5.1（串口收发包互不阻塞加固）", "SYSTEM");
       }
       unoTouches.clear();
       clearManualTouchPulses();
@@ -369,7 +373,7 @@ function receiveLine(rawLine, source) {
         cancelBehavior("UNO_RESET");
         addLog("event", "DECISION_STOP reason=UNO_RESET", "ESP32·SIM");
       }
-      if (line === "READY UNO_CAT_V5") send("GET_CONFIG");
+      if (/^READY UNO_CAT_V5/.test(line)) send("GET_CONFIG");
     }
     const state = /DATA \d+ STATUS (\S+)/.exec(line);
     const config = /DATA \d+ CONFIG WHEEL_MM=(\d+(?:\.\d+)?) TRACK_MM=(UNSET|\d+(?:\.\d+)?)/.exec(line);
@@ -488,6 +492,63 @@ function settleCommandDone(id, suffix, error = null) {
   else pending.resolve();
 }
 
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// Transport hardening: serial bursts used to overflow the Uno's 64-byte RX ring
+// (injection + motion written in the same millisecond while the firmware blocks on
+// Serial.print), which fragmented the last line of every escape. All serial writes now
+// go through one FIFO with a minimum gap between lines.
+const SERIAL_WRITE_GAP_MS = 15;
+let serialWriteTail = Promise.resolve();
+let serialLastWriteAt = 0;
+function enqueueSerialWrite(line, id) {
+  serialWriteTail = serialWriteTail.then(async () => {
+    if (!writer) return;
+    const wait = SERIAL_WRITE_GAP_MS - (performance.now() - serialLastWriteAt);
+    if (wait > 0) await sleep(wait);
+    try { await writer.write(new TextEncoder().encode(`${line}\n`)); }
+    catch (error) {
+      receiveLine(`ERROR ${id} WRITE_FAILED`, "SERIAL");
+      showToast(`串口写入失败：${error.message}`);
+    }
+    serialLastWriteAt = performance.now();
+  });
+}
+
+// Test-only seam: a wire filter applied before MockUno.receiveWire. Returning a
+// mutated line simulates a corrupted frame; returning null simulates a lost frame.
+export const testHooks = { wireFault: null };
+function applyWireFault(line) {
+  return testHooks.wireFault ? testHooks.wireFault(line) : line;
+}
+
+// Rejections that prove the Uno never executed the command, so resending is safe.
+const MOTION_TRANSPORT_ERRORS = /^(UNKNOWN_OR_INVALID_COMMAND|BAD_ENVELOPE|TOO_MANY_ARGUMENTS|LINE_TOO_LONG|WRITE_FAILED)$/;
+async function motionDeviceIdle() {
+  send("GET_STATUS");
+  await sleep(200);
+  return mode === "mock" ? !mock.active : realState !== "MOVING";
+}
+async function sendMotionWithTransportRetry(command, attempts = 3) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try { return await sendMotion(command); }
+    catch (error) {
+      lastError = error;
+      const timeoutButIdle = error.message === "MOTION_TIMEOUT" && await motionDeviceIdle();
+      if ((!MOTION_TRANSPORT_ERRORS.test(error.message) && !timeoutButIdle) || attempt === attempts) throw error;
+      addLog("event", `MOTION_RETRY command="${command}" next_attempt=${attempt + 1} reason=${error.message}`, "ESP32·SIM");
+      await sleep(80);
+    }
+  }
+  throw lastError;
+}
+
+// Timestamp of the last completed stationary cat view; END_SESSION uses this to avoid
+// holding a second gaze right after the post-escape observation.
+let lastViewHoldAt = 0;
+const END_SESSION_HOLD_GRACE_MS = 10000;
+
 function send(command, preflight = true) {
   const normalized = command.trim().replace(/\s+/g, " ");
   if (!normalized || normalized.length > 96 || /[\r\n]/.test(command)) {
@@ -517,17 +578,28 @@ function send(command, preflight = true) {
     }
   }
   addLog("command", line, mode === "mock" ? "TX·SIM" : "TX·SERIAL");
-  if (mode === "mock") mock.receiveWire(line, performance.now());
-  else if (writer) writer.write(new TextEncoder().encode(`${line}\n`)).catch(error => {
-    receiveLine(`ERROR ${id} WRITE_FAILED`, "SERIAL");
-    showToast(`串口写入失败：${error.message}`);
-  });
+  if (mode === "mock") {
+    const wireLine = applyWireFault(line);
+    if (wireLine !== null) mock.receiveWire(wireLine, performance.now());
+  } else if (writer) enqueueSerialWrite(line, id);
   return id;
 }
 
-function sendMotion(command) {
+async function sendMotion(command) {
+  const motion = sceneMotionFromCommand(command);
+  if (mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked) {
+    // Confirmed one-at-a-time sync so the motion line never shares the wire with its
+    // injections; the Uno must be idle on TX when ROTATE/DRIVE arrive.
+    const syncCommands = sceneSensorCommands(performance.now(), true, motion) || [];
+    for (const syncCommand of syncCommands) {
+      const expectedSuffix = syncCommand.startsWith("CAMERA_FRONT") ? "CAMERA_FRONT_SET" : "";
+      try { await sendAndWaitDone(syncCommand, expectedSuffix); }
+      catch (error) { addLog("event", `SENSOR_SYNC_FAILED command="${syncCommand}" reason=${error.message}`, "SYSTEM"); }
+    }
+  } else {
+    streamSceneSensors(performance.now(), true, motion);
+  }
   // The promise is registered before sending: the mock can return an error synchronously.
-  streamSceneSensors(performance.now(), true, sceneMotionFromCommand(command));
   const expectedId = nextCommandId;
   const promise = new Promise((resolve, reject) => {
     const timeout = setTimeout(() => settleMotion(expectedId, new Error("MOTION_TIMEOUT")), 14000);
@@ -585,7 +657,7 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
   let turnDirection = direction;
   let reversed = false;
   let blockedReason = null;
-  const deadline = performance.now() + timeoutMs;
+  let deadline = performance.now() + timeoutMs;
   try {
     while (token === behaviorToken && active()) {
       const now = performance.now();
@@ -594,7 +666,11 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
       if (scan.abortReason) {
         if (scan.abortReason === "TOUCH") {
           scan.abortReason = null;
-          if (!await waitForTouchRelease(token, decisionSystem.responsePolicy.touchReleaseTimeoutMs))
+          // Time spent pinned by the cat's grab does not consume the sweep budget.
+          const resumeAt = performance.now();
+          const released = await waitForTouchRelease(token, decisionSystem.responsePolicy.touchReleaseTimeoutMs);
+          deadline += performance.now() - resumeAt;
+          if (!released)
             return { found: false, reason: token === behaviorToken ? "TOUCH_HELD" : "CANCELLED", sweptDeg: degrees(swept) };
           lastCommandAt = -Infinity;
           continue;
@@ -615,7 +691,10 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
       }
       if (document.visibilityState === "hidden") return { found: false, reason: "PAGE_HIDDEN", sweptDeg: degrees(swept) };
       if (unoTouches.size) {
+        // Holding position while the cat grips the robot: pause the sweep timer too.
+        const resumeAt = performance.now();
         await new Promise(resolve => setTimeout(resolve, 25));
+        deadline += performance.now() - resumeAt;
         continue;
       }
       const observation = observe();
@@ -760,6 +839,39 @@ async function behaviorPause(durationMs, token) {
   addLog("event", `PAUSE ${durationMs}ms`, "ESP32·SIM");
   await new Promise(resolve => setTimeout(resolve, durationMs));
   return token === behaviorToken;
+}
+
+async function holdCatView(token) {
+  const seconds = decisionSystem.responsePolicy.initialLookSeconds;
+  if (seconds === 0) { lastViewHoldAt = performance.now(); return true; }
+  send("STOP");
+  $("faceCatStatus").textContent = `面向猫静止取景 ${seconds} 秒（模拟）`;
+  addLog("event", `CAT_VIEW_HOLD_START duration_s=${seconds} stationary=true`, "ESP32·SIM");
+  const deadline = performance.now() + seconds * 1000;
+  while (token === behaviorToken && performance.now() < deadline) {
+    if (!cameraObservation(world).detected) {
+      addLog("error", "CAT_VIEW_HOLD_STOP reason=CAT_LOST", "ESP32·SIM");
+      return false;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  if (token !== behaviorToken) return false;
+  lastViewHoldAt = performance.now();
+  addLog("event", `CAT_VIEW_HOLD_DONE duration_s=${seconds} photo_taken=false`, "ESP32·SIM");
+  return true;
+}
+
+async function waitForCatPursuit(token) {
+  const seconds = decisionSystem.responsePolicy.postEscapeWaitSeconds;
+  if (seconds === 0) return;
+  send("STOP");
+  $("faceCatStatus").textContent = `逃跑后停下，等待猫再次触碰（最多 ${seconds} 秒）`;
+  addLog("event", `CHASE_WAIT_START duration_s=${seconds} stationary=true`, "ESP32·SIM");
+  const deadline = performance.now() + seconds * 1000;
+  while (token === behaviorToken && !pendingTouchDecision && performance.now() < deadline)
+    await new Promise(resolve => setTimeout(resolve, 100));
+  if (token === behaviorToken)
+    addLog("event", `CHASE_WAIT_DONE reason=${pendingTouchDecision ? "TOUCH" : "TIMEOUT"}`, "ESP32·SIM");
 }
 
 async function waitForTouchRelease(token, timeoutMs) {
@@ -991,21 +1103,37 @@ async function signalToCat(token) {
 
 async function fleeFromFacingCat(token, pace = "FAST") {
   if (mode === "serial" && !serialTrackConfigured) throw new Error("TRACK_NOT_SET");
-  const { escapeDistanceCm, slowEscapePwm, fastEscapePwm } = decisionSystem.responsePolicy;
+  const { escapeDistanceCm, slowEscapePwm, fastEscapePwm, touchReleaseTimeoutMs } = decisionSystem.responsePolicy;
   const pwm = pace === "SLOW" ? slowEscapePwm : fastEscapePwm;
-  const route = planSimulatedEscapeRoute(world, escapeDistanceCm,
-    direction => !sceneTurnBlockReason(direction));
-  if (!route) throw new Error("ESCAPE_NO_SAFE_ROUTE");
-  addLog("event", `ESCAPE_ROUTE angle_deg=${route.angle} planned_cm=${route.distanceCm} projected_front_cm=${route.frontClearanceCm.toFixed(1)}`, "ESP32·SIM");
-  await sendMotion(`ROTATE ${route.angle} 110`);
-  if (token !== behaviorToken) return;
-  const currentFrontCm = cameraFrontDistanceCm(world);
-  const safeDistanceCm = currentFrontCm < 15 ? 0
-    : Math.min(route.distanceCm, Math.floor(forwardPathClearanceCm(world) - 15));
-  if (safeDistanceCm < 5) throw new Error("ESCAPE_FRONT_BLOCKED_AFTER_TURN");
-  addLog("event", `ESCAPE_PHASE pace=${pace} straight_distance_cm=${safeDistanceCm} pwm=${pwm}`, "ESP32·SIM");
-  await sendMotion(`DRIVE ${safeDistanceCm} ${pwm}`);
-  if (token === behaviorToken) send("STOP");
+  let resumedAfterTouch = false;
+  for (;;) {
+    try {
+      const route = planSimulatedEscapeRoute(world, escapeDistanceCm,
+        direction => !sceneTurnBlockReason(direction));
+      if (!route) throw new Error("ESCAPE_NO_SAFE_ROUTE");
+      addLog("event", `ESCAPE_ROUTE angle_deg=${route.angle} planned_cm=${route.distanceCm} projected_front_cm=${route.frontClearanceCm.toFixed(1)}`, "ESP32·SIM");
+      await sendMotionWithTransportRetry(`ROTATE ${route.angle} 110`);
+      if (token !== behaviorToken) return;
+      const currentFrontCm = cameraFrontDistanceCm(world);
+      const safeDistanceCm = currentFrontCm < 15 ? 0
+        : Math.min(route.distanceCm, Math.floor(forwardPathClearanceCm(world) - 15));
+      if (safeDistanceCm < 5) throw new Error("ESCAPE_FRONT_BLOCKED_AFTER_TURN");
+      addLog("event", `ESCAPE_PHASE pace=${pace} straight_distance_cm=${safeDistanceCm} pwm=${pwm}`, "ESP32·SIM");
+      await sendMotionWithTransportRetry(`DRIVE ${safeDistanceCm} ${pwm}`);
+      if (token === behaviorToken) send("STOP");
+      return;
+    } catch (error) {
+      // A cat grab mid-escape force-stops the wheels (Uno safety interlock). Wait for
+      // the release, then re-plan from the current pose and continue the flee once.
+      if (error.message === "TOUCH" && !resumedAfterTouch && token === behaviorToken) {
+        resumedAfterTouch = true;
+        addLog("event", `ESCAPE_RESUME reason=TOUCH_WAIT_RELEASE timeout_ms=${touchReleaseTimeoutMs}`, "ESP32·SIM");
+        if (await waitForTouchRelease(token, touchReleaseTimeoutMs)) continue;
+        if (token !== behaviorToken) return;
+      }
+      throw error;
+    }
+  }
 }
 
 async function showEndingOutcome(token, outcome) {
@@ -1071,9 +1199,26 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   if (name !== "END_SESSION" && name !== "PATROL" && sessionStartedAt === null) startSession(false);
   const token = behaviorToken;
   let skipFinalFacing = name === "SEARCH_CAT_START" || name === "OBSERVE" || name === "STAY" ||
-    (name === "END_SESSION" && (Boolean(endingOutcome) || !cameraObservation(world).detected));
+    (name === "END_SESSION" && !cameraObservation(world).detected);
+  if (name === "END_SESSION" && endingActiveSession && !cameraObservation(world).detected)
+    addLog("error", "FACE_CAT_RESULT action=END_SESSION status=FAILED reason=CAT_NOT_DETECTED", "ESP32·SIM");
   let attackFailureReason = null;
   try {
+    if (source === "ESP32_AUTO" && interactionPhase === "INTERACTION" &&
+        initialLookPending && name !== "ATTACK_RESPONSE" && name !== "SEARCH_CAT_START" &&
+        name !== "END_SESSION" &&
+        cameraObservation(world).detected) {
+      if (!await finishFacingCat(token, name)) {
+        skipFinalFacing = true;
+        return;
+      }
+      if (token !== behaviorToken) return;
+      initialLookPending = false;
+      if (!await holdCatView(token)) {
+        skipFinalFacing = true;
+        return;
+      }
+    }
     if (name === "END_SESSION") {
       send("STOP");
       if (endingOutcome) await showEndingOutcome(token, endingOutcome);
@@ -1109,6 +1254,13 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       });
       if (token !== behaviorToken) return;
       if (!ready) throw new Error("ATTACK_CAT_NOT_FOUND_OR_UNSAFE");
+      if (initialLookPending) {
+        initialLookPending = false;
+        if (!await holdCatView(token)) {
+          if (token !== behaviorToken) return;
+          throw new Error("CAT_LOST_DURING_VIEW_HOLD");
+        }
+      }
       addLog("event", `ATTACK_RESPONSE_PHASE cat_aligned=true response=${plan.response}`, "ESP32·SIM");
       if (plan.response === "STAY_SIGNAL") {
         await signalToCat(token);
@@ -1116,8 +1268,17 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
         await fleeFromFacingCat(token, plan.response === "SLOW_STRAIGHT_ESCAPE" ? "SLOW" : "FAST");
         if (token !== behaviorToken) return;
         addLog("event", "ATTACK_RESPONSE_PHASE reface_after_escape", "ESP32·SIM");
-        if (!await finishFacingCat(token, name, { forceSearch: true, searchLimitDeg: 360 })) {
-          throw new Error("CAT_NOT_FOUND_AFTER_ESCAPE");
+        if (cameraObservation(world).detected) {
+          if (!await finishFacingCat(token, name))
+            addLog("event", "CHASE_WAIT_CAT_NOT_CENTERED", "ESP32·SIM");
+        } else addLog("event", "CHASE_WAIT_CAT_OUTSIDE_CAMERA", "ESP32·SIM");
+        if (token !== behaviorToken) return;
+        await waitForCatPursuit(token);
+        if (token !== behaviorToken) return;
+        // 逃跑后猫没有追上来：保持不动、面向猫凝视观察一段时间，再进入互动收尾。
+        if (!pendingTouchDecision && cameraObservation(world).detected) {
+          if (await finishFacingCat(token, name) && token === behaviorToken) await holdCatView(token);
+          addLog("event", "POST_ESCAPE_OBSERVE_DONE", "ESP32·SIM");
         }
       }
     } else if (name === "SLOW_APPROACH") {
@@ -1205,7 +1366,14 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   } finally {
     if (token === behaviorToken && !skipFinalFacing && name !== "PATROL" && name !== "ATTACK_RESPONSE" && (name !== "END_SESSION" || endingActiveSession)) {
       try {
-        await finishFacingCat(token, name);
+        const faced = await finishFacingCat(token, name);
+        // 会话结束的最后一个动作：面向猫静止凝视 ≥5 秒（逃后观察刚完成时不重复计时），
+        // 之后才允许 SESSION_STOP 关闭闩锁。
+        if (faced && name === "END_SESSION" && token === behaviorToken &&
+            performance.now() - lastViewHoldAt > END_SESSION_HOLD_GRACE_MS) {
+          if (!await holdCatView(token) && token === behaviorToken)
+            addLog("event", "FINAL_VIEW_HOLD_STOPPED reason=CAT_LOST_SESSION_ENDS_ANYWAY", "ESP32·SIM");
+        }
       } catch (error) {
         if (token === behaviorToken) {
           send("STOP");
@@ -1215,21 +1383,42 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       }
     }
     if (token === behaviorToken && name === "END_SESSION") {
-      try {
-        await sendAndWaitDone("SESSION_STOP", "SESSION_STOPPED");
-      } catch (error) {
-        if (token !== behaviorToken) return;
-        $("routeStatus").textContent = `互动结束失败：${error.message}；请检查串口日志`;
-        addLog("error", `SESSION_END_FAILED reason=${error.message}`, "ESP32·SIM");
-        autoControlEnabled = false;
-        interactionPhase = "IDLE";
-        return;
+      let stopConfirmed = false;
+      for (let attempt = 1; attempt <= 3 && !stopConfirmed; attempt++) {
+        try {
+          await sendAndWaitDone("SESSION_STOP", "SESSION_STOPPED");
+          stopConfirmed = true;
+        } catch (error) {
+          if (token !== behaviorToken) return;
+          if (attempt < 3) {
+            addLog("event", `SESSION_STOP_RETRY attempt=${attempt + 1} reason=${error.message}`, "ESP32·SIM");
+            await sleep(1000);
+            continue;
+          }
+          // 三次都无回执：用一次状态查询判断命令是否其实已执行（只是回执碎在链路上）。
+          send("GET_STATUS");
+          await sleep(250);
+          if (mode === "mock" ? mock.sessionStopped : realState === "STOPPED") {
+            addLog("event", "SESSION_STOP_CONFIRMED_VIA_STATUS", "ESP32·SIM");
+            stopConfirmed = true;
+            break;
+          }
+          $("routeStatus").textContent = `互动结束失败：${error.message}；请检查串口日志`;
+          addLog("error", `SESSION_END_FAILED reason=${error.message}`, "ESP32·SIM");
+          // 不再永久关闭自动决策：记录续巡意图，下一次干净的 END_SESSION 会恢复巡游，
+          // 避免固件闩锁关闭后无人重开导致的停死。
+          interactionPhase = "IDLE";
+          resumePatrolAfterInteraction = true;
+          return;
+        }
       }
       if (token !== behaviorToken) return;
       const duration = sessionStartedAt === null ? 0 : ((Date.now() - sessionStartedAt) / 1000).toFixed(1);
       addLog("event", `SESSION_ENDED duration_s=${duration}`, "ESP32·SIM");
       sessionStartedAt = null;
       decisionSystem.finishInteraction();
+      initialLookPending = false;
+      pendingTouchDecision = null;
       if (autoControlEnabled || resumePatrolAfterInteraction) {
         const target = PATROL_TAGS[patrolWaypointIndex];
         interactionPhase = "PATROL";
@@ -1245,9 +1434,16 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
     }
     if (token === behaviorToken && name === "ATTACK_RESPONSE") {
       if (attackFailureReason) {
+        pendingTouchDecision = null;
         addLog("event", `CAT_TOUCH_FALLBACK reason=${attackFailureReason} action=RETURN_TO_PATROL`, "ESP32·AUTO");
         launchAutoDecision("END_SESSION", `cat_touch_response_failed_${attackFailureReason}`,
           true, true, { endingOutcome: "CONTINUE_PATROL" });
+      } else if (pendingTouchDecision) {
+        const nextTouch = pendingTouchDecision;
+        pendingTouchDecision = null;
+        addLog("event", `ATTACK_TOUCH_QUEUED_START area=${nextTouch.plan.area}`, "ESP32·AUTO");
+        launchAutoDecision(nextTouch.action, nextTouch.reason, true, true,
+          { attackPlan: nextTouch.plan });
       } else if (!autoControlEnabled) {
         const ending = decisionSystem.chooseCatEnding("standalone_response_finished");
         await runBehavior("END_SESSION", "ESP32_AUTO", ending.reason,
@@ -1269,7 +1465,7 @@ function catInputConfiguration() {
 
 const CAT_POLICY_KEYS = ["touchSignalPercent", "touchSlowEscapePercent", "touchFastEscapePercent",
   "catFollowProbePercent", "catFollowObservePercent", "catFollowPatrolPercent",
-  "catProbeCooldownSeconds"];
+  "catProbeCooldownSeconds", "initialLookSeconds", "postEscapeWaitSeconds"];
 const ENDING_POLICY_KEYS = ["endingAfterRounds", "endingInactivitySeconds",
   "endingPatrolPercent", "endingSilentPercent", "endingSignalPercent", "captureWaitMaxSeconds"];
 const ROBOT_POLICY_KEYS = ["robotFarApproachPercent", "robotFarProbePercent",
@@ -1285,7 +1481,7 @@ function showResponsePolicy(group = null) {
     : group === "robot" ? ROBOT_POLICY_KEYS
     : group === "advanced" ? ADVANCED_POLICY_KEYS : Object.keys(DEFAULT_RESPONSE_POLICY);
   for (const key of keys) $(key).value = String(policy[key]);
-  $("responsePolicyStatus").textContent = `已应用：触碰后声光／慢逃／快逃 ${policy.touchSignalPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%。`;
+  $("responsePolicyStatus").textContent = `已应用：触碰后声光／慢逃／快逃 ${policy.touchSignalPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；初次取景 ${policy.initialLookSeconds} 秒，逃跑后等待追击 ${policy.postEscapeWaitSeconds} 秒。`;
   $("endingPolicyStatus").textContent = `已应用：${policy.endingAfterRounds} 轮触碰或 ${policy.endingInactivitySeconds} 秒无新触碰后结束；直接巡游／安静倒下／声光倒下 ${policy.endingPatrolPercent}/${policy.endingSilentPercent}/${policy.endingSignalPercent}%；倒下后最多等待 ${policy.captureWaitMaxSeconds} 秒。0 表示关闭对应触发条件。`;
   $("robotPolicyStatus").textContent = `已应用：远处接近／试探 ${policy.robotFarApproachPercent}/${policy.robotFarProbePercent}%；近处声光／观察／静止 ${policy.robotNearSignalPercent}/${policy.robotNearObservePercent}/${policy.robotNearStayPercent}%。`;
   $("advancedPolicyStatus").textContent = "高级动作参数已应用；下次相应动作生效。";
@@ -1340,6 +1536,8 @@ function stopController(reason) {
   autoControlEnabled = false;
   interactionPhase = "IDLE";
   resumePatrolAfterInteraction = false;
+  initialLookPending = false;
+  pendingTouchDecision = null;
   autoDecisionVersion += 1;
   autoBusy = false;
   cancelBehavior(reason);
@@ -1373,14 +1571,17 @@ function onUnoTouchPress(area) {
   addLog("event", `ATTACK_EVIDENCE source=UNO_TOUCH area=${area} count=${decisionSystem.attackCount}`, "ESP32·AUTO");
   if (interactionPhase === "PATROL") {
     interactionPhase = "INTERACTION";
+    initialLookPending = true;
     if (!autoControlEnabled) resumePatrolAfterInteraction = true;
     $("routeStatus").textContent = `巡游在标签 ${PATROL_TAGS[patrolWaypointIndex]} 前中断：Uno 回报触碰`;
     addLog("event", `INTERACTION_TRIGGER source=UNO_TOUCH area=${area}`, "ESP32·AUTO");
   } else if (interactionPhase === "IDLE") {
     interactionPhase = "INTERACTION";
+    initialLookPending = true;
   }
   if (autoBusy && activeAutoAction === "ATTACK_RESPONSE") {
-    addLog("event", `ATTACK_TOUCH_DURING_RESPONSE area=${area} action=CONTINUE_CURRENT`, "ESP32·AUTO");
+    pendingTouchDecision = decision;
+    addLog("event", `ATTACK_TOUCH_DURING_RESPONSE area=${area} action=QUEUE_NEXT`, "ESP32·AUTO");
     return;
   }
   launchAutoDecision(decision.action, decision.reason, true, true, { attackPlan: decision.plan });
@@ -1399,6 +1600,7 @@ function injectMoodAlert(source) {
   });
   if (!decision) return;
   interactionPhase = "INTERACTION";
+  initialLookPending = true;
   $("routeStatus").textContent = `巡游在标签 ${PATROL_TAGS[patrolWaypointIndex]} 前中断：收到猫状态告警`;
   addLog("event", `INTERACTION_TRIGGER source=${source}`, "ESP32·AUTO");
   launchAutoDecision(decision.action, decision.reason, true, true);
@@ -1766,16 +1968,16 @@ function updateTelemetry(now, visual) {
   $("systemStatus").textContent = `猫动作${catInput.running ? "运行中" : "停止"} · 系统${phaseLabel} · Uno 触碰 ${decisionSystem.attackCount} 次${mode === "serial" ? serialDryRunConfirmed ? " · 空板输入" : " · 实体输入" : ""}`;
 }
 
-function streamSceneSensors(now, force = false, requestedMotion = null) {
+function sceneSensorCommands(now, force = false, requestedMotion = null) {
   const simulatedInputsEnabled = mode === "mock" ||
     (mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked);
-  if (!simulatedInputsEnabled) return;
+  if (!simulatedInputsEnabled) return null;
   const emptyBoard = mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked;
   const motion = requestedMotion || (mode === "mock" ? mock.active : activeSceneMotion);
   const moving = mode === "mock" ? Boolean(mock.active) : realState === "MOVING";
   const frontRequired = !motion ||
     ((motion.left > 0 && motion.right >= 0) || (motion.right > 0 && motion.left >= 0));
-  const commands = sceneSensors.plan({
+  return sceneSensors.plan({
     now,
     cameraValue: manualFrontInput === null ? cameraFrontDistanceCm(world).toFixed(1) : manualFrontInput,
     sides: emptyBoard ? {
@@ -1787,7 +1989,13 @@ function streamSceneSensors(now, force = false, requestedMotion = null) {
     beforeMotion: force,
     frontRequired,
   });
+}
+
+function streamSceneSensors(now, force = false, requestedMotion = null) {
+  const commands = sceneSensorCommands(now, force, requestedMotion);
+  if (commands === null) return;
   for (const command of commands) send(command, false);
+  const emptyBoard = mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked;
   if (!emptyBoard || manualTouchAreas.size) return;
   const override = catInput.touchOverride();
   const area = override === undefined ? contactArea(world) : override;
@@ -1869,6 +2077,8 @@ $("startPatrol").addEventListener("click", () => {
   interactionPhase = "PATROL";
   decisionSystem.reset();
   resumePatrolAfterInteraction = false;
+  initialLookPending = false;
+  pendingTouchDecision = null;
   obstacleBlockedUntil = 0;
   autoDecisionVersion += 1;
   autoBusy = false;

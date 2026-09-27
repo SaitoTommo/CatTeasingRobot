@@ -94,6 +94,8 @@ test("patrol continues until touch, then top signals after facing and left escap
   elements.get("catFollowProbePercent").value = "0";
   elements.get("catFollowObservePercent").value = "30";
   elements.get("catFollowPatrolPercent").value = "70";
+  elements.get("initialLookSeconds").value = "1";
+  elements.get("postEscapeWaitSeconds").value = "1";
   elements.get("endingInactivitySeconds").value = "8";
   elements.get("applyEndingPolicy").click();
   elements.get("applyResponsePolicy").click();
@@ -144,6 +146,8 @@ test("patrol continues until touch, then top signals after facing and left escap
   const motor = log.findIndex((message, index) => index > search && /^CMD \d+ MOTOR /.test(message));
   const face = log.findIndex(message => message.includes("FACE_CAT_RESULT action=ATTACK_RESPONSE status=READY"));
   const signal = log.findIndex(message => message.includes("ATTACK_RESPONSE stationary=true light=FLASH sound=BEEP"));
+  const viewHold = log.findIndex(message => message.includes("CAT_VIEW_HOLD_START duration_s=1 stationary=true"));
+  const viewDone = log.findIndex(message => message.includes("CAT_VIEW_HOLD_DONE duration_s=1"));
   assert.ok(switchIndex > 0, "the attack scenario should be selected during patrol");
   assert.ok(log.slice(switchIndex, attack).some(message => /PATROL_|^CMD \d+ (DRIVE|MOTOR) /.test(message)),
     "patrol should keep moving after the attack scenario is selected and before contact");
@@ -158,7 +162,8 @@ test("patrol continues until touch, then top signals after facing and left escap
   assert.ok(search > response, "search should begin after the touch releases");
   assert.ok(motor > search, "the robot should actually rotate to search");
   assert.ok(face > motor, `the search should finish with a face-cat result: ${log.filter(message => /SEARCH_CAT|SCAN_WAIT|FACE_CAT|ALIGN_CAT|OBSTACLE_NEAR|BEHAVIOR_ABORTED|TOP_LEVEL_DECISION/.test(message)).slice(-55).join(" | ")}`);
-  assert.ok(signal > face, "the sound and light response should start only after the cat is found and faced");
+  assert.ok(viewHold > face && viewDone > viewHold && signal > viewDone,
+    "the robot should hold a stationary cat view before selecting its response");
   assert.ok(!log.some(message => /^CMD \d+ ROTATE 90 /.test(message)), "patrol should never use the old fixed turn");
 
   const firstSignalEnd = performance.now() + 3000;
@@ -173,7 +178,10 @@ test("patrol continues until touch, then top signals after facing and left escap
   elements.get("attackArea").dispatch("change");
   randomValue = .9;
   const leftStart = messages().length;
-  const leftDeadline = performance.now() + 35000;
+  // Escape now survives mid-flee grabs (wait for release, then resume the flee and the
+  // 360° refacing sweep; grab-hold time does not consume the search budget), so the full
+  // left-attack round needs a wider window than the old abort-on-touch timeline.
+  const leftDeadline = performance.now() + 60000;
   while (performance.now() < leftDeadline &&
       messages().slice(leftStart).filter(message => message.includes("FACE_CAT_RESULT action=ATTACK_RESPONSE status=READY")).length < 2 &&
       !messages().slice(leftStart).some(message => message.includes("BEHAVIOR_ABORTED ATTACK_RESPONSE"))) {
@@ -199,11 +207,6 @@ test("patrol continues until touch, then top signals after facing and left escap
   assert.ok(reface > escapeDrive, "escape should finish by searching for the cat again");
   assert.ok(facedAgain > reface, `the robot should face the cat again after escape: ${leftLog.filter(message => /ATTACK_|SEARCH_CAT|FACE_CAT|BEHAVIOR_ABORTED|MOTOR |ROTATE 180|DRIVE 26/.test(message)).slice(-45).join(" | ")}`);
 
-  let interruptedTarget = "A";
-  for (const message of log.slice(0, response)) {
-    const reached = /PATROL_TAG_REACHED tag=[A-D] .* next_tag=([A-D])/.exec(message);
-    if (reached) interruptedTarget = reached[1];
-  }
   elements.get("catScenarioBehavior").value = "RETREAT";
   elements.get("catScenarioBehavior").dispatch("change");
   const endingStart = messages().length;
@@ -218,6 +221,13 @@ test("patrol continues until touch, then top signals after facing and left escap
   }
   const resumedLog = messages().slice(endingStart);
   const endingLog = messages().slice(leftStart);
+  // A grab during the first refacing legitimately starts a second response round, so
+  // anchor the pursuit-wait check to the chase wait that follows the LAST face result.
+  const chaseWaitStart = endingLog.findIndex((message, index) => index > facedAgain &&
+    message.includes("CHASE_WAIT_START duration_s=1 stationary=true"));
+  const chaseWaitDone = endingLog.findIndex((message, index) => index > chaseWaitStart && message.includes("CHASE_WAIT_DONE reason="));
+  assert.ok(chaseWaitStart > facedAgain && chaseWaitDone > chaseWaitStart,
+    "escape should end with a stationary wait for the cat to catch up");
   const outcomeStart = endingLog.findIndex(message => message.includes("ENDING_OUTCOME_START outcome=PREY_SIGNAL stationary=true"));
   const outcomeEnd = endingLog.findIndex((message, index) => index > outcomeStart &&
     message.includes("ENDING_OUTCOME_DONE outcome=PREY_SIGNAL"));
@@ -230,8 +240,16 @@ test("patrol continues until touch, then top signals after facing and left escap
   const resume = resumedLog.findIndex(message => message.includes("PATROL_RESUME target_tag="));
   assert.ok(stopConfirmation >= 0 && resume > stopConfirmation,
     `patrol should resume only after Uno confirms SESSION_STOPPED: ${resumedLog.slice(-45).join(" | ")}`);
+  // Interaction rounds may span several patrol checkpoints: the resume must continue
+  // from the last checkpoint reached before the session ended, never restart at A.
+  const absoluteMessages = messages();
+  let interruptedTarget = "A";
+  for (let i = endingStart + resume - 1; i >= 0; i--) {
+    const reached = /PATROL_TAG_REACHED tag=[A-D] .* next_tag=([A-D])/.exec(absoluteMessages[i]);
+    if (reached) { interruptedTarget = reached[1]; break; }
+  }
   assert.ok(resumedLog[resume].includes(`target_tag=${interruptedTarget}`),
-    `patrol must retain its interrupted target ${interruptedTarget}: ${resumedLog[resume]}`);
+    `patrol must retain its checkpoint ${interruptedTarget}: ${resumedLog[resume]}`);
   assert.ok(resumedLog.slice(resume).some(message => message.includes("BEHAVIOR PATROL source=ESP32_AUTO")),
     "automatic patrol should restart after the interaction ends");
 
@@ -394,6 +412,7 @@ test("patrol continues until touch, then top signals after facing and left escap
   elements.get("touchSignalPercent").value = "0";
   elements.get("touchSlowEscapePercent").value = "100";
   elements.get("touchFastEscapePercent").value = "0";
+  elements.get("postEscapeWaitSeconds").value = "3";
   elements.get("applyResponsePolicy").click();
   const slowEscapeStart = messages().length;
   topTouchButton.click();
@@ -408,6 +427,31 @@ test("patrol continues until touch, then top signals after facing and left escap
   }
   assert.ok(messages().slice(slowEscapeStart).some(message => message.includes("ESCAPE_PHASE pace=SLOW straight_distance_cm=26 pwm=95")),
     `the slow setting should change the executed escape speed: ${messages().slice(slowEscapeStart).filter(message => /ATTACK_|ESCAPE_PHASE|BEHAVIOR_ABORTED/.test(message)).slice(-25).join(" | ")}`);
+  const pursuitDeadline = performance.now() + 15000;
+  while (performance.now() < pursuitDeadline &&
+      !messages().slice(slowEscapeStart).some(message => message.includes("CHASE_WAIT_START duration_s=3"))) {
+    const frame = nextFrame;
+    assert.ok(frame);
+    nextFrame = null;
+    frame(performance.now());
+    await new Promise(resolve => setTimeout(resolve, 16));
+  }
+  assert.ok(messages().slice(slowEscapeStart).some(message => message.includes("CHASE_WAIT_START duration_s=3")),
+    "escape should wait for the cat to catch up");
+  topTouchButton.click();
+  const queuedTouchDeadline = performance.now() + 2500;
+  while (performance.now() < queuedTouchDeadline &&
+      !messages().slice(slowEscapeStart).some(message => message.includes("ATTACK_TOUCH_QUEUED_START area=TOP"))) {
+    const frame = nextFrame;
+    assert.ok(frame);
+    nextFrame = null;
+    frame(performance.now());
+    await new Promise(resolve => setTimeout(resolve, 16));
+  }
+  const queuedTouchLog = messages().slice(slowEscapeStart);
+  assert.ok(queuedTouchLog.some(message => message.includes("CHASE_WAIT_DONE reason=TOUCH")) &&
+    queuedTouchLog.some(message => message.includes("ATTACK_TOUCH_QUEUED_START area=TOP")),
+  `a new touch during pursuit wait should start a new response: ${queuedTouchLog.filter(message => /CHASE_WAIT|ATTACK_TOUCH/.test(message)).slice(-20).join(" | ")}`);
   elements.get("stopMotion").click();
 
   elements.get("resetScene").click();
@@ -439,6 +483,72 @@ test("patrol continues until touch, then top signals after facing and left escap
     `search failure should stop the interaction and reopen Uno motion before patrol: ${unseenTouchLog.filter(message => /CAT_TOUCH_FALLBACK|SESSION_|PATROL_RESUME/.test(message)).slice(-35).join(" | ")}`);
   assert.ok(!unseenTouchLog.some(message => /ENDING_OUTCOME_START outcome=PREY_/.test(message)),
     "a failed search must not draw a prey-like ending");
+  elements.get("stopPatrol").click();
+
+  // --- Transport fault injection -------------------------------------------------
+  // Real serial links can corrupt a frame in flight (the escape bug: fragmented
+  // ROTATE lines were answered UNKNOWN_OR_INVALID_COMMAND and the flee silently
+  // died). The mock receives intact lines, so faults are injected via testHooks.
+  const { testHooks } = await import("./app.mjs");
+  elements.get("resetScene").click();
+  elements.get("touchSignalPercent").value = "0";
+  elements.get("touchSlowEscapePercent").value = "0";
+  elements.get("touchFastEscapePercent").value = "100";
+  elements.get("postEscapeWaitSeconds").value = "1";
+  elements.get("applyResponsePolicy").click();
+  let corruptedRotations = 0;
+  let droppedStops = 0;
+  testHooks.wireFault = line => {
+    if (/^CMD \d+ ROTATE -?\d+ 110$/.test(line) && corruptedRotations === 0) {
+      corruptedRotations = 1;
+      return line.replace(/ -?\d+ 110$/, ""); // firmware/mock answers UNKNOWN_OR_INVALID
+    }
+    if (/^CMD \d+ SESSION_STOP$/.test(line) && droppedStops === 0) {
+      droppedStops = 1;
+      return null; // frame lost entirely: the host must retry, not freeze
+    }
+    return line;
+  };
+  randomValue = .9;
+  // Run with auto-control on so the end of the session must hand control back to patrol.
+  elements.get("startPatrol").click();
+  const faultStart = messages().length;
+  topTouchButton.click();
+  const faultDeadline = performance.now() + 90000;
+  while (performance.now() < faultDeadline &&
+      !messages().slice(faultStart).some(message => /DONE \d+ SESSION_STOPPED/.test(message))) {
+    const frame = nextFrame;
+    assert.ok(frame);
+    nextFrame = null;
+    frame(performance.now());
+    await new Promise(resolve => setTimeout(resolve, 16));
+  }
+  testHooks.wireFault = null;
+  const faultLog = messages().slice(faultStart);
+  assert.ok(faultLog.some(message => /^CMD \d+ ROTATE -?\d+ 110$/.test(message)),
+    "the escape must be sent despite the first corrupted attempt");
+  // TX rows log the pre-fault line, so the intact RESEND is the first match after the retry event.
+  const retryEvent = faultLog.findIndex(message => message.includes("MOTION_RETRY"));
+  const intactRotate = faultLog.findIndex((message, index) => index > retryEvent &&
+    /^CMD \d+ ROTATE -?\d+ 110$/.test(message));
+  const faultEscapeDrive = faultLog.findIndex(message => /^CMD \d+ DRIVE 26 210$/.test(message));
+  assert.ok(retryEvent >= 0 && intactRotate > retryEvent,
+    `a transport error should trigger exactly one resend before the flee proceeds: ${faultLog.filter(m => /ROTATE|DRIVE|MOTION_RETRY|BEHAVIOR_ABORTED/.test(m)).slice(0, 25).join(" | ")}`);
+  assert.ok(faultEscapeDrive > intactRotate &&
+    !faultLog.some(message => message.includes("BEHAVIOR_ABORTED ATTACK_RESPONSE reason=UNKNOWN_OR_INVALID_COMMAND")),
+    "the escape should complete instead of silently aborting on a corrupted frame");
+  const stopRetry = faultLog.findIndex(message => message.includes("SESSION_STOP_RETRY"));
+  const stopDone = faultLog.findIndex(message => /DONE \d+ SESSION_STOPPED/.test(message));
+  assert.ok(stopRetry >= 0 && stopDone > stopRetry,
+    `a lost SESSION_STOP frame should be retried, not end in a frozen session: ${faultLog.filter(m => /SESSION_/.test(m)).slice(-15).join(" | ")}`);
+  const endBehavior = faultLog.findIndex(message => message.includes("BEHAVIOR END_SESSION"));
+  const viewBeforeStop = faultLog.findIndex((message, index) => index > endBehavior &&
+    (message.includes("CAT_VIEW_HOLD_DONE") || message.includes("FACE_CAT_RESULT action=END_SESSION")));
+  assert.ok(endBehavior >= 0 && viewBeforeStop >= 0 && stopDone > viewBeforeStop,
+    "the last interaction action must be the cat-facing hold (or its recorded failure) before SESSION_STOP");
+  const resumeAfterFault = faultLog.findIndex(message => message.includes("PATROL_RESUME target_tag="));
+  assert.ok(resumeAfterFault > stopDone,
+    `patrol should resume after the retried session stop: ${faultLog.filter(m => /PATROL_RESUME|SESSION_/.test(m)).slice(-10).join(" | ")}`);
   elements.get("stopPatrol").click();
   Math.random = previousRandom;
 });

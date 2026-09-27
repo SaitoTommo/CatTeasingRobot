@@ -141,8 +141,11 @@
             </div>
             <div class="inject-row">
               <label>猫主动试探冷却 s <input id="catProbeCooldownSeconds" type="number" min="0" max="60" step="1" value="15"></label>
+              <label>进入互动后面向猫停留 s <input id="initialLookSeconds" type="number" min="0" max="30" step="1" value="5"></label>
+              <label>逃跑后等待猫追击 s <input id="postEscapeWaitSeconds" type="number" min="0" max="60" step="1" value="10"></label>
               <button id="applyResponsePolicy" class="button secondary" type="button">应用触碰回应概率</button>
             </div>
+            <p class="hint">停留取景也适用于猫状态告警打断巡游；0 可关闭对应等待。等待期间保持停车，新的触碰会接入下一轮回应。</p>
             <p id="responsePolicyStatus" class="hint" aria-live="polite"></p>
           </div>
           <div class="decision-priority-card">

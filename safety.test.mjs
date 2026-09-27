@@ -96,3 +96,25 @@ test("signed rotation can turn left and still obey left sonar", () => {
   uno.receiveWire("CMD 5 ROTATE -90 110", 0);
   assert.ok(lines.includes("EVENT MOTION_STARTED 5 ROTATE ESTIMATED"));
 });
+
+test("one continuous overlap emits one press until the cat separates and returns", () => {
+  const world = initialWorld();
+  world.cat = { x: world.robot.x, y: world.robot.y + 30 };
+  const lines = [];
+  const uno = new MockUno(world, line => lines.push(line));
+  uno.step(0);
+  uno.step(50);
+  world.robot.heading = Math.PI;
+  uno.step(500);
+  uno.step(5000);
+  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* PRESS/.test(line)).length, 1);
+  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* RELEASE/.test(line)).length, 0);
+  world.cat.y = world.robot.y + 150;
+  uno.step(5050);
+  uno.step(5100);
+  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* RELEASE/.test(line)).length, 1);
+  world.cat.y = world.robot.y + 30;
+  uno.step(5150);
+  uno.step(5200);
+  assert.equal(lines.filter(line => /EVENT SIM_POSITION TOUCH .* PRESS/.test(line)).length, 2);
+});
