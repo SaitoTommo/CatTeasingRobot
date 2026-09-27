@@ -1,7 +1,7 @@
 // ESP32 decision policy. This module accepts observations and emits behavior decisions;
 // it has no DOM, canvas, serial, or cat-scene dependency.
 export const DEFAULT_RESPONSE_POLICY = Object.freeze({
-  touchSignalPercent: 20, touchSlowEscapePercent: 40, touchFastEscapePercent: 40,
+  touchFlashPercent: 20, touchPreyPercent: 20, touchSlowEscapePercent: 40, touchFastEscapePercent: 40,
   catFollowProbePercent: 5, catFollowObservePercent: 35, catFollowPatrolPercent: 60,
   endingAfterRounds: 3, endingInactivitySeconds: 12,
   endingPatrolPercent: 40, endingSilentPercent: 30, endingSignalPercent: 30,
@@ -23,7 +23,8 @@ export const DEFAULT_RESPONSE_POLICY = Object.freeze({
 });
 
 export const RESPONSE_POLICY_LIMITS = Object.freeze({
-  touchSignalPercent: [0, 100], touchSlowEscapePercent: [0, 100], touchFastEscapePercent: [0, 100],
+  touchFlashPercent: [0, 100], touchPreyPercent: [0, 100],
+  touchSlowEscapePercent: [0, 100], touchFastEscapePercent: [0, 100],
   catFollowProbePercent: [0, 100], catFollowObservePercent: [0, 100], catFollowPatrolPercent: [0, 100],
   endingAfterRounds: [0, 20], endingInactivitySeconds: [0, 120],
   endingPatrolPercent: [0, 100], endingSilentPercent: [0, 100], endingSignalPercent: [0, 100],
@@ -50,11 +51,18 @@ export function validateResponsePolicy(policy) {
     throw new Error("INVALID_RESPONSE_POLICY");
   // Migrate the two-probability settings saved by earlier versions of the lab.
   const migrated = { ...policy };
-  if (policy.signalPercent !== undefined && policy.touchSignalPercent === undefined) {
-    migrated.touchSignalPercent = policy.signalPercent;
+  if (policy.signalPercent !== undefined && policy.touchSignalPercent === undefined && policy.touchPreyPercent === undefined) {
+    migrated.touchPreyPercent = policy.signalPercent;
+    if (policy.touchFlashPercent === undefined) migrated.touchFlashPercent = policy.signalPercent;
     migrated.touchSlowEscapePercent = Math.round((100 - policy.signalPercent) *
       (policy.slowEscapePercent ?? 50) / 100);
-    migrated.touchFastEscapePercent = 100 - migrated.touchSignalPercent - migrated.touchSlowEscapePercent;
+    migrated.touchFastEscapePercent = 100 - migrated.touchPreyPercent - migrated.touchSlowEscapePercent;
+  }
+  // The former post-release signal share becomes the caught/prey share. Keep
+  // the same value for the independent contact-light draw on saved policies.
+  if (policy.touchSignalPercent !== undefined) {
+    if (policy.touchPreyPercent === undefined) migrated.touchPreyPercent = policy.touchSignalPercent;
+    if (policy.touchFlashPercent === undefined) migrated.touchFlashPercent = policy.touchSignalPercent;
   }
   if (policy.probePercent !== undefined && policy.robotFarProbePercent === undefined) {
     migrated.robotFarProbePercent = policy.probePercent;
@@ -80,7 +88,7 @@ export function validateResponsePolicy(policy) {
   if (resolved.farCatThresholdCm >= resolved.catLeaveDistanceCm)
     throw new Error("INVALID_RESPONSE_POLICY distance_order");
   for (const keys of [
-    ["touchSignalPercent", "touchSlowEscapePercent", "touchFastEscapePercent"],
+    ["touchPreyPercent", "touchSlowEscapePercent", "touchFastEscapePercent"],
     ["catFollowProbePercent", "catFollowObservePercent", "catFollowPatrolPercent"],
     ["robotFarApproachPercent", "robotFarProbePercent"],
     ["robotNearSignalPercent", "robotNearObservePercent", "robotNearStayPercent"],
@@ -96,18 +104,21 @@ export function validateResponsePolicy(policy) {
 
 export function touchResponsePlan(area, random = Math.random, policy = DEFAULT_RESPONSE_POLICY) {
   if (!["TOP", "LEFT", "RIGHT", "REAR"].includes(area)) throw new Error("INVALID_TOUCH_AREA");
-  const { touchSignalPercent, touchSlowEscapePercent } = validateResponsePolicy(policy);
+  const { touchFlashPercent, touchPreyPercent, touchSlowEscapePercent } = validateResponsePolicy(policy);
+  const flashDraw = random();
   const draw = random();
-  const response = draw < touchSignalPercent / 100 ? "STAY_SIGNAL"
-    : draw < (touchSignalPercent + touchSlowEscapePercent) / 100
+  const response = draw < touchPreyPercent / 100 ? "PREY_STILL"
+    : draw < (touchPreyPercent + touchSlowEscapePercent) / 100
       ? "SLOW_STRAIGHT_ESCAPE" : "FAST_STRAIGHT_ESCAPE";
   return {
     area,
     direction: area === "LEFT" ? -1 : 1,
     sweepLimitDeg: 360,
     response,
+    flashDuringTouch: flashDraw < touchFlashPercent / 100,
+    flashDraw,
     draw,
-    escapeDraw: response === "STAY_SIGNAL" ? null : draw,
+    escapeDraw: response === "PREY_STILL" ? null : draw,
   };
 }
 
@@ -266,7 +277,9 @@ export class Esp32DecisionSystem {
       reason: `attack_touch_${area} count=${this.attackCount} interaction_round=${this.catInteractionRounds}` +
         ` random=${plan.draw.toFixed(3)}` +
         ` escape_random=${plan.escapeDraw === null ? "NONE" : plan.escapeDraw.toFixed(3)}` +
-        ` touch_signal_pct=${this.responsePolicy.touchSignalPercent}` +
+        ` contact_flash_random=${plan.flashDraw.toFixed(3)} contact_flash=${plan.flashDuringTouch}` +
+        ` touch_flash_pct=${this.responsePolicy.touchFlashPercent}` +
+        ` touch_prey_pct=${this.responsePolicy.touchPreyPercent}` +
         ` touch_slow_escape_pct=${this.responsePolicy.touchSlowEscapePercent}` +
         ` touch_fast_escape_pct=${this.responsePolicy.touchFastEscapePercent}` +
         ` response=${plan.response} direction=${plan.direction < 0 ? "LEFT" : "RIGHT"} sweep_limit_deg=${plan.sweepLimitDeg}`,

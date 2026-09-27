@@ -128,9 +128,10 @@
           <p class="hint">决策系统只接收触碰、摄像头观测、告警和时钟输入。TX 命令是决策执行后送给 Uno 的输出；“可取景”只依据模拟摄像头。</p>
           <div class="decision-priority-card">
             <h3>① 猫主动找机器人：触碰后的回应</h3>
-            <p class="hint">Uno 回报触碰后，先选声光／慢逃／快逃；执行完成后，只抽取一次试探／原地观察／恢复巡游。之后等待新的触碰或独立的“结束互动”条件。每组三个概率须合计 100%。</p>
+            <p class="hint">Uno 回报触碰按下时，独立抽取是否立即闪光，再抽取当场装死／松开后慢逃／松开后快逃。装死时不转动或移动，等猫离开后续巡；逃跑完成后再抽取试探／观察／巡游。装死／慢逃／快逃须合计 100%；闪光概率单独设置。</p>
             <div class="inject-row">
-              <label>触碰后声光 % <input id="touchSignalPercent" type="number" min="0" max="100" step="1" value="20"></label>
+              <label>接触中闪光 % <input id="touchFlashPercent" type="number" min="0" max="100" step="1" value="20"></label>
+              <label>被抓住后装死 % <input id="touchPreyPercent" type="number" min="0" max="100" step="1" value="20"></label>
               <label>触碰后慢逃 % <input id="touchSlowEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
               <label>触碰后快逃 % <input id="touchFastEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
             </div>
@@ -146,12 +147,12 @@
               <label>连击合并窗口 ms <input id="touchDebounceMs" type="number" min="0" max="5000" step="50" value="1000"></label>
               <button id="applyResponsePolicy" class="button secondary" type="button">应用触碰回应概率</button>
             </div>
-            <p class="hint">逃跑不等待预先取景；触碰松开后立即向安全方向移动，停下后再找猫并对准。停留取景仍适用于声光回应与猫状态告警。首次触碰立即触发回应，合并窗口只用于把后续连击算作同一轮。</p>
+            <p class="hint">接触中闪光不启动轮子；抽中装死会立即停车并保持静止。逃跑不等待预先取景，触碰松开后立即向安全方向移动，停下后再找猫并对准。首次触碰立即触发回应，合并窗口只用于把后续连击算作同一轮。</p>
             <p id="responsePolicyStatus" class="hint" aria-live="polite"></p>
           </div>
           <div class="decision-priority-card">
             <h3>② 结束互动：独立触发与随机结局</h3>
-            <p class="hint">一次连击算一轮。达到设定轮数的那次抓住触碰会立即抽取直接巡游、安静装死或声光装死；装死期间停车，等猫离开或达到最长等待后再恢复巡游。无新触碰超时只结束互动并恢复巡游，不会在逃跑后装死。填 0 可关闭对应触发条件。</p>
+            <p class="hint">一次连击算一轮。平时每轮被抓住即可抽中装死；达到设定轮数时，改由下方结局概率抽取直接巡游、安静装死或声光装死。装死发生在接触当下，停车等待猫离开或达到最长等待后续巡。无新触碰超时只结束互动。填 0 可关闭对应轮数或超时条件。</p>
             <div class="inject-row">
               <label>第几轮抓住时抽取装死结局 <input id="endingAfterRounds" type="number" min="0" max="20" step="1" value="3"></label>
               <label>无新触碰多少秒结束 <input id="endingInactivitySeconds" type="number" min="0" max="120" step="1" value="12"></label>

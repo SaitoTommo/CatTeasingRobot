@@ -12,12 +12,20 @@ test("search stops at one full turn", () => {
     limitDeg: 360, timedOut: false }), "FULL_SWEEP");
 });
 
-test("cat touch has its own three response probabilities", () => {
-  assert.equal(touchResponsePlan("TOP", () => .1).response, "STAY_SIGNAL");
+test("contact light draw is independent of prey or escape", () => {
+  assert.equal(touchResponsePlan("TOP", () => .1).response, "PREY_STILL");
   assert.equal(touchResponsePlan("LEFT", () => .3).response, "SLOW_STRAIGHT_ESCAPE");
   assert.equal(touchResponsePlan("RIGHT", () => .9).response, "FAST_STRAIGHT_ESCAPE");
   assert.equal(touchResponsePlan("LEFT", () => .3).direction, -1);
   assert.equal(touchResponsePlan("LEFT", () => .3).sweepLimitDeg, 360);
+  let draws = [.1, .9];
+  const litEscape = touchResponsePlan("RIGHT", () => draws.shift());
+  assert.equal(litEscape.flashDuringTouch, true);
+  assert.equal(litEscape.response, "FAST_STRAIGHT_ESCAPE");
+  draws = [.9, .1];
+  const quietPrey = touchResponsePlan("TOP", () => draws.shift());
+  assert.equal(quietPrey.flashDuringTouch, false);
+  assert.equal(quietPrey.response, "PREY_STILL");
 });
 
 test("cat-initiated follow-up is independent from robot search probabilities", () => {
@@ -64,7 +72,8 @@ test("robot-initiated far and near probabilities and cooldown remain separate", 
 test("old browser settings migrate and each probability group sums to 100", () => {
   const legacy = validateResponsePolicy({ signalPercent: 20, slowEscapePercent: 75,
     probePercent: 10, nearObservePercent: 50 });
-  assert.equal(legacy.touchSignalPercent, 20);
+  assert.equal(legacy.touchPreyPercent, 20);
+  assert.equal(legacy.touchFlashPercent, 20);
   assert.equal(legacy.touchSlowEscapePercent, 60);
   assert.equal(legacy.touchFastEscapePercent, 20);
   assert.equal(legacy.robotFarProbePercent, 10);
@@ -72,6 +81,10 @@ test("old browser settings migrate and each probability group sums to 100", () =
   assert.equal(legacy.initialLookSeconds, 5);
   assert.equal(legacy.touchDebounceMs, 1000);
   assert.equal(legacy.postEscapeWaitSeconds, 10);
+  const saved = validateResponsePolicy({ touchSignalPercent: 30,
+    touchSlowEscapePercent: 30, touchFastEscapePercent: 40 });
+  assert.equal(saved.touchPreyPercent, 30);
+  assert.equal(saved.touchFlashPercent, 30);
   assert.equal(validateResponsePolicy({ initialLookSeconds: 8,
     postEscapeWaitSeconds: 20 }).postEscapeWaitSeconds, 20);
   assert.throws(() => validateResponsePolicy({ catFollowProbePercent: 20 }), /sum_/);
