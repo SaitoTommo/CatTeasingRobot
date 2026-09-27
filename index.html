@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uno × 猫互动测试台</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">CAT ROBOT / FIRMWARE LAB</p>
+      <h1>Uno × 猫互动测试台</h1>
+      <p class="subtitle">网页暂代 ESP32 规划动作；Arduino Uno 只负责执行和本地安全判断。</p>
+    </div>
+    <div class="connection">
+      <span id="modeBadge" class="badge">本地模拟</span>
+      <button id="connectSerial" class="button secondary" type="button">连接 Uno 串口</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice" id="modeNotice">当前回报来自 JavaScript 模拟 Uno，不是实际固件。连接 Uno USB 串口后才能向固件发送命令。</div>
+    <div class="notice boot-error" id="appBootError" role="alert" hidden>测试台脚本没有成功加载。请关闭旧的测试台服务器窗口，重新双击“启动猫互动测试台.bat”，然后刷新此页面。若直接用 file:// 打开了 HTML，也请改用 BAT 启动。</div>
+    <section class="main-grid" aria-label="互动测试台">
+      <div class="scene-column">
+        <section class="panel scene-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">SIMULATION ARENA</p>
+              <h2>可视化环境</h2>
+            </div>
+            <div class="scene-actions">
+              <button id="pauseSim" class="button secondary" type="button">暂停模拟</button>
+              <button id="resetScene" class="button secondary" type="button">重置位置</button>
+            </div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="arena" width="1000" height="600" aria-label="可拖动的猫、机器人和障碍物模拟环境"></canvas>
+          </div>
+          <p class="hint">拖动猫、机器人、障碍物及 A/B/C/D 路线标签；拖动机器人前方的小圆点改变朝向。键盘：W/A/S/D 移猫，方向键移机器人，Q/E 转向，空格停止。车身变黄表示灯亮，橙色虚线表示灯处于闪烁的灭灯阶段，紫色声波表示蜂鸣器鸣响，蓝色圆环表示正在运动。这些显示跟随 Uno 的逻辑状态；空板模式不会输出真实引脚电平。</p>
+          <div class="route-card">
+            <div><strong>固定巡游路线</strong><span>A → 旋转寻找 B → 旋转寻找 C → 旋转寻找 D → 旋转寻找 A → 循环；每次最多 360°</span></div>
+            <label>接近标签至 <input id="tagStopCm" type="number" min="15" max="50" value="20"> cm</label>
+            <span id="routeStatus" aria-live="polite">等待开始巡游</span>
+          </div>
+          <div class="telemetry" aria-live="polite">
+            <div><span>前向判定（ESP32 → Uno）</span><strong id="distanceValue">—</strong></div>
+            <div><span>左侧超声波</span><strong id="leftSonarValue">—</strong></div>
+            <div><span>右侧超声波</span><strong id="rightSonarValue">—</strong></div>
+            <div><span>模拟猫识别</span><strong id="cameraValue">—</strong></div>
+            <div><span>触碰</span><strong id="touchValue">—</strong></div>
+            <div><span>运动状态</span><strong id="motionValue">—</strong></div>
+            <div><span>灯状态</span><strong id="ledValue">—</strong></div>
+            <div><span>蜂鸣器</span><strong id="buzzerValue">—</strong></div>
+          </div>
+          <div class="camera-stream-card">
+            <strong>ESP32-S3 摄像头视频流（预留）</strong>
+            <div class="inject-row">
+              <label>HTTP 视频流 URL <input id="cameraStreamUrl" type="url" placeholder="http://esp32-address/stream"></label>
+              <button id="openCameraStream" class="button secondary" type="button">显示画面</button>
+              <button id="closeCameraStream" class="button secondary" type="button">关闭画面</button>
+            </div>
+            <p id="cameraStreamStatus" class="hint">尚未连接。视频仅供预览；将来由 ESP32 处理画面，再把前向安全判定发送给 Uno。当前未实现真实图像识别。</p>
+            <img id="cameraStreamPreview" alt="ESP32-S3 摄像头视频流" hidden>
+          </div>
+        </section>
+
+        <section class="panel scenario-panel">
+          <div class="section-heading"><div><p class="eyebrow">CAT INPUT</p><h2>猫的动作输入</h2></div></div>
+          <p class="hint">这里仅设置猫如何移动和接触机器人。独立的决策模块读取触碰、摄像头观测、一次性告警和时间，再决定巡游或互动动作。</p>
+          <div class="scenario-fields">
+            <label>猫的行为
+              <select id="catScenarioBehavior">
+                <option value="STILL">静止观察</option>
+                <option value="APPROACH">主动靠近</option>
+                <option value="CHASE">跟随机器人</option>
+                <option value="ATTACK" selected>接近并反复攻击</option>
+                <option value="RETREAT">远离机器人</option>
+              </select>
+            </label>
+            <label>攻击触碰位置
+              <select id="attackArea">
+                <option value="TOP">顶部</option>
+                <option value="LEFT">左侧</option>
+                <option value="RIGHT">右侧</option>
+                <option value="REAR">后部</option>
+              </select>
+            </label>
+            <label>猫移动速度 cm/s <input id="catSpeedCmS" type="number" min="1" max="60" value="35"></label>
+            <label>每次攻击持续 ms <input id="attackHoldMs" type="number" min="100" max="3000" step="100" value="700"></label>
+            <label>攻击间隔 ms <input id="attackIntervalMs" type="number" min="500" max="10000" step="100" value="3500"></label>
+          </div>
+          <div class="inline-actions">
+            <button id="prepareScenarioBoard" class="button secondary" type="button">准备 Uno 空板</button>
+            <button id="startCatMotion" class="button" type="button">开始猫动作</button>
+            <button id="stopCatMotion" class="button secondary" type="button">停止猫动作</button>
+            <span id="systemStatus" class="muted" aria-live="polite">猫动作未开始</span>
+          </div>
+          <p class="hint">可随时选择“远离机器人”让猫离开。猫状态告警是一次性输入，请在右侧“传感器注入”中发送。</p>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">AUDIT TRAIL</p>
+              <h2>指令与事件</h2>
+            </div>
+            <div class="scene-actions">
+              <button id="exportLog" class="button secondary" type="button">导出 JSON</button>
+              <button id="clearLog" class="button secondary" type="button">清空</button>
+            </div>
+          </div>
+          <div id="log" class="log" role="log" aria-label="指令与事件记录"></div>
+        </section>
+      </div>
+
+      <div class="controls-column">
+        <section class="panel decision-panel" aria-live="polite">
+          <div class="section-heading"><div><p class="eyebrow">ESP32 DECISION</p><h2>顶层决策与取景</h2></div></div>
+          <div class="decision-card">
+            <span class="decision-label">当前输入</span><strong id="decisionInput">等待传感器数据</strong>
+            <span class="decision-label">选定动作</span><strong id="decisionAction" class="decision-action">—</strong>
+            <span class="decision-label">选择依据</span><span id="decisionReason">—</span>
+            <span class="decision-label">面向猫 / 取景</span><strong id="faceCatStatus">未开始</strong>
+          </div>
+          <div class="inline-actions"><button id="startPatrol" class="button" type="button">启动巡游决策</button><button id="stopPatrol" class="button danger" type="button">停止决策与运动</button></div>
+          <p class="hint">决策系统只接收触碰、摄像头观测、告警和时钟输入。TX 命令是决策执行后送给 Uno 的输出；“可取景”只依据模拟摄像头。</p>
+          <div class="decision-priority-card">
+            <h3>① 猫主动找机器人：触碰后的回应</h3>
+            <p class="hint">Uno 回报触碰后，先选声光／慢逃／快逃；执行完成后，只抽取一次试探／原地观察／恢复巡游。之后等待新的触碰或独立的“结束互动”条件。每组三个概率须合计 100%。</p>
+            <div class="inject-row">
+              <label>触碰后声光 % <input id="touchSignalPercent" type="number" min="0" max="100" step="1" value="20"></label>
+              <label>触碰后慢逃 % <input id="touchSlowEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
+              <label>触碰后快逃 % <input id="touchFastEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
+            </div>
+            <div class="inject-row">
+              <label>回应后走停试探 % <input id="catFollowProbePercent" type="number" min="0" max="100" step="1" value="5"></label>
+              <label>回应后原地观察 % <input id="catFollowObservePercent" type="number" min="0" max="100" step="1" value="35"></label>
+              <label>回应后恢复巡游 % <input id="catFollowPatrolPercent" type="number" min="0" max="100" step="1" value="60"></label>
+            </div>
+            <div class="inject-row">
+              <label>猫主动试探冷却 s <input id="catProbeCooldownSeconds" type="number" min="0" max="60" step="1" value="15"></label>
+              <button id="applyResponsePolicy" class="button secondary" type="button">应用触碰回应概率</button>
+            </div>
+            <p id="responsePolicyStatus" class="hint" aria-live="polite"></p>
+          </div>
+          <div class="decision-priority-card">
+            <h3>② 结束互动：独立触发与随机结局</h3>
+            <p class="hint">每次 Uno 触碰算一轮。达到设定轮数，或最后一次触碰后超过设定时间，先发生的条件触发结束；填 0 可关闭其中一个条件。结局再按独立概率随机选择：直接巡游、安静地倒下、带声光地倒下。倒下后停车等待猫离开，再恢复巡游。</p>
+            <div class="inject-row">
+              <label>触碰达到多少轮结束 <input id="endingAfterRounds" type="number" min="0" max="20" step="1" value="3"></label>
+              <label>无新触碰多少秒结束 <input id="endingInactivitySeconds" type="number" min="0" max="120" step="1" value="12"></label>
+              <label>倒下后最多静止等待 s <input id="captureWaitMaxSeconds" type="number" min="1" max="60" step="1" value="15"></label>
+            </div>
+            <div class="inject-row">
+              <label>直接恢复巡游 % <input id="endingPatrolPercent" type="number" min="0" max="100" step="1" value="40"></label>
+              <label>安静倒下 % <input id="endingSilentPercent" type="number" min="0" max="100" step="1" value="30"></label>
+              <label>声光倒下 % <input id="endingSignalPercent" type="number" min="0" max="100" step="1" value="30"></label>
+              <button id="applyEndingPolicy" class="button secondary" type="button">应用结束触发与结局</button>
+            </div>
+            <p id="endingPolicyStatus" class="hint" aria-live="polite"></p>
+          </div>
+          <div class="decision-priority-card">
+            <h3>③ 机器人主动找猫：独立决策</h3>
+            <p class="hint">巡游收到一次性猫状态告警后进入此分支；远处选缓慢接近／走停试探，近处选声光／观察／静止。不会读取上面“猫主动”概率。每组概率须合计 100%。</p>
+            <div class="inject-row">
+              <label>远处缓慢接近 % <input id="robotFarApproachPercent" type="number" min="0" max="100" step="1" value="85"></label>
+              <label>远处走停试探 % <input id="robotFarProbePercent" type="number" min="0" max="100" step="1" value="15"></label>
+              <label>远近分界 cm <input id="farCatThresholdCm" type="number" min="20" max="69" step="1" value="40"></label>
+              <label>机器人主动试探冷却 s <input id="robotProbeCooldownSeconds" type="number" min="0" max="60" step="1" value="15"></label>
+            </div>
+            <div class="inject-row">
+              <label>近处声光 % <input id="robotNearSignalPercent" type="number" min="0" max="100" step="1" value="20"></label>
+              <label>近处观察 % <input id="robotNearObservePercent" type="number" min="0" max="100" step="1" value="40"></label>
+              <label>近处静止 % <input id="robotNearStayPercent" type="number" min="0" max="100" step="1" value="40"></label>
+              <button id="applyRobotPolicy" class="button secondary" type="button">应用机器人主动概率</button>
+            </div>
+            <p id="robotPolicyStatus" class="hint" aria-live="polite"></p>
+          </div>
+          <details class="control-subsection"><summary>高级动作参数：距离、PWM、停顿与安全超时</summary>
+            <details><summary>决策距离、间隔与结束条件</summary>
+              <div class="inject-row">
+                <label>猫离开距离 cm <input id="catLeaveDistanceCm" type="number" min="41" max="150" step="1" value="70"></label>
+                <label>离开持续时间 s <input id="catLeaveSeconds" type="number" min="1" max="30" step="1" value="5"></label>
+                <label>互动最长时间 s <input id="sessionLimitSeconds" type="number" min="10" max="300" step="1" value="60"></label>
+                <label>动作后再决策间隔 ms <input id="decisionIntervalMs" type="number" min="0" max="10000" step="1" value="2500"></label>
+              </div>
+            </details>
+            <details><summary>找猫、对准与触碰松开</summary>
+              <div class="inject-row">
+                <label>找猫超时 ms <input id="searchTimeoutMs" type="number" min="1000" max="30000" step="1" value="15000"></label>
+                <label>收尾找猫超时 ms <input id="finalSearchTimeoutMs" type="number" min="1000" max="30000" step="1" value="8000"></label>
+                <label>对准超时 ms <input id="alignTimeoutMs" type="number" min="1000" max="15000" step="1" value="5000"></label>
+                <label>等待触碰松开 ms <input id="touchReleaseTimeoutMs" type="number" min="500" max="10000" step="1" value="4000"></label>
+                <label>找猫转向 PWM <input id="searchPwm" type="number" min="30" max="150" step="1" value="75"></label>
+                <label>画面居中容差 % <input id="centerTolerancePercent" type="number" min="1" max="20" step="0.1" value="5.5"></label>
+                <label>对准转向 PWM <input id="alignPwm" type="number" min="30" max="150" step="1" value="52"></label>
+              </div>
+            </details>
+            <details><summary>接近与走停试探动作</summary>
+              <div class="inject-row">
+                <label>缓慢接近距离 cm <input id="slowApproachCm" type="number" min="1" max="30" step="1" value="9"></label>
+                <label>缓慢接近 PWM <input id="slowApproachPwm" type="number" min="50" max="255" step="1" value="95"></label>
+                <label>试探第 1 段 cm <input id="probeStep1Cm" type="number" min="1" max="20" step="1" value="3"></label>
+                <label>试探第 2 段 cm <input id="probeStep2Cm" type="number" min="1" max="20" step="1" value="4"></label>
+                <label>试探第 3 段 cm <input id="probeStep3Cm" type="number" min="1" max="20" step="1" value="3"></label>
+                <label>第 1 段后停顿 ms <input id="probePause1Ms" type="number" min="0" max="3000" step="1" value="700"></label>
+                <label>第 2 段后停顿 ms <input id="probePause2Ms" type="number" min="0" max="3000" step="1" value="900"></label>
+                <label>第 3 段后停顿 ms <input id="probePause3Ms" type="number" min="0" max="3000" step="1" value="600"></label>
+                <label>试探 PWM <input id="probePwm" type="number" min="50" max="255" step="1" value="90"></label>
+              </div>
+            </details>
+            <details><summary>声光与逃跑动作</summary>
+              <div class="inject-row">
+                <label>闪灯时长 ms <input id="signalFlashMs" type="number" min="100" max="5000" step="1" value="1400"></label>
+                <label>蜂鸣时长 ms <input id="signalBeepMs" type="number" min="0" max="1000" step="1" value="180"></label>
+                <label>被捕获闪灯时长 ms <input id="captureCueFlashMs" type="number" min="1000" max="5000" step="1" value="2200"></label>
+                <label>被捕获第二声蜂鸣 ms <input id="captureCueBeepMs" type="number" min="100" max="1000" step="1" value="360"></label>
+                <label>逃跑距离 cm <input id="escapeDistanceCm" type="number" min="1" max="60" step="1" value="26"></label>
+                <label>慢速逃跑 PWM <input id="slowEscapePwm" type="number" min="50" max="255" step="1" value="95"></label>
+                <label>快速逃跑 PWM <input id="fastEscapePwm" type="number" min="50" max="255" step="1" value="210"></label>
+              </div>
+            </details>
+            <div class="inline-actions"><button id="applyAdvancedPolicy" class="button secondary" type="button">应用高级动作参数</button></div>
+            <p id="advancedPolicyStatus" class="hint" aria-live="polite"></p>
+            <p class="hint">以上设置保存在此浏览器，导出日志记录全部参数。搜索上限固定 360°；Uno 的前方与左右避障阈值仍由固件和安全距离区控制。</p>
+          </details>
+        </section>
+        <section class="panel interaction-controls-panel">
+          <div class="section-heading"><div><p class="eyebrow">SENSOR INPUTS</p><h2>传感器注入</h2></div></div>
+          <p class="hint">输入经 Uno 事件和摄像头观测进入决策系统；这里没有预设机器人互动动作。</p>
+          <div class="inline-actions"><span id="sessionValue" class="muted">互动未开始</span></div>
+          <div class="control-subsection">
+            <h3>一次性猫状态告警</h3>
+            <div class="inline-actions">
+              <button data-mood-alert="CAMERA_NEGATIVE" class="button secondary" type="button">注入摄像头告警</button>
+              <button data-mood-alert="HTTP_NEGATIVE" class="button secondary" type="button">注入 HTTP 告警</button>
+            </div>
+            <p class="hint">每点击一次只向独立决策模块提交一条告警事件；“HTTP 告警”是手动模拟的一次 HTTP 判断结果，不会发起 HTTP 请求，也不会预设机器人动作。请先启动巡游决策。</p>
+          </div>
+          <div class="control-subsection" aria-labelledby="sensorInjectionHeading">
+            <h3 id="sensorInjectionHeading">传感器注入</h3>
+            <div class="inline-actions">
+              <button id="prepareBoardSimulation" class="button" type="button">准备空板模拟</button>
+              <button data-command="DEBUG_MODE ON" class="button secondary" type="button">开启固件调试</button>
+              <button data-command="DEBUG_MOTOR_MODE DRY_RUN" class="button secondary" type="button">空板模式＋模拟输入</button>
+              <button data-command="DEBUG_MODE OFF" class="button secondary" type="button">关闭固件调试</button>
+            </div>
+            <div class="button-grid four">
+              <button data-touch="TOP" class="button secondary touch-button" type="button" aria-pressed="false">顶部</button>
+              <button data-touch="LEFT" class="button secondary touch-button" type="button" aria-pressed="false">左侧</button>
+              <button data-touch="RIGHT" class="button secondary touch-button" type="button" aria-pressed="false">右侧</button>
+              <button data-touch="REAR" class="button secondary touch-button" type="button" aria-pressed="false">后部</button>
+            </div>
+            <p class="hint">点击一次发送 250 ms 触碰脉冲（按下后自动松开）。Uno 的触碰回报进入同一决策模块，和猫动作输入无关；拖动猫接触机器人也会生成触碰数据。</p>
+            <label class="check-row"><input id="streamSceneSensors" type="checkbox"> 空板模式按需注入模拟传感器（静止时不重复发送）</label>
+            <div class="inject-row">
+              <label>前向摄像头模拟距离 cm <input id="injectDistance" type="number" min="0" max="400" value="12"></label>
+              <button id="setDistance" class="button secondary" type="button">注入</button>
+              <button id="clearDistance" class="button secondary" type="button">恢复模拟摄像头</button>
+              <button data-command="CAMERA_FRONT INVALID" class="button secondary" type="button">注入无效读数</button>
+            </div>
+            <p class="hint">距离和编码器是状态输入：注入后会影响正在执行或后续的动作与安全判断，不会让待命的机器自行启动。触碰脉冲会触发找猫决策。</p>
+            <div class="inject-row">
+              <label>左编码器脉冲 <input id="injectLeftEncoder" type="number" min="0" max="10000" value="10"></label>
+              <label>右编码器脉冲 <input id="injectRightEncoder" type="number" min="0" max="10000" value="10"></label>
+              <button id="injectEncoder" class="button secondary" type="button">注入脉冲</button>
+            </div>
+            <div class="control-subsection">
+              <h3>左右转向安全距离</h3>
+              <p class="hint">左右两只超声波各自测距，默认安全净空都是 5 cm；通过串口可分别设置左转、右转所需的最小净空。前方由摄像头判定。侧面读数无效时仍会拒绝转向；配置只在本次上电期间有效。</p>
+              <div class="inject-row">
+                <label>左侧最小净空 cm <input id="safeLeftCm" type="number" min="5" max="100" step="0.1" value="5"></label>
+                <button id="setSafeLeft" class="button secondary" type="button">设置左侧</button>
+                <label>右侧最小净空 cm <input id="safeRightCm" type="number" min="5" max="100" step="0.1" value="5"></label>
+                <button id="setSafeRight" class="button secondary" type="button">设置右侧</button>
+              </div>
+              <p id="safeDistanceStatus" class="hint" aria-live="polite">当前阈值：左 5 cm，右 5 cm；前方摄像头 15 cm</p>
+            </div>
+            <details class="debug-help">
+              <summary>空板模式与安全说明</summary>
+              <p class="hint">只有 Uno 板、没有传感器和电机时，连接串口后点“准备空板模拟”：网页按需提供模拟摄像头的前方距离，并在数值变化时注入左右超声波、触碰；固件产生虚拟编码器脉冲。静止时不反复发送相同数据，前进时仍按固件读数有效期刷新前向输入。空板模式抑制电机、灯和蜂鸣器输出引脚的真实电平；避障、停转、超时和运动反馈照常执行。前方摄像头判定阈值为 15 cm，左右超声波默认各 5 cm；读数失效时仍会拒绝动作。巡游时会优先尝试另一安全转向；按触碰方向找猫时不会违背该方向或绕过安全判断。LIVE 模式不接收网页的虚拟摄像头读数；未接真实摄像头数据源时，前进会被固件拒绝。</p>
+            </details>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading"><div><p class="eyebrow">MOTION COMMANDS</p><h2>运动与执行器</h2></div></div>
+          <div class="field-row">
+            <label>PWM <input id="pwm" type="number" min="1" max="255" value="120"></label>
+            <label>距离 cm <input id="driveCm" type="number" min="-100" max="100" value="20"></label>
+            <label>角度 ° <input id="rotateDeg" type="number" min="-360" max="360" value="45"></label>
+          </div>
+          <div class="button-grid three">
+            <button id="driveTarget" class="button" type="button">按距离行驶</button>
+            <button id="rotateTarget" class="button" type="button">按角度旋转</button>
+            <button id="stopMotion" class="button danger" type="button">立即停止</button>
+            <button data-quick="MOVE FORWARD" class="button secondary" type="button">前进 1 秒</button>
+            <button data-quick="MOVE BACKWARD" class="button secondary" type="button">后退 1 秒</button>
+            <button data-quick="TURN LEFT" class="button secondary" type="button">左转 0.5 秒</button>
+            <button data-quick="TURN RIGHT" class="button secondary" type="button">右转 0.5 秒</button>
+          </div>
+          <div class="wheel-row">
+            <label>左轮 PWM <input id="leftPwm" type="number" min="-255" max="255" value="-60"></label>
+            <label>右轮 PWM <input id="rightPwm" type="number" min="-255" max="255" value="60"></label>
+            <button id="sendMotor" class="button secondary" type="button">连续控制</button>
+          </div>
+          <div class="hint">连续控制每 500 ms 需要重新下发；超时自动停机。距离/角度在本地模拟中只是估算，真实固件需要编码器与标定。</div>
+          <div class="inline-actions">
+            <button data-command="LED ON" class="button secondary" type="button">灯亮</button>
+            <button data-command="LED OFF" class="button secondary" type="button">灯灭</button>
+            <button data-command="LED FLASH 200 1000" class="button secondary" type="button">闪烁</button>
+            <button data-command="BEEP 120" class="button secondary" type="button">蜂鸣</button>
+          </div>
+        </section>
+
+        <section class="panel compact">
+          <div class="section-heading"><div><p class="eyebrow">PROTOCOL CONSOLE</p><h2>原始命令</h2></div></div>
+          <form id="rawForm" class="raw-row">
+            <label class="visually-hidden" for="rawCommand">原始 Uno 命令</label>
+            <input id="rawCommand" autocomplete="off" spellcheck="false" placeholder="例如 GET_STATUS 或 MOTOR -60 60" maxlength="96">
+            <button class="button" type="submit">发送</button>
+          </form>
+          <div class="inline-actions">
+            <button data-command="PING" class="button secondary" type="button">PING</button>
+            <button data-command="GET_STATUS" class="button secondary" type="button">状态</button>
+            <button data-command="GET_DISTANCE" class="button secondary" type="button">距离</button>
+            <button data-command="GET_ENCODER" class="button secondary" type="button">编码器</button>
+            <button data-command="GET_CONFIG" class="button secondary" type="button">几何参数</button>
+          </div>
+          <div class="inject-row">
+            <label>车轮直径 mm <input id="wheelDiameterMm" type="number" min="20" max="150" step="0.1" value="65"></label>
+            <label>左右轮中心距 mm <input id="trackWidthMm" type="number" min="50" max="300" step="0.1" placeholder="空板默认 120；实车请实测"></label>
+            <button id="setGeometry" class="button secondary" type="button">设置几何参数</button>
+          </div>
+          <p class="hint">配套车轮标称直径 65 mm；轮中心距尚未提供，实体 Uno 的角度旋转须先填写实测值。</p>
+        </section>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="alert" hidden></div>
+  <script>setTimeout(() => { if (!globalThis.__unoLabReady) document.getElementById("appBootError").hidden = false; }, 2500);</script>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
