@@ -2,12 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { touchResponsePlan } from "./decision-system.mjs";
 
-test("each touch area can choose a flash and a separate prey or escape response", () => {
+test("each touch area can choose a flash and a separate prey, sound-light, or escape response", () => {
   for (const area of ["TOP", "LEFT", "RIGHT", "REAR"]) {
     const prey = touchResponsePlan(area, () => .1);
+    const signal = touchResponsePlan(area, () => .3);
     const escape = touchResponsePlan(area, () => .9);
     assert.equal(prey.response, "PREY_STILL");
     assert.equal(prey.flashDuringTouch, true);
+    assert.equal(signal.response, "SOUND_LIGHT_RESPONSE");
     assert.equal(escape.response, "FAST_STRAIGHT_ESCAPE");
     assert.equal(escape.flashDuringTouch, false);
   }
@@ -93,6 +95,7 @@ test("contact light precedes release; escape waits for release; prey collapses o
 
     elements.get("touchFlashPercent").value = "100";
     elements.get("touchPreyPercent").value = "0";
+    elements.get("touchSoundLightPercent").value = "0";
     elements.get("touchSlowEscapePercent").value = "100";
     elements.get("touchFastEscapePercent").value = "0";
     elements.get("postEscapeWaitSeconds").value = "0";
@@ -134,6 +137,27 @@ test("contact light precedes release; escape waits for release; prey collapses o
     await runFramesUntil(() => messages().slice(preyStart).some(m => m.includes("PATROL_RESUME target_tag=")), 5000);
     assert.ok(messages().slice(preyStart).some(m => m.includes("DONE") && m.includes("SESSION_STARTED")),
       "after collapse the Uno session must reopen for patrol");
+    elements.get("stopPatrol").click();
+
+    elements.get("touchFlashPercent").value = "0";
+    elements.get("touchPreyPercent").value = "0";
+    elements.get("touchSoundLightPercent").value = "100";
+    elements.get("touchSlowEscapePercent").value = "0";
+    elements.get("touchFastEscapePercent").value = "0";
+    elements.get("applyResponsePolicy").click();
+    elements.get("startPatrol").click();
+    const signalStart = messages().length;
+    touchButton.click();
+    await runFramesUntil(() => messages().slice(signalStart).some(m => m.includes("ATTACK_RESPONSE_PHASE sound_light_on_contact")));
+    const signalLog = messages().slice(signalStart);
+    const signalPress = signalLog.findIndex(m => m.includes("TOUCH area=TOP phase=PRESS"));
+    const signalFlash = signalLog.findIndex(m => /CMD \d+ LED FLASH 220 /.test(m));
+    const signalBeep = signalLog.findIndex(m => /CMD \d+ BEEP 180/.test(m));
+    assert.ok(signalPress >= 0 && signalFlash > signalPress && signalBeep > signalPress,
+      `sound and light must begin on contact: ${signalLog.join(" | ")}`);
+    assert.ok(!signalLog.some(m => m.includes("TOUCH area=TOP phase=RELEASE")));
+    assert.ok(!signalLog.some(m => /CMD \d+ (DRIVE|ROTATE) /.test(m)),
+      "sound-light response must keep the wheels stopped during contact");
     elements.get("stopPatrol").click();
   } finally {
     Math.random = previousRandom;

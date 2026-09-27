@@ -128,12 +128,13 @@
           <p class="hint">决策系统只接收触碰、摄像头观测、告警和时钟输入。TX 命令是决策执行后送给 Uno 的输出；“可取景”只依据模拟摄像头。</p>
           <div class="decision-priority-card">
             <h3>① 猫主动找机器人：触碰后的回应</h3>
-            <p class="hint">Uno 回报触碰按下时，独立抽取是否立即闪光，再抽取当场装死／松开后慢逃／松开后快逃。装死时不转动或移动，等猫离开后续巡；逃跑完成后再抽取试探／观察／巡游。装死／慢逃／快逃须合计 100%；闪光概率单独设置。</p>
+            <p class="hint">Uno 回报触碰按下时，独立抽取是否立即闪光，再抽取当场装死／声光回应／松开后慢逃／松开后快逃。声光回应会在接触中停车、闪灯并鸣叫，松开后观察猫；装死时不转动或移动，等猫离开后续巡。四种回应须合计 100%；接触中闪光概率单独设置。</p>
             <div class="inject-row">
               <label>接触中闪光 % <input id="touchFlashPercent" type="number" min="0" max="100" step="1" value="20"></label>
               <label>被抓住后装死 % <input id="touchPreyPercent" type="number" min="0" max="100" step="1" value="20"></label>
-              <label>触碰后慢逃 % <input id="touchSlowEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
-              <label>触碰后快逃 % <input id="touchFastEscapePercent" type="number" min="0" max="100" step="1" value="40"></label>
+              <label>被抓住后声光回应 % <input id="touchSoundLightPercent" type="number" min="0" max="100" step="1" value="20"></label>
+              <label>触碰后慢逃 % <input id="touchSlowEscapePercent" type="number" min="0" max="100" step="1" value="30"></label>
+              <label>触碰后快逃 % <input id="touchFastEscapePercent" type="number" min="0" max="100" step="1" value="30"></label>
             </div>
             <div class="inject-row">
               <label>回应后走停试探 % <input id="catFollowProbePercent" type="number" min="0" max="100" step="1" value="5"></label>
@@ -220,6 +221,7 @@
               <div class="inject-row">
                 <label>闪灯时长 ms <input id="signalFlashMs" type="number" min="100" max="5000" step="1" value="1400"></label>
                 <label>蜂鸣时长 ms <input id="signalBeepMs" type="number" min="0" max="1000" step="1" value="180"></label>
+                <label>被抓声光回应蜂鸣 ms <input id="touchSoundLightBeepMs" type="number" min="100" max="1000" step="1" value="180"></label>
                 <label>被捕获闪灯时长 ms <input id="captureCueFlashMs" type="number" min="1000" max="5000" step="1" value="2200"></label>
                 <label>被捕获第二声蜂鸣 ms <input id="captureCueBeepMs" type="number" min="100" max="1000" step="1" value="360"></label>
                 <label>逃跑距离 cm <input id="escapeDistanceCm" type="number" min="1" max="60" step="1" value="26"></label>
