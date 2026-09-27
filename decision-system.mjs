@@ -247,7 +247,7 @@ export class Esp32DecisionSystem {
     this.catAbsentSince = 0;
   }
 
-  onTouchPress(area, now = 0) {
+  onTouchPress(area, now = 0, newEpisode = true) {
     const plan = touchResponsePlan(area, this.random, this.responsePolicy);
     this.attackCount += 1;
     this.catWasNear = true;
@@ -255,8 +255,10 @@ export class Esp32DecisionSystem {
     this.catAbsentSince = 0;
     if (this.initiator !== "CAT_TOUCH") this.catInteractionRounds = 0;
     this.initiator = "CAT_TOUCH";
-    this.catInteractionRounds += 1;
-    this.catFollowUpStage = "PENDING";
+    if (newEpisode) {
+      this.catInteractionRounds += 1;
+      this.catFollowUpStage = "PENDING";
+    }
     this.lastCatTouchAt = now;
     return {
       action: "ATTACK_RESPONSE",
@@ -290,24 +292,26 @@ export class Esp32DecisionSystem {
     if (phase !== "INTERACTION") return null;
     const policy = this.responsePolicy;
     const limitSeconds = sessionLimitSeconds ?? policy.sessionLimitSeconds;
-    if (sessionElapsedMs !== null && sessionElapsedMs >= limitSeconds * 1000)
-      return this.initiator === "CAT_TOUCH" ? this.chooseCatEnding(`session_limit_${limitSeconds}`)
-        : { action: "END_SESSION", reason: `session_limit_${limitSeconds}` };
     // Motion can point the camera away from the cat. Keep an existing absence
     // timer, but only start a new one after the current behavior completes.
     if (autoBusy) {
       if (camera.detected && camera.distanceCm <= policy.catLeaveDistanceCm) this.catAbsentSince = 0;
       return null;
     }
+    if (sessionElapsedMs !== null && sessionElapsedMs >= limitSeconds * 1000)
+      return { action: "END_SESSION", endingOutcome: "CONTINUE_PATROL",
+        reason: `session_limit_${limitSeconds}` };
     if (this.initiator === "CAT_TOUCH") {
       if (this.catFollowUpStage === "FAILED")
         return { action: "END_SESSION", endingOutcome: "CONTINUE_PATROL",
           reason: "cat_touch_response_failed" };
       if (policy.endingAfterRounds > 0 && this.catInteractionRounds >= policy.endingAfterRounds)
-        return this.chooseCatEnding("rounds");
+        return { action: "END_SESSION", endingOutcome: "CONTINUE_PATROL",
+          reason: "cat_round_limit_after_release" };
       if (policy.endingInactivitySeconds > 0 && this.lastCatTouchAt !== null &&
           now - this.lastCatTouchAt >= policy.endingInactivitySeconds * 1000)
-        return this.chooseCatEnding("inactivity");
+        return { action: "END_SESSION", endingOutcome: "CONTINUE_PATROL",
+          reason: "cat_inactive_after_touch" };
       if (now < nextDecisionAt || now < obstacleBlockedUntil) return null;
       if (this.catFollowUpStage === "PENDING") {
         const followUp = this.chooseCatFollowUp(camera, now);

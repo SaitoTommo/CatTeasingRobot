@@ -90,7 +90,7 @@ test("ending outcome has its own three probabilities", () => {
     endingInactivitySeconds: 0 }), /ending_trigger/);
 });
 
-test("ending triggers by rounds or inactivity without requiring an escape", () => {
+test("prey endings are chosen on a caught touch; idle endings only resume patrol", () => {
   const base = { phase: "INTERACTION", autoBusy: false, nextDecisionAt: 0,
     obstacleBlockedUntil: 0, sessionElapsedMs: 1000,
     camera: { detected: true, distanceCm: 55 } };
@@ -98,11 +98,16 @@ test("ending triggers by rounds or inactivity without requiring an escape", () =
     endingAfterRounds: 2, endingInactivitySeconds: 0,
   }));
   rounds.onTouchPress("TOP", 1000);
+  rounds.onTouchPress("LEFT", 1100, false);
+  assert.equal(rounds.catInteractionRounds, 1, "swipes in one episode count as one round");
   rounds.onTouchPress("TOP", 2000);
+  const caughtEnding = rounds.chooseCatEnding("caught_touch");
+  assert.equal(caughtEnding.endingOutcome, "PREY_SIGNAL");
+  assert.match(caughtEnding.reason, /trigger=caught_touch/);
   const roundEnding = rounds.tick({ ...base, now: 2500 });
   assert.equal(roundEnding.action, "END_SESSION");
-  assert.equal(roundEnding.endingOutcome, "PREY_SIGNAL");
-  assert.match(roundEnding.reason, /trigger=rounds/);
+  assert.equal(roundEnding.endingOutcome, "CONTINUE_PATROL");
+  assert.match(roundEnding.reason, /round_limit_after_release/);
   rounds.finishInteraction();
   assert.equal(rounds.catInteractionRounds, 0);
 
@@ -112,6 +117,8 @@ test("ending triggers by rounds or inactivity without requiring an escape", () =
   inactivity.onTouchPress("TOP", 1000);
   assert.equal(inactivity.tick({ ...base, nextDecisionAt: 6000, now: 4999 }), null);
   const idleEnding = inactivity.tick({ ...base, nextDecisionAt: 6000, now: 5000 });
-  assert.equal(idleEnding.endingOutcome, "PREY_STILL");
-  assert.match(idleEnding.reason, /trigger=inactivity/);
+  assert.equal(idleEnding.endingOutcome, "CONTINUE_PATROL");
+  assert.match(idleEnding.reason, /inactive_after_touch/);
+  assert.equal(inactivity.tick({ ...base, autoBusy: true, sessionElapsedMs: 60000,
+    now: 60000 }), null, "an active escape cannot be interrupted by the session limit");
 });

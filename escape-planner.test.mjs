@@ -32,3 +32,13 @@ test("simulated corner chooses the open right corridor", () => {
   assert.equal(route.angle, 90);
   assert.equal(route.distanceCm, 26);
 });
+
+test("escape aims away from the cat before any camera search", () => {
+  const world = initialWorld();
+  world.robot = { x: 500, y: 315, heading: 0 };
+  world.cat = { x: 430, y: 315 }; // cat behind the robot
+  world.obstacle = { x: 900, y: 500, radius: 20 };
+  const route = planSimulatedEscapeRoute(world, 26);
+  assert.equal(route.angle, 0, "turning 180 degrees here would drive into the cat");
+  assert.equal(route.distanceCm, 26);
+});

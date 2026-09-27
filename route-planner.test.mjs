@@ -30,3 +30,16 @@ test("detour reports no path when the route is physically boxed in", () => {
   assert.equal(result.blocked, true);
   assert.deepEqual(result.paths, []);
 });
+
+test("patrol can depart safely when the cat is just inside the planning clearance", () => {
+  const world = initialWorld();
+  world.robot = { x: 570.6, y: 305.5, heading: 1.0 };
+  world.cat = { x: 660.3, y: 248.6 };
+  const result = planSceneDetour({ start: world.robot, target: world.tags.B,
+    stopRadiusPx: 80, arena: ARENA, robotRadius: ARENA.robotRadius,
+    pxPerCm: ARENA.pxPerCm,
+    obstacles: [{ ...world.cat, radius: ARENA.catRadius, name: "CAT" },
+      { ...world.obstacle, name: "OBSTACLE" }] });
+  assert.equal(result.blocked, false,
+    "moving away from a nearby cat toward a clear patrol tag must be allowed");
+});

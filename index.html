@@ -141,19 +141,19 @@
             </div>
             <div class="inject-row">
               <label>猫主动试探冷却 s <input id="catProbeCooldownSeconds" type="number" min="0" max="60" step="1" value="15"></label>
-              <label>进入互动后面向猫停留 s <input id="initialLookSeconds" type="number" min="0" max="30" step="1" value="5"></label>
+              <label>面向猫静止取景 s <input id="initialLookSeconds" type="number" min="0" max="30" step="1" value="5"></label>
               <label>逃跑后等待猫追击 s <input id="postEscapeWaitSeconds" type="number" min="0" max="60" step="1" value="10"></label>
-              <label>连击防抖静默 ms <input id="touchDebounceMs" type="number" min="0" max="5000" step="50" value="1000"></label>
+              <label>连击合并窗口 ms <input id="touchDebounceMs" type="number" min="0" max="5000" step="50" value="1000"></label>
               <button id="applyResponsePolicy" class="button secondary" type="button">应用触碰回应概率</button>
             </div>
-            <p class="hint">停留取景也适用于猫状态告警打断巡游；0 可关闭对应等待。连击防抖：猫的多次快速触碰只在静默窗口结束后合并回应一次；回应期间收到的新触碰不再排第二轮，只用于打断逃跑后的等待。</p>
+            <p class="hint">逃跑不等待预先取景；触碰松开后立即向安全方向移动，停下后再找猫并对准。停留取景仍适用于声光回应与猫状态告警。首次触碰立即触发回应，合并窗口只用于把后续连击算作同一轮。</p>
             <p id="responsePolicyStatus" class="hint" aria-live="polite"></p>
           </div>
           <div class="decision-priority-card">
             <h3>② 结束互动：独立触发与随机结局</h3>
-            <p class="hint">每次 Uno 触碰算一轮。达到设定轮数，或最后一次触碰后超过设定时间，先发生的条件触发结束；填 0 可关闭其中一个条件。结局再按独立概率随机选择：直接巡游、安静地倒下、带声光地倒下。倒下后停车等待猫离开，再恢复巡游。</p>
+            <p class="hint">一次连击算一轮。达到设定轮数的那次抓住触碰会立即抽取直接巡游、安静装死或声光装死；装死期间停车，等猫离开或达到最长等待后再恢复巡游。无新触碰超时只结束互动并恢复巡游，不会在逃跑后装死。填 0 可关闭对应触发条件。</p>
             <div class="inject-row">
-              <label>触碰达到多少轮结束 <input id="endingAfterRounds" type="number" min="0" max="20" step="1" value="3"></label>
+              <label>第几轮抓住时抽取装死结局 <input id="endingAfterRounds" type="number" min="0" max="20" step="1" value="3"></label>
               <label>无新触碰多少秒结束 <input id="endingInactivitySeconds" type="number" min="0" max="120" step="1" value="12"></label>
               <label>倒下后最多静止等待 s <input id="captureWaitMaxSeconds" type="number" min="1" max="60" step="1" value="15"></label>
             </div>

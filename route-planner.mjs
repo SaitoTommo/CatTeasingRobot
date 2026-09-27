@@ -37,7 +37,7 @@ export function planSceneDetour({ start, target, stopRadiusPx, obstacles, arena,
   const directGoal = goalAt(0);
   if (withinArena(directGoal, arena, robotRadius) &&
       obstacles.every(obstacle => distance(directGoal, obstacle) >= clearance(obstacle)) &&
-      clearLeg(start, directGoal, obstacles, clearance))
+      clearLeg(start, directGoal, obstacles, clearance, true))
     return { blocked: false, paths: [] };
 
   const offsets = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2,
@@ -47,7 +47,7 @@ export function planSceneDetour({ start, target, stopRadiusPx, obstacles, arena,
     const goal = goalAt(offset);
     if (!withinArena(goal, arena, robotRadius) ||
         obstacles.some(obstacle => distance(goal, obstacle) < clearance(obstacle))) continue;
-    if (clearLeg(start, goal, obstacles, clearance)) {
+    if (clearLeg(start, goal, obstacles, clearance, true)) {
       paths.push({ side: "DIRECT", points: [goal], lengthPx: distance(start, goal) });
       continue;
     }

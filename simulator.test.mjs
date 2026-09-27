@@ -101,7 +101,7 @@ test("patrol continues until touch, then top signals after facing and left escap
   elements.get("applyEndingPolicy").click();
   elements.get("applyResponsePolicy").click();
   assert.match(elements.get("responsePolicyStatus").textContent, /触碰后声光／慢逃／快逃 0\/100\/0%/);
-  assert.match(elements.get("endingPolicyStatus").textContent, /8 秒无新触碰后结束/);
+  assert.match(elements.get("endingPolicyStatus").textContent, /8 秒无新触碰时直接结束/);
   assert.ok(messages().some(message => message.includes("RESPONSE_POLICY_SET group=cat")));
   elements.get("touchSignalPercent").value = "20";
   elements.get("touchSlowEscapePercent").value = "40";
@@ -110,7 +110,7 @@ test("patrol continues until touch, then top signals after facing and left escap
   elements.get("catFollowObservePercent").value = "35";
   elements.get("catFollowPatrolPercent").value = "60";
   elements.get("endingInactivitySeconds").value = "12";
-  elements.get("endingAfterRounds").value = "2";
+  elements.get("endingAfterRounds").value = "3";
   elements.get("endingPatrolPercent").value = "0";
   elements.get("endingSilentPercent").value = "0";
   elements.get("endingSignalPercent").value = "100";
@@ -184,7 +184,7 @@ test("patrol continues until touch, then top signals after facing and left escap
   // left-attack round needs a wider window than the old abort-on-touch timeline.
   const leftDeadline = performance.now() + 60000;
   while (performance.now() < leftDeadline &&
-      messages().slice(leftStart).filter(message => message.includes("FACE_CAT_RESULT action=ATTACK_RESPONSE status=READY")).length < 2 &&
+      !messages().slice(leftStart).some(message => message.includes("POST_ESCAPE_OBSERVE_DONE")) &&
       !messages().slice(leftStart).some(message => message.includes("BEHAVIOR_ABORTED ATTACK_RESPONSE"))) {
     const frame = nextFrame;
     assert.ok(frame);
@@ -194,23 +194,28 @@ test("patrol continues until touch, then top signals after facing and left escap
   }
   const leftLog = messages().slice(leftStart);
   const leftTouch = leftLog.findIndex(message => message.includes("UNO_TO_ESP32 TOUCH area=LEFT phase=PRESS"));
-  const leftSearch = leftLog.findIndex(message => message.includes("ATTACK_SEARCH_START area=LEFT direction=LEFT sweep_limit_deg=360"));
-  const leftFace = leftLog.findIndex((message, index) => index > leftSearch && message.includes("FACE_CAT_RESULT action=ATTACK_RESPONSE status=READY"));
-  const leftMotor = leftLog.findIndex((message, index) => index > leftSearch && index < leftFace && /^CMD \d+ MOTOR -\d+ \d+$/.test(message));
-  const escapeTurn = leftLog.findIndex(message => /^CMD \d+ ROTATE 180 110$/.test(message));
+  const leftRelease = leftLog.findIndex((message, index) => index > leftTouch &&
+    message.includes("UNO_TO_ESP32 TOUCH area=LEFT phase=RELEASE"));
+  const responseCommitted = leftLog.findIndex(message => message.includes("TOUCH_BURST_COMMIT action=ATTACK_RESPONSE"));
+  const escapeTurn = leftLog.findIndex(message => /^CMD \d+ ROTATE -?\d+ 110$/.test(message));
   const escapeDrive = leftLog.findIndex(message => /^CMD \d+ DRIVE 26 210$/.test(message));
   const reface = leftLog.findIndex(message => message.includes("ATTACK_RESPONSE_PHASE reface_after_escape"));
+  const leftSearch = leftLog.findIndex((message, index) => index > reface && message.includes("SEARCH_CAT_START"));
   const facedAgain = leftLog.findIndex((message, index) => index > reface && message.includes("FACE_CAT_RESULT action=ATTACK_RESPONSE status=READY"));
-  assert.ok(leftTouch >= 0 && leftSearch > leftTouch, `left touch should start a leftward cat search: ${leftLog.filter(message => /ATTACK_|SEARCH_CAT|FACE_CAT|BEHAVIOR_ABORTED|MOTOR -75/.test(message)).slice(-45).join(" | ")}`);
-  assert.ok(leftMotor > leftSearch, "the left touch should physically command a left turn");
-  assert.ok(leftFace > leftMotor, `the cat should be faced before escape: ${leftLog.filter(message => /ATTACK_|SEARCH_CAT|FACE_CAT|BEHAVIOR_ABORTED|MOTOR -75|ROTATE 180|DRIVE 26/.test(message)).slice(-55).join(" | ")}`);
-  assert.ok(escapeTurn > leftFace && escapeDrive > escapeTurn, "escape should turn away from the faced cat then drive");
-  assert.ok(reface > escapeDrive, "escape should finish by searching for the cat again");
-  assert.ok(facedAgain > reface, `the robot should face the cat again after escape: ${leftLog.filter(message => /ATTACK_|SEARCH_CAT|FACE_CAT|BEHAVIOR_ABORTED|MOTOR |ROTATE 180|DRIVE 26/.test(message)).slice(-45).join(" | ")}`);
+  assert.ok(leftTouch >= 0 && responseCommitted > leftTouch && responseCommitted < leftRelease,
+    "the first touch must choose a response before release or the quiet-window timeout");
+  assert.ok(escapeTurn > leftRelease && escapeDrive > escapeTurn,
+    `escape should start before searching for the cat: ${leftLog.filter(message => /ATTACK_|SEARCH_CAT|FACE_CAT|BEHAVIOR_ABORTED|ROTATE |DRIVE /.test(message)).slice(-55).join(" | ")}`);
+  assert.ok(!leftLog.slice(leftTouch, escapeDrive).some(message =>
+    /ATTACK_SEARCH_START|SEARCH_CAT_START|CAT_VIEW_HOLD_START/.test(message)),
+    "escape must not wait for a pre-escape search or camera hold");
+  assert.ok(reface > escapeDrive && leftSearch > reface && facedAgain > leftSearch,
+    `the robot should turn back to find and face the cat after escape: ${leftLog.filter(message => /ATTACK_|SEARCH_CAT|FACE_CAT|BEHAVIOR_ABORTED|MOTOR |ROTATE |DRIVE /.test(message)).slice(-55).join(" | ")}`);
 
   elements.get("catScenarioBehavior").value = "RETREAT";
   elements.get("catScenarioBehavior").dispatch("change");
   const endingStart = messages().length;
+  topTouchButton.click(); // the third attack catches the robot while touch is active
   const endingDeadline = performance.now() + 20000;
   while (performance.now() < endingDeadline &&
       !messages().slice(endingStart).some(message => message.includes("PATROL_RESUME target_tag="))) {
@@ -222,13 +227,18 @@ test("patrol continues until touch, then top signals after facing and left escap
   }
   const resumedLog = messages().slice(endingStart);
   const endingLog = messages().slice(leftStart);
-  // A grab during the first refacing legitimately starts a second response round, so
-  // anchor the pursuit-wait check to the chase wait that follows the LAST face result.
+  // Pursuit wait follows the first post-escape face result.
   const chaseWaitStart = endingLog.findIndex((message, index) => index > facedAgain &&
     message.includes("CHASE_WAIT_START duration_s=1 stationary=true"));
   const chaseWaitDone = endingLog.findIndex((message, index) => index > chaseWaitStart && message.includes("CHASE_WAIT_DONE reason="));
   assert.ok(chaseWaitStart > facedAgain && chaseWaitDone > chaseWaitStart,
-    "escape should end with a stationary wait for the cat to catch up");
+    "escape should wait while facing the cat");
+  assert.ok(endingLog.some(message => message.includes("CAT_CAPTURE_TRIGGER") && message.includes("outcome=PREY_SIGNAL")),
+    "prey collapse should be selected on the next touch, not after an escape timeout");
+  const captureTrigger = endingLog.findIndex(message => message.includes("CAT_CAPTURE_TRIGGER"));
+  const captureRelease = endingLog.findIndex((message, index) => index > captureTrigger &&
+    message.includes("UNO_TO_ESP32 TOUCH area=TOP phase=RELEASE"));
+  assert.ok(captureRelease > captureTrigger, "the prey ending must begin while the cat is still touching");
   const outcomeStart = endingLog.findIndex(message => message.includes("ENDING_OUTCOME_START outcome=PREY_SIGNAL stationary=true"));
   const outcomeEnd = endingLog.findIndex((message, index) => index > outcomeStart &&
     message.includes("ENDING_OUTCOME_DONE outcome=PREY_SIGNAL"));
@@ -474,6 +484,10 @@ test("patrol continues until touch, then top signals after facing and left escap
   arena.dispatch("pointerup", { pointerId: 5 });
   elements.get("searchTimeoutMs").value = "1000";
   elements.get("applyAdvancedPolicy").click();
+  elements.get("touchSignalPercent").value = "100";
+  elements.get("touchSlowEscapePercent").value = "0";
+  elements.get("touchFastEscapePercent").value = "0";
+  elements.get("applyResponsePolicy").click();
   elements.get("startPatrol").click();
   const unseenTouchStart = messages().length;
   topTouchButton.click();
@@ -600,7 +614,7 @@ test("patrol continues until touch, then top signals after facing and left escap
   assert.ok(burstLog.some(message => message.includes("ATTACK_EVIDENCE source=UNO_TOUCH area=TOP count=5")),
     `every swipe stays recorded as evidence: ${burstLog.filter(m => /ATTACK_EVIDENCE|TOUCH_BURST/.test(m)).slice(0, 15).join(" | ")}`);
   assert.equal(burstLog.filter(message => message.includes("TOUCH_BURST_COMMIT")).length, 1,
-    "the burst must commit exactly once, after the quiet window following the LAST swipe");
+    "the first swipe must commit once and the quiet window must absorb later swipes");
   assert.equal(burstLog.filter(message => message.includes("BEHAVIOR ATTACK_RESPONSE")).length, 1,
     "five fast swipes should produce exactly one response round");
   assert.ok(burstLog.some(message => message.includes("SESSION_ENDED duration_s=")),

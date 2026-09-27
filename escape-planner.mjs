@@ -12,11 +12,13 @@ export function chooseEscapeRoute(candidates, requestedDistanceCm, marginCm = 15
 }
 
 export function planSimulatedEscapeRoute(world, requestedDistanceCm, canTurn = () => true) {
-  const candidates = [180, -180, -90, 90].map((angle, priority) => {
+  const awayHeading = Math.atan2(world.robot.y - world.cat.y, world.robot.x - world.cat.x);
+  const candidates = [0, -90, 90].map((offset, priority) => {
+    const angle = Math.round(wrapAngle(awayHeading + radians(offset) - world.robot.heading) * 180 / Math.PI);
     const orientedWorld = { ...world,
       robot: { ...world.robot, heading: wrapAngle(world.robot.heading + radians(angle)) } };
     return { angle, priority,
-      turnAllowed: canTurn(angle < 0 ? -1 : 1) && cameraFrontDistanceCm(orientedWorld) >= 15,
+      turnAllowed: (angle === 0 || canTurn(angle < 0 ? -1 : 1)) && cameraFrontDistanceCm(orientedWorld) >= 15,
       frontClearanceCm: forwardPathClearanceCm(orientedWorld) };
   });
   return chooseEscapeRoute(candidates, requestedDistanceCm);

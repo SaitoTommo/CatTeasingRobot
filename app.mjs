@@ -70,9 +70,8 @@ let nextAutoDecisionAt = 0;
 let obstacleBlockedUntil = 0;
 let resumePatrolAfterInteraction = false;
 let initialLookPending = false;
-// Touch-burst debouncing: a cat lands several swipes per attack episode; each press is
-// still recorded as evidence, but the RESPONSE waits for a quiet window so one burst
-// produces exactly one response instead of a response per swipe.
+// The first press starts the response. The quiet window only groups later swipes
+// into the same episode; it must never delay an escape.
 let pendingTouchBurst = null;
 let touchBurstTimer = null;
 let touchDuringBehavior = false;
@@ -84,7 +83,7 @@ const BEHAVIOR_LABELS = {
   PROBE_APPROACH: "走停试探", FAST_FORWARD: "快速前进",
   SLOW_STRAIGHT_ESCAPE: "缓慢直线逃跑", FAST_STRAIGHT_ESCAPE: "快速直线逃跑",
   CAPTURE_WIGGLE: "原地轻摇，模拟被抓",
-  SEARCH_CAT_START: "寻找猫", ATTACK_RESPONSE: "触碰后找猫并回应", OBSERVE: "观察猫", END_SESSION: "结束互动",
+  SEARCH_CAT_START: "寻找猫", ATTACK_RESPONSE: "触碰后回应", OBSERVE: "观察猫", END_SESSION: "结束互动",
 };
 
 function explainReason(reason) {
@@ -96,11 +95,15 @@ function explainReason(reason) {
     const direction = area === "LEFT" ? "向左" : area === "RIGHT" ? "向右" : area === "REAR" ? "向后" : "旋转";
     const action = response === "SLOW_STRAIGHT_ESCAPE" ? "缓慢逃跑再面向猫"
       : response === "FAST_STRAIGHT_ESCAPE" ? "快速逃跑再面向猫" : "面向猫做声光回应";
-    return `Uno 回报第 ${count} 次触碰（${area}）；松开后${direction}找猫，看到即停并对准，最多 360°；随后${action}${draw ? `；随机数 ${draw}` : ""}`;
+    return response === "STAY_SIGNAL"
+      ? `Uno 回报第 ${count} 次触碰（${area}）；松开后${direction}找猫并对准，最多 360°；随后${action}${draw ? `；随机数 ${draw}` : ""}`
+      : `Uno 回报第 ${count} 次触碰（${area}）；松开后立即向远离猫的安全方向${action}${draw ? `；随机数 ${draw}` : ""}`;
   }
   if (reason.startsWith("mood_alert_")) return `外部猫状态告警：${reason.endsWith("CAMERA_NEGATIVE") ? "摄像头判断" : "HTTP 判断"}`;
   if (reason.startsWith("cat_left_for_")) return `猫自行离开，并持续远离 ${/cat_left_for_(\d+)s/.exec(reason)?.[1] || "?"} 秒`;
   if (reason.startsWith("cat_inactive_for_")) return `猫在 ${/cat_inactive_for_(\d+)s/.exec(reason)?.[1] || "?"} 秒内没有再次触碰，恢复巡游`;
+  if (reason === "cat_inactive_after_touch") return "猫停止触碰，结束互动并恢复巡游";
+  if (reason === "cat_round_limit_after_release") return "触碰轮数已到，结束互动并恢复巡游";
   if (reason.startsWith("cat_ending ")) {
     const trigger = /trigger=([^ ]+)/.exec(reason)?.[1];
     const outcome = /outcome=([^ ]+)/.exec(reason)?.[1];
@@ -1070,30 +1073,42 @@ async function finishFacingCat(token, action, { forceSearch = false, searchLimit
     addLog("error", `FACE_CAT_RESULT action=${action} status=FAILED reason=TOUCH_HELD`, "ESP32·SIM");
     return false;
   }
-  $("faceCatStatus").textContent = `${phase}：寻找猫`;
-  const search = !forceSearch && cameraObservation(world).detected
-    ? { found: true, reason: "CAT_DETECTED" }
-    : await searchCat(token, forceSearch ? decisionSystem.responsePolicy.searchTimeoutMs
-      : decisionSystem.responsePolicy.finalSearchTimeoutMs, searchLimitDeg, searchDirection);
-  if (token !== behaviorToken) return false;
-  if (!search.found) {
-    send("STOP");
-    $("faceCatStatus").textContent = `未能面向猫：${search.reason}`;
-    addLog("error", `FACE_CAT_RESULT action=${action} status=FAILED reason=${search.reason}`, "ESP32·SIM");
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    $("faceCatStatus").textContent = `${phase}：寻找猫`;
+    const search = (attempt > 1 || !forceSearch) && cameraObservation(world).detected
+      ? { found: true, reason: "CAT_DETECTED" }
+      : await searchCat(token, forceSearch ? decisionSystem.responsePolicy.searchTimeoutMs
+        : decisionSystem.responsePolicy.finalSearchTimeoutMs, searchLimitDeg, searchDirection);
+    if (token !== behaviorToken) return false;
+    if (!search.found) {
+      send("STOP");
+      $("faceCatStatus").textContent = `未能面向猫：${search.reason}`;
+      addLog("error", `FACE_CAT_RESULT action=${action} status=FAILED reason=${search.reason}`, "ESP32·SIM");
+      return false;
+    }
+    $("faceCatStatus").textContent = `${phase}：对准猫`;
+    const aligned = await alignToCat(token);
+    if (token !== behaviorToken) return false;
+    const camera = cameraObservation(world);
+    const ready = aligned && camera.detected &&
+      Math.abs(camera.centerX - .5) <= decisionSystem.responsePolicy.centerTolerancePercent / 100;
+    if (ready) {
+      faceReady = true;
+      $("faceCatStatus").textContent = `已面向猫 · 模拟取景就绪 (x=${camera.centerX.toFixed(2)})`;
+      addLog("event", `FACE_CAT_RESULT action=${action} status=READY center_x=${camera.centerX.toFixed(2)}`, "ESP32·SIM");
+      addLog("event", "SIM_CAMERA CAPTURE_READY cat_centered=true photo_taken=false", "ESP32·SIM");
+      return true;
+    }
+    if (attempt === 1 && !camera.detected) {
+      addLog("event", `FACE_CAT_RETRY action=${action} reason=CAT_LOST_AFTER_ALIGN`, "ESP32·SIM");
+      continue;
+    }
+    faceReady = false;
+    $("faceCatStatus").textContent = "未能面向猫：对准失败或猫离开视野";
+    addLog("error", `FACE_CAT_RESULT action=${action} status=FAILED center_x=${camera.detected ? camera.centerX.toFixed(2) : "INVALID"}`, "ESP32·SIM");
     return false;
   }
-  $("faceCatStatus").textContent = `${phase}：对准猫`;
-  const aligned = await alignToCat(token);
-  if (token !== behaviorToken) return false;
-  const camera = cameraObservation(world);
-  const ready = aligned && camera.detected &&
-    Math.abs(camera.centerX - .5) <= decisionSystem.responsePolicy.centerTolerancePercent / 100;
-  faceReady = ready;
-  $("faceCatStatus").textContent = ready ? `已面向猫 · 模拟取景就绪 (x=${camera.centerX.toFixed(2)})`
-    : "未能面向猫：对准失败或猫离开视野";
-  addLog(ready ? "event" : "error", `FACE_CAT_RESULT action=${action} status=${ready ? "READY" : "FAILED"} center_x=${camera.detected ? camera.centerX.toFixed(2) : "INVALID"}`, "ESP32·SIM");
-  if (ready) addLog("event", "SIM_CAMERA CAPTURE_READY cat_centered=true photo_taken=false", "ESP32·SIM");
-  return ready;
+  return false;
 }
 
 async function signalToCat(token) {
@@ -1117,7 +1132,7 @@ async function fleeFromFacingCat(token, pace = "FAST") {
         direction => !sceneTurnBlockReason(direction));
       if (!route) throw new Error("ESCAPE_NO_SAFE_ROUTE");
       addLog("event", `ESCAPE_ROUTE angle_deg=${route.angle} planned_cm=${route.distanceCm} projected_front_cm=${route.frontClearanceCm.toFixed(1)}`, "ESP32·SIM");
-      await sendMotionWithTransportRetry(`ROTATE ${route.angle} 110`);
+      if (route.angle !== 0) await sendMotionWithTransportRetry(`ROTATE ${route.angle} 110`);
       if (token !== behaviorToken) return;
       const currentFrontCm = cameraFrontDistanceCm(world);
       const safeDistanceCm = currentFrontCm < 15 ? 0
@@ -1166,9 +1181,12 @@ async function showEndingOutcome(token, outcome) {
   let awaySince = null;
   let waitReason = "MAX_WAIT";
   while (token === behaviorToken && performance.now() < deadline) {
-    const camera = cameraObservation(world);
+    // A collapsed robot may point its camera away while the cat is still next
+    // to it. Use scene distance so loss of sight is not mistaken for departure.
+    const catDistanceCm = Math.hypot(world.robot.x - world.cat.x,
+      world.robot.y - world.cat.y) / ARENA.pxPerCm;
     const now = performance.now();
-    if (!camera.detected || camera.distanceCm > catLeaveDistanceCm) {
+    if (!unoTouches.size && catDistanceCm > catLeaveDistanceCm) {
       if (awaySince === null) awaySince = now;
       if (now - awaySince >= catLeaveSeconds * 1000) {
         waitReason = "CAT_LEFT";
@@ -1205,8 +1223,9 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   const token = behaviorToken;
   if (name === "ATTACK_RESPONSE") touchDuringBehavior = false;
   let skipFinalFacing = name === "SEARCH_CAT_START" || name === "OBSERVE" || name === "STAY" ||
-    (name === "END_SESSION" && !cameraObservation(world).detected);
-  if (name === "END_SESSION" && endingActiveSession && !cameraObservation(world).detected)
+    (name === "END_SESSION" && (endingOutcome?.startsWith("PREY_") || !cameraObservation(world).detected));
+  if (name === "END_SESSION" && endingActiveSession && !endingOutcome?.startsWith("PREY_") &&
+      !cameraObservation(world).detected)
     addLog("error", "FACE_CAT_RESULT action=END_SESSION status=FAILED reason=CAT_NOT_DETECTED", "ESP32·SIM");
   let attackFailureReason = null;
   try {
@@ -1254,38 +1273,42 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
     } else if (name === "ATTACK_RESPONSE") {
       const plan = details.attackPlan;
       if (!plan) throw new Error("INVALID_ATTACK_PLAN");
-      addLog("event", `ATTACK_SEARCH_START area=${plan.area} direction=${plan.direction < 0 ? "LEFT" : "RIGHT"} sweep_limit_deg=${plan.sweepLimitDeg}`, "ESP32·SIM");
-      const ready = await finishFacingCat(token, name, {
-        forceSearch: true, searchLimitDeg: plan.sweepLimitDeg, searchDirection: plan.direction,
-      });
-      if (token !== behaviorToken) return;
-      if (!ready) throw new Error("ATTACK_CAT_NOT_FOUND_OR_UNSAFE");
-      if (initialLookPending) {
-        initialLookPending = false;
+      initialLookPending = false;
+      if (plan.response === "STAY_SIGNAL") {
+        addLog("event", `ATTACK_SEARCH_START area=${plan.area} direction=${plan.direction < 0 ? "LEFT" : "RIGHT"} sweep_limit_deg=${plan.sweepLimitDeg}`, "ESP32·SIM");
+        const ready = await finishFacingCat(token, name, {
+          forceSearch: true, searchLimitDeg: plan.sweepLimitDeg, searchDirection: plan.direction,
+        });
+        if (token !== behaviorToken) return;
+        if (!ready) throw new Error("ATTACK_CAT_NOT_FOUND_OR_UNSAFE");
         if (!await holdCatView(token)) {
           if (token !== behaviorToken) return;
           throw new Error("CAT_LOST_DURING_VIEW_HOLD");
         }
-      }
-      addLog("event", `ATTACK_RESPONSE_PHASE cat_aligned=true response=${plan.response}`, "ESP32·SIM");
-      if (plan.response === "STAY_SIGNAL") {
+        addLog("event", `ATTACK_RESPONSE_PHASE cat_aligned=true response=${plan.response}`, "ESP32·SIM");
         await signalToCat(token);
       } else {
+        // Uno forbids wheel motion while the touch switch is held. Start the
+        // response on PRESS and move as soon as the switch is released.
+        if (!await waitForTouchRelease(token, decisionSystem.responsePolicy.touchReleaseTimeoutMs)) {
+          if (token !== behaviorToken) return;
+          throw new Error("TOUCH_HELD");
+        }
+        addLog("event", `ATTACK_RESPONSE_PHASE escape_immediate response=${plan.response}`, "ESP32·SIM");
         await fleeFromFacingCat(token, plan.response === "SLOW_STRAIGHT_ESCAPE" ? "SLOW" : "FAST");
         if (token !== behaviorToken) return;
         addLog("event", "ATTACK_RESPONSE_PHASE reface_after_escape", "ESP32·SIM");
-        if (cameraObservation(world).detected) {
-          if (!await finishFacingCat(token, name))
-            addLog("event", "CHASE_WAIT_CAT_NOT_CENTERED", "ESP32·SIM");
-        } else addLog("event", "CHASE_WAIT_CAT_OUTSIDE_CAMERA", "ESP32·SIM");
+        if (!await finishFacingCat(token, name))
+          addLog("event", "CHASE_WAIT_CAT_NOT_CENTERED", "ESP32·SIM");
         if (token !== behaviorToken) return;
         await waitForCatPursuit(token);
         if (token !== behaviorToken) return;
-        // 逃跑后猫没有追上来：保持不动、面向猫凝视观察一段时间，再进入互动收尾。
-        if (!touchDuringBehavior && cameraObservation(world).detected) {
-          if (await finishFacingCat(token, name) && token === behaviorToken) await holdCatView(token);
-          addLog("event", "POST_ESCAPE_OBSERVE_DONE", "ESP32·SIM");
-        }
+        // The cat can move during the pursuit wait. Search again even if it is
+        // outside the current camera view, then finish stationary facing it.
+        const faced = await finishFacingCat(token, name);
+        if (token !== behaviorToken) return;
+        if (faced) await holdCatView(token);
+        addLog(faced ? "event" : "error", `POST_ESCAPE_OBSERVE_${faced ? "DONE" : "FAILED"}`, "ESP32·SIM");
       }
     } else if (name === "SLOW_APPROACH") {
       if (!(await searchCat(token)).found) { skipFinalFacing = true; return; }
@@ -1445,9 +1468,8 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
         launchAutoDecision("END_SESSION", `cat_touch_response_failed_${attackFailureReason}`,
           true, true, { endingOutcome: "CONTINUE_PATROL" });
       } else if (!autoControlEnabled) {
-        const ending = decisionSystem.chooseCatEnding("standalone_response_finished");
-        await runBehavior("END_SESSION", "ESP32_AUTO", ending.reason,
-          { endingOutcome: ending.endingOutcome });
+        await runBehavior("END_SESSION", "ESP32_AUTO", "standalone_response_finished",
+          { endingOutcome: "CONTINUE_PATROL" });
       }
     }
   }
@@ -1481,8 +1503,8 @@ function showResponsePolicy(group = null) {
     : group === "robot" ? ROBOT_POLICY_KEYS
     : group === "advanced" ? ADVANCED_POLICY_KEYS : Object.keys(DEFAULT_RESPONSE_POLICY);
   for (const key of keys) $(key).value = String(policy[key]);
-  $("responsePolicyStatus").textContent = `已应用：触碰后声光／慢逃／快逃 ${policy.touchSignalPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；初次取景 ${policy.initialLookSeconds} 秒，逃跑后等待追击 ${policy.postEscapeWaitSeconds} 秒，连击静默 ${policy.touchDebounceMs} 毫秒（0 关闭）。`;
-  $("endingPolicyStatus").textContent = `已应用：${policy.endingAfterRounds} 轮触碰或 ${policy.endingInactivitySeconds} 秒无新触碰后结束；直接巡游／安静倒下／声光倒下 ${policy.endingPatrolPercent}/${policy.endingSilentPercent}/${policy.endingSignalPercent}%；倒下后最多等待 ${policy.captureWaitMaxSeconds} 秒。0 表示关闭对应触发条件。`;
+  $("responsePolicyStatus").textContent = `已应用：触碰后声光／慢逃／快逃 ${policy.touchSignalPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；面向猫取景 ${policy.initialLookSeconds} 秒（逃跑前跳过），逃跑后等待追击 ${policy.postEscapeWaitSeconds} 秒，连击合并窗口 ${policy.touchDebounceMs} 毫秒（首次触碰立即回应）。`;
+  $("endingPolicyStatus").textContent = `已应用：第 ${policy.endingAfterRounds} 轮抓住时抽取直接巡游／安静装死／声光装死 ${policy.endingPatrolPercent}/${policy.endingSilentPercent}/${policy.endingSignalPercent}%；${policy.endingInactivitySeconds} 秒无新触碰时直接结束；装死后最多等待 ${policy.captureWaitMaxSeconds} 秒。0 表示关闭对应触发条件。`;
   $("robotPolicyStatus").textContent = `已应用：远处接近／试探 ${policy.robotFarApproachPercent}/${policy.robotFarProbePercent}%；近处声光／观察／静止 ${policy.robotNearSignalPercent}/${policy.robotNearObservePercent}/${policy.robotNearStayPercent}%。`;
   $("advancedPolicyStatus").textContent = "高级动作参数已应用；下次相应动作生效。";
 }
@@ -1567,7 +1589,8 @@ function launchAutoDecision(action, reason, force = false, sensorTriggered = fal
 
 function onUnoTouchPress(area) {
   if (paused || interactionPhase === "ENDING") return;
-  const decision = decisionSystem.onTouchPress(area, performance.now());
+  const newEpisode = pendingTouchBurst === null;
+  const decision = decisionSystem.onTouchPress(area, performance.now(), newEpisode);
   addLog("event", `ATTACK_EVIDENCE source=UNO_TOUCH area=${area} count=${decisionSystem.attackCount}`, "ESP32·AUTO");
   if (interactionPhase === "PATROL") {
     interactionPhase = "INTERACTION";
@@ -1579,14 +1602,22 @@ function onUnoTouchPress(area) {
     interactionPhase = "INTERACTION";
     initialLookPending = true;
   }
-  if (autoBusy && activeAutoAction === "ATTACK_RESPONSE") {
+  if (newEpisode) pendingTouchBurst = decision;
+  const roundLimit = decisionSystem.responsePolicy.endingAfterRounds;
+  if (newEpisode && roundLimit > 0 && decisionSystem.catInteractionRounds >= roundLimit) {
+    const ending = decisionSystem.chooseCatEnding("caught_touch");
+    addLog("event", `CAT_CAPTURE_TRIGGER area=${area} rounds=${decisionSystem.catInteractionRounds} outcome=${ending.endingOutcome}`, "ESP32·AUTO");
+    launchAutoDecision("END_SESSION", ending.reason, true, true,
+      { endingOutcome: ending.endingOutcome });
+  } else if (autoBusy && activeAutoAction === "ATTACK_RESPONSE") {
     // Touch during an active response joins the current burst: it can end a waiting
     // phase (see waitForCatPursuit) but never schedules a second response.
     touchDuringBehavior = true;
     addLog("event", `ATTACK_TOUCH_DURING_RESPONSE area=${area} action=COUNT_ONLY`, "ESP32·AUTO");
-    return;
+  } else if (newEpisode) {
+    addLog("event", `TOUCH_BURST_COMMIT action=${decision.action} quiet_ms=${decisionSystem.responsePolicy.touchDebounceMs}`, "ESP32·AUTO");
+    launchAutoDecision(decision.action, decision.reason, true, true, { attackPlan: decision.plan });
   }
-  pendingTouchBurst = decision;
   if (touchBurstTimer) clearTimeout(touchBurstTimer);
   const quietMs = decisionSystem.responsePolicy.touchDebounceMs;
   if (quietMs === 0) { flushTouchBurst(); return; }
@@ -1595,15 +1626,7 @@ function onUnoTouchPress(area) {
 
 function flushTouchBurst() {
   touchBurstTimer = null;
-  const burst = pendingTouchBurst;
   pendingTouchBurst = null;
-  if (!burst || paused || interactionPhase === "ENDING") return;
-  if (autoBusy && activeAutoAction === "ATTACK_RESPONSE") {
-    touchDuringBehavior = true;
-    return;
-  }
-  addLog("event", `TOUCH_BURST_COMMIT action=${burst.action} quiet_ms=${decisionSystem.responsePolicy.touchDebounceMs}`, "ESP32·AUTO");
-  launchAutoDecision(burst.action, burst.reason, true, true, { attackPlan: burst.plan });
 }
 
 function resetTouchBurst() {
