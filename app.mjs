@@ -1505,7 +1505,7 @@ function catInputConfiguration() {
   };
 }
 
-const CAT_POLICY_KEYS = ["explorationBranchPercent", "touchPreyPercent",
+const CAT_POLICY_KEYS = ["explorationBranchPercent", "touchFlashPercent", "touchPreyPercent",
   "touchSlowEscapePercent", "touchFastEscapePercent",
   "catFollowProbePercent", "catFollowObservePercent", "catFollowPatrolPercent",
   "catProbeCooldownSeconds", "initialLookSeconds", "postEscapeWaitSeconds", "touchDebounceMs"];
@@ -1524,7 +1524,7 @@ function showResponsePolicy(group = null) {
     : group === "robot" ? ROBOT_POLICY_KEYS
     : group === "advanced" ? ADVANCED_POLICY_KEYS : Object.keys(DEFAULT_RESPONSE_POLICY);
   for (const key of keys) $(key).value = String(policy[key]);
-  $("responsePolicyStatus").textContent = `已应用：每轮互动先抽声光探索 ${policy.explorationBranchPercent}%／捕猎 ${100 - policy.explorationBranchPercent}%；捕猎分支装死／慢逃／快逃 ${policy.touchPreyPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%；声光探索四种节奏轮换且每次不重复；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；连击合并窗口 ${policy.touchDebounceMs} 毫秒。`;
+  $("responsePolicyStatus").textContent = `已应用：每轮互动先抽声光探索 ${policy.explorationBranchPercent}%／捕猎 ${100 - policy.explorationBranchPercent}%；捕猎分支装死／慢逃／快逃 ${policy.touchPreyPercent}/${policy.touchSlowEscapePercent}/${policy.touchFastEscapePercent}%，触摸时独立声光反馈 ${policy.touchFlashPercent}%；声光探索每次触摸都有声光且四种节奏轮换；回应后试探／观察／巡游 ${policy.catFollowProbePercent}/${policy.catFollowObservePercent}/${policy.catFollowPatrolPercent}%；连击合并窗口 ${policy.touchDebounceMs} 毫秒。`;
   $("endingPolicyStatus").textContent = `已应用：第 ${policy.endingAfterRounds} 轮抓住时抽取直接巡游／安静装死／声光装死 ${policy.endingPatrolPercent}/${policy.endingSilentPercent}/${policy.endingSignalPercent}%；${policy.endingInactivitySeconds} 秒无新触碰时直接结束；装死后最多等待 ${policy.captureWaitMaxSeconds} 秒。0 表示关闭对应触发条件。`;
   $("robotPolicyStatus").textContent = `已应用：远处接近／试探 ${policy.robotFarApproachPercent}/${policy.robotFarProbePercent}%；近处声光／观察／静止 ${policy.robotNearSignalPercent}/${policy.robotNearObservePercent}/${policy.robotNearStayPercent}%。`;
   $("advancedPolicyStatus").textContent = "高级动作参数已应用；下次相应动作生效。";
@@ -1652,6 +1652,12 @@ function onUnoTouchPress(area) {
   } else if (newEpisode) {
     addLog("event", `TOUCH_BURST_COMMIT action=${decision.action} quiet_ms=${decisionSystem.responsePolicy.touchDebounceMs}`, "ESP32·AUTO");
     launchAutoDecision(decision.action, decision.reason, true, true, { attackPlan: decision.plan });
+  }
+  if (branch === "HUNT" && newEpisode && decision.plan?.contactFeedbackDuringTouch) {
+    const policy = decisionSystem.responsePolicy;
+    addLog("event", `CONTACT_SOUND_LIGHT area=${area} flash=true beep=true draw=${decision.plan.contactFeedbackDraw.toFixed(3)}`, "ESP32·AUTO");
+    send(`LED FLASH 220 ${policy.signalFlashMs}`);
+    send(`BEEP ${policy.touchFeedbackBeepMs}`);
   }
   if (touchBurstTimer) clearTimeout(touchBurstTimer);
   const quietMs = decisionSystem.responsePolicy.touchDebounceMs;

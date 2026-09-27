@@ -19,6 +19,14 @@ test("hunting branch draws only prey, slow escape, or fast escape", () => {
   assert.equal(touchResponsePlan("LEFT", () => .5).direction, -1);
   assert.equal(touchResponsePlan("LEFT", () => .3).sweepLimitDeg, 360);
   assert.equal(touchResponsePlan("TOP", () => .1).escapeDraw, null);
+  let draws = [.9, .1];
+  const preyWithoutFeedback = touchResponsePlan("TOP", () => draws.shift());
+  assert.equal(preyWithoutFeedback.response, "PREY_STILL");
+  assert.equal(preyWithoutFeedback.contactFeedbackDuringTouch, false);
+  draws = [.1, .9];
+  const fastWithFeedback = touchResponsePlan("TOP", () => draws.shift());
+  assert.equal(fastWithFeedback.response, "FAST_STRAIGHT_ESCAPE");
+  assert.equal(fastWithFeedback.contactFeedbackDuringTouch, true);
 });
 
 test("a touch counted during an active hunting response does not draw again", () => {
@@ -26,11 +34,11 @@ test("a touch counted during an active hunting response does not draw again", ()
   const system = new Esp32DecisionSystem(() => { draws += 1; return .9; });
   system.chooseTouchBranch();
   system.onTouchPress("TOP", 1000, true);
-  assert.equal(draws, 2);
+  assert.equal(draws, 3);
   const counted = system.onTouchPress("LEFT", 2000, true, false);
   assert.equal(counted.plan, null);
   assert.match(counted.reason, /response=COUNT_ONLY/);
-  assert.equal(draws, 2);
+  assert.equal(draws, 3);
   assert.equal(system.attackCount, 2);
 });
 
@@ -102,6 +110,7 @@ test("old browser settings migrate and each probability group sums to 100", () =
   const legacy = validateResponsePolicy({ signalPercent: 20, slowEscapePercent: 75,
     probePercent: 10, nearObservePercent: 50 });
   assert.equal(legacy.touchPreyPercent, 20);
+  assert.equal(legacy.touchFlashPercent, 20);
   assert.equal(legacy.touchSlowEscapePercent, 60);
   assert.equal(legacy.touchFastEscapePercent, 20);
   assert.equal(legacy.robotFarProbePercent, 10);
@@ -112,6 +121,7 @@ test("old browser settings migrate and each probability group sums to 100", () =
   const saved = validateResponsePolicy({ touchSignalPercent: 30,
     touchSlowEscapePercent: 30, touchFastEscapePercent: 40 });
   assert.equal(saved.touchPreyPercent, 30);
+  assert.equal(saved.touchFlashPercent, 30);
   assert.equal(saved.touchSlowEscapePercent, 30);
   const previousFourWay = validateResponsePolicy({ touchPreyPercent: 20,
     touchSoundLightPercent: 20, touchSlowEscapePercent: 30, touchFastEscapePercent: 30 });

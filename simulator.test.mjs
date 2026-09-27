@@ -90,6 +90,7 @@ test("branch choice separates hunting motion from sound-light exploration", asyn
     };
 
     elements.get("explorationBranchPercent").value = "0";
+    elements.get("touchFlashPercent").value = "100";
     elements.get("touchPreyPercent").value = "0";
     elements.get("touchSlowEscapePercent").value = "100";
     elements.get("touchFastEscapePercent").value = "0";
@@ -102,8 +103,11 @@ test("branch choice separates hunting motion from sound-light exploration", asyn
     await runFramesUntil(() => messages().slice(escapeStart).some(m => m.includes("TOUCH_BRANCH_SELECT branch=HUNT")));
     const early = messages().slice(escapeStart);
     const press = early.findIndex(m => m.includes("TOUCH area=TOP phase=PRESS"));
+    const contactFlash = early.findIndex(m => /CMD \d+ LED FLASH 220 /.test(m));
+    const contactBeep = early.findIndex(m => /CMD \d+ BEEP 180/.test(m));
     const release = early.findIndex(m => m.includes("TOUCH area=TOP phase=RELEASE"));
-    assert.ok(press >= 0 && release < 0);
+    assert.ok(press >= 0 && contactFlash > press && contactBeep > press && release < 0,
+      `hunting contact feedback must start during touch: ${early.join(" | ")}`);
     assert.ok(!early.some(m => /CMD \d+ (DRIVE|ROTATE) /.test(m)),
       "escape wheels must not start while touch is held");
     await runFramesUntil(() => messages().slice(escapeStart).some(m => m.includes("ATTACK_RESPONSE_PHASE escape_immediate")));
@@ -115,6 +119,7 @@ test("branch choice separates hunting motion from sound-light exploration", asyn
     elements.get("stopPatrol").click();
 
     elements.get("touchPreyPercent").value = "100";
+    elements.get("touchFlashPercent").value = "0";
     elements.get("touchSlowEscapePercent").value = "0";
     elements.get("captureWaitMaxSeconds").value = "1";
     elements.get("applyResponsePolicy").click();
@@ -133,6 +138,7 @@ test("branch choice separates hunting motion from sound-light exploration", asyn
     elements.get("stopPatrol").click();
 
     elements.get("explorationBranchPercent").value = "100";
+    elements.get("touchFlashPercent").value = "100";
     elements.get("initialLookSeconds").value = "0";
     elements.get("applyResponsePolicy").click();
     elements.get("endingInactivitySeconds").value = "1";
@@ -148,6 +154,8 @@ test("branch choice separates hunting motion from sound-light exploration", asyn
     assert.ok(signalPress >= 0 && signalFlash > signalPress && signalBeep > signalPress,
       `sound and light must begin on contact: ${signalLog.join(" | ")}`);
     assert.ok(signalLog.some(m => m.includes("TOUCH_BRANCH_SELECT branch=EXPLORE")));
+    assert.equal(signalLog.filter(m => /CMD \d+ LED (ON|FLASH)/.test(m)).length, 1,
+      "exploration cue must not duplicate the independent hunting feedback");
     assert.ok(!signalLog.some(m => m.includes("TOUCH area=TOP phase=RELEASE")),
       `sound-light cue must start before release: ${signalLog.join(" | ")}`);
     assert.ok(!signalLog.some(m => /CMD \d+ (DRIVE|ROTATE) /.test(m)),
