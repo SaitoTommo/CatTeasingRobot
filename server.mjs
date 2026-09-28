@@ -18,10 +18,53 @@ const files = new Map([
 ]);
 const port = Number(process.env.UNO_WEB_LAB_PORT || 8765);
 
+// One-shot find-cat commands addressed at the simulated ESP32 host. The queue
+// carries intent only ("HTTP_NEGATIVE") — never cat position or any scene truth.
+const commandQueue = [];
+const COMMAND_QUEUE_LIMIT = 16;
+const ALLOWED_SOURCES = new Set(["HTTP_NEGATIVE"]);
+
+function jsonReply(response, status, payload) {
+  response.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+  }).end(JSON.stringify(payload));
+}
+
+async function readBody(request) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > 4096) return null;
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function parseSource(raw) {
+  if (!raw) return null;
+  try { return JSON.parse(raw).source ?? null; } catch { /* fall through */ }
+  try { return new URLSearchParams(raw).get("source"); } catch { return null; }
+}
+
 createServer(async (request, response) => {
   let pathname;
   try { pathname = new URL(request.url, "http://localhost").pathname; }
   catch { response.writeHead(400).end("Bad request"); return; }
+  if (pathname === "/mood_alert" && request.method === "POST") {
+    const source = parseSource(await readBody(request));
+    if (!ALLOWED_SOURCES.has(source)) { jsonReply(response, 400, { error: "unsupported_source" }); return; }
+    if (commandQueue.length >= COMMAND_QUEUE_LIMIT) commandQueue.shift();
+    commandQueue.push({ source, receivedAt: new Date().toISOString() });
+    jsonReply(response, 200, { queued: true, pending: commandQueue.length });
+    return;
+  }
+  if (pathname === "/mood_alert/pending" && request.method === "GET") {
+    const command = commandQueue.shift() || null;
+    jsonReply(response, 200, { source: command?.source ?? null, pending: commandQueue.length });
+    return;
+  }
   const resource = files.get(pathname);
   if (!resource || request.method !== "GET") {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" }).end("Not found");

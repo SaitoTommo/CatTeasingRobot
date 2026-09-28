@@ -172,7 +172,7 @@
           </div>
           <div class="decision-priority-card">
             <h3>③ 机器人主动找猫：独立决策</h3>
-            <p class="hint">巡游中摄像头实际检测到猫后进入此分支；远处选缓慢接近／走停试探，近处选声光／观察／静止。不会读取上面“猫主动”概率。每组概率须合计 100%。</p>
+            <p class="hint">巡游收到一次性 HTTP 指令后进入此分支；远处选缓慢接近／走停试探，近处选声光／观察／静止。不会读取上面“猫主动”概率。每组概率须合计 100%。</p>
             <div class="inject-row">
               <label>远处缓慢接近 % <input id="robotFarApproachPercent" type="number" min="0" max="100" step="1" value="85"></label>
               <label>远处走停试探 % <input id="robotFarProbePercent" type="number" min="0" max="100" step="1" value="15"></label>
@@ -241,7 +241,12 @@
           <div class="section-heading"><div><p class="eyebrow">SENSOR INPUTS</p><h2>碰撞与观测测试</h2></div></div>
           <p class="hint">输入经 Uno 事件和摄像头观测进入决策系统；这里没有预设机器人互动动作。</p>
           <div class="inline-actions"><span id="sessionValue" class="muted">互动未开始</span></div>
-          <p class="hint">巡游中由当前摄像头检测到猫或实际接触触发互动；不接收手工 HTTP／情绪告警。</p>
+          <div class="control-subsection">
+            <h3>一次性模拟 HTTP 指令</h3>
+            <button data-mood-alert="HTTP_NEGATIVE" class="button secondary" type="button">注入 HTTP 指令 · 主动找猫</button>
+            <p class="hint">每次点击模拟收到一条 HTTP 指令。经 server.mjs 打开本页时还可真实发送，由网页端（模拟上位机 ESP32）收信后再指挥下位机：<code>curl -X POST http://127.0.0.1:8765/mood_alert -d "{\"source\":\"HTTP_NEGATIVE\"}"</code>。巡游只有收到该指令或 Uno 触碰才进入互动；看见猫本身不会中断巡游。指令只携带意图，不携带猫的位置；方向和行驶仍依据机器人当前观测。</p>
+            <p class="hint" id="httpChannelStatus"></p>
+          </div>
           <div class="control-subsection" aria-labelledby="sensorInjectionHeading">
             <h3 id="sensorInjectionHeading">场景输入与实测读数</h3>
             <div class="inline-actions">

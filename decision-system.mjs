@@ -360,12 +360,12 @@ export class Esp32DecisionSystem {
   }
 
   onMoodAlert(source, { phase, camera, now = 0 }) {
-    if (phase !== "PATROL" || source !== "CAMERA_DETECTED" || !camera.detected) return null;
+    if (phase !== "PATROL" || source !== "HTTP_NEGATIVE") return null;
     this.initiator = "ROBOT_SEARCH";
     this.catFollowUpStage = null;
     this.catInteractionRounds = 0;
     const choice = this.chooseRobotAction(camera, now);
-    return { action: choice.action, reason: `camera_detection next=${choice.action}`, enterInteraction: true };
+    return { action: choice.action, reason: `http_command next=${choice.action}`, enterInteraction: true };
   }
 
   tick({ phase, now, autoBusy, nextDecisionAt, obstacleBlockedUntil,

@@ -95,7 +95,7 @@ test("cat follow-up runs once and inactivity returns to patrol", () => {
 test("robot-initiated far and near probabilities and cooldown remain separate", () => {
   const system = new Esp32DecisionSystem(() => .1);
   const camera = { detected: true, distanceCm: 55 };
-  system.onMoodAlert("CAMERA_DETECTED", { phase: "PATROL", camera, now: 1000 });
+  system.onMoodAlert("HTTP_NEGATIVE", { phase: "PATROL", camera, now: 1000 });
   const base = { phase: "INTERACTION", autoBusy: false, nextDecisionAt: 0,
     obstacleBlockedUntil: 0, sessionElapsedMs: 1000, camera };
   assert.equal(system.tick({ ...base, now: 2000 }).action, "SLOW_APPROACH");
@@ -181,4 +181,15 @@ test("prey endings are chosen on a caught touch; idle endings only resume patrol
   assert.match(idleEnding.reason, /inactive_after_touch/);
   assert.equal(inactivity.tick({ ...base, autoBusy: true, sessionElapsedMs: 60000,
     now: 60000 }), null, "an active escape cannot be interrupted by the session limit");
+});
+
+test("seeing a cat does not interrupt patrol; HTTP triggers search even outside camera", () => {
+  const system = new Esp32DecisionSystem(() => .1);
+  const patrol = { phase: "PATROL", now: 1000, autoBusy: false,
+    nextDecisionAt: 0, obstacleBlockedUntil: 0, camera: { detected: true, distanceCm: 20 } };
+  assert.equal(system.tick(patrol).action, "PATROL");
+  assert.equal(system.onMoodAlert("CAMERA_DETECTED", patrol), null);
+  const unseen = { ...patrol, camera: { detected: false, distanceCm: null } };
+  assert.equal(system.onMoodAlert("HTTP_NEGATIVE", unseen).action, "SEARCH_CAT_START");
+  assert.equal(system.onMoodAlert("HTTP_NEGATIVE", { ...unseen, phase: "INTERACTION" }), null);
 });

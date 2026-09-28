@@ -89,6 +89,7 @@ const BEHAVIOR_LABELS = {
 };
 
 function explainReason(reason) {
+  if (reason.startsWith("http_command")) return "收到一次性模拟 HTTP 指令，依据当前传感器观测进入找猫互动";
   if (reason.startsWith("explore_touch_")) {
     const area = /^explore_touch_(TOP|LEFT|RIGHT|REAR)/.exec(reason)?.[1] || "未知位置";
     const pattern = /pattern=([^ ]+)/.exec(reason)?.[1] || "?";
@@ -118,7 +119,7 @@ function explainReason(reason) {
   }
   if (reason.startsWith("cat_touch_follow_up")) return "猫主动触碰后的独立后续回应概率";
   if (reason.startsWith("session_limit_")) return `达到设定的互动时长：${reason.split("_").at(-1)} 秒`;
-  if (reason.startsWith("patrol_no_alert")) return "尚未检测到猫或 Uno 触碰，继续巡游";
+  if (reason.startsWith("patrol_no_alert")) return "尚未收到 HTTP 指令或 Uno 触碰，继续巡游";
   if (reason.startsWith("cat_visible_distance_cm=")) {
     const distance = /^cat_visible_distance_cm=([\d.]+)/.exec(reason)?.[1] || "?";
     const roll = /random=([\d.]+)/.exec(reason)?.[1];
@@ -1672,18 +1673,47 @@ function resetTouchBurst() {
 }
 
 
+function injectMoodAlert(source) {
+  if (!autoControlEnabled || paused || interactionPhase !== "PATROL") {
+    addLog("event", `HTTP_COMMAND_IGNORED source=${source} phase=${interactionPhase}`, "ESP32·SIM");
+    showToast("请先启动巡游，再发送一次性模拟 HTTP 指令。");
+    return;
+  }
+  const decision = decisionSystem.onMoodAlert(source, {
+    phase: interactionPhase, camera: robotCamera(), now: performance.now(),
+  });
+  if (!decision) return;
+  addLog("event", `HTTP_COMMAND_RECEIVED source=${source}`, "HTTP·SIM");
+  interactionPhase = "INTERACTION";
+  initialLookPending = true;
+  $("routeStatus").textContent = `巡游在标签 ${PATROL_TAGS[patrolWaypointIndex]} 前中断：收到 HTTP 指令`;
+  addLog("event", `INTERACTION_TRIGGER source=${source}`, "ESP32·AUTO");
+  launchAutoDecision(decision.action, decision.reason, true, true);
+}
+
+const HTTP_COMMAND_POLL_MS = 600;
+
+async function pollHttpCommand() {
+  let command;
+  try {
+    const response = await fetch("/mood_alert/pending", { cache: "no-store" });
+    if (!response.ok) return;
+    command = await response.json();
+  } catch { return; }
+  if (!command?.source) return;
+  addLog("event", `HTTP_REQUEST_ARRIVED path=/mood_alert/pending source=${command.source}`, "HTTP·LAN");
+  injectMoodAlert(command.source);
+}
+
+if (globalThis.location?.protocol === "http:") {
+  setInterval(pollHttpCommand, HTTP_COMMAND_POLL_MS);
+  $("httpChannelStatus").textContent = "真实 HTTP 通道已启用：POST /mood_alert 入队，本页每 600ms 取走一条（模拟上位机 ESP32 收到 HTTP 指令）";
+} else {
+  $("httpChannelStatus").textContent = "当前以 file:// 打开，无网络通道；只能点击按钮模拟收到 HTTP 指令。请用启动脚本经 server.mjs 打开本页。";
+}
+
 function tickAutoDecision(now) {
   if (!autoControlEnabled || paused) return;
-  const camera = robotCamera();
-  if (interactionPhase === "PATROL" && camera.detected) {
-    const choice = decisionSystem.onMoodAlert("CAMERA_DETECTED", { phase: interactionPhase, camera, now });
-    if (choice) {
-      interactionPhase = "INTERACTION";
-      initialLookPending = true;
-      launchAutoDecision(choice.action, "cat_visible_distance_cm=" + camera.distanceCm.toFixed(1), true, true);
-      return;
-    }
-  }
   const decision = decisionSystem.tick({
     phase: interactionPhase, now,
     autoBusy, nextDecisionAt: nextAutoDecisionAt, obstacleBlockedUntil,
@@ -2168,7 +2198,7 @@ $("startPatrol").addEventListener("click", () => {
   faceReady = false;
   $("decisionInput").textContent = "巡游启动；等待摄像头与 Uno 观测";
   $("decisionAction").textContent = "巡游待命";
-  $("decisionReason").textContent = "等待摄像头检测或 Uno 触碰";
+  $("decisionReason").textContent = "等待 HTTP 指令或 Uno 触碰";
   $("faceCatStatus").textContent = "巡游中；尚未进入互动取景";
   if (mode === "serial" && serialDryRunConfirmed) {
     $("streamSceneSensors").checked = true;
@@ -2178,6 +2208,8 @@ $("startPatrol").addEventListener("click", () => {
   addLog("event", "DECISION_START phase=PATROL", "ESP32·SIM");
   launchAutoDecision("PATROL", "operator_start_patrol", true);
 });
+document.querySelectorAll("[data-mood-alert]").forEach(button => button.addEventListener("click", () =>
+  injectMoodAlert(button.dataset.moodAlert)));
 $("applyResponsePolicy").addEventListener("click", () => applyResponsePolicy("cat"));
 $("applyEndingPolicy").addEventListener("click", () => applyResponsePolicy("ending"));
 $("applyRobotPolicy").addEventListener("click", () => applyResponsePolicy("robot"));

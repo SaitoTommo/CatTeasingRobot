@@ -43,10 +43,10 @@ test("wheel observations track rotation instead of reading scene heading", () =>
   const radians = (uno.encoder.left + uno.encoder.right) * Math.PI * uno.wheelDiameterMm / 20 / 120;
   assert.ok(Math.abs(world.robot.heading - heading - radians) < 1e-8);
 });
-test("external alerts cannot initiate behavior without camera detection", () => {
+test("HTTP can initiate search but camera detection alone cannot", () => {
   const system = new Esp32DecisionSystem();
   const context = { phase: "PATROL", camera: { detected: false }, now: 10 };
-  assert.equal(system.onMoodAlert("HTTP_NEGATIVE", context), null);
+  assert.equal(system.onMoodAlert("HTTP_NEGATIVE", context).action, "SEARCH_CAT_START");
   assert.equal(system.onMoodAlert("CAMERA_DETECTED", context), null);
 });
 test("decision and navigation code cannot access world geometry", async () => {
@@ -71,4 +71,13 @@ test("injected side measurements expire instead of persisting indefinitely", () 
   assert.equal(uno.sideDistanceCm("LEFT"), 90);
   uno.step(501);
   assert.equal(uno.sideDistanceCm("LEFT"), null);
+});
+
+test("page binds the HTTP button and auto tick has no visual interaction trigger", async () => {
+  const app = await readFile(new URL("app.mjs", import.meta.url), "utf8");
+  const html = await readFile(new URL("index.html", import.meta.url), "utf8");
+  assert.ok(html.includes('data-mood-alert="HTTP_NEGATIVE"'));
+  assert.ok(app.includes('injectMoodAlert(button.dataset.moodAlert)'));
+  const tick = app.slice(app.indexOf("function tickAutoDecision"), app.indexOf("function startSession"));
+  assert.doesNotMatch(tick, /onMoodAlert|CAMERA_DETECTED|interactionPhase =/);
 });
