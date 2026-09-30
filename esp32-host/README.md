@@ -10,6 +10,8 @@
 
 开发板创建热点 `ESP32-CatHost`，密码 `catrobot32`。调试页 `http://192.168.4.1/`，HTTP MJPEG 流 `http://192.168.4.1:81/stream`。调试页可配置 2.4GHz Wi-Fi；热点保留，站点 IP 在状态中显示。
 
+2026-10-01 接好外置天线后，完整固件已连接笔记本热点，当前地址 `192.168.137.22`；HTTP 页面、Uno 收信日志和视频解码已实测通过。IP 可能改变，以实时状态为准。电脑页面连接 USB 后会自动填写 stationIP 对应的视频地址和调试页链接。
+
 也可连接笔记本移动热点：开启 2.4GHz 热点并接好开发板外置天线，通过 USB 或板载调试页保存热点信息。连接成功后使用状态里的 `stationIP` 访问 `http://<stationIP>/` 和 `http://<stationIP>:81/stream`；电脑测试页的视频地址也改成该流地址。固件重启会读取已保存配置自动连接。`http-smoke.py --host <stationIP>` 可验证此网络上的视频。
 
 真实 Uno UART：ESP32 D6/GPIO43 TX 接 Uno RX，Uno TX 经 5V→3.3V 电平转换接 ESP32 D7/GPIO44 RX，共地；57600 波特。USB 控制和 UART 是独立通道。先断开电机输出验证协议，再装轮验收。

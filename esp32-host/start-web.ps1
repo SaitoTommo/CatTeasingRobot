@@ -39,7 +39,7 @@ try {
     Write-Host "To stop it: Stop-Process -Id $($server.Id)"
   } else {Write-Host 'Reusing the running ESP32 web server.'}
   Write-Host "Open: $url"
-  Write-Host 'USB: select COM11 in the page. Video: connect the ESP32-CatHost hotspot after attaching the antenna.'
+  Write-Host 'USB: select COM11. Video: use the same network as ESP32; its USB state fills the Wi-Fi address automatically.'
   if(!$NoBrowser){Start-Process $url}
 } catch {
   Write-Host $_.Exception.Message -ForegroundColor Red
