@@ -1,0 +1,21 @@
+import urllib.request, time, json, pathlib, io
+from PIL import Image
+root=pathlib.Path(__file__).parent
+start=time.monotonic()
+state=json.load(urllib.request.urlopen('http://192.168.4.1/api/state',timeout=5))
+assert state['cameraOk']
+page=urllib.request.urlopen('http://192.168.4.1/',timeout=5).read();assert 'Uno'.encode() in page
+frame=urllib.request.urlopen('http://192.168.4.1/capture',timeout=5).read();img=Image.open(io.BytesIO(frame));img.load();assert img.size==(320,240)
+(root/'http-camera-snapshot.jpg').write_bytes(frame)
+frames=[];buffer=b''
+with urllib.request.urlopen('http://192.168.4.1:81/stream',timeout=5) as stream:
+    assert 'multipart/x-mixed-replace' in stream.headers['content-type']
+    deadline=time.monotonic()+8
+    while len(frames)<5 and time.monotonic()<deadline:
+        buffer+=stream.read(1024)
+        while b'\xff\xd8' in buffer and b'\xff\xd9' in buffer:
+            a=buffer.index(b'\xff\xd8');b=buffer.index(b'\xff\xd9',a)+2
+            data=buffer[a:b];buffer=buffer[b:];image=Image.open(io.BytesIO(data));image.load();frames.append({'bytes':len(data),'size':image.size,'seconds':time.monotonic()-start})
+assert len(frames)>=3,frames
+result={'checks':['ESP32 debug HTTP page','state endpoint','capture JPEG decoded','MJPEG multipart stream decoded'], 'frames':frames,'cameraVision':state.get('cameraVision'),'firmware':state['firmware'],'elapsedSeconds':time.monotonic()-start}
+(root/'http-smoke-result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))

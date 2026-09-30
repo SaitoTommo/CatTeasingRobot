@@ -8,9 +8,10 @@
 #include <deque>
 #include "debug_page.h"
 #include "policy_defaults.h"
+#include "host_types.h"
+SET_LOOP_TASK_STACK_SIZE(16384);
 
 // Control work stays on loop(); HTTP and camera tasks only enqueue input.
-struct Input { char text[4096]; bool physical; };
 QueueHandle_t inputs;
 QueueHandle_t usbPackets;
 SemaphoreHandle_t stateLock, frameLock;
@@ -24,6 +25,7 @@ String logs[160]; uint32_t logSeq=0, dropped=0, lastUnoAt=0, lastPoll=0;
 uint32_t telemetryId=0,telemetryAt=0;
 uint8_t *jpegCache=nullptr; size_t jpegLen=0; uint32_t frameSeq=0;
 bool cameraOk=false;
+String visionMode="OFF";uint32_t visionIntervalMs=1500;
 void emitUsb(const String &s){String *copy=new String(s);if(xQueueSend(usbPackets,&copy,0)!=pdTRUE){delete copy;}}
 void usbTask(void*){String *s;while(true){if(xQueueReceive(usbPackets,&s,portMAX_DELAY)==pdTRUE){Serial.println(*s);delete s;}}}
 uint8_t crc8(const String &s) { uint8_t c=0; for(size_t n=0;n<s.length();n++) {c^=s[n];for(int j=0;j<8;j++)c=(c<<1)^((c&128)?7:0);}return c; }
@@ -83,6 +85,7 @@ String snapshot() {
   JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.3";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
+  d["visionMode"]=visionMode;d["visionIntervalMs"]=visionIntervalMs;
   d["apIP"]=WiFi.softAPIP().toString();d["stationIP"]=WiFi.localIP().toString();d["config"]=config;d["vision"]=observation;d["cameraVision"]=realVision;
   d["droppedLogs"]=dropped;JsonArray arr=d["logs"].to<JsonArray>();uint32_t start=logSeq>160?logSeq-160:0;
   for(uint32_t n=start;n<logSeq;n++){JsonDocument item;deserializeJson(item,logs[n%160]);arr.add(item);}
@@ -97,7 +100,8 @@ void handleInput(const Input &in) {
   else if(op=="command") {if(phase!="IDLE"&&phase!="STOPPED"){logLine("INPUT_ERROR","stop policy before manual commands");return;}String command=d["command"]|"PING";command.trim();if(!command.length()||command.length()>96||command.indexOf('\n')>=0||command.indexOf('\r')>=0){logLine("INPUT_ERROR","invalid command line");return;}sendUno(command);}
   else if(op=="mode") {policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";lastUnoAt=0;telemetryId=0;observation.clear();policyInput("READY SOURCE_CHANGED");logLine("MODE",mode);}
   else if(op=="vision" && mode=="SIM_UNO") {observation=d["vision"];observation["source"]="SIM_CAMERA";observation["at"]=millis();}
-  else if(op=="camera"&&in.physical) {realVision=d["vision"];if(mode=="UART")observation=realVision;}
+  else if(op=="camera"&&in.physical) {if(visionMode!="OFF"&&String(d["vision"]["mode"]|"")==visionMode){realVision=d["vision"];if(mode=="UART")observation=realVision;}}
+  else if(op=="vision_mode") {String m=d["mode"]|"OFF";if(m!="OFF"&&m!="TAGS"&&m!="CAT"&&m!="BOTH"){logLine("INPUT_ERROR","invalid vision mode");return;}visionMode=m;realVision.clear();if(mode=="UART")observation.clear();logLine("VISION_MODE",visionMode);}
   else if(op=="calibrate_front") {if(phase!="IDLE"&&phase!="STOPPED"){logLine("CONFIG_ERROR","stop first");return;}if(millis()-realVision["at"].as<uint32_t>()>5000||realVision["floorSignature"].size()!=72){logLine("CONFIG_ERROR","no fresh camera signature");return;}config["floorReference"]=realVision["floorSignature"];config["frontCalibrated"]=true;String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CALIBRATION","ground appearance reference captured; experimental qualitative front input");}
   else if(op=="config") {
     if(phase!="IDLE"&&phase!="STOPPED"){logLine("CONFIG_ERROR","stop first");return;}
@@ -135,9 +139,9 @@ void startServers() {
   c.server_port=81;c.ctrl_port=32769;c.stack_size=4096;c.max_open_sockets=2;if(httpd_start(&h,&c)==ESP_OK){httpd_uri_t p={.uri="/stream",.method=HTTP_GET,.handler=streamHandler};httpd_register_uri_handler(h,&p);}
 }
 void processVision(camera_fb_t *fb);
-void visionTask(void*){while(true){camera_fb_t fb={};xSemaphoreTake(frameLock,portMAX_DELAY);if(jpegLen){fb.len=jpegLen;fb.buf=(uint8_t*)ps_malloc(fb.len);if(fb.buf){memcpy(fb.buf,jpegCache,fb.len);fb.width=320;fb.height=240;fb.format=PIXFORMAT_JPEG;}}xSemaphoreGive(frameLock);if(fb.buf){processVision(&fb);free(fb.buf);}vTaskDelay(pdMS_TO_TICKS(350));}}
+void visionTask(void*){while(true){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);bool enabled=visionMode!="OFF";xSemaphoreGiveRecursive(stateLock);if(enabled){camera_fb_t fb={};xSemaphoreTake(frameLock,portMAX_DELAY);if(jpegLen){fb.len=jpegLen;fb.buf=(uint8_t*)ps_malloc(fb.len);if(fb.buf){memcpy(fb.buf,jpegCache,fb.len);fb.width=320;fb.height=240;fb.format=PIXFORMAT_JPEG;}}xSemaphoreGive(frameLock);if(fb.buf){processVision(&fb);free(fb.buf);}}vTaskDelay(pdMS_TO_TICKS(visionIntervalMs));}}
 void cameraTask(void*) {
-  while(true) {camera_fb_t *fb=esp_camera_fb_get();if(fb){xSemaphoreTake(frameLock,portMAX_DELAY);if(fb->len<160000){memcpy(jpegCache,fb->buf,fb->len);jpegLen=fb->len;frameSeq++;}xSemaphoreGive(frameLock);esp_camera_fb_return(fb);}vTaskDelay(pdMS_TO_TICKS(40));}
+  while(true) {camera_fb_t *fb=esp_camera_fb_get();if(fb){xSemaphoreTake(frameLock,portMAX_DELAY);if(fb->len<160000){memcpy(jpegCache,fb->buf,fb->len);jpegLen=fb->len;frameSeq++;}xSemaphoreGive(frameLock);esp_camera_fb_return(fb);}vTaskDelay(pdMS_TO_TICKS(200));}
 }
 void initCamera() {
   camera_config_t c={};c.ledc_channel=LEDC_CHANNEL_0;c.ledc_timer=LEDC_TIMER_0;
@@ -153,9 +157,9 @@ void setup() {
   WiFi.mode(WIFI_AP_STA);WiFi.softAP("ESP32-CatHost","catrobot32");String ssid=prefs.getString("ssid","");if(ssid.length())WiFi.begin(ssid.c_str(),prefs.getString("password","").c_str());
   logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO");initCamera();startServers();
 }
-void readLines(Stream &s,String &buffer,bool physical) {static bool usbOverflow=false,uartOverflow=false;bool &overflow=physical?uartOverflow:usbOverflow;int count=0;while(s.available()&&count++<1024){char c=s.read();if(c=='\n'){if(!overflow){if(physical)acceptUno(buffer,true);else {Input in={};buffer.toCharArray(in.text,sizeof(in.text));handleInput(in);}}overflow=false;buffer="";}else if(c!='\r'&&!overflow){if(buffer.length()<4095)buffer+=c;else{buffer="";overflow=true;logLine("OVERFLOW","serial line discarded");}}}}
+void readLines(Stream &s,String &buffer,bool physical) {static Input in;static bool usbOverflow=false,uartOverflow=false;bool &overflow=physical?uartOverflow:usbOverflow;int count=0;while(s.available()&&count++<1024){char c=s.read();if(c=='\n'){if(!overflow){if(physical)acceptUno(buffer,true);else {buffer.toCharArray(in.text,sizeof(in.text));handleInput(in);}}overflow=false;buffer="";}else if(c!='\r'&&!overflow){if(buffer.length()<4095)buffer+=c;else{buffer="";overflow=true;logLine("OVERFLOW","serial line discarded");}}}}
 void loop() {
-  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);readLines(Serial,usbLine,false);readLines(uno,uartLine,true);Input in;for(int i=0;i<4&&xQueueReceive(inputs,&in,0)==pdTRUE;i++)handleInput(in);
+  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);readLines(Serial,usbLine,false);readLines(uno,uartLine,true);static Input in;for(int i=0;i<4&&xQueueReceive(inputs,&in,0)==pdTRUE;i++)handleInput(in);
   policyTick();xSemaphoreGiveRecursive(stateLock);
   if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis()+1700;logLine("TELEMETRY_TIMEOUT","retry in 2s");}
   if((int32_t)(millis()-lastPoll)>=300&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
