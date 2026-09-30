@@ -4,9 +4,13 @@
 
 ## 连接
 
+双击仓库根目录 `启动ESP32测试网页.bat`，自动启动本地服务器并打开 ESP32 页面；已运行则复用。端口被旧版本或其他服务占用时提示关闭对应服务，不自动结束进程。启动日志在忽略版本管理的 `esp32-host/vendor/web-8765*.log`。PowerShell 也可运行 `./esp32-host/start-web.ps1`；`-NoBrowser` 只启动服务，`-Port 8766` 可选择其他端口。它启动的是电脑测试网页；开发板调试网站随固件上电启动。
+
 从原测试台打开“ESP32 实机上位机”，或访问 `http://localhost:8765/esp32-lab.html`。USB 使用 115200 波特，选择 COM11；网页模拟 Uno，ESP32 接收观测并运行决策。切换 UART 后不接受模拟输入。
 
 开发板创建热点 `ESP32-CatHost`，密码 `catrobot32`。调试页 `http://192.168.4.1/`，HTTP MJPEG 流 `http://192.168.4.1:81/stream`。调试页可配置 2.4GHz Wi-Fi；热点保留，站点 IP 在状态中显示。
+
+也可连接笔记本移动热点：开启 2.4GHz 热点并接好开发板外置天线，通过 USB 或板载调试页保存热点信息。连接成功后使用状态里的 `stationIP` 访问 `http://<stationIP>/` 和 `http://<stationIP>:81/stream`；电脑测试页的视频地址也改成该流地址。固件重启会读取已保存配置自动连接。`http-smoke.py --host <stationIP>` 可验证此网络上的视频。
 
 真实 Uno UART：ESP32 D6/GPIO43 TX 接 Uno RX，Uno TX 经 5V→3.3V 电平转换接 ESP32 D7/GPIO44 RX，共地；57600 波特。USB 控制和 UART 是独立通道。先断开电机输出验证协议，再装轮验收。
 

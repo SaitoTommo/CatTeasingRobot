@@ -1,15 +1,17 @@
-import urllib.request, time, json, pathlib, io
+import urllib.request, time, json, pathlib, io, argparse
 from PIL import Image
 root=pathlib.Path(__file__).parent
 urllib.request.install_opener(urllib.request.build_opener(urllib.request.ProxyHandler({})))
 start=time.monotonic()
-state=json.load(urllib.request.urlopen('http://192.168.4.1/api/state',timeout=5))
+parser=argparse.ArgumentParser();parser.add_argument('--host',default='192.168.4.1');args=parser.parse_args()
+base='http://'+args.host
+state=json.load(urllib.request.urlopen(base+'/api/state',timeout=5))
 assert state['cameraOk']
-page=urllib.request.urlopen('http://192.168.4.1/',timeout=5).read();assert 'Uno'.encode() in page
-frame=urllib.request.urlopen('http://192.168.4.1/capture',timeout=5).read();img=Image.open(io.BytesIO(frame));img.load();assert img.size==(320,240)
+page=urllib.request.urlopen(base+'/',timeout=5).read();assert 'Uno'.encode() in page
+frame=urllib.request.urlopen(base+'/capture',timeout=5).read();img=Image.open(io.BytesIO(frame));img.load();assert img.size==(320,240)
 (root/'http-camera-snapshot.jpg').write_bytes(frame)
 frames=[];buffer=b''
-with urllib.request.urlopen('http://192.168.4.1:81/stream',timeout=5) as stream:
+with urllib.request.urlopen(base+':81/stream',timeout=5) as stream:
     assert 'multipart/x-mixed-replace' in stream.headers['content-type']
     deadline=time.monotonic()+8
     while len(frames)<5 and time.monotonic()<deadline:
