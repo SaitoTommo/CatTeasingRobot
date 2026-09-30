@@ -42,6 +42,9 @@ void processVision(camera_fb_t *fb) {
   zarray_t *found=runTags?apriltag_detector_detect(tags,&im):nullptr;auto arr=v["tags"].to<JsonArray>();v["tagsValid"]=runTags;
   for(int i=0;found&&i<zarray_size(found)&&i<24;i++){apriltag_detection_t *tag;zarray_get(found,i,&tag);auto o=arr.add<JsonObject>();o["id"]=tag->id;o["centerX"]=tag->c[0]/fb->width;float width=0;for(int k=0;k<4;k++)width+=hypotf(tag->p[k][0]-tag->p[(k+1)%4][0],tag->p[k][1]-tag->p[(k+1)%4][1]);o["width"]=width/(4.0f*fb->width);o["margin"]=tag->decision_margin;for(int k=0;k<4;k++){o["corners"][k][0]=tag->p[k][0];o["corners"][k][1]=tag->p[k][1];}}
   if(found)apriltag_detections_destroy(found);heap_caps_free(img.data);
+  // Research background: Lee, Yi & Cho (2016), doi:10.3390/s16030311.
+  // This simplified appearance guard does NOT implement their IPM/MRF method.
+  // See ../FRONT_VISION_REFERENCES.md for provenance and implementation scope.
   // A calibrated ground-appearance guard is qualitative, not depth sensing.
   // Unknown calibration stays INVALID. Similar-colour obstacles remain a
   // known limitation of this prototype and require physical commissioning.

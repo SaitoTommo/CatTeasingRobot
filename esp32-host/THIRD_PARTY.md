@@ -5,3 +5,5 @@
 3. 猫检测：Espressif ESP-DL ESPDet-Pico 224×224 int8，文件来源 https://github.com/espressif/esp-dl/blob/6d3c4da1087d35916858dd0f9b3e9d6a85186e11/models/cat_detect/models/s3/espdet_pico_224_224_cat.espdl 。模型 498576 bytes，SHA-256 `604501220b26b8a59f44a835b7d37c31444444a8f5661c5ad9469c61fbcd71e1`。Apache 2.0 许可证见 `ESP-DL-LICENSE`。模型初始化、letterbox 和后处理参数参照同仓库 `models/cat_detect/cat_detect.cpp`；推理库使用 Arduino ESP32 3.3.12 所带 ESP-DL。
 
 `generate-model.mjs` 校验二进制后生成对齐的 C++ 头文件。原二进制纳入 Git，生成头文件忽略；因此模型更新必须同时修改校验值并记录来源。库源文件已在项目中，编译不依赖联网下载。ArduinoJson 7.4.3 由现有 Arduino 环境提供。
+
+前向视觉研究依据：Lee, Yi & Cho (2016), *A Monocular Vision Sensor-Based Obstacle Detection Algorithm for Autonomous Robots*, Sensors 16(3), 311，https://doi.org/10.3390/s16030311 。这是地面/障碍分割路线的背景引用，当前灰度块参考检查没有复现论文的 IPM、MRF 或距离估计，也没有使用论文源码。历史讨论与实现差异见 [FRONT_VISION_REFERENCES.md](./FRONT_VISION_REFERENCES.md)。
