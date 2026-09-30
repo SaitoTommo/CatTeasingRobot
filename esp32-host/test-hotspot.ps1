@@ -10,7 +10,14 @@ if($LASTEXITCODE -ne 0){throw 'Cannot add ESP32 hotspot profile'}
 try {
   & netsh wlan connect name=ESP32-CatHost interface=WLAN
   if($LASTEXITCODE -ne 0){throw 'Cannot connect ESP32 hotspot'}
-  Start-Sleep -Seconds 4
+  $ready=$false
+  for($attempt=0;$attempt -lt 15;$attempt++) {
+    Start-Sleep -Seconds 2
+    $addresses=Get-NetIPAddress -InterfaceAlias WLAN -AddressFamily IPv4 -ErrorAction SilentlyContinue
+    if($addresses | Where-Object { $_.IPAddress -like '192.168.4.*' }){$ready=$true;break}
+  }
+  & netsh wlan show interfaces
+  if(!$ready){throw 'ESP32 hotspot DHCP address not acquired'}
   & 'C:\Users\guoto\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' (Join-Path $PSScriptRoot 'http-smoke.py')
   if($LASTEXITCODE -ne 0){throw 'HTTP camera verification failed'}
 } finally {

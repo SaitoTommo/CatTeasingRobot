@@ -1,6 +1,7 @@
 import urllib.request, time, json, pathlib, io
 from PIL import Image
 root=pathlib.Path(__file__).parent
+urllib.request.install_opener(urllib.request.build_opener(urllib.request.ProxyHandler({})))
 start=time.monotonic()
 state=json.load(urllib.request.urlopen('http://192.168.4.1/api/state',timeout=5))
 assert state['cameraOk']

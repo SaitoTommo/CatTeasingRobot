@@ -1,0 +1,35 @@
+"""Check that on-board inference produces observations; not an accuracy test."""
+import sys,pathlib,time,json
+root=pathlib.Path(__file__).parent
+sys.path.insert(0,str(root/'vendor'/'python'))
+import serial
+wire=serial.Serial('COM11',115200,timeout=.1,write_timeout=2)
+buffer=bytearray();records=[];raw=[]
+def send(d):wire.write((json.dumps(d)+'\n').encode())
+def sample(mode,seconds):
+    global buffer
+    send({'op':'vision_mode','mode':mode});end=time.monotonic()+seconds;states=[];last=0
+    while time.monotonic()<end:
+        if time.monotonic()-last>1:send({'op':'state'});last=time.monotonic()
+        buffer.extend(wire.read(max(1,wire.in_waiting)))
+        while b'\n' in buffer:
+            line,_,buffer=buffer.partition(b'\n');raw.append(line.decode(errors='replace'))
+            try:d=json.loads(line)
+            except (ValueError,UnicodeError):continue
+            if 'firmware' in d:states.append(d)
+    assert len(states)>=2,(mode,'no states')
+    assert states[-1]['frameSeq']>states[0]['frameSeq'],(mode,'camera stalled')
+    if mode!='OFF':
+        assert any(s.get('cameraVision',{} ) and s['cameraVision'].get('mode')==mode for s in states),(mode,'no inference observation')
+    record={'mode':mode,'samples':len(states),'frameBefore':states[0]['frameSeq'],'frameAfter':states[-1]['frameSeq'],'heap':states[-1]['heap'],'cameraVision':states[-1].get('cameraVision')}
+    records.append(record);print(json.dumps(record),flush=True)
+try:
+    send({'op':'control','action':'stop'})
+    sample('OFF',35)
+    sample('TAGS',12)
+    sample('CAT',15)
+    sample('BOTH',15)
+finally:
+    send({'op':'vision_mode','mode':'OFF'});wire.close()
+    (root/'vendor'/'vision-runtime.log').write_text('\n'.join(raw),encoding='utf-8')
+    (root/'vision-smoke-result.json').write_text(json.dumps(records,indent=2),encoding='utf-8')
