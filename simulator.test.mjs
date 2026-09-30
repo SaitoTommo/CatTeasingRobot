@@ -132,9 +132,13 @@ test("branch choice separates hunting motion from sound-light exploration", asyn
     assert.ok(preyLog.some(m => m.includes("TOUCH_BRANCH_SELECT branch=HUNT")));
     assert.ok(!preyLog.some(m => m.includes("TOUCH area=TOP phase=RELEASE")),
       "prey collapse must begin while the cat is still touching");
-    await runFramesUntil(() => messages().slice(preyStart).some(m => m.includes("PATROL_RESUME target_tag=")), 5000);
-    assert.ok(messages().slice(preyStart).some(m => m.includes("DONE") && m.includes("SESSION_STARTED")),
-      "after collapse the Uno session must reopen for patrol");
+    await runFramesUntil(() => messages().slice(preyStart).some(m => m.includes("PATROL_HELD reason=CAT_DEPARTURE_UNCONFIRMED")), 5000);
+    const heldLog = messages().slice(preyStart);
+    assert.ok(heldLog.some(m => m.includes("MAX_WAIT_UNCONFIRMED cat_left_confirmed=false")));
+    assert.ok(!heldLog.some(m => m.includes("PATROL_RESUME target_tag=")),
+      "unseen cat movement or touch release cannot silently resume patrol");
+    elements.get("startPatrol").click();
+    await runFramesUntil(() => messages().slice(preyStart).some(m => m.includes("DONE") && m.includes("SESSION_STARTED")));
     elements.get("stopPatrol").click();
 
     elements.get("explorationBranchPercent").value = "100";

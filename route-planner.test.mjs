@@ -9,3 +9,10 @@ test("obstruction requests real scanning, invalid range stops", () => {
   assert.deepEqual(decideLocalAvoidance({ frontCm: 10, requestedCm: 90 }), { action: "SCAN" });
   assert.deepEqual(decideLocalAvoidance({ frontCm: null, requestedCm: 90 }), { action: "STOP" });
 });
+
+test("continuous patrol can reach its stop point without 12 cm segments and still respects front clearance", () => {
+  assert.deepEqual(decideLocalAvoidance({ frontCm: 80, requestedCm: 40, maxStepCm: Infinity }),
+    { action: "DRIVE", distanceCm: 40 });
+  assert.deepEqual(decideLocalAvoidance({ frontCm: 30, requestedCm: 40, maxStepCm: Infinity }),
+    { action: "DRIVE", distanceCm: 15 });
+});

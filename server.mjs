@@ -14,6 +14,8 @@ const files = new Map([
   ["/sensor-stream.mjs", ["sensor-stream.mjs", "text/javascript; charset=utf-8"]],
   ["/route-planner.mjs", ["route-planner.mjs", "text/javascript; charset=utf-8"]],
   ["/escape-planner.mjs", ["escape-planner.mjs", "text/javascript; charset=utf-8"]],
+  ["/hardware-telemetry.mjs", ["hardware-telemetry.mjs", "text/javascript; charset=utf-8"]],
+  ["/robot-observations.mjs", ["robot-observations.mjs", "text/javascript; charset=utf-8"]],
   ["/app.mjs", ["app.mjs", "text/javascript; charset=utf-8"]],
 ]);
 const port = Number(process.env.UNO_WEB_LAB_PORT || 8765);

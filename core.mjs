@@ -153,12 +153,13 @@ export class MockUno {
     this.touch = Object.fromEntries(TOUCH_AREAS.map(area => [area, false]));
     this.touchStarted = {};
     this.autoArea = null;
+    this.simulateRearTouch = true;
     this.pendingAutoArea = null;
     this.pendingAutoSince = now;
     this.encoder = { left: 0, right: 0 };
     this.debugEnabled = true;
     this.dryRunMotors = true;
-    this.wheelDiameterMm = 65;
+    this.wheelDiameterMm = 67.5;
     this.trackWidthMm = null;
     this.lastStep = now;
     this.obstacleLatched = false;
@@ -237,16 +238,8 @@ export class MockUno {
   }
 
   updateAutomaticTouch(now) {
-    const nextArea = contactArea(this.world);
-    // One continuous overlap is one contact, even if the robot turns and the
-    // geometric contact label changes while the bodies remain touching.
-    const stillOverlapping = Math.hypot(this.world.cat.x - this.world.robot.x,
-      this.world.cat.y - this.world.robot.y) <= ARENA.robotRadius + ARENA.catRadius;
-    if (this.autoArea && (nextArea || stillOverlapping)) {
-      this.pendingAutoArea = this.autoArea;
-      this.pendingAutoSince = now;
-      return;
-    }
+    let nextArea = contactArea(this.world);
+    if (nextArea === "REAR" && !this.simulateRearTouch) nextArea = null;
     if (nextArea !== this.pendingAutoArea) {
       this.pendingAutoArea = nextArea;
       this.pendingAutoSince = now;
@@ -343,6 +336,11 @@ export class MockUno {
       this.stopMotion("STOP_COMMAND");
       return this.done(id, "MOTOR_STOPPED");
     }
+    if (verb === "KEEP" && words.length === 1) {
+      if (this.active?.kind !== "MOTOR") return this.error(id, "NO_ACTIVE_MOTOR");
+      this.active.endAt = now + 500;
+      return this.done(id, "LEASE_RENEWED");
+    }
     if (verb === "MOVE" && words.length === 4 && ["FORWARD", "BACKWARD"].includes(a)) {
       const pwm = numberArg(b, 1, 255);
       const duration = numberArg(c, 1, 10000);
@@ -365,6 +363,10 @@ export class MockUno {
         this.ack(id);
         this.stopMotion("MOTOR_ZERO");
         return this.done(id, "MOTOR_STOPPED");
+      }
+      if (this.active?.kind === "MOTOR" && this.active.left === left / 255 && this.active.right === right / 255) {
+        this.active.endAt = now + 500;
+        return this.done(id, "LEASE_RENEWED");
       }
       if (this.active?.kind === "MOTOR") this.stopMotion("REPLACED");
       return this.startMotion(id, left / 255, right / 255, 500, "MOTOR", now);

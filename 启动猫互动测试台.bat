@@ -43,7 +43,7 @@ popd
 exit /b 0
 
 :check_lab
-powershell -NoProfile -Command "try { $r = Invoke-WebRequest -Uri 'http://127.0.0.1:8765/' -UseBasicParsing -TimeoutSec 1; $m = Invoke-WebRequest -Uri 'http://127.0.0.1:8765/escape-planner.mjs' -UseBasicParsing -TimeoutSec 1; if ($r.StatusCode -eq 200 -and $r.Content.Contains('connectSerial') -and $m.StatusCode -eq 200) { exit 0 } } catch {}; exit 1" >nul 2>&1
+powershell -NoProfile -Command "try { $r = Invoke-WebRequest -Uri 'http://127.0.0.1:8765/' -UseBasicParsing -TimeoutSec 1; $m = Invoke-WebRequest -Uri 'http://127.0.0.1:8765/robot-observations.mjs' -UseBasicParsing -TimeoutSec 1; if ($r.StatusCode -eq 200 -and $r.Content.Contains('connectSerial') -and $m.StatusCode -eq 200) { exit 0 } } catch {}; exit 1" >nul 2>&1
 exit /b %errorlevel%
 
 :check_old_lab

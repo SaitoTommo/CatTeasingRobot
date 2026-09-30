@@ -168,3 +168,36 @@ input, select { min-width: 0; width: 100%; min-height: 36px; padding: 6px 8px; m
   .scenario-fields { grid-template-columns: 1fr; }
   .log-entry { grid-template-columns: 60px 72px minmax(0, 1fr); gap: 4px; font-size: 11px; }
 }
+
+/* Hardware comes first; long interaction policies open on demand. */
+[hidden] { display: none !important; }
+.workspace-tabs { display: flex; gap: 6px; padding: 5px; width: fit-content; margin: 18px 0 14px; background: #e6eeea; border-radius: 12px; }
+.workspace-tab { border: 0; border-radius: 8px; padding: 10px 18px; color: #536b63; background: transparent; font-weight: 700; cursor: pointer; }
+.workspace-tab.active { color: #145d51; background: white; box-shadow: 0 2px 8px #173b2614; }
+.hardware-panel { padding: 22px; border-color: #bad5ca; }
+.hardware-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.hardware-status { padding: 7px 11px; border-radius: 20px; background: #eef4f1; color: #466557; font-size: 12px; }
+.hardware-note { font-size: 12px; line-height: 1.6; color: #6c715e; margin: 12px 0 16px; }
+.hardware-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.hardware-card { min-width: 0; border: 1px solid #d7e3dc; border-radius: 12px; background: #fbfdfb; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.hardware-card-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.hardware-card-heading h3 { margin: 0; font-size: 15px; color: #214c40; }
+.pin-badge { font-size: 10px; padding: 4px 6px; border-radius: 5px; background: #eaf1ed; color: #617469; }
+.io-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+.io-toggle input { width: 15px; min-height: 15px; margin: 0; accent-color: #1c7d61; }
+.io-toggle small { margin-left: auto; font-size: 10px; color: #6e8076; }
+.hardware-reading { display: block; white-space: pre-line; overflow-wrap: anywhere; border-radius: 8px; padding: 10px; margin-top: auto; min-height: 67px; background: #edf4ef; color: #225644; font-family: Consolas, monospace; font-size: 12px; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.hardware-reading[data-state="stale"] { color: #996320; background: #fff3dc; }
+.hardware-reading[data-state="waiting"] { color: #7a8880; }
+.hardware-motor-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.hardware-motor-actions .button { padding: 7px 9px; min-height: 30px; font-size: 11px; }
+.hardware-help { margin-top: 16px; border-top: 1px solid #d7e3dc; padding-top: 12px; font-size: 12px; color: #617469; }
+.hardware-help summary, .decision-priority-card summary, .shared-log > summary { cursor: pointer; font-weight: 700; }
+.decision-priority-card > summary { color: #214c40; font-size: 15px; }
+.shared-log { margin-top: 18px; }
+.shared-log > summary { color: #536b63; font-size: 13px; }
+.shared-log[open] > summary { margin-bottom: 15px; }
+@media (max-width: 1050px) { .hardware-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .hardware-grid { grid-template-columns: 1fr; } .hardware-panel { padding: 15px; } .hardware-toolbar > .button { flex: 1 1 40%; } }
+
+.strategy-io-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px 16px; }

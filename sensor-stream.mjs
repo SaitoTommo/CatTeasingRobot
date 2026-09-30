@@ -20,7 +20,7 @@ export class SceneSensorPublisher {
   }
 
   plan({ now, cameraValue, sides = null, sideSafeCm = { LEFT: DEFAULT_SIDE_SAFE_CM, RIGHT: DEFAULT_SIDE_SAFE_CM },
-    moving = false, beforeMotion = false, frontRequired = true }) {
+    moving = false, beforeMotion = false, frontRequired = true, physicalSides = {} }) {
     if (!moving && !beforeMotion) return [];
     const commands = [];
     const cameraChangedSafety = crossesStopBoundary(Number(this.cameraValue), Number(cameraValue)) ||
@@ -32,6 +32,7 @@ export class SceneSensorPublisher {
     }
     if (!sides) return commands;
     for (const side of ["LEFT", "RIGHT"]) {
+      if (physicalSides[side]) continue;
       const value = sides[side];
       const previous = this.sideValues[side];
       const urgent = previous === null || crossesStopBoundary(Number(previous), Number(value), sideSafeCm[side]);

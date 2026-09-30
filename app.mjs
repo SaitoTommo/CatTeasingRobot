@@ -7,9 +7,11 @@ import {
   DEFAULT_RESPONSE_POLICY, RESPONSE_POLICY_LIMITS, Esp32DecisionSystem, decidePatrolStep, decideScanProgress,
   decideTargetAlignment, turnObstacleReason,
 } from "./decision-system.mjs";
+import { HardwareTelemetry, TelemetryPoller, IO_CHANNELS, confirmSceneMotion, encodeSerialCommand, decodeSerialFrame, encoderWheelTravel } from "./hardware-telemetry.mjs";
 import { SceneSensorPublisher } from "./sensor-stream.mjs";
 import { decideLocalAvoidance } from "./route-planner.mjs";
 import { escapeTurn, observedTravelCm } from "./escape-planner.mjs";
+import { sideObservation, frontObservation, cameraObservationInput, CapturedCatWait } from "./robot-observations.mjs";
 
 const $ = id => document.getElementById(id);
 const canvas = $("arena");
@@ -52,14 +54,28 @@ let realLeftDistanceText = "未读取";
 let realRightDistanceText = "未读取";
 let serialFirmwareVerified = false;
 let serialDryRunConfirmed = false;
+const physicalIoState = new Map();
+const hardwareTelemetry = new HardwareTelemetry();
+const telemetryPoller = new TelemetryPoller();
+function resetPhysicalIoUi() {
+  physicalIoState.clear();
+  hardwareTelemetry.reset(); telemetryPoller.reset();
+  document.querySelectorAll('[data-physical-io]').forEach(el => { el.disabled = true; el.checked = false; });
+  document.querySelectorAll('[data-io-state]').forEach(el => el.textContent = '未读取');
+}
 let serialTrackConfigured = false;
-let serialGeometry = { wheelMm: 65, trackMm: 120 };
+let serialGeometry = { wheelMm: 67.5, trackMm: 120 };
 const serialSafeSideCm = { LEFT: 5, RIGHT: 5 };
 let patrolWaypointIndex = 0;
 const PATROL_TAGS = ["A", "B", "C", "D"];
 const pendingSceneMotions = new Map();
 let activeSceneMotion = null;
+let activeDistanceTravel = null;
+let manualBenchMotors = [0, 0];
+let manualBenchRenewedAt = 0;
 let manualRobotRevision = 0;
+let sceneDisplayPose = null;
+let sceneDisplayRevision = -1;
 let lastFrameAt = performance.now();
 let patrolStartedAt = 0;
 let interactionPhase = "IDLE";
@@ -284,41 +300,18 @@ function measuredGeometry() {
   return mode === "mock" ? { wheelMm: mock.wheelDiameterMm, trackMm: mock.trackWidthMm ?? 120 } : serialGeometry;
 }
 
-function stepSerialSceneMotion(elapsedSeconds) {
-  if (!activeSceneMotion || activeSceneMotion.haltedByCommand) return;
-  const seconds = clamp(elapsedSeconds, 0, .05);
-  const wheelMm = measuredGeometry().wheelMm;
-  const trackMm = measuredGeometry().trackMm;
-  const fullSpeedPxS = 200 / 60 * Math.PI * wheelMm / 10 * ARENA.pxPerCm;
-  const leftSpeed = activeSceneMotion.left * fullSpeedPxS;
-  const rightSpeed = activeSceneMotion.right * fullSpeedPxS;
-  const rotation = (leftSpeed - rightSpeed) / (trackMm / 10 * ARENA.pxPerCm);
-  world.robot.heading = wrapAngle(world.robot.heading + rotation * seconds);
-  const travel = (leftSpeed + rightSpeed) / 2 * seconds;
-  world.robot.x = clamp(world.robot.x + Math.cos(world.robot.heading) * travel,
-    ARENA.robotRadius, ARENA.width - ARENA.robotRadius);
-  world.robot.y = clamp(world.robot.y + Math.sin(world.robot.heading) * travel,
-    ARENA.robotRadius, ARENA.height - ARENA.robotRadius);
-}
-
 function reconcileSceneMotion(motion, line, completed) {
-  if (!motion || motion.manualRobotRevision !== manualRobotRevision ||
-      (motion.kind !== "DRIVE" && motion.kind !== "ROTATE")) return;
+  if (!motion || motion.manualRobotRevision !== manualRobotRevision) return;
   const counts = /\bLEFT_PULSES=(\d+) RIGHT_PULSES=(\d+)/.exec(line);
-  const wheelCm = (measuredGeometry().wheelMm) / 10;
-  const trackCm = (measuredGeometry().trackMm) / 10;
-  let leftCm;
-  let rightCm;
-  if (counts) {
-    const cmPerPulse = Math.PI * wheelCm / 20;
-    leftCm = Math.sign(motion.left) * Number(counts[1]) * cmPerPulse;
-    rightCm = Math.sign(motion.right) * Number(counts[2]) * cmPerPulse;
-  } else if (completed && motion.kind === "DRIVE") {
-    leftCm = rightCm = motion.target;
-  } else if (completed && motion.kind === "ROTATE") {
-    leftCm = trackCm * radians(motion.target) / 2;
-    rightCm = -leftCm;
-  } else return;
+  if (!counts) return;
+  const pulses = [Number(counts[1]), Number(counts[2])];
+  const travel = encoderWheelTravel(motion, pulses, measuredGeometry().wheelMm);
+  if (!travel) return;
+  const { leftCm, rightCm } = travel;
+  const trackCm = measuredGeometry().trackMm / 10;
+  motion.lastPulses = pulses;
+  motion.travelCm = travel.travelCm;
+  motion.progressAt = performance.now();
   const distanceCm = (leftCm + rightCm) / 2;
   const rotation = (leftCm - rightCm) / trackCm;
   const start = motion.startPose;
@@ -336,16 +329,53 @@ function reconcileSceneMotion(motion, line, completed) {
 }
 
 function receiveLine(rawLine, source) {
-  const line = rawLine.trim();
+  const line = source === "SERIAL" ? decodeSerialFrame(rawLine) : rawLine.trim();
+  if (line === null) {
+    addLog("error", "SERIAL_FRAME_REJECTED 校验失败，已丢弃损坏回报", source);
+    return;
+  }
   if (!line) return;
   let type = line.startsWith("ERROR") ? "error" : line.startsWith("EVENT") ? "event" : "response";
-  addLog(type, line, source);
+  const routineTelemetry = source === "SERIAL" && (/^DATA \d+ HW /.test(line) || new RegExp('^(ACK|DONE) ' + telemetryPoller.pending?.id + '(?: |$)').test(line));
+  if (!routineTelemetry && !line.startsWith("EVENT MOTION_PROGRESS")) addLog(type, line, source);
+  if (source === "SERIAL") {
+    const now = performance.now();
+    const hardware = hardwareTelemetry.accept(line, now);
+    if (hardware?.kind === "STATE") {
+      realState = hardware.values[1];
+      const mask = Number(hardware.values[4]);
+      IO_CHANNELS.forEach((channel, index) => {
+        const enabled = Boolean(mask & (1 << index));
+        physicalIoState.set(channel, enabled);
+        document.querySelectorAll('[data-physical-io="' + channel + '"]').forEach(control => { control.checked = enabled; control.disabled = !serialFirmwareVerified; });
+        document.querySelectorAll('[data-io-state="' + channel + '"]').forEach(status => { status.textContent = enabled ? "已开启" : "已关闭"; });
+      });
+    }
+    if (hardware?.kind === "EL") serialEncoder.left = Number(hardware.values[2]);
+    if (hardware?.kind === "ER") serialEncoder.right = Number(hardware.values[2]);
+    const telemetryEnd = /^(?:DONE|ERROR) (\d+)/.exec(line);
+    if (telemetryEnd) telemetryPoller.settle(Number(telemetryEnd[1]), now);
+  }
   const encoderData = /^DATA \d+ ENCODER (\d+) (\d+)/.exec(line);
   if (encoderData && source !== "SIM_UNO") serialEncoder = { left: Number(encoderData[1]), right: Number(encoderData[2]) };
+  const progress = /^EVENT MOTION_PROGRESS (\d+)/.exec(line);
+  if (source === "SERIAL" && progress) {
+    activeSceneMotion = confirmSceneMotion(pendingSceneMotions, activeSceneMotion,
+      Number(progress[1]), world.robot, manualRobotRevision, line);
+    if (activeSceneMotion?.id === Number(progress[1])) reconcileSceneMotion(activeSceneMotion, line, false);
+    if (activeSceneMotion?.id === Number(progress[1])) realState = "MOVING";
+  }
   const motionDone = /^EVENT MOTION_DONE (\d+)/.exec(line);
   const motionAborted = /^EVENT MOTION_ABORTED (\d+) (\S+)/.exec(line);
   const commandDone = /^DONE (\d+)(?: (\S+))?/.exec(line);
   const error = /^ERROR (\d+) (.+)/.exec(line);
+  if (activeDistanceTravel && motionAborted && Number(motionAborted[1]) === activeDistanceTravel.id && !activeDistanceTravel.stopping) activeDistanceTravel.error = motionAborted[2];
+  if (activeDistanceTravel && error && Number(error[1]) === activeDistanceTravel.id) activeDistanceTravel.error = error[2];
+  if (error?.[2] === "NO_ACTIVE_MOTOR") {
+    manualBenchMotors = [0, 0];
+    if (activeDistanceTravel) activeDistanceTravel.error = "NO_ACTIVE_MOTOR";
+  }
+  if (commandDone?.[2] === "LEASE_RENEWED") pendingSceneMotions.delete(Number(commandDone[1]));
   if (activeScanMotion) {
     if (motionAborted && activeScanMotion.commandIds.has(Number(motionAborted[1])) && motionAborted[2] !== "REPLACED") {
       activeScanMotion.abortReason = motionAborted[2];
@@ -369,10 +399,11 @@ function receiveLine(rawLine, source) {
     if (line.startsWith("READY ")) {
       resetSerialOutputs();
       resetSerialSafeDistances();
-      serialFirmwareVerified = line === "READY UNO_CAT_V5.2";
+      resetPhysicalIoUi();
+      serialFirmwareVerified = line === "READY UNO_CAT_V5.6";
       if (!serialFirmwareVerified) {
-        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.2", "SYSTEM");
-        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.2。");
+        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.6", "SYSTEM");
+        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.6。");
 
       }
       unoTouches.clear();
@@ -393,7 +424,13 @@ function receiveLine(rawLine, source) {
         cancelBehavior("UNO_RESET");
         addLog("event", "DECISION_STOP reason=UNO_RESET", "ESP32·SIM");
       }
-      if (/^READY UNO_CAT_V5/.test(line)) send("GET_CONFIG");
+      if (serialFirmwareVerified) { send("GET_CONFIG"); send("GET_IO"); }
+    }
+    const io = /^DATA \d+ IO (\S+) (ON|OFF)$/.exec(line);
+    if (io) {
+      physicalIoState.set(io[1], io[2] === "ON");
+      document.querySelectorAll('[data-physical-io="' + io[1] + '"]').forEach(control => { control.checked = io[2] === "ON"; control.disabled = !serialFirmwareVerified; });
+      document.querySelectorAll('[data-io-state="' + io[1] + '"]').forEach(status => { status.textContent = io[2] === "ON" ? "已开启" : "已关闭"; });
     }
     const state = /DATA \d+ STATUS (\S+)/.exec(line);
     const config = /DATA \d+ CONFIG WHEEL_MM=(\d+(?:\.\d+)?) TRACK_MM=(UNSET|\d+(?:\.\d+)?)/.exec(line);
@@ -403,7 +440,7 @@ function receiveLine(rawLine, source) {
     if (state) {
       realState = state[1];
       const wasDryRunConfirmed = serialDryRunConfirmed;
-      serialDryRunConfirmed = serialFirmwareVerified && /DEBUG=ON/.test(line) && /MOTOR_MODE=DRY_RUN/.test(line);
+      serialDryRunConfirmed = serialFirmwareVerified && /DEBUG=ON/.test(line) && /INPUT_MODE=TEST/.test(line);
       if (!wasDryRunConfirmed && serialDryRunConfirmed && $("streamSceneSensors").checked) {
         sceneSensors.reset();
         streamSceneSensors(performance.now(), true);
@@ -443,21 +480,23 @@ function receiveLine(rawLine, source) {
       else realRightDistanceText = shown;
     }
     const motionStarted = /^EVENT MOTION_STARTED (\d+)/.exec(line);
-    if (motionStarted) {
-      const id = Number(motionStarted[1]);
-      const sceneMotion = pendingSceneMotions.get(id);
-      activeSceneMotion = sceneMotion ? {
-        ...sceneMotion, id, startPose: { ...world.robot }, manualRobotRevision,
-      } : null;
-      pendingSceneMotions.delete(id);
+    const motionAck = /^ACK (\d+)$/.exec(line);
+    if (motionStarted || motionAck) {
+      const id = Number((motionStarted || motionAck)[1]);
+      activeSceneMotion = confirmSceneMotion(pendingSceneMotions, activeSceneMotion,
+        id, world.robot, manualRobotRevision, line);
     }
     if (line.includes("MOTION_STARTED")) realState = "MOVING";
     if (motionDone || motionAborted) {
+      activeSceneMotion = confirmSceneMotion(pendingSceneMotions, activeSceneMotion,
+        Number((motionDone || motionAborted)[1]), world.robot, manualRobotRevision, line);
       if (activeSceneMotion?.id === Number((motionDone || motionAborted)[1])) {
         reconcileSceneMotion(activeSceneMotion, line, Boolean(motionDone));
       }
-      realState = motionAborted?.[2] === "REPLACED" ? "MOVING" : "IDLE";
-      activeSceneMotion = null;
+      if (!activeSceneMotion || activeSceneMotion.id === Number((motionDone || motionAborted)[1])) {
+        realState = motionAborted?.[2] === "REPLACED" ? "MOVING" : "IDLE";
+        activeSceneMotion = null;
+      }
     }
     if (/^DONE \d+ SESSION_STOPPED$/.test(line)) {
       realState = "STOPPED";
@@ -474,6 +513,7 @@ function receiveLine(rawLine, source) {
   if (source === "SERIAL" && error) pendingSceneMotions.delete(Number(error[1]));
   if (source === "SERIAL" && error?.[2] === "DEBUG_DISABLED") {
     serialDryRunConfirmed = false;
+    resetPhysicalIoUi();
     $("streamSceneSensors").checked = false;
   }
   if (source === "SERIAL" && /^(FRONT_OBSTACLE_OR_CAMERA_INVALID|SIDE_(LEFT|RIGHT)_OBSTACLE_OR_SENSOR_INVALID)$/.test(error?.[2] || "")) {
@@ -527,7 +567,7 @@ function enqueueSerialWrite(line, id) {
     if (!writer) return;
     const wait = SERIAL_WRITE_GAP_MS - (performance.now() - serialLastWriteAt);
     if (wait > 0) await sleep(wait);
-    try { await writer.write(new TextEncoder().encode(`${line}\n`)); }
+    try { await writer.write(new TextEncoder().encode(`${encodeSerialCommand(line)}\n`)); }
     catch (error) {
       receiveLine(`ERROR ${id} WRITE_FAILED`, "SERIAL");
       showToast(`串口写入失败：${error.message}`);
@@ -548,7 +588,7 @@ const MOTION_TRANSPORT_ERRORS = /^(UNKNOWN_OR_INVALID_COMMAND|BAD_ENVELOPE|TOO_M
 async function motionDeviceIdle() {
   send("GET_STATUS");
   await sleep(200);
-  return mode === "mock" ? !mock.active : realState !== "MOVING";
+  return robotMotionState() !== "MOVING";
 }
 async function sendMotionWithTransportRetry(command, attempts = 3) {
   let lastError = null;
@@ -588,6 +628,7 @@ function send(command, preflight = true) {
     streamSceneSensors(performance.now(), true, requestedMotion);
   const id = nextCommandId++;
   const line = `CMD ${id} ${normalized}`;
+  if (normalized === "STOP" || normalized === "SESSION_STOP" || normalized === "MOTOR 0 0") manualBenchMotors = [0, 0];
   if (mode === "serial") {
     if (/^(LED |BEEP |SESSION_STOP$)/.test(normalized)) pendingSerialOutputs.set(id, normalized);
     const safeDistance = /^SET_SAFE_DISTANCE (LEFT|RIGHT) (\d+(?:\.\d+)?)$/.exec(normalized);
@@ -597,17 +638,70 @@ function send(command, preflight = true) {
       $("streamSceneSensors").checked = false;
     }
     const sceneMotion = sceneMotionFromCommand(normalized);
-    if (sceneMotion && normalized !== "MOTOR 0 0") pendingSceneMotions.set(id, sceneMotion);
+    if (sceneMotion && normalized !== "MOTOR 0 0") pendingSceneMotions.set(id, {
+      ...sceneMotion, startPose: { ...world.robot }, manualRobotRevision,
+      renewalOf: normalized.startsWith("MOTOR ") && activeSceneMotion && !activeSceneMotion.haltedByCommand && sceneMotion.left === activeSceneMotion.left && sceneMotion.right === activeSceneMotion.right ? activeSceneMotion.id : null,
+    });
     if (normalized === "STOP" || normalized === "SESSION_STOP" || normalized === "MOTOR 0 0") {
+      manualBenchMotors = [0, 0];
       if (activeSceneMotion) activeSceneMotion.haltedByCommand = true;
     }
   }
-  addLog("command", line, mode === "mock" ? "TX·SIM" : "TX·SERIAL");
+  if (normalized !== "GET_TELEMETRY" && normalized !== "KEEP") addLog("command", line, mode === "mock" ? "TX·SIM" : "TX·SERIAL");
   if (mode === "mock") {
     const wireLine = applyWireFault(line);
     if (wireLine !== null) mock.receiveWire(wireLine, performance.now());
   } else if (writer) enqueueSerialWrite(line, id);
   return id;
+}
+
+async function runContinuousDistance(distanceCm, pwm) {
+  manualBenchMotors = [0, 0];
+  if (activeSceneMotion && !activeSceneMotion.haltedByCommand)
+    await sendAndWaitDone("STOP", "MOTOR_STOPPED");
+  for (const side of ["LEFT", "RIGHT"]) {
+    if (physicalIoState.get("MOTOR_" + side) && !physicalIoState.get("ENCODER_" + side))
+      throw new Error("PHYSICAL_ENCODER_REQUIRED");
+  }
+  const token = behaviorToken;
+  const speed = Math.sign(distanceCm) * pwm;
+  const targetCm = Math.max(0, Math.abs(distanceCm) - motorStopMarginCm());
+  if (targetCm === 0) return;
+  const travel = { id: nextCommandId, stopping: false, error: null };
+  activeDistanceTravel = travel;
+  send(`MOTOR ${speed} ${speed}`, false);
+  let renewedAt = performance.now();
+  const startedAt = renewedAt;
+  const deadline = renewedAt + 30000;
+  try {
+    while (performance.now() < deadline) {
+      if (token !== behaviorToken) throw new Error("BEHAVIOR_CANCELLED");
+      if (travel.error) throw new Error(travel.error);
+      const motion = activeSceneMotion?.id === travel.id ? activeSceneMotion : null;
+      if (motion?.travelCm >= targetCm) return;
+      if (performance.now() - (motion?.progressAt ?? startedAt) > 750)
+        throw new Error("MOTION_FEEDBACK_TIMEOUT");
+      if (performance.now() - renewedAt >= 200) {
+        // Renew the same motion without stopping wheels or resetting its pulse base.
+        send("KEEP", false);
+        renewedAt = performance.now();
+      }
+      await sleep(20);
+    }
+    throw new Error("MOTION_TIMEOUT");
+  } finally {
+    travel.stopping = true;
+    // Confirm the off command before another action can begin.
+    try {
+      if (activeDistanceTravel === travel && (!activeSceneMotion || activeSceneMotion.id === travel.id))
+        await sendAndWaitDone("STOP", "MOTOR_STOPPED");
+    }
+    finally { if (activeDistanceTravel === travel) activeDistanceTravel = null; }
+  }
+}
+
+function motorStopMarginCm() {
+  return clamp(Number($("motorStopMarginCm").value) || 0, 0, 15);
 }
 
 async function sendMotion(command) {
@@ -623,6 +717,10 @@ async function sendMotion(command) {
     }
   } else {
     streamSceneSensors(performance.now(), true, motion);
+  }
+  if (mode === "serial" && command.startsWith("DRIVE ")) {
+    const [, distance, pwm] = command.split(" ");
+    return runContinuousDistance(Number(distance), Number(pwm));
   }
   // The promise is registered before sending: the mock can return an error synchronously.
   const expectedId = nextCommandId;
@@ -645,6 +743,7 @@ function sendAndWaitDone(command, expectedSuffix) {
 }
 
 function cancelBehavior(reason = "USER_STOP") {
+  manualBenchMotors = [0, 0];
   behaviorToken += 1;
   faceReady = false;
   $("faceCatStatus").textContent = `动作中断：${reason}`;
@@ -656,34 +755,37 @@ function simulatedSensorsEnabled() {
   return mode === "mock" || (serialDryRunConfirmed && $("streamSceneSensors").checked);
 }
 function robotCamera(name = null) {
-  if (!simulatedSensorsEnabled()) return { detected: false, centerX: null, relativeDeg: null, distanceCm: null };
-  return name === null ? cameraObservation(world) : cameraTargetObservation(world, world.tags[name]);
+  return cameraObservationInput({ simulatedAllowed: simulatedSensorsEnabled(),
+    readSimulated: () => name === null ? cameraObservation(world) : cameraTargetObservation(world, world.tags[name]) });
 }
 function robotFrontCm() {
-  if (!simulatedSensorsEnabled()) return null;
-  return cameraFrontDistanceCm(world);
+  return frontObservation({ mode, simulatedAllowed: simulatedSensorsEnabled(),
+    readSimulated: () => cameraFrontDistanceCm(world), rows: hardwareTelemetry.rows,
+    now: performance.now() }).distanceCm;
+}
+function robotSideObservation(side) {
+  return sideObservation({ side, mode, physicalIo: physicalIoState, rows: hardwareTelemetry.rows,
+    now: performance.now(), simulatedAllowed: simulatedSensorsEnabled(),
+    readSimulated: area => sideSonarDistanceCm(world, area), readMock: area => mock.sideDistanceCm(area) });
 }
 let serialEncoder = { left: 0, right: 0 };
+function robotMotionState() { return mode === "mock" ? mock.snapshot(performance.now()).state : realState; }
 function robotEncoder() { return mode === "mock" ? { ...mock.encoder } : { ...serialEncoder }; }
 
 function logCamera() {
   const camera = robotCamera();
   const description = camera.detected
     ? `cat_detected=true center_x=${camera.centerX.toFixed(2)} distance_est_cm=${camera.distanceCm.toFixed(1)} bbox=${camera.bboxSize.toFixed(2)}`
-    : "cat_detected=false";
-  addLog("event", `SIM_CAMERA ${description}`, "ESP32·SIM");
+    : camera.valid === false ? "cat_position=UNKNOWN sensor=UNAVAILABLE" : "cat_detected=false cat_position=UNKNOWN";
+  addLog("event", `CAMERA source=${camera.source} ${description}`, "ESP32·SIM");
 }
 
 function sceneTurnBlockReason(direction) {
-  const sceneClearanceKnown = mode === "mock" ||
-    (mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked);
-  return turnObstacleReason({ direction, available: sceneClearanceKnown,
+  return turnObstacleReason({ direction, available: true,
     leftSafeCm: mode === "mock" ? mock.safeSideCm.LEFT : serialSafeSideCm.LEFT,
     rightSafeCm: mode === "mock" ? mock.safeSideCm.RIGHT : serialSafeSideCm.RIGHT,
-    leftCm: mode === "mock" ? mock.sideDistanceCm("LEFT")
-      : sceneClearanceKnown ? sideSonarDistanceCm(world, "LEFT") : null,
-    rightCm: mode === "mock" ? mock.sideDistanceCm("RIGHT")
-      : sceneClearanceKnown ? sideSonarDistanceCm(world, "RIGHT") : null });
+    leftCm: robotSideObservation("LEFT").distanceCm,
+    rightCm: robotSideObservation("RIGHT").distanceCm });
 }
 
 async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeoutMs = Infinity,
@@ -1017,7 +1119,7 @@ async function followFixedPatrol(token) {
     const name = PATROL_TAGS[patrolWaypointIndex];
     const tag = tagObservation(name);
     if (decidePatrolStep({ detected: tag.detected, distanceCm: tag.distanceCm,
-      targetCm: clamp(Number($("tagStopCm").value) || 20, 15, 50) }).action === "SCAN") {
+      targetCm: clamp(Number($("tagStopCm").value) || 20, 15, 50) + motorStopMarginCm() }).action === "SCAN") {
       if (!await scanForRouteTag(name, token)) return;
       announcedTag = null;
       continue;
@@ -1032,10 +1134,11 @@ async function followFixedPatrol(token) {
     if (token !== behaviorToken || interactionPhase !== "PATROL") return;
     const centered = tagObservation(name);
     const routeDecision = decidePatrolStep({ detected: centered.detected,
-      distanceCm: centered.distanceCm, targetCm: stopCm });
+      distanceCm: centered.distanceCm, targetCm: stopCm + motorStopMarginCm() });
     if (routeDecision.action === "SCAN") continue;
     if (routeDecision.action === "APPROACH") {
-      const local = decideLocalAvoidance({ frontCm: robotFrontCm(), requestedCm: routeDecision.stepCm });
+      const local = decideLocalAvoidance({ frontCm: robotFrontCm(),
+        requestedCm: centered.distanceCm - stopCm, maxStepCm: Infinity });
       if (local.action === "STOP") throw new Error("FRONT_OBSTACLE_OR_CAMERA_INVALID");
       if (local.action === "SCAN") {
         if (!await avoidObservedObstacle(token)) return;
@@ -1180,28 +1283,26 @@ async function showEndingOutcome(token, outcome) {
     if (!await behaviorPause(captureCueFlashMs - 500, token)) return;
     send("LED OFF");
   }
-  const deadline = performance.now() + captureWaitMaxSeconds * 1000;
-  let awaySince = null;
-  let waitReason = "MAX_WAIT";
-  while (token === behaviorToken && performance.now() < deadline) {
-    const camera = robotCamera();
-    const now = performance.now();
-    if (!unoTouches.size && camera.detected && camera.distanceCm > catLeaveDistanceCm) {
-      if (awaySince === null) awaySince = now;
-      if (now - awaySince >= catLeaveSeconds * 1000) {
-        waitReason = "CAT_LEFT";
-        break;
-      }
-    } else awaySince = null;
-    await new Promise(resolve => setTimeout(resolve, 100));
+  const wait = new CapturedCatWait({ startedAt: performance.now(),
+    maxWaitMs: captureWaitMaxSeconds * 1000, farCm: catLeaveDistanceCm,
+    farHoldMs: catLeaveSeconds * 1000 });
+  let result;
+  while (token === behaviorToken) {
+    result = wait.update({ camera: robotCamera(), touchActive: unoTouches.size > 0, now: performance.now() });
+    if (result.done) break;
+    $("faceCatStatus").textContent = result.reason === "CAT_POSITION_UNKNOWN"
+      ? "装死等待：当前看不见猫，位置未知；触碰松开不代表离开"
+      : result.reason === "CONTACT_ACTIVE" ? "装死等待：仍检测到触碰"
+      : "装死等待：尚未连续观察到猫远离";
+    await sleep(100);
   }
-  if (token === behaviorToken && unoTouches.size) {
-    addLog("event", "ENDING_WAIT_TOUCH_RELEASE reason=CAT_STILL_HOLDING", "ESP32·SIM");
-    while (token === behaviorToken && unoTouches.size)
-      await new Promise(resolve => setTimeout(resolve, 100));
+  if (token === behaviorToken) {
+    $("faceCatStatus").textContent = result.confirmedLeft ? "视觉已确认猫远离"
+      : "装死等待超时：无法确认猫离开，保持停止";
+    addLog("event", `ENDING_OUTCOME_DONE outcome=${outcome} reason=${result.reason} cat_left_confirmed=${result.confirmedLeft} wait_max_s=${captureWaitMaxSeconds}`, "ESP32·SIM");
   }
-  if (token === behaviorToken)
-    addLog("event", `ENDING_OUTCOME_DONE outcome=${outcome} reason=${waitReason} wait_max_s=${captureWaitMaxSeconds}`, "ESP32·SIM");
+  return result;
+
 }
 
 async function runBehavior(name, source = "MANUAL", reason = "manual_button", details = {}) {
@@ -1216,7 +1317,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
   if (name !== "PATROL" && name !== "END_SESSION" && source !== "ESP32_AUTO" && interactionPhase === "PATROL") {
     interactionPhase = "INTERACTION";
   }
-  const hadMotion = mode === "mock" ? Boolean(mock.active) : realState === "MOVING";
+  const hadMotion = robotMotionState() === "MOVING";
   if (activeSearch) activeSearch.stopReason = "REPLACED_BY_BEHAVIOR";
   cancelBehavior("NEW_BEHAVIOR");
   if (hadMotion) send("STOP");
@@ -1234,6 +1335,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       !robotCamera().detected)
     addLog("error", "FACE_CAT_RESULT action=END_SESSION status=FAILED reason=CAT_NOT_DETECTED", "ESP32·SIM");
   let attackFailureReason = null;
+  let endingUnconfirmed = false;
   try {
     if (source === "ESP32_AUTO" && interactionPhase === "INTERACTION" &&
         initialLookPending && name !== "ATTACK_RESPONSE" && name !== "EXPLORE_SOUND_LIGHT" &&
@@ -1253,10 +1355,14 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
     }
     if (name === "END_SESSION") {
       send("STOP");
-      if (endingOutcome) await showEndingOutcome(token, endingOutcome);
+      if (endingOutcome) {
+        const outcomeResult = await showEndingOutcome(token, endingOutcome);
+        endingUnconfirmed = outcomeResult?.confirmedLeft === false;
+        if (endingUnconfirmed) skipFinalFacing = true;
+      }
     } else if (name === "PATROL") {
       if (reason === "operator_start_patrol" ||
-          (mode === "mock" ? mock.sessionStopped : realState === "STOPPED")) {
+          (robotMotionState() === "STOPPED")) {
         await sendAndWaitDone("SESSION_START", "SESSION_STARTED");
         if (token !== behaviorToken) return;
       }
@@ -1442,7 +1548,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
           // 三次都无回执：用一次状态查询判断命令是否其实已执行（只是回执碎在链路上）。
           send("GET_STATUS");
           await sleep(250);
-          if (mode === "mock" ? mock.sessionStopped : realState === "STOPPED") {
+          if (robotMotionState() === "STOPPED") {
             addLog("event", "SESSION_STOP_CONFIRMED_VIA_STATUS", "ESP32·SIM");
             stopConfirmed = true;
             break;
@@ -1463,7 +1569,13 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       decisionSystem.finishInteraction();
       initialLookPending = false;
       resetTouchBurst();
-      if (autoControlEnabled || resumePatrolAfterInteraction) {
+      if (endingUnconfirmed) {
+        autoControlEnabled = false;
+        resumePatrolAfterInteraction = false;
+        interactionPhase = "IDLE";
+        $("routeStatus").textContent = "猫是否离开未知：保持停止，确认现场后手动恢复巡游";
+        addLog("event", "PATROL_HELD reason=CAT_DEPARTURE_UNCONFIRMED", "ESP32·SIM");
+      } else if (autoControlEnabled || resumePatrolAfterInteraction) {
         const target = PATROL_TAGS[patrolWaypointIndex];
         interactionPhase = "PATROL";
         resumePatrolAfterInteraction = false;
@@ -1728,7 +1840,7 @@ function tickAutoDecision(now) {
 
 function startSession(cancelCurrent = true) {
   if (cancelCurrent) {
-    const hadMotion = mode === "mock" ? Boolean(mock.active) : realState === "MOVING";
+    const hadMotion = robotMotionState() === "MOVING";
     cancelBehavior("NEW_SESSION");
     if (hadMotion) send("STOP");
   }
@@ -1743,7 +1855,7 @@ function setMode(next) {
   $("modeBadge").classList.toggle("serial", next === "serial");
   $("modeNotice").textContent = next === "mock"
     ? "当前回报来自 JavaScript 模拟 Uno，不是实际固件。连接 Uno USB 串口后才能向固件发送命令。"
-    : "已连接 Uno 串口。空板与实体模式使用同一套固件行为；画布位置依据运动与编码器回报估计。空板请先点“准备空板模拟”，实体模式请设置实测几何参数。";
+    : "已连接 Uno 串口。空板与实体模式使用同一套固件行为；画布位置依据运动与编码器回报估计。元器件测试请先点“准备元器件测试”，实体模式请设置实测几何参数。";
   $("connectSerial").textContent = next === "mock" ? "连接 Uno 串口" : "断开串口";
   addLog("event", next === "mock" ? "MODE SIM_UNO" : "MODE SERIAL_UNO", "SYSTEM");
 }
@@ -1756,7 +1868,7 @@ async function connectSerial() {
   try {
     serialFirmwareVerified = false;
     port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
+    await port.open({ baudRate: 57600 });
     writer = port.writable.getWriter();
     reader = port.readable.getReader();
     reading = true;
@@ -1800,6 +1912,7 @@ async function readSerial() {
 }
 
 async function disconnectSerial() {
+  resetPhysicalIoUi();
   reading = false;
   cancelBehavior("SERIAL_DISCONNECTED");
   catInput.stop();
@@ -1914,7 +2027,7 @@ function drawScene(visual, now) {
   for (let x = 0; x <= ARENA.width; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ARENA.height); ctx.stroke(); }
   for (let y = 0; y <= ARENA.height; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(ARENA.width, y); ctx.stroke(); }
 
-  const robot = world.robot;
+  const robot = sceneDisplayPose || world.robot;
   ctx.beginPath();
   ctx.moveTo(robot.x, robot.y);
   const sightLength = Math.hypot(ARENA.width, ARENA.height) * 2;
@@ -2046,7 +2159,7 @@ function updateTelemetry(now, visual) {
   const camera = robotCamera();
   if (faceReady && (!camera.detected || Math.abs(camera.centerX - .5) > decisionSystem.responsePolicy.centerTolerancePercent / 100)) {
     faceReady = false;
-    $("faceCatStatus").textContent = "猫或机器人已移动，模拟取景需重新对准";
+    $("faceCatStatus").textContent = "目标已不在当前视野中心，需要重新观测和对准";
     addLog("event", "SIM_CAMERA CAPTURE_READY_INVALIDATED", "ESP32·SIM");
   }
   const touch = [...unoTouches];
@@ -2073,7 +2186,7 @@ function updateTelemetry(now, visual) {
   $("safeDistanceStatus").textContent = `当前 Uno 阈值：左 ${safeSide.LEFT.toFixed(1)} cm，右 ${safeSide.RIGHT.toFixed(1)} cm；前方摄像头判定阈值 15.0 cm`;
   $("sessionValue").textContent = sessionStartedAt === null ? "互动未开始" : `互动 ${((Date.now() - sessionStartedAt) / 1000).toFixed(1)} 秒`;
   const phaseLabel = ({ PATROL: "巡游", INTERACTION: "互动", ENDING: "收尾", IDLE: "待命" })[interactionPhase];
-  $("systemStatus").textContent = `猫动作${catInput.running ? "运行中" : "停止"} · 系统${phaseLabel} · Uno 触碰 ${decisionSystem.attackCount} 次${mode === "serial" ? serialDryRunConfirmed ? " · 空板输入" : " · 实体输入" : ""}`;
+  $("systemStatus").textContent = `猫动作${catInput.running ? "运行中" : "停止"} · 系统${phaseLabel} · Uno 触碰 ${decisionSystem.attackCount} 次${mode === "serial" ? serialDryRunConfirmed ? " · 测试输入" : " · 实体输入" : ""}`;
 }
 
 function sceneSensorCommands(now, force = false, requestedMotion = null) {
@@ -2082,7 +2195,7 @@ function sceneSensorCommands(now, force = false, requestedMotion = null) {
   if (!simulatedInputsEnabled) return null;
   const emptyBoard = mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked;
   const motion = requestedMotion || (mode === "mock" ? mock.active : activeSceneMotion);
-  const moving = mode === "mock" ? Boolean(mock.active) : realState === "MOVING";
+  const moving = robotMotionState() === "MOVING";
   const frontRequired = !motion ||
     ((motion.left > 0 && motion.right >= 0) || (motion.right > 0 && motion.left >= 0));
   return sceneSensors.plan({
@@ -2092,6 +2205,7 @@ function sceneSensorCommands(now, force = false, requestedMotion = null) {
       LEFT: sideSonarDistanceCm(world, "LEFT").toFixed(1),
       RIGHT: sideSonarDistanceCm(world, "RIGHT").toFixed(1),
     } : null,
+    physicalSides: { LEFT: physicalIoState.get("SONAR_LEFT_TRIG") && physicalIoState.get("SONAR_LEFT_ECHO"), RIGHT: physicalIoState.get("SONAR_RIGHT_TRIG") && physicalIoState.get("SONAR_RIGHT_ECHO") },
     sideSafeCm: mode === "mock" ? mock.safeSideCm : serialSafeSideCm,
     moving,
     beforeMotion: force,
@@ -2106,27 +2220,65 @@ function streamSceneSensors(now, force = false, requestedMotion = null) {
   const emptyBoard = mode === "serial" && serialDryRunConfirmed && $("streamSceneSensors").checked;
   if (!emptyBoard) return;
   let area = contactArea(world);
-  const overlapping = Math.hypot(world.cat.x - world.robot.x, world.cat.y - world.robot.y) <= ARENA.robotRadius + ARENA.catRadius;
-  if (lastSerialAutoArea && overlapping) area = lastSerialAutoArea;
+  if (area === "REAR" && !$("simulateRearTouch").checked) area = null;
+  if (area && physicalIoState.get("TOUCH_" + area)) area = null;
   if (area !== lastSerialAutoArea) {
-    if (lastSerialAutoArea) send(`DEBUG_INJECT TOUCH ${lastSerialAutoArea} RELEASE`, false);
+    if (lastSerialAutoArea && !physicalIoState.get("TOUCH_" + lastSerialAutoArea)) send(`DEBUG_INJECT TOUCH ${lastSerialAutoArea} RELEASE`, false);
     lastSerialAutoArea = area;
     if (area) send(`DEBUG_INJECT TOUCH ${area} PRESS`, false);
   }
 }
 
+function tickHardwareTelemetry(now) {
+  const connected = mode === "serial" && serialFirmwareVerified && reading && writer;
+  const refresh = $("liveHardwareTelemetry").checked;
+  if (telemetryPoller.due(now, connected && refresh)) {
+    telemetryPoller.begin(nextCommandId, now);
+    if (send("GET_TELEMETRY", false) === null) telemetryPoller.reset();
+  }
+  for (const output of document.querySelectorAll('[data-hw-value]')) {
+    const row = hardwareTelemetry.display(output.dataset.hwValue, now);
+    output.textContent = connected ? row.text : "连接 Uno 后显示物理读数";
+    output.dataset.state = connected ? row.state : "waiting";
+  }
+  const state = hardwareTelemetry.rows.get("STATE");
+  $("hardwareTelemetryStatus").textContent = !connected ? "未连接 V5.6 Uno 固件" : !refresh ? "实时刷新已暂停" : !state ? "等待首次读数" : now - state.at > 2500 ? "读数过期 · 检查串口" : hardwareTelemetry.display("STATE", now).text;
+}
+
 function frame(now) {
   const elapsedSeconds = clamp((now - lastFrameAt) / 1000, 0, .05);
   lastFrameAt = now;
+  if (manualBenchMotors.some(Boolean) && now - manualBenchRenewedAt >= 200) {
+    send("KEEP", false);
+    manualBenchRenewedAt = now;
+  }
   if (!paused) {
-    if (mode === "serial") stepSerialSceneMotion(elapsedSeconds);
+
     for (const event of catInput.step(now, elapsedSeconds)) {
       addLog("event", `SIM_CAT ${event.type} area=${event.area}`, "CAT·SIM");
     }
-    if (mode === "mock") mock.step(now);
+    if (mode === "mock") {
+      mock.simulateRearTouch = $("simulateRearTouch").checked;
+      mock.step(now);
+    }
   }
+  $("strategySceneSensors").checked = $("streamSceneSensors").checked;
+  document.querySelectorAll('[data-bench-motor]').forEach(button => {
+    const values = button.dataset.benchMotor.split(" ").map(Number);
+    const side = values[0] ? 0 : 1;
+    button.setAttribute("aria-pressed", String(manualBenchMotors[side] === values[side]));
+  });
+  tickHardwareTelemetry(now);
   streamSceneSensors(now);
   tickAutoDecision(now);
+  if (!sceneDisplayPose || sceneDisplayRevision !== manualRobotRevision || mode !== "serial") {
+    sceneDisplayPose = { ...world.robot }; sceneDisplayRevision = manualRobotRevision;
+  } else {
+    const fraction = 1 - Math.exp(-elapsedSeconds / .09);
+    sceneDisplayPose.x += (world.robot.x - sceneDisplayPose.x) * fraction;
+    sceneDisplayPose.y += (world.robot.y - sceneDisplayPose.y) * fraction;
+    sceneDisplayPose.heading = wrapAngle(sceneDisplayPose.heading + wrapAngle(world.robot.heading - sceneDisplayPose.heading) * fraction);
+  }
   const visual = robotVisualState(now);
   drawScene(visual, now);
   updateTelemetry(now, visual);
@@ -2241,19 +2393,32 @@ function setSafeDistance(side) {
 }
 $("setSafeLeft").addEventListener("click", () => setSafeDistance("LEFT"));
 $("setSafeRight").addEventListener("click", () => setSafeDistance("RIGHT"));
-$("driveTarget").addEventListener("click", () => send(`DRIVE ${$("driveCm").value} ${$("pwm").value}`));
+$("driveTarget").addEventListener("click", () => sendMotion(`DRIVE ${$("driveCm").value} ${$("pwm").value}`).catch(error => showToast(error.message)));
 $("rotateTarget").addEventListener("click", () => send(`ROTATE ${$("rotateDeg").value} ${$("pwm").value}`));
 $("stopMotion").addEventListener("click", () => { cancelBehavior(); send("STOP"); });
+async function toggleManualMotors(left, right) {
+  if (manualBenchMotors[0] === left && manualBenchMotors[1] === right) return send("STOP");
+  cancelBehavior("MANUAL_MOTOR");
+  try {
+    await sendAndWaitDone("SESSION_START", "SESSION_STARTED");
+    manualBenchMotors = [left, right];
+    manualBenchRenewedAt = performance.now();
+    send(`MOTOR ${manualBenchMotors[0]} ${manualBenchMotors[1]}`);
+  } catch (error) { showToast(error.message); send("STOP"); }
+}
 document.querySelectorAll("[data-quick]").forEach(button => button.addEventListener("click", () => {
-  const duration = button.dataset.quick.startsWith("TURN") ? 500 : 1000;
-  send(`${button.dataset.quick} ${$("pwm").value} ${duration}`);
+  const pwm = Number($("pwm").value);
+  const speeds = { "MOVE FORWARD": [pwm, pwm], "MOVE BACKWARD": [-pwm, -pwm],
+    "TURN LEFT": [-pwm, pwm], "TURN RIGHT": [pwm, -pwm] };
+  toggleManualMotors(...speeds[button.dataset.quick]);
 }));
-$("sendMotor").addEventListener("click", () => send(`MOTOR ${$("leftPwm").value} ${$("rightPwm").value}`));
+$("sendMotor").addEventListener("click", () => toggleManualMotors(Number($("leftPwm").value), Number($("rightPwm").value)));
 document.querySelectorAll("[data-command]").forEach(button => button.addEventListener("click", () => {
   if (button.dataset.command === "DEBUG_MODE OFF") {
     $("streamSceneSensors").checked = false;
     serialDryRunConfirmed = false;
   }
+  if (button.dataset.command === "GET_IO" && mode !== "serial") return showToast("物理 IO 开关需要连接 Uno 串口。");
   send(button.dataset.command);
   if (button.dataset.command === "CAMERA_FRONT INVALID" &&
       (mode === "mock" || serialDryRunConfirmed)) {
@@ -2265,7 +2430,7 @@ document.querySelectorAll("[data-command]").forEach(button => button.addEventLis
     send("GET_STATUS");
   }
 }));
-$("prepareBoardSimulation").addEventListener("click", () => {
+$("prepareComponentTest").addEventListener("click", () => {
   if (mode !== "serial") {
     showToast("请先连接已烧录固件的 Uno 串口。");
     return;
@@ -2287,6 +2452,8 @@ $("prepareBoardSimulation").addEventListener("click", () => {
   autoBusy = false;
   send("STOP");
   send("DEBUG_MODE ON");
+  serialDryRunConfirmed = false;
+  resetPhysicalIoUi();
   send("DEBUG_MOTOR_MODE DRY_RUN");
   send(`SET_GEOMETRY ${diameter} ${track}`);
   $("streamSceneSensors").checked = true;
@@ -2294,15 +2461,54 @@ $("prepareBoardSimulation").addEventListener("click", () => {
   sceneSensors.reset();
   send("GET_STATUS");
   send("GET_CONFIG");
-  showToast("已发送空板设置与几何参数；请确认 GET_STATUS、GET_CONFIG 和距离回报后再开始动作。未填写轮距时使用名义值 120 mm。");
+  send("GET_IO");
+  showToast("已发送元器件测试设置与几何参数；请确认 GET_STATUS、GET_CONFIG 和距离回报后再开始动作。未填写轮距时使用名义值 120 mm。");
 });
+$("prepareBoardSimulation").addEventListener("click", async () => {
+  if (mode !== "serial" || !serialFirmwareVerified) return showToast("请连接并烧录 V5.6 固件。");
+  cancelBehavior("OUTPUTS_OFF"); catInput.stop(); autoControlEnabled = false; autoDecisionVersion += 1;
+  try { await sendAndWaitDone("DEBUG_MODE ON", "DEBUG_ON"); await sendAndWaitDone("DEBUG_OUTPUTS OFF", "IO_SET"); send("GET_STATUS"); }
+  catch (error) { showToast("关闭输出失败：" + error.message); send("GET_IO"); }
+});
+document.querySelectorAll('[data-physical-io]').forEach(control => control.addEventListener('change', async () => {
+  const channel = control.dataset.physicalIo;
+  const requested = control.checked;
+  control.disabled = true;
+  cancelBehavior("IO_CHANGE"); catInput.stop(); autoControlEnabled = false; autoDecisionVersion += 1;
+  try {
+    await sendAndWaitDone("DEBUG_MODE ON", "DEBUG_ON");
+    await sendAndWaitDone('DEBUG_IO ' + channel + (requested ? ' ON' : ' OFF'), "IO_SET");
+    sceneSensors.reset(); lastSerialAutoArea = null;
+    send("GET_STATUS");
+  } catch (error) { showToast("IO 设置失败：" + error.message); send("GET_IO"); }
+}));
+document.querySelectorAll('[data-bench-motor]').forEach(button => button.addEventListener('click', async () => {
+  if (mode !== "serial" || !serialDryRunConfirmed) return showToast("请先准备元器件测试，再开启对应电机输出。");
+  const wheel = button.dataset.benchMotor.split(" ")[0] === "0" ? "MOTOR_RIGHT" : "MOTOR_LEFT";
+  if (!physicalIoState.get(wheel)) return showToast("请先开启对应电机的物理输出。");
+  const requested = button.dataset.benchMotor.split(" ").map(Number);
+  const side = requested[0] ? 0 : 1;
+  const next = [...manualBenchMotors];
+  next[side] = next[side] === requested[side] ? 0 : requested[side];
+  cancelBehavior("MANUAL_MOTOR");
+  try {
+    await sendAndWaitDone("SESSION_START", "SESSION_STARTED");
+    manualBenchMotors = next; manualBenchRenewedAt = performance.now();
+    send(`MOTOR ${next[0]} ${next[1]}`);
+    button.setAttribute("aria-pressed", String(Boolean(next[side])));
+  } catch (error) { manualBenchMotors = [0, 0]; send("STOP"); showToast("电机测试：" + error.message); }
+}));
 $("prepareScenarioBoard").addEventListener("click", () => $("prepareBoardSimulation").click());
 document.querySelectorAll("[data-touch]").forEach(button => button.addEventListener("click", () => {
   if (mode === "serial" && !serialDryRunConfirmed) {
-    showToast("场景接触测试需要先启用空板模式；实体模式使用真实触碰开关。");
+    showToast("场景接触测试需要先准备元器件测试；真实触碰通道使用实体开关。");
     return;
   }
   const area = button.dataset.touch;
+  if (area === "REAR" && !$("simulateRearTouch").checked) {
+    showToast("当前未配置后部模拟触碰；只有实际安装或显式启用后部传感器后才产生该输入。");
+    return;
+  }
   const previous = { ...world.cat };
   const offset = ({ TOP: 0, LEFT: -Math.PI / 2, RIGHT: Math.PI / 2, REAR: Math.PI })[area];
   const radius = area === "TOP" ? 0 : ARENA.robotRadius + ARENA.catRadius - 2;
@@ -2317,7 +2523,7 @@ document.querySelectorAll("[data-touch]").forEach(button => button.addEventListe
 $("setDistance").addEventListener("click", () => {
   const distance = Number($("injectDistance").value);
   if (!Number.isFinite(distance) || distance < 0 || distance > 400) return showToast("距离须在 0–400 cm。");
-  if (mode === "serial" && !serialDryRunConfirmed) return showToast("LIVE 模式不使用场景传感器；请先启用空板模式。");
+  if (mode === "serial" && !serialDryRunConfirmed) return showToast("请先准备元器件测试，再使用场景传感器。");
   // Place a physical obstacle at the requested forward range; raycast it normally.
   const offset = ARENA.robotRadius + world.obstacle.radius + distance * ARENA.pxPerCm;
   world.obstacle.x = clamp(world.robot.x + Math.cos(world.robot.heading) * offset, world.obstacle.radius, ARENA.width - world.obstacle.radius);
@@ -2326,7 +2532,7 @@ $("setDistance").addEventListener("click", () => {
   showToast("已移动障碍物；实际读数由当前射线碰撞计算，可能受墙或猫遮挡。");
 });
 $("clearDistance").addEventListener("click", () => {
-  if (mode === "serial" && !serialDryRunConfirmed) return showToast("LIVE 模式不使用场景传感器；请先启用空板模式。");
+  if (mode === "serial" && !serialDryRunConfirmed) return showToast("请先准备元器件测试，再使用场景传感器。");
   send(`CAMERA_FRONT ${cameraFrontDistanceCm(world).toFixed(1)}`, false);
   send("GET_DISTANCE");
 });
@@ -2380,6 +2586,9 @@ $("clearLog").addEventListener("click", () => { trace.length = 0; $("log").repla
 $("exportLog").addEventListener("click", () => {
   const payload = { exportedAt: new Date().toISOString(), mode,
     note: "SIM_UNO is a JavaScript mock, not Arduino firmware",
+    serialProtocol: { version: "V5.6", baudRate: 57600, cardPollMs: 250, motionFeedbackMs: 100 },
+    physicalIo: Object.fromEntries(physicalIoState),
+    hardwareTelemetry: Object.fromEntries(hardwareTelemetry.rows),
     responsePolicy: decisionSystem.responsePolicy, world, trace };
   const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
   const link = document.createElement("a");
@@ -2389,7 +2598,22 @@ $("exportLog").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
+document.querySelectorAll('[data-workspace]').forEach(button => button.addEventListener('click', () => {
+  const hardware = button.dataset.workspace === "hardware";
+  $("hardwareWorkspace").hidden = !hardware;
+  $("interactionWorkspace").hidden = hardware;
+  document.querySelectorAll('[data-workspace]').forEach(tab => {
+    const selected = tab === button; tab.classList.toggle("active", selected); tab.setAttribute("aria-pressed", String(selected));
+  });
+}));
+$("hardwareStop").addEventListener("click", () => { cancelBehavior("HARDWARE_STOP"); autoControlEnabled = false; autoDecisionVersion += 1; send("STOP"); });
+$("liveHardwareTelemetry").addEventListener("change", () => { telemetryPoller.nextAt = 0; });
+
 restoreResponsePolicy();
 setMode("mock");
 requestAnimationFrame(frame);
 globalThis.__unoLabReady = true;
+
+$("strategySceneSensors").checked = $("streamSceneSensors").checked;
+$("strategySceneSensors").addEventListener("change", () => { $("streamSceneSensors").checked = $("strategySceneSensors").checked; $("streamSceneSensors").dispatchEvent(new Event("change")); });
+$("streamSceneSensors").addEventListener("change", () => { $("strategySceneSensors").checked = $("streamSceneSensors").checked; });

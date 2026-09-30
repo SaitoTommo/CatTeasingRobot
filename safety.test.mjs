@@ -97,14 +97,13 @@ test("signed rotation can turn left and still obey left sonar", () => {
   assert.ok(lines.includes("EVENT MOTION_STARTED 5 ROTATE ESTIMATED"));
 });
 
-test("one continuous overlap emits one press until the cat separates and returns", () => {
+test("one continuous contact in the same sensor region emits one press until release", () => {
   const world = initialWorld();
   world.cat = { x: world.robot.x, y: world.robot.y + 30 };
   const lines = [];
   const uno = new MockUno(world, line => lines.push(line));
   uno.step(0);
   uno.step(50);
-  world.robot.heading = Math.PI;
   uno.step(500);
   uno.step(5000);
   assert.equal(lines.filter(line => /EVENT SIM_CONTACT TOUCH .* PRESS/.test(line)).length, 1);
@@ -117,4 +116,50 @@ test("one continuous overlap emits one press until the cat separates and returns
   uno.step(5150);
   uno.step(5200);
   assert.equal(lines.filter(line => /EVENT SIM_CONTACT TOUCH .* PRESS/.test(line)).length, 2);
+});
+
+test("moving from a side sensor to an uninstrumented rear region releases contact without waiting for body separation", () => {
+  const world = initialWorld();
+  const lines = [];
+  const uno = new MockUno(world, line => lines.push(line));
+  world.cat = { x: world.robot.x, y: world.robot.y + 30 };
+  uno.simulateRearTouch = false; // Explicit missing-sensor fixture, not the actual robot configuration.
+  uno.step(0); uno.step(50);
+  assert.equal(uno.touch.RIGHT, true);
+  world.cat = { x: world.robot.x - 30, y: world.robot.y };
+  uno.step(100); uno.step(150);
+  assert.equal(uno.touch.RIGHT, false);
+  assert.equal(uno.touch.REAR, false);
+  const events = lines.filter(line => line.includes("SIM_CONTACT TOUCH"));
+  world.cat.x -= 150;
+  uno.step(200); uno.step(250);
+  assert.deepEqual(lines.filter(line => line.includes("SIM_CONTACT TOUCH")), events,
+    "leaving the hidden rear region adds no signal");
+});
+
+test("the installed rear touch sensor is enabled by default and can be explicitly disabled for a fixture", () => {
+  const world = initialWorld();
+  world.cat = { x: world.robot.x - 30, y: world.robot.y };
+  const uno = new MockUno(world, () => {});
+  uno.step(0); uno.step(50);
+  assert.equal(uno.touch.REAR, true);
+  uno.simulateRearTouch = false;
+  uno.step(100); uno.step(150);
+  assert.equal(uno.touch.REAR, false);
+});
+
+test("rear touch release is observable but further hidden movement produces no additional signal", () => {
+  const world = initialWorld();
+  world.cat = { x: world.robot.x - 30, y: world.robot.y };
+  const lines = [];
+  const uno = new MockUno(world, line => lines.push(line));
+  uno.step(0); uno.step(50);
+  assert.equal(uno.touch.REAR, true);
+  world.cat.x -= 40;
+  uno.step(100); uno.step(150);
+  assert.equal(uno.touch.REAR, false);
+  const events = lines.filter(line => line.includes("SIM_CONTACT TOUCH"));
+  world.cat.x -= 100;
+  uno.step(200); uno.step(250);
+  assert.deepEqual(lines.filter(line => line.includes("SIM_CONTACT TOUCH")), events);
 });

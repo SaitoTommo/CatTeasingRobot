@@ -22,8 +22,27 @@
   <main>
     <div class="notice" id="modeNotice">当前回报来自 JavaScript 模拟 Uno，不是实际固件。连接 Uno USB 串口后才能向固件发送命令。</div>
     <div class="notice boot-error" id="appBootError" role="alert" hidden>测试台脚本没有成功加载。请关闭旧的测试台服务器窗口，重新双击“启动猫互动测试台.bat”，然后刷新此页面。若直接用 file:// 打开了 HTML，也请改用 BAT 启动。</div>
-    <section class="main-grid" aria-label="互动测试台">
-      <div class="scene-column">
+<nav class="workspace-tabs" aria-label="测试工作区"><button class="workspace-tab active" data-workspace="hardware" aria-pressed="true">硬件测试</button><button class="workspace-tab" data-workspace="interaction" aria-pressed="false">互动模拟与策略</button></nav>
+    <section id="hardwareWorkspace" class="panel hardware-panel" aria-labelledby="hardwareHeading">
+      <div class="section-heading"><div><p class="eyebrow">HARDWARE BENCH</p><h2 id="hardwareHeading">元器件实时测试</h2></div><span id="hardwareTelemetryStatus" class="hardware-status">未连接 Uno</span></div>
+      <div class="hardware-toolbar"><button id="prepareComponentTest" class="button">准备元器件测试</button><button id="prepareBoardSimulation" class="button danger">关闭所有物理输出</button><button id="hardwareStop" class="button secondary">停止电机</button><button data-command="GET_IO" class="button secondary">读取开关</button><label class="io-toggle"><input id="streamSceneSensors" type="checkbox">模拟未接输入</label><label class="io-toggle"><input id="liveHardwareTelemetry" type="checkbox" checked>实时刷新（约 0.25 秒）</label></div>
+      <p class="hardware-note">开启所接元件，在同一卡片查看读数。电机卡片显示固件接收指令与引脚驱动；是否真实转动请看编码器。ENA/ENB 保留 5V 跳线时，显示的 PWM 不会改变实际速度。</p>
+      <div id="physicalIoControls" class="hardware-grid"><article class="hardware-card"><div class="hardware-card-heading"><h3>左电机</h3><span class="pin-badge">D4 / D7 / D5</span></div><label class="io-toggle"><input data-physical-io="MOTOR_LEFT" type="checkbox" disabled><span>左电机输出</span><small data-io-state="MOTOR_LEFT">未读取</small></label><div class="hardware-motor-actions"><button data-bench-motor="80 0" class="button secondary" type="button">正转 开 / 关</button><button data-bench-motor="-80 0" class="button secondary" type="button">反转 开 / 关</button></div><output data-hw-value="ML" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>左编码器</h3><span class="pin-badge">D2</span></div><label class="io-toggle"><input data-physical-io="ENCODER_LEFT" type="checkbox" disabled><span>左编码器输入</span><small data-io-state="ENCODER_LEFT">未读取</small></label><output data-hw-value="EL" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>右电机</h3><span class="pin-badge">D8 / D9 / D6</span></div><label class="io-toggle"><input data-physical-io="MOTOR_RIGHT" type="checkbox" disabled><span>右电机输出</span><small data-io-state="MOTOR_RIGHT">未读取</small></label><div class="hardware-motor-actions"><button data-bench-motor="0 80" class="button secondary" type="button">正转 开 / 关</button><button data-bench-motor="0 -80" class="button secondary" type="button">反转 开 / 关</button></div><output data-hw-value="MR" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>右编码器</h3><span class="pin-badge">D3</span></div><label class="io-toggle"><input data-physical-io="ENCODER_RIGHT" type="checkbox" disabled><span>右编码器输入</span><small data-io-state="ENCODER_RIGHT">未读取</small></label><output data-hw-value="ER" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>左超声波</h3><span class="pin-badge">D10 / D11</span></div><label class="io-toggle"><input data-physical-io="SONAR_LEFT_TRIG" type="checkbox" disabled><span>TRIG 发射</span><small data-io-state="SONAR_LEFT_TRIG">未读取</small></label><label class="io-toggle"><input data-physical-io="SONAR_LEFT_ECHO" type="checkbox" disabled><span>ECHO 输入</span><small data-io-state="SONAR_LEFT_ECHO">未读取</small></label><output data-hw-value="SL" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>右超声波</h3><span class="pin-badge">A4 / A5</span></div><label class="io-toggle"><input data-physical-io="SONAR_RIGHT_TRIG" type="checkbox" disabled><span>TRIG 发射</span><small data-io-state="SONAR_RIGHT_TRIG">未读取</small></label><label class="io-toggle"><input data-physical-io="SONAR_RIGHT_ECHO" type="checkbox" disabled><span>ECHO 输入</span><small data-io-state="SONAR_RIGHT_ECHO">未读取</small></label><output data-hw-value="SR" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>灯与蜂鸣器</h3><span class="pin-badge">D13 / D12</span></div><label class="io-toggle"><input data-physical-io="LED" type="checkbox" disabled><span>LED 输出</span><small data-io-state="LED">未读取</small></label><label class="io-toggle"><input data-physical-io="BUZZER" type="checkbox" disabled><span>蜂鸣器输出</span><small data-io-state="BUZZER">未读取</small></label><div class="hardware-motor-actions"><button data-command="LED ON" class="button secondary">灯亮</button><button data-command="LED OFF" class="button secondary">灯灭</button><button data-command="BEEP 300" class="button secondary">蜂鸣 0.3 s</button></div><output data-hw-value="OUT" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>前向判定</h3><span class="pin-badge">USB 串口</span></div><p class="hint">电脑测试场景 / 上位机输入</p><output data-hw-value="FRONT" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>顶部触碰</h3><span class="pin-badge">A0</span></div><label class="io-toggle"><input data-physical-io="TOUCH_TOP" type="checkbox" disabled><span>顶部触碰输入</span><small data-io-state="TOUCH_TOP">未读取</small></label><output data-hw-value="T_TOP" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>左侧触碰</h3><span class="pin-badge">A1</span></div><label class="io-toggle"><input data-physical-io="TOUCH_LEFT" type="checkbox" disabled><span>左侧触碰输入</span><small data-io-state="TOUCH_LEFT">未读取</small></label><output data-hw-value="T_LEFT" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>右侧触碰</h3><span class="pin-badge">A2</span></div><label class="io-toggle"><input data-physical-io="TOUCH_RIGHT" type="checkbox" disabled><span>右侧触碰输入</span><small data-io-state="TOUCH_RIGHT">未读取</small></label><output data-hw-value="T_RIGHT" class="hardware-reading">等待 Uno 回报</output></article>
+<article class="hardware-card"><div class="hardware-card-heading"><h3>后部触碰</h3><span class="pin-badge">A3</span></div><label class="io-toggle"><input data-physical-io="TOUCH_REAR" type="checkbox" disabled><span>后部触碰输入</span><small data-io-state="TOUCH_REAR">未读取</small></label><output data-hw-value="T_REAR" class="hardware-reading">等待 Uno 回报</output></article></div>
+      <details class="hardware-help"><summary>接线、数据来源与高级调试</summary><p class="hint">物理输入关闭时显示“未采样”；虚拟脉冲、测试注入与真实输入分别标注。超过 2.5 秒未更新的读数显示过期。数字输入 HIGH/LOW 是采样瞬间状态，不是波形。电机输出不是万用表测得的电压或电流；模块实际供电需单独检查。只接电机时先准备元器件测试，再开启对应电机，车轮悬空。真实电机进行距离/角度动作需开启对应编码器。IO 切换会先停止动作。所有通道仅本次上电有效。</p><div class="inline-actions"><button data-command="DEBUG_MODE ON" class="button secondary">开启固件调试</button><button data-command="DEBUG_MODE OFF" class="button secondary">关闭固件调试</button></div></details>
+    </section>
+    <section id="interactionWorkspace" class="main-grid" aria-label="互动测试台" hidden>
+      <div class="scene-column"><section class="panel"><h2>策略测试 · 物理 IO</h2><label class="io-toggle"><input id="simulateRearTouch" type="checkbox" checked><span>模拟后部触碰（已安装，默认开启）</span></label><label class="io-toggle"><input id="strategySceneSensors" type="checkbox" checked><span>模拟未接输入（与硬件页同步）</span></label><p>勾选使用真实硬件；关闭的输入可由场景模拟提供，关闭的输出不驱动物理元件。与硬件测试页同步。切换会停止当前策略，设置后请重新开始巡游。</p><div class="strategy-io-grid"><label class="io-toggle"><input data-physical-io="MOTOR_LEFT" type="checkbox" disabled><span>左电机</span><small data-io-state="MOTOR_LEFT">未读取</small></label><label class="io-toggle"><input data-physical-io="MOTOR_RIGHT" type="checkbox" disabled><span>右电机</span><small data-io-state="MOTOR_RIGHT">未读取</small></label><label class="io-toggle"><input data-physical-io="ENCODER_LEFT" type="checkbox" disabled><span>左编码器</span><small data-io-state="ENCODER_LEFT">未读取</small></label><label class="io-toggle"><input data-physical-io="ENCODER_RIGHT" type="checkbox" disabled><span>右编码器</span><small data-io-state="ENCODER_RIGHT">未读取</small></label><label class="io-toggle"><input data-physical-io="SONAR_LEFT_TRIG" type="checkbox" disabled><span>左超声波发射</span><small data-io-state="SONAR_LEFT_TRIG">未读取</small></label><label class="io-toggle"><input data-physical-io="SONAR_LEFT_ECHO" type="checkbox" disabled><span>左超声波接收</span><small data-io-state="SONAR_LEFT_ECHO">未读取</small></label><label class="io-toggle"><input data-physical-io="SONAR_RIGHT_TRIG" type="checkbox" disabled><span>右超声波发射</span><small data-io-state="SONAR_RIGHT_TRIG">未读取</small></label><label class="io-toggle"><input data-physical-io="SONAR_RIGHT_ECHO" type="checkbox" disabled><span>右超声波接收</span><small data-io-state="SONAR_RIGHT_ECHO">未读取</small></label><label class="io-toggle"><input data-physical-io="TOUCH_TOP" type="checkbox" disabled><span>顶部触碰</span><small data-io-state="TOUCH_TOP">未读取</small></label><label class="io-toggle"><input data-physical-io="TOUCH_LEFT" type="checkbox" disabled><span>左触碰</span><small data-io-state="TOUCH_LEFT">未读取</small></label><label class="io-toggle"><input data-physical-io="TOUCH_RIGHT" type="checkbox" disabled><span>右触碰</span><small data-io-state="TOUCH_RIGHT">未读取</small></label><label class="io-toggle"><input data-physical-io="TOUCH_REAR" type="checkbox" disabled><span>后触碰</span><small data-io-state="TOUCH_REAR">未读取</small></label><label class="io-toggle"><input data-physical-io="LED" type="checkbox" disabled><span>灯</span><small data-io-state="LED">未读取</small></label><label class="io-toggle"><input data-physical-io="BUZZER" type="checkbox" disabled><span>蜂鸣器</span><small data-io-state="BUZZER">未读取</small></label></div><p>启用“模拟未接输入”后，未开启的输入使用场景数据。编码器：真实电机开启时，距离动作需要真实编码器；不能用虚拟脉冲冒充实际移动。</p></section>
         <section class="panel scene-panel">
           <div class="section-heading">
             <div>
@@ -38,7 +57,7 @@
           <div class="canvas-wrap">
             <canvas id="arena" width="1000" height="600" aria-label="可拖动的猫、机器人和障碍物模拟环境"></canvas>
           </div>
-          <p class="hint">拖动猫、机器人、障碍物及 A/B/C/D 路线标签；拖动机器人前方的小圆点改变朝向。键盘：W/A/S/D 移猫，方向键移机器人，Q/E 转向，空格停止。车身变黄表示灯亮，橙色虚线表示灯处于闪烁的灭灯阶段，紫色声波表示蜂鸣器鸣响，蓝色圆环表示正在运动。这些显示跟随 Uno 的逻辑状态；空板模式不会输出真实引脚电平。</p>
+          <p class="hint">拖动猫、机器人、障碍物及 A/B/C/D 路线标签；拖动机器人前方的小圆点改变朝向。键盘：W/A/S/D 移猫，方向键移机器人，Q/E 转向，空格停止。车身变黄表示灯亮，橙色虚线表示灯处于闪烁的灭灯阶段，紫色声波表示蜂鸣器鸣响，蓝色圆环表示正在运动。这些显示跟随 Uno 的逻辑状态；物理输出是否驱动由各 IO 开关决定。</p>
           <div class="route-card">
             <div><strong>固定巡游路线</strong><span>A → 旋转寻找 B → 旋转寻找 C → 旋转寻找 D → 旋转寻找 A → 循环；每次最多 360°</span></div>
             <label>接近标签至 <input id="tagStopCm" type="number" min="15" max="50" value="20"> cm</label>
@@ -92,7 +111,7 @@
             <label>攻击间隔 ms <input id="attackIntervalMs" type="number" min="500" max="10000" step="100" value="3500"></label>
           </div>
           <div class="inline-actions">
-            <button id="prepareScenarioBoard" class="button secondary" type="button">准备 Uno 空板</button>
+            <button id="prepareScenarioBoard" class="button secondary" type="button">关闭所有物理输出</button>
             <button id="startCatMotion" class="button" type="button">开始猫动作</button>
             <button id="stopCatMotion" class="button secondary" type="button">停止猫动作</button>
             <span id="systemStatus" class="muted" aria-live="polite">猫动作未开始</span>
@@ -100,19 +119,7 @@
           <p class="hint">可随时选择“远离机器人”让猫离开。测量随当前场景变化更新；场景设置本身不直接指定机器人动作。</p>
         </section>
 
-        <section class="panel log-panel">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">AUDIT TRAIL</p>
-              <h2>指令与事件</h2>
-            </div>
-            <div class="scene-actions">
-              <button id="exportLog" class="button secondary" type="button">导出 JSON</button>
-              <button id="clearLog" class="button secondary" type="button">清空</button>
-            </div>
-          </div>
-          <div id="log" class="log" role="log" aria-label="指令与事件记录"></div>
-        </section>
+
       </div>
 
       <div class="controls-column">
@@ -126,8 +133,8 @@
           </div>
           <div class="inline-actions"><button id="startPatrol" class="button" type="button">启动巡游决策</button><button id="stopPatrol" class="button danger" type="button">停止决策与运动</button></div>
           <p class="hint">决策系统只接收触碰、摄像头观测和时钟输入。TX 命令是决策执行后送给 Uno 的输出；“可取景”只依据模拟摄像头。</p>
-          <div class="decision-priority-card">
-            <h3>① 猫主动找机器人：两种互动分支</h3>
+          <details class="decision-priority-card">
+            <summary>① 猫主动找机器人：两种互动分支</summary>
             <p class="hint">猫首次触碰时，按概率抽取声光探索或捕猎，并在这一轮连续互动中保持该分支。声光探索每次触摸都同时使用 LED 和蜂鸣器，四种节奏轮换；捕猎抽取装死／慢逃／快逃，还可独立抽取触摸时的声光反馈。两种分支共用观察、结束互动和恢复巡游流程。</p>
             <div class="inject-row">
               <label>声光探索分支 % <input id="explorationBranchPercent" type="number" min="0" max="100" step="1" value="20"></label>
@@ -153,9 +160,9 @@
             </div>
             <p class="hint">探索声光在触碰时启动且不启动轮子；抽中装死会立即停车。逃跑在触碰松开后向安全方向移动。首次触碰立即触发回应，合并窗口只用于把后续连击算作同一轮。</p>
             <p id="responsePolicyStatus" class="hint" aria-live="polite"></p>
-          </div>
-          <div class="decision-priority-card">
-            <h3>② 结束互动：独立触发与随机结局</h3>
+          </details>
+          <details class="decision-priority-card">
+            <summary>② 结束互动：独立触发与随机结局</summary>
             <p class="hint">一次连击算一轮。平时每轮被抓住即可抽中装死；达到设定轮数时，改由下方结局概率抽取直接巡游、安静装死或声光装死。装死发生在接触当下，停车等待猫离开或达到最长等待后续巡。无新触碰超时只结束互动。填 0 可关闭对应轮数或超时条件。</p>
             <div class="inject-row">
               <label>第几轮抓住时抽取装死结局 <input id="endingAfterRounds" type="number" min="0" max="20" step="1" value="3"></label>
@@ -169,9 +176,9 @@
               <button id="applyEndingPolicy" class="button secondary" type="button">应用结束触发与结局</button>
             </div>
             <p id="endingPolicyStatus" class="hint" aria-live="polite"></p>
-          </div>
-          <div class="decision-priority-card">
-            <h3>③ 机器人主动找猫：独立决策</h3>
+          </details>
+          <details class="decision-priority-card">
+            <summary>③ 机器人主动找猫：独立决策</summary>
             <p class="hint">巡游收到一次性 HTTP 指令后进入此分支；远处选缓慢接近／走停试探，近处选声光／观察／静止。不会读取上面“猫主动”概率。每组概率须合计 100%。</p>
             <div class="inject-row">
               <label>远处缓慢接近 % <input id="robotFarApproachPercent" type="number" min="0" max="100" step="1" value="85"></label>
@@ -186,7 +193,7 @@
               <button id="applyRobotPolicy" class="button secondary" type="button">应用机器人主动概率</button>
             </div>
             <p id="robotPolicyStatus" class="hint" aria-live="polite"></p>
-          </div>
+          </details>
           <details class="control-subsection"><summary>高级动作参数：距离、PWM、停顿与安全超时</summary>
             <details><summary>决策距离、间隔与结束条件</summary>
               <div class="inject-row">
@@ -249,12 +256,7 @@
           </div>
           <div class="control-subsection" aria-labelledby="sensorInjectionHeading">
             <h3 id="sensorInjectionHeading">场景输入与实测读数</h3>
-            <div class="inline-actions">
-              <button id="prepareBoardSimulation" class="button" type="button">准备空板模拟</button>
-              <button data-command="DEBUG_MODE ON" class="button secondary" type="button">开启固件调试</button>
-              <button data-command="DEBUG_MOTOR_MODE DRY_RUN" class="button secondary" type="button">空板模式＋模拟输入</button>
-              <button data-command="DEBUG_MODE OFF" class="button secondary" type="button">关闭固件调试</button>
-            </div>
+            <p class="hint">物理通道开关、实时读数和单轮按钮已集中到顶部“硬件测试”页。</p>
             <div class="button-grid four">
               <button data-touch="TOP" class="button secondary touch-button" type="button" aria-pressed="false">顶部</button>
               <button data-touch="LEFT" class="button secondary touch-button" type="button" aria-pressed="false">左侧</button>
@@ -262,7 +264,7 @@
               <button data-touch="REAR" class="button secondary touch-button" type="button" aria-pressed="false">后部</button>
             </div>
             <p class="hint">点击将猫放到对应接触位置约 350 ms，再还原位置；触碰开关由车体接触检测和去抖生成。拖动猫与猫动作脚本使用同一检测。</p>
-            <label class="check-row"><input id="streamSceneSensors" type="checkbox"> 空板模式按需注入模拟传感器（静止时不重复发送）</label>
+
             <div class="inject-row">
               <label>障碍物目标前向间距 cm <input id="injectDistance" type="number" min="0" max="400" value="12"></label>
               <button id="setDistance" class="button secondary" type="button">放置障碍物</button>
@@ -282,8 +284,8 @@
               <p id="safeDistanceStatus" class="hint" aria-live="polite">当前阈值：左 5 cm，右 5 cm；前方摄像头 15 cm</p>
             </div>
             <details class="debug-help">
-              <summary>空板模式与安全说明</summary>
-              <p class="hint">只有 Uno 板、没有传感器和电机时，连接串口后点“准备空板模拟”：网页按需提供模拟摄像头的前方距离，并持续更新左右超声波测量、按接触变化报告触碰；固件产生虚拟编码器脉冲。静止时不反复发送相同数据，运动时仍按固件读数有效期刷新前向与侧面输入。空板模式抑制电机、灯和蜂鸣器输出引脚的真实电平；避障、停转、超时和运动反馈照常执行。前方摄像头判定阈值为 15 cm，左右超声波默认各 5 cm；读数失效时仍会拒绝动作。巡游时会优先尝试另一安全转向；按触碰方向找猫时不会违背该方向或绕过安全判断。LIVE 模式不接收网页的虚拟摄像头读数；未接真实摄像头数据源时，前进会被固件拒绝。</p>
+              <summary>元器件测试与安全说明</summary>
+              <p class="hint">“准备元器件测试”会关闭全部物理输入和输出，启用电脑场景模拟未接输入；随后逐个勾选所接元件。“关闭所有物理输出”只关闭输出通道，保留输入选择。真实超声波 TRIG/ECHO 都启用时，网页停止注入该侧距离；真实触碰启用时，网页停止注入该开关。前方仍使用测试场景摄像头数据，阈值 15 cm；侧面默认 5 cm，无效或过期仍拒绝动作。物理电机开启且没有真实编码器时，不生成虚拟脉冲，只使用短时动作；按距离/角度运行需要对应编码器。测试输入不代表真实避障，电机测试应将车轮悬空。关闭调试不会自动开启任何输出。所有开关只在当前通电周期有效。</p>
             </details>
           </div>
         </section>
@@ -299,17 +301,17 @@
             <button id="driveTarget" class="button" type="button">按距离行驶</button>
             <button id="rotateTarget" class="button" type="button">按角度旋转</button>
             <button id="stopMotion" class="button danger" type="button">立即停止</button>
-            <button data-quick="MOVE FORWARD" class="button secondary" type="button">前进 1 秒</button>
-            <button data-quick="MOVE BACKWARD" class="button secondary" type="button">后退 1 秒</button>
-            <button data-quick="TURN LEFT" class="button secondary" type="button">左转 0.5 秒</button>
-            <button data-quick="TURN RIGHT" class="button secondary" type="button">右转 0.5 秒</button>
+            <button data-quick="MOVE FORWARD" class="button secondary" type="button">前进 开 / 关</button>
+            <button data-quick="MOVE BACKWARD" class="button secondary" type="button">后退 开 / 关</button>
+            <button data-quick="TURN LEFT" class="button secondary" type="button">左转 开 / 关</button>
+            <button data-quick="TURN RIGHT" class="button secondary" type="button">右转 开 / 关</button>
           </div>
           <div class="wheel-row">
             <label>左轮 PWM <input id="leftPwm" type="number" min="-255" max="255" value="-60"></label>
             <label>右轮 PWM <input id="rightPwm" type="number" min="-255" max="255" value="60"></label>
-            <button id="sendMotor" class="button secondary" type="button">连续控制</button>
+            <button id="sendMotor" class="button secondary" type="button">电机 开 / 关</button>
           </div>
-          <div class="hint">连续控制每 500 ms 需要重新下发；超时自动停机。距离/角度在本地模拟中只是估算，真实固件需要编码器与标定。</div>
+          <div class="hint">按一次开启，按同方向按钮关闭；“停止电机”关闭全部。距离控制使用编码器，并预留提前停止余量。</div>
           <div class="inline-actions">
             <button data-command="LED ON" class="button secondary" type="button">灯亮</button>
             <button data-command="LED OFF" class="button secondary" type="button">灯灭</button>
@@ -333,7 +335,8 @@
             <button data-command="GET_CONFIG" class="button secondary" type="button">几何参数</button>
           </div>
           <div class="inject-row">
-            <label>车轮直径 mm <input id="wheelDiameterMm" type="number" min="20" max="150" step="0.1" value="65"></label>
+            <label>提前停止余量 cm <input id="motorStopMarginCm" type="number" min="0" max="15" step="0.5" value="3"></label>
+            <label>车轮直径 mm <input id="wheelDiameterMm" type="number" min="20" max="150" step="0.1" value="67.5"></label>
             <label>左右轮中心距 mm <input id="trackWidthMm" type="number" min="50" max="300" step="0.1" placeholder="空板默认 120；实车请实测"></label>
             <button id="setGeometry" class="button secondary" type="button">设置几何参数</button>
           </div>
@@ -341,6 +344,19 @@
         </section>
       </div>
     </section>
+        <details class="panel log-panel shared-log"><summary>指令与事件日志</summary>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">AUDIT TRAIL</p>
+              <h2>指令与事件</h2>
+            </div>
+            <div class="scene-actions">
+              <button id="exportLog" class="button secondary" type="button">导出 JSON</button>
+              <button id="clearLog" class="button secondary" type="button">清空</button>
+            </div>
+          </div>
+          <div id="log" class="log" role="log" aria-label="指令与事件记录"></div>
+        </details>
   </main>
   <div id="toast" class="toast" role="alert" hidden></div>
   <script>setTimeout(() => { if (!globalThis.__unoLabReady) document.getElementById("appBootError").hidden = false; }, 2500);</script>

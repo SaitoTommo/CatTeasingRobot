@@ -41,3 +41,11 @@ test("new motion after SESSION_STOP restores cleared sensor inputs", () => {
     "CAMERA_FRONT 80.0", "DEBUG_INJECT SONAR LEFT 50.0", "DEBUG_INJECT SONAR RIGHT 60.0",
   ]);
 });
+
+test("mixed hardware testing never overwrites an enabled physical sonar", () => {
+  const publisher = new SceneSensorPublisher();
+  const scene = { now: 0, cameraValue: "80.0", sides: { LEFT: "50.0", RIGHT: "60.0" }, beforeMotion: true };
+  assert.deepEqual(publisher.plan({ ...scene, physicalSides: { LEFT: true } }), ["CAMERA_FRONT 80.0", "DEBUG_INJECT SONAR RIGHT 60.0"]);
+  assert.deepEqual(publisher.plan({ ...scene, now: 300, physicalSides: { LEFT: true, RIGHT: true } }), ["CAMERA_FRONT 80.0"]);
+  assert.deepEqual(publisher.plan({ ...scene, now: 600, physicalSides: { RIGHT: true } }), ["CAMERA_FRONT 80.0", "DEBUG_INJECT SONAR LEFT 50.0"]);
+});
