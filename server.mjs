@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const files = new Map([
+  ["/esp32-lab.html", ["esp32-lab.html", "text/html; charset=utf-8"]],
+  ["/esp32-lab.mjs", ["esp32-lab.mjs", "text/javascript; charset=utf-8"]],
+  ["/esp32-link.mjs", ["esp32-link.mjs", "text/javascript; charset=utf-8"]],
   ["/", ["index.html", "text/html; charset=utf-8"]],
   ["/index.html", ["index.html", "text/html; charset=utf-8"]],
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
