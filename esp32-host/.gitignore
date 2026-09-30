@@ -1,3 +1,4 @@
 vendor/
 build/
 *.local.json
+ESP32CatHost/cat_model.h
