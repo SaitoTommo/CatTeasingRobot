@@ -116,7 +116,7 @@ void handleInput(const Input &in) {
   else if(op=="wifi") {String ssid=d["ssid"]|"",pass=d["password"]|"";prefs.putString("ssid",ssid);prefs.putString("password",pass);WiFi.begin(ssid.c_str(),pass.c_str());logLine("WIFI","station connecting; AP remains available");}
   else logLine("INPUT_ERROR","unsupported op or source");
 }
-esp_err_t pageHandler(httpd_req_t *r) {httpd_resp_set_type(r,"text/html; charset=utf-8");return httpd_resp_send(r,DEBUG_PAGE,HTTPD_RESP_USE_STRLEN);}
+esp_err_t pageHandler(httpd_req_t *r) {httpd_resp_set_type(r,"text/html; charset=utf-8");httpd_resp_set_hdr(r,"Content-Encoding","gzip");return httpd_resp_send(r,(const char*)DEBUG_PAGE_GZIP,sizeof(DEBUG_PAGE_GZIP));}
 esp_err_t stateHandler(httpd_req_t *r) {xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String s=snapshot();xSemaphoreGiveRecursive(stateLock);httpd_resp_set_type(r,"application/json");httpd_resp_set_hdr(r,"Cache-Control","no-store");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");return httpd_resp_send(r,s.c_str(),s.length());}
 esp_err_t captureHandler(httpd_req_t *r){uint8_t *copy=nullptr;size_t len=0;xSemaphoreTake(frameLock,portMAX_DELAY);if(jpegLen){len=jpegLen;copy=(uint8_t*)ps_malloc(len);if(copy)memcpy(copy,jpegCache,len);}xSemaphoreGive(frameLock);if(!copy){httpd_resp_send_err(r,HTTPD_500_INTERNAL_SERVER_ERROR,"camera unavailable");return ESP_FAIL;}httpd_resp_set_type(r,"image/jpeg");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");esp_err_t e=httpd_resp_send(r,(const char*)copy,len);free(copy);return e;}
 esp_err_t inputHandler(httpd_req_t *r) {

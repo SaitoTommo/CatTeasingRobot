@@ -1,0 +1,25 @@
+{
+  "checks": [
+    "gzip HTTP page byte-for-byte equal to HTML source",
+    "all prior saved config preserved",
+    "patrol speed API saves and reads back",
+    "patrol values restored",
+    "200ms vision rest active",
+    "camera initialized",
+    "inference OFF at finish"
+  ],
+  "state": {
+    "firmware": "ESP32_CAT_HOST_0.3",
+    "phase": "IDLE",
+    "mode": "SIM_UNO",
+    "cameraOk": true,
+    "visionMode": "OFF",
+    "stationIP": "192.168.137.155",
+    "heap": 57892,
+    "psram": 8167696
+  },
+  "patrolSpeeds": {
+    "patrolSearchPwm": 45,
+    "patrolAlignPwm": 30
+  }
+}

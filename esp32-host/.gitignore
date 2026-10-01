@@ -4,3 +4,4 @@ build/
 ESP32CatHost/cat_model.h
 WiFiMinimal/secrets.local.h
 http-camera-snapshot.jpg
+__pycache__/

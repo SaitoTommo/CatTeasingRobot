@@ -2,6 +2,8 @@ param([string]$Port='COM11',[switch]$Upload)
 $ErrorActionPreference='Stop'
 & node (Join-Path $PSScriptRoot 'generate-model.mjs')
 if($LASTEXITCODE -ne 0){throw 'Model checksum or header generation failed'}
+& node (Join-Path $PSScriptRoot 'generate-debug-page.mjs')
+if($LASTEXITCODE -ne 0){throw 'Debug page compression failed'}
 $cli='D:\software\arduinoIDE\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe'
 if(!(Test-Path -LiteralPath $cli)){throw 'Set Arduino CLI path in build.ps1'}
 $build=Join-Path $env:TEMP 'codex-esp32-cat-build'

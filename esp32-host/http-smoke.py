@@ -1,4 +1,4 @@
-import urllib.request, time, json, pathlib, io, argparse
+import urllib.request, time, json, pathlib, io, argparse, gzip
 from PIL import Image
 root=pathlib.Path(__file__).parent
 urllib.request.install_opener(urllib.request.build_opener(urllib.request.ProxyHandler({})))
@@ -7,7 +7,11 @@ parser=argparse.ArgumentParser();parser.add_argument('--host',default='192.168.4
 base='http://'+args.host
 state=json.load(urllib.request.urlopen(base+'/api/state',timeout=5))
 assert state['cameraOk']
-page=urllib.request.urlopen(base+'/',timeout=5).read();assert 'Uno'.encode() in page
+with urllib.request.urlopen(base+'/',timeout=5) as response:
+    page=response.read()
+    if response.headers.get('Content-Encoding')=='gzip':page=gzip.decompress(page)
+assert 'Uno'.encode() in page
+assert b'patrolSearchPwm' in page and b'patrolAlignPwm' in page
 assert state['mode']=='SIM_UNO','HTTP injection check requires SIM_UNO'
 assert state['phase'] in ('IDLE','STOPPED'),'stop policy before HTTP check'
 marker='ACK 65000'

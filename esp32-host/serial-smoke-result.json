@@ -10,2154 +10,2166 @@
     "missing encoder feedback stops",
     "camera frames advance"
   ],
-  "cameraBefore": 282,
-  "cameraAfter": 300,
+  "cameraBefore": 141,
+  "cameraAfter": 159,
   "cameraVision": null,
   "phase": "STOPPED",
-  "heap": 45096,
-  "psram": 8168264,
+  "heap": 45020,
+  "psram": 8167848,
   "events": [
     {
-      "seq": 17,
-      "ms": 46819,
+      "seq": 8,
+      "ms": 18209,
       "source": "DECISION",
       "line": "STOPPED FAULT"
     },
     {
-      "seq": 18,
-      "ms": 46819,
+      "seq": 9,
+      "ms": 18209,
       "source": "FAULT",
       "line": "operator_stop"
     },
     {
-      "seq": 19,
-      "ms": 46819,
+      "seq": 10,
+      "ms": 18210,
       "source": "MODE",
       "line": "SIM_UNO"
     },
     {
-      "seq": 20,
-      "ms": 46820,
+      "seq": 11,
+      "ms": 18211,
       "source": "SIM_TX",
-      "line": "C 8 STOP*A0"
+      "line": "C 4 STOP*4B"
+    },
+    {
+      "seq": 12,
+      "ms": 18213,
+      "source": "SIM_RX",
+      "line": "ACK 4"
+    },
+    {
+      "seq": 13,
+      "ms": 18216,
+      "source": "SIM_RX",
+      "line": "DONE 4"
+    },
+    {
+      "seq": 14,
+      "ms": 18227,
+      "source": "SIM_TX",
+      "line": "C 5 SESSION_STOP*03"
+    },
+    {
+      "seq": 15,
+      "ms": 18229,
+      "source": "SIM_RX",
+      "line": "ACK 5"
+    },
+    {
+      "seq": 16,
+      "ms": 18230,
+      "source": "SIM_RX",
+      "line": "DONE 5 SESSION_STOPPED"
+    },
+    {
+      "seq": 17,
+      "ms": 18243,
+      "source": "SIM_TX",
+      "line": "C 6 GET_TELEMETRY*E4"
+    },
+    {
+      "seq": 18,
+      "ms": 18245,
+      "source": "SIM_RX",
+      "line": "ACK 6"
+    },
+    {
+      "seq": 19,
+      "ms": 18246,
+      "source": "SIM_RX",
+      "line": "DATA 6 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 20,
+      "ms": 18247,
+      "source": "SIM_RX",
+      "line": "DATA 6 HW SR 0 0 -1 -1 100 I"
     },
     {
       "seq": 21,
-      "ms": 46823,
+      "ms": 18247,
+      "source": "SIM_RX",
+      "line": "DONE 6"
+    },
+    {
+      "seq": 22,
+      "ms": 18511,
+      "source": "SIM_TX",
+      "line": "C 7 GET_TELEMETRY*51"
+    },
+    {
+      "seq": 23,
+      "ms": 18515,
+      "source": "SIM_RX",
+      "line": "ACK 7"
+    },
+    {
+      "seq": 24,
+      "ms": 18516,
+      "source": "SIM_RX",
+      "line": "DATA 7 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 25,
+      "ms": 18517,
+      "source": "SIM_RX",
+      "line": "DATA 7 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 26,
+      "ms": 18518,
+      "source": "SIM_RX",
+      "line": "DONE 7"
+    },
+    {
+      "seq": 27,
+      "ms": 18812,
+      "source": "SIM_TX",
+      "line": "C 8 GET_TELEMETRY*E0"
+    },
+    {
+      "seq": 28,
+      "ms": 18815,
       "source": "SIM_RX",
       "line": "ACK 8"
     },
     {
-      "seq": 22,
-      "ms": 46824,
+      "seq": 29,
+      "ms": 18816,
+      "source": "SIM_RX",
+      "line": "DATA 8 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 30,
+      "ms": 18817,
+      "source": "SIM_RX",
+      "line": "DATA 8 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 31,
+      "ms": 18817,
       "source": "SIM_RX",
       "line": "DONE 8"
     },
     {
-      "seq": 23,
-      "ms": 46836,
+      "seq": 32,
+      "ms": 19112,
       "source": "SIM_TX",
-      "line": "C 9 SESSION_STOP*A3"
+      "line": "C 9 GET_TELEMETRY*55"
     },
     {
-      "seq": 24,
-      "ms": 46838,
+      "seq": 33,
+      "ms": 19115,
       "source": "SIM_RX",
       "line": "ACK 9"
     },
     {
-      "seq": 25,
-      "ms": 46839,
+      "seq": 34,
+      "ms": 19116,
       "source": "SIM_RX",
-      "line": "DONE 9 SESSION_STOPPED"
+      "line": "DATA 9 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 26,
-      "ms": 46851,
+      "seq": 35,
+      "ms": 19117,
+      "source": "SIM_RX",
+      "line": "DATA 9 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 36,
+      "ms": 19117,
+      "source": "SIM_RX",
+      "line": "DONE 9"
+    },
+    {
+      "seq": 37,
+      "ms": 19413,
       "source": "SIM_TX",
       "line": "C 10 GET_TELEMETRY*E5"
     },
     {
-      "seq": 27,
-      "ms": 46853,
+      "seq": 38,
+      "ms": 19417,
       "source": "SIM_RX",
       "line": "ACK 10"
     },
     {
-      "seq": 28,
-      "ms": 46854,
+      "seq": 39,
+      "ms": 19418,
       "source": "SIM_RX",
       "line": "DATA 10 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 29,
-      "ms": 46855,
+      "seq": 40,
+      "ms": 19418,
       "source": "SIM_RX",
       "line": "DATA 10 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 30,
-      "ms": 46855,
+      "seq": 41,
+      "ms": 19419,
       "source": "SIM_RX",
       "line": "DONE 10"
     },
     {
-      "seq": 31,
-      "ms": 47121,
+      "seq": 42,
+      "ms": 19714,
       "source": "SIM_TX",
       "line": "C 11 GET_TELEMETRY*50"
     },
     {
-      "seq": 32,
-      "ms": 47124,
+      "seq": 43,
+      "ms": 19717,
       "source": "SIM_RX",
       "line": "ACK 11"
     },
     {
-      "seq": 33,
-      "ms": 47125,
+      "seq": 44,
+      "ms": 19718,
       "source": "SIM_RX",
       "line": "DATA 11 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 34,
-      "ms": 47126,
+      "seq": 45,
+      "ms": 19719,
       "source": "SIM_RX",
       "line": "DATA 11 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 35,
-      "ms": 47126,
+      "seq": 46,
+      "ms": 19719,
       "source": "SIM_RX",
       "line": "DONE 11"
     },
     {
-      "seq": 36,
-      "ms": 47421,
+      "seq": 47,
+      "ms": 20014,
       "source": "SIM_TX",
       "line": "C 12 GET_TELEMETRY*88"
     },
     {
-      "seq": 37,
-      "ms": 47424,
+      "seq": 48,
+      "ms": 20017,
       "source": "SIM_RX",
       "line": "ACK 12"
     },
     {
-      "seq": 38,
-      "ms": 47425,
+      "seq": 49,
+      "ms": 20018,
       "source": "SIM_RX",
       "line": "DATA 12 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 39,
-      "ms": 47426,
+      "seq": 50,
+      "ms": 20019,
       "source": "SIM_RX",
       "line": "DATA 12 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 40,
-      "ms": 47426,
+      "seq": 51,
+      "ms": 20019,
       "source": "SIM_RX",
       "line": "DONE 12"
     },
     {
-      "seq": 41,
-      "ms": 47722,
+      "seq": 52,
+      "ms": 20315,
       "source": "SIM_TX",
       "line": "C 13 GET_TELEMETRY*3D"
     },
     {
-      "seq": 42,
-      "ms": 47726,
+      "seq": 53,
+      "ms": 20319,
       "source": "SIM_RX",
       "line": "ACK 13"
     },
     {
-      "seq": 43,
-      "ms": 47727,
+      "seq": 54,
+      "ms": 20320,
       "source": "SIM_RX",
       "line": "DATA 13 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 44,
-      "ms": 47727,
+      "seq": 55,
+      "ms": 20320,
       "source": "SIM_RX",
       "line": "DATA 13 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 45,
-      "ms": 47728,
+      "seq": 56,
+      "ms": 20321,
       "source": "SIM_RX",
       "line": "DONE 13"
     },
     {
-      "seq": 46,
-      "ms": 48023,
+      "seq": 57,
+      "ms": 20616,
       "source": "SIM_TX",
       "line": "C 14 GET_TELEMETRY*3F"
     },
     {
-      "seq": 47,
-      "ms": 48026,
+      "seq": 58,
+      "ms": 20619,
       "source": "SIM_RX",
       "line": "ACK 14"
     },
     {
-      "seq": 48,
-      "ms": 48027,
+      "seq": 59,
+      "ms": 20620,
       "source": "SIM_RX",
       "line": "DATA 14 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 49,
-      "ms": 48028,
+      "seq": 60,
+      "ms": 20621,
       "source": "SIM_RX",
       "line": "DATA 14 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 50,
-      "ms": 48028,
+      "seq": 61,
+      "ms": 20621,
       "source": "SIM_RX",
       "line": "DONE 14"
     },
     {
-      "seq": 51,
-      "ms": 48323,
+      "seq": 62,
+      "ms": 20946,
+      "source": "CONFIG",
+      "line": "saved"
+    },
+    {
+      "seq": 63,
+      "ms": 20948,
       "source": "SIM_TX",
       "line": "C 15 GET_TELEMETRY*8A"
     },
     {
-      "seq": 52,
-      "ms": 48326,
+      "seq": 64,
+      "ms": 20950,
       "source": "SIM_RX",
       "line": "ACK 15"
     },
     {
-      "seq": 53,
-      "ms": 48327,
+      "seq": 65,
+      "ms": 20951,
       "source": "SIM_RX",
       "line": "DATA 15 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 54,
-      "ms": 48328,
+      "seq": 66,
+      "ms": 20952,
       "source": "SIM_RX",
       "line": "DATA 15 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 55,
-      "ms": 48328,
+      "seq": 67,
+      "ms": 20952,
       "source": "SIM_RX",
       "line": "DONE 15"
     },
     {
-      "seq": 56,
-      "ms": 48624,
+      "seq": 68,
+      "ms": 21248,
       "source": "SIM_TX",
       "line": "C 16 GET_TELEMETRY*52"
     },
     {
-      "seq": 57,
-      "ms": 48628,
+      "seq": 69,
+      "ms": 21252,
       "source": "SIM_RX",
       "line": "ACK 16"
     },
     {
-      "seq": 58,
-      "ms": 48629,
+      "seq": 70,
+      "ms": 21253,
       "source": "SIM_RX",
       "line": "DATA 16 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 59,
-      "ms": 48629,
+      "seq": 71,
+      "ms": 21253,
       "source": "SIM_RX",
       "line": "DATA 16 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 60,
-      "ms": 48630,
+      "seq": 72,
+      "ms": 21254,
       "source": "SIM_RX",
       "line": "DONE 16"
     },
     {
-      "seq": 61,
-      "ms": 48924,
+      "seq": 73,
+      "ms": 21549,
       "source": "SIM_TX",
       "line": "C 17 GET_TELEMETRY*E7"
     },
     {
-      "seq": 62,
-      "ms": 48927,
+      "seq": 74,
+      "ms": 21552,
       "source": "SIM_RX",
       "line": "ACK 17"
     },
     {
-      "seq": 63,
-      "ms": 48928,
+      "seq": 75,
+      "ms": 21553,
       "source": "SIM_RX",
       "line": "DATA 17 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 64,
-      "ms": 48929,
+      "seq": 76,
+      "ms": 21554,
       "source": "SIM_RX",
       "line": "DATA 17 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 65,
-      "ms": 48929,
+      "seq": 77,
+      "ms": 21554,
       "source": "SIM_RX",
       "line": "DONE 17"
     },
     {
-      "seq": 66,
-      "ms": 49224,
+      "seq": 78,
+      "ms": 21849,
       "source": "SIM_TX",
       "line": "C 18 GET_TELEMETRY*56"
     },
     {
-      "seq": 67,
-      "ms": 49227,
+      "seq": 79,
+      "ms": 21852,
       "source": "SIM_RX",
       "line": "ACK 18"
     },
     {
-      "seq": 68,
-      "ms": 49228,
+      "seq": 80,
+      "ms": 21853,
       "source": "SIM_RX",
       "line": "DATA 18 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 69,
-      "ms": 49229,
+      "seq": 81,
+      "ms": 21854,
       "source": "SIM_RX",
       "line": "DATA 18 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 70,
-      "ms": 49229,
+      "seq": 82,
+      "ms": 21854,
       "source": "SIM_RX",
       "line": "DONE 18"
     },
     {
-      "seq": 71,
-      "ms": 49558,
-      "source": "CONFIG",
-      "line": "saved"
-    },
-    {
-      "seq": 72,
-      "ms": 49559,
-      "source": "SIM_TX",
-      "line": "C 19 GET_TELEMETRY*E3"
-    },
-    {
-      "seq": 73,
-      "ms": 49562,
-      "source": "SIM_RX",
-      "line": "ACK 19"
-    },
-    {
-      "seq": 74,
-      "ms": 49563,
-      "source": "SIM_RX",
-      "line": "DATA 19 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 75,
-      "ms": 49564,
-      "source": "SIM_RX",
-      "line": "DATA 19 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 76,
-      "ms": 49564,
-      "source": "SIM_RX",
-      "line": "DONE 19"
-    },
-    {
-      "seq": 77,
-      "ms": 49860,
-      "source": "SIM_TX",
-      "line": "C 20 GET_TELEMETRY*E3"
-    },
-    {
-      "seq": 78,
-      "ms": 49863,
-      "source": "SIM_RX",
-      "line": "ACK 20"
-    },
-    {
-      "seq": 79,
-      "ms": 49864,
-      "source": "SIM_RX",
-      "line": "DATA 20 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 80,
-      "ms": 49865,
-      "source": "SIM_RX",
-      "line": "DATA 20 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 81,
-      "ms": 49865,
-      "source": "SIM_RX",
-      "line": "DONE 20"
-    },
-    {
-      "seq": 82,
-      "ms": 50161,
-      "source": "SIM_TX",
-      "line": "C 21 GET_TELEMETRY*56"
-    },
-    {
       "seq": 83,
-      "ms": 50164,
-      "source": "SIM_RX",
-      "line": "ACK 21"
-    },
-    {
-      "seq": 84,
-      "ms": 50165,
-      "source": "SIM_RX",
-      "line": "DATA 21 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 85,
-      "ms": 50166,
-      "source": "SIM_RX",
-      "line": "DATA 21 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 86,
-      "ms": 50166,
-      "source": "SIM_RX",
-      "line": "DONE 21"
-    },
-    {
-      "seq": 87,
-      "ms": 50462,
-      "source": "SIM_TX",
-      "line": "C 22 GET_TELEMETRY*8E"
-    },
-    {
-      "seq": 88,
-      "ms": 50466,
-      "source": "SIM_RX",
-      "line": "ACK 22"
-    },
-    {
-      "seq": 89,
-      "ms": 50467,
-      "source": "SIM_RX",
-      "line": "DATA 22 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 90,
-      "ms": 50467,
-      "source": "SIM_RX",
-      "line": "DATA 22 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 91,
-      "ms": 50468,
-      "source": "SIM_RX",
-      "line": "DONE 22"
-    },
-    {
-      "seq": 92,
-      "ms": 50763,
-      "source": "SIM_TX",
-      "line": "C 23 GET_TELEMETRY*3B"
-    },
-    {
-      "seq": 93,
-      "ms": 50766,
+      "ms": 22100,
       "source": "CONFIG_ERROR",
       "line": "tag36h11 IDs must be 0..586"
     },
     {
-      "seq": 94,
-      "ms": 50767,
+      "seq": 84,
+      "ms": 22149,
+      "source": "SIM_TX",
+      "line": "C 19 GET_TELEMETRY*E3"
+    },
+    {
+      "seq": 85,
+      "ms": 22153,
       "source": "SIM_RX",
-      "line": "ACK 23"
+      "line": "ACK 19"
+    },
+    {
+      "seq": 86,
+      "ms": 22154,
+      "source": "SIM_RX",
+      "line": "DATA 19 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 87,
+      "ms": 22155,
+      "source": "SIM_RX",
+      "line": "DATA 19 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 88,
+      "ms": 22155,
+      "source": "SIM_RX",
+      "line": "DONE 19"
+    },
+    {
+      "seq": 89,
+      "ms": 22449,
+      "source": "SIM_TX",
+      "line": "C 20 GET_TELEMETRY*E3"
+    },
+    {
+      "seq": 90,
+      "ms": 22452,
+      "source": "SIM_RX",
+      "line": "ACK 20"
+    },
+    {
+      "seq": 91,
+      "ms": 22453,
+      "source": "SIM_RX",
+      "line": "DATA 20 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 92,
+      "ms": 22454,
+      "source": "SIM_RX",
+      "line": "DATA 20 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 93,
+      "ms": 22454,
+      "source": "SIM_RX",
+      "line": "DONE 20"
+    },
+    {
+      "seq": 94,
+      "ms": 22749,
+      "source": "SIM_TX",
+      "line": "C 21 GET_TELEMETRY*56"
     },
     {
       "seq": 95,
-      "ms": 50768,
+      "ms": 22752,
       "source": "SIM_RX",
-      "line": "DATA 23 HW SL 0 0 -1 -1 100 I"
+      "line": "ACK 21"
     },
     {
       "seq": 96,
-      "ms": 50768,
+      "ms": 22753,
       "source": "SIM_RX",
-      "line": "DATA 23 HW SR 0 0 -1 -1 100 I"
+      "line": "DATA 21 HW SL 0 0 -1 -1 100 I"
     },
     {
       "seq": 97,
-      "ms": 50769,
+      "ms": 22754,
       "source": "SIM_RX",
-      "line": "DONE 23"
+      "line": "DATA 21 HW SR 0 0 -1 -1 100 I"
     },
     {
       "seq": 98,
-      "ms": 51063,
-      "source": "SIM_TX",
-      "line": "C 24 GET_TELEMETRY*39"
+      "ms": 22754,
+      "source": "SIM_RX",
+      "line": "DONE 21"
     },
     {
       "seq": 99,
-      "ms": 51066,
-      "source": "SIM_RX",
-      "line": "ACK 24"
+      "ms": 23050,
+      "source": "SIM_TX",
+      "line": "C 22 GET_TELEMETRY*8E"
     },
     {
       "seq": 100,
-      "ms": 51067,
+      "ms": 23054,
       "source": "SIM_RX",
-      "line": "DATA 24 HW SL 0 0 -1 -1 100 I"
+      "line": "ACK 22"
     },
     {
       "seq": 101,
-      "ms": 51068,
+      "ms": 23055,
       "source": "SIM_RX",
-      "line": "DATA 24 HW SR 0 0 -1 -1 100 I"
+      "line": "DATA 22 HW SL 0 0 -1 -1 100 I"
     },
     {
       "seq": 102,
-      "ms": 51068,
+      "ms": 23055,
       "source": "SIM_RX",
-      "line": "DONE 24"
+      "line": "DATA 22 HW SR 0 0 -1 -1 100 I"
     },
     {
       "seq": 103,
-      "ms": 51363,
-      "source": "SIM_TX",
-      "line": "C 25 GET_TELEMETRY*8C"
+      "ms": 23056,
+      "source": "SIM_RX",
+      "line": "DONE 22"
     },
     {
       "seq": 104,
-      "ms": 51366,
-      "source": "SIM_RX",
-      "line": "ACK 25"
-    },
-    {
-      "seq": 105,
-      "ms": 51367,
-      "source": "SIM_RX",
-      "line": "DATA 25 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 106,
-      "ms": 51368,
-      "source": "SIM_RX",
-      "line": "DATA 25 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 107,
-      "ms": 51368,
-      "source": "SIM_RX",
-      "line": "DONE 25"
-    },
-    {
-      "seq": 108,
-      "ms": 51664,
-      "source": "SIM_TX",
-      "line": "C 26 GET_TELEMETRY*54"
-    },
-    {
-      "seq": 109,
-      "ms": 51667,
-      "source": "SIM_RX",
-      "line": "ACK 26"
-    },
-    {
-      "seq": 110,
-      "ms": 51668,
-      "source": "SIM_RX",
-      "line": "DATA 26 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 111,
-      "ms": 51669,
-      "source": "SIM_RX",
-      "line": "DATA 26 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 112,
-      "ms": 51669,
-      "source": "SIM_RX",
-      "line": "DONE 26"
-    },
-    {
-      "seq": 113,
-      "ms": 51851,
+      "ms": 23172,
       "source": "CRC_ERROR",
       "line": "MP 999 8 8*00"
     },
     {
-      "seq": 114,
-      "ms": 51965,
+      "seq": 105,
+      "ms": 23350,
       "source": "SIM_TX",
-      "line": "C 27 GET_TELEMETRY*E1"
+      "line": "C 23 GET_TELEMETRY*3B"
     },
     {
-      "seq": 115,
-      "ms": 51968,
+      "seq": 106,
+      "ms": 23353,
       "source": "SIM_RX",
-      "line": "ACK 27"
+      "line": "ACK 23"
     },
     {
-      "seq": 116,
-      "ms": 51969,
+      "seq": 107,
+      "ms": 23354,
       "source": "SIM_RX",
-      "line": "DATA 27 HW SL 0 0 -1 -1 100 I"
+      "line": "DATA 23 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 117,
-      "ms": 51970,
+      "seq": 108,
+      "ms": 23355,
       "source": "SIM_RX",
-      "line": "DATA 27 HW SR 0 0 -1 -1 100 I"
+      "line": "DATA 23 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 118,
-      "ms": 51970,
+      "seq": 109,
+      "ms": 23355,
       "source": "SIM_RX",
-      "line": "DONE 27"
+      "line": "DONE 23"
     },
     {
-      "seq": 119,
-      "ms": 52266,
-      "source": "SIM_TX",
-      "line": "C 28 GET_TELEMETRY*50"
-    },
-    {
-      "seq": 120,
-      "ms": 52270,
+      "seq": 110,
+      "ms": 23606,
       "source": "DECISION",
       "line": "STARTING WAIT_SESSION_START"
     },
     {
-      "seq": 121,
-      "ms": 52271,
+      "seq": 111,
+      "ms": 23607,
+      "source": "SIM_TX",
+      "line": "C 24 STOP*37"
+    },
+    {
+      "seq": 112,
+      "ms": 23610,
       "source": "SIM_RX",
-      "line": "ACK 28"
+      "line": "ACK 24"
+    },
+    {
+      "seq": 113,
+      "ms": 23611,
+      "source": "SIM_RX",
+      "line": "DONE 24"
+    },
+    {
+      "seq": 114,
+      "ms": 23623,
+      "source": "SIM_TX",
+      "line": "C 25 SET_GEOMETRY 67.50 120.00*22"
+    },
+    {
+      "seq": 115,
+      "ms": 23625,
+      "source": "SIM_RX",
+      "line": "ACK 25"
+    },
+    {
+      "seq": 116,
+      "ms": 23626,
+      "source": "SIM_RX",
+      "line": "DONE 25"
+    },
+    {
+      "seq": 117,
+      "ms": 23638,
+      "source": "SIM_TX",
+      "line": "C 26 GET_CONFIG*0F"
+    },
+    {
+      "seq": 118,
+      "ms": 23640,
+      "source": "SIM_RX",
+      "line": "ACK 26"
+    },
+    {
+      "seq": 119,
+      "ms": 23641,
+      "source": "SIM_RX",
+      "line": "DATA 26 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5 SAFE_RIGHT_CM=5"
+    },
+    {
+      "seq": 120,
+      "ms": 23642,
+      "source": "SIM_RX",
+      "line": "DONE 26"
+    },
+    {
+      "seq": 121,
+      "ms": 23654,
+      "source": "SIM_TX",
+      "line": "C 27 SESSION_START*79"
     },
     {
       "seq": 122,
-      "ms": 52272,
+      "ms": 23656,
       "source": "SIM_RX",
-      "line": "DATA 28 HW SL 0 0 -1 -1 100 I"
+      "line": "ACK 27"
     },
     {
       "seq": 123,
-      "ms": 52273,
+      "ms": 23657,
       "source": "SIM_RX",
-      "line": "DATA 28 HW SR 0 0 -1 -1 100 I"
+      "line": "DONE 27 SESSION_STARTED"
     },
     {
       "seq": 124,
-      "ms": 52273,
-      "source": "SIM_RX",
-      "line": "DONE 28"
+      "ms": 23657,
+      "source": "DECISION",
+      "line": "PATROL SCAN_TAG"
     },
     {
       "seq": 125,
-      "ms": 52282,
-      "source": "SIM_TX",
-      "line": "C 29 STOP*F5"
+      "ms": 23658,
+      "source": "DECISION",
+      "line": "PATROL SCAN_TAG"
     },
     {
       "seq": 126,
-      "ms": 52284,
-      "source": "SIM_RX",
-      "line": "ACK 29"
-    },
-    {
-      "seq": 127,
-      "ms": 52285,
-      "source": "SIM_RX",
-      "line": "DONE 29"
-    },
-    {
-      "seq": 128,
-      "ms": 52297,
-      "source": "SIM_TX",
-      "line": "C 30 SET_GEOMETRY 67.50 120.00*5E"
-    },
-    {
-      "seq": 129,
-      "ms": 52299,
-      "source": "SIM_RX",
-      "line": "ACK 30"
-    },
-    {
-      "seq": 130,
-      "ms": 52300,
-      "source": "SIM_RX",
-      "line": "DONE 30"
-    },
-    {
-      "seq": 131,
-      "ms": 52312,
-      "source": "SIM_TX",
-      "line": "C 31 GET_CONFIG*0F"
-    },
-    {
-      "seq": 132,
-      "ms": 52314,
-      "source": "SIM_RX",
-      "line": "ACK 31"
-    },
-    {
-      "seq": 133,
-      "ms": 52315,
-      "source": "SIM_RX",
-      "line": "DATA 31 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5 SAFE_RIGHT_CM=5"
-    },
-    {
-      "seq": 134,
-      "ms": 52316,
-      "source": "SIM_RX",
-      "line": "DONE 31"
-    },
-    {
-      "seq": 135,
-      "ms": 52328,
-      "source": "SIM_TX",
-      "line": "C 32 SESSION_START*14"
-    },
-    {
-      "seq": 136,
-      "ms": 52330,
-      "source": "SIM_RX",
-      "line": "ACK 32"
-    },
-    {
-      "seq": 137,
-      "ms": 52331,
-      "source": "SIM_RX",
-      "line": "DONE 32 SESSION_STARTED"
-    },
-    {
-      "seq": 138,
-      "ms": 52331,
-      "source": "DECISION",
-      "line": "PATROL SCAN_TAG"
-    },
-    {
-      "seq": 139,
-      "ms": 52332,
-      "source": "DECISION",
-      "line": "PATROL SCAN_TAG"
-    },
-    {
-      "seq": 140,
-      "ms": 52333,
+      "ms": 23659,
       "source": "TAG_REACHED",
       "line": "41"
     },
     {
-      "seq": 141,
-      "ms": 52343,
+      "seq": 127,
+      "ms": 23669,
       "source": "SIM_TX",
-      "line": "C 33 CAMERA_FRONT CLEAR*98"
+      "line": "C 28 GET_TELEMETRY*50"
+    },
+    {
+      "seq": 128,
+      "ms": 23671,
+      "source": "SIM_RX",
+      "line": "ACK 28"
+    },
+    {
+      "seq": 129,
+      "ms": 23672,
+      "source": "SIM_RX",
+      "line": "DATA 28 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 130,
+      "ms": 23673,
+      "source": "SIM_RX",
+      "line": "DATA 28 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 131,
+      "ms": 23673,
+      "source": "SIM_RX",
+      "line": "DONE 28"
+    },
+    {
+      "seq": 132,
+      "ms": 23684,
+      "source": "SIM_TX",
+      "line": "C 29 CAMERA_FRONT CLEAR*63"
+    },
+    {
+      "seq": 133,
+      "ms": 23686,
+      "source": "SIM_RX",
+      "line": "ACK 29"
+    },
+    {
+      "seq": 134,
+      "ms": 23687,
+      "source": "SIM_RX",
+      "line": "DONE 29"
+    },
+    {
+      "seq": 135,
+      "ms": 23951,
+      "source": "SIM_TX",
+      "line": "C 30 GET_TELEMETRY*E1"
+    },
+    {
+      "seq": 136,
+      "ms": 23954,
+      "source": "SIM_RX",
+      "line": "ACK 30"
+    },
+    {
+      "seq": 137,
+      "ms": 23955,
+      "source": "SIM_RX",
+      "line": "DATA 30 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 138,
+      "ms": 23956,
+      "source": "SIM_RX",
+      "line": "DATA 30 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 139,
+      "ms": 23956,
+      "source": "SIM_RX",
+      "line": "DONE 30"
+    },
+    {
+      "seq": 140,
+      "ms": 23967,
+      "source": "SIM_TX",
+      "line": "C 31 CAMERA_FRONT CLEAR*C0"
+    },
+    {
+      "seq": 141,
+      "ms": 23969,
+      "source": "SIM_RX",
+      "line": "ACK 31"
     },
     {
       "seq": 142,
-      "ms": 52345,
+      "ms": 23970,
+      "source": "SIM_RX",
+      "line": "DONE 31"
+    },
+    {
+      "seq": 143,
+      "ms": 24160,
+      "source": "SIM_TX",
+      "line": "C 32 MOTOR 45 -45*AC"
+    },
+    {
+      "seq": 144,
+      "ms": 24162,
+      "source": "SIM_RX",
+      "line": "ACK 32"
+    },
+    {
+      "seq": 145,
+      "ms": 24163,
+      "source": "SIM_RX",
+      "line": "MS 32 0 0"
+    },
+    {
+      "seq": 146,
+      "ms": 24164,
+      "source": "SIM_RX",
+      "line": "MP 32 2 2"
+    },
+    {
+      "seq": 147,
+      "ms": 24253,
+      "source": "SIM_TX",
+      "line": "C 33 GET_TELEMETRY*39"
+    },
+    {
+      "seq": 148,
+      "ms": 24256,
       "source": "SIM_RX",
       "line": "ACK 33"
     },
     {
-      "seq": 143,
-      "ms": 52346,
+      "seq": 149,
+      "ms": 24257,
+      "source": "SIM_RX",
+      "line": "DATA 33 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 150,
+      "ms": 24258,
+      "source": "SIM_RX",
+      "line": "DATA 33 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 151,
+      "ms": 24258,
       "source": "SIM_RX",
       "line": "DONE 33"
     },
     {
-      "seq": 144,
-      "ms": 52566,
+      "seq": 152,
+      "ms": 24268,
       "source": "SIM_TX",
-      "line": "C 34 GET_TELEMETRY*3B"
+      "line": "C 34 CAMERA_FRONT CLEAR*5C"
     },
     {
-      "seq": 145,
-      "ms": 52570,
+      "seq": 153,
+      "ms": 24271,
+      "source": "SIM_RX",
+      "line": "MP 32 4 4"
+    },
+    {
+      "seq": 154,
+      "ms": 24272,
       "source": "SIM_RX",
       "line": "ACK 34"
     },
     {
-      "seq": 146,
-      "ms": 52571,
-      "source": "SIM_RX",
-      "line": "DATA 34 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 147,
-      "ms": 52572,
-      "source": "SIM_RX",
-      "line": "DATA 34 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 148,
-      "ms": 52572,
+      "seq": 155,
+      "ms": 24272,
       "source": "SIM_RX",
       "line": "DONE 34"
     },
     {
-      "seq": 149,
-      "ms": 52633,
+      "seq": 156,
+      "ms": 24361,
       "source": "SIM_TX",
-      "line": "C 35 CAMERA_FRONT CLEAR*70"
+      "line": "C 35 KEEP*5D"
     },
     {
-      "seq": 150,
-      "ms": 52636,
+      "seq": 157,
+      "ms": 24364,
       "source": "SIM_RX",
       "line": "ACK 35"
     },
     {
-      "seq": 151,
-      "ms": 52637,
+      "seq": 158,
+      "ms": 24365,
       "source": "SIM_RX",
       "line": "DONE 35"
     },
     {
-      "seq": 152,
-      "ms": 52833,
-      "source": "SIM_TX",
-      "line": "C 36 MOTOR 75 -75*75"
+      "seq": 159,
+      "ms": 24418,
+      "source": "SIM_RX",
+      "line": "MP 32 6 6"
     },
     {
-      "seq": 153,
-      "ms": 52835,
+      "seq": 160,
+      "ms": 24541,
+      "source": "SIM_RX",
+      "line": "MP 32 8 8"
+    },
+    {
+      "seq": 161,
+      "ms": 24552,
+      "source": "SIM_TX",
+      "line": "C 36 GET_TELEMETRY*56"
+    },
+    {
+      "seq": 162,
+      "ms": 24555,
       "source": "SIM_RX",
       "line": "ACK 36"
     },
     {
-      "seq": 154,
-      "ms": 52836,
+      "seq": 163,
+      "ms": 24556,
       "source": "SIM_RX",
-      "line": "MS 36 0 0"
+      "line": "DATA 36 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 155,
-      "ms": 52836,
+      "seq": 164,
+      "ms": 24557,
       "source": "SIM_RX",
-      "line": "MP 36 2 2"
+      "line": "DATA 36 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 156,
-      "ms": 52867,
+      "seq": 165,
+      "ms": 24557,
+      "source": "SIM_RX",
+      "line": "DONE 36"
+    },
+    {
+      "seq": 166,
+      "ms": 24568,
       "source": "SIM_TX",
-      "line": "C 37 GET_TELEMETRY*E3"
+      "line": "C 37 KEEP*0F"
     },
     {
-      "seq": 157,
-      "ms": 52870,
+      "seq": 167,
+      "ms": 24571,
       "source": "SIM_RX",
       "line": "ACK 37"
     },
     {
-      "seq": 158,
-      "ms": 52871,
-      "source": "SIM_RX",
-      "line": "DATA 37 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 159,
-      "ms": 52872,
-      "source": "SIM_RX",
-      "line": "DATA 37 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 160,
-      "ms": 52872,
+      "seq": 168,
+      "ms": 24572,
       "source": "SIM_RX",
       "line": "DONE 37"
     },
     {
-      "seq": 161,
-      "ms": 52935,
+      "seq": 169,
+      "ms": 24583,
       "source": "SIM_TX",
       "line": "C 38 CAMERA_FRONT CLEAR*8B"
     },
     {
-      "seq": 162,
-      "ms": 52937,
+      "seq": 170,
+      "ms": 24586,
       "source": "SIM_RX",
       "line": "ACK 38"
     },
     {
-      "seq": 163,
-      "ms": 52938,
+      "seq": 171,
+      "ms": 24587,
       "source": "SIM_RX",
       "line": "DONE 38"
     },
     {
-      "seq": 164,
-      "ms": 52991,
+      "seq": 172,
+      "ms": 24650,
       "source": "SIM_RX",
-      "line": "MP 36 4 4"
+      "line": "MP 32 10 10"
     },
     {
-      "seq": 165,
-      "ms": 53034,
+      "seq": 173,
+      "ms": 24762,
       "source": "SIM_TX",
       "line": "C 39 KEEP*B6"
     },
     {
-      "seq": 166,
-      "ms": 53037,
+      "seq": 174,
+      "ms": 24766,
+      "source": "SIM_RX",
+      "line": "MP 32 12 12"
+    },
+    {
+      "seq": 175,
+      "ms": 24767,
       "source": "SIM_RX",
       "line": "ACK 39"
     },
     {
-      "seq": 167,
-      "ms": 53038,
+      "seq": 176,
+      "ms": 24767,
       "source": "SIM_RX",
       "line": "DONE 39"
     },
     {
-      "seq": 168,
-      "ms": 53100,
-      "source": "SIM_RX",
-      "line": "MP 36 6 6"
-    },
-    {
-      "seq": 169,
-      "ms": 53167,
+      "seq": 177,
+      "ms": 24852,
       "source": "SIM_TX",
       "line": "C 40 GET_TELEMETRY*EF"
     },
     {
-      "seq": 170,
-      "ms": 53170,
+      "seq": 178,
+      "ms": 24855,
       "source": "SIM_RX",
       "line": "ACK 40"
     },
     {
-      "seq": 171,
-      "ms": 53171,
+      "seq": 179,
+      "ms": 24856,
       "source": "SIM_RX",
       "line": "DATA 40 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 172,
-      "ms": 53172,
+      "seq": 180,
+      "ms": 24857,
       "source": "SIM_RX",
       "line": "DATA 40 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 173,
-      "ms": 53172,
+      "seq": 181,
+      "ms": 24857,
       "source": "SIM_RX",
       "line": "DONE 40"
     },
     {
-      "seq": 174,
-      "ms": 53226,
-      "source": "SIM_RX",
-      "line": "MP 36 8 8"
-    },
-    {
-      "seq": 175,
-      "ms": 53236,
+      "seq": 182,
+      "ms": 24867,
       "source": "SIM_TX",
-      "line": "C 41 KEEP*EA"
+      "line": "C 41 CAMERA_FRONT CLEAR*92"
     },
     {
-      "seq": 176,
-      "ms": 53238,
+      "seq": 183,
+      "ms": 24870,
       "source": "SIM_RX",
       "line": "ACK 41"
     },
     {
-      "seq": 177,
-      "ms": 53239,
+      "seq": 184,
+      "ms": 24871,
       "source": "SIM_RX",
       "line": "DONE 41"
     },
     {
-      "seq": 178,
-      "ms": 53252,
-      "source": "SIM_TX",
-      "line": "C 42 CAMERA_FRONT CLEAR*E6"
+      "seq": 185,
+      "ms": 24871,
+      "source": "SIM_RX",
+      "line": "MP 32 14 14"
     },
     {
-      "seq": 179,
-      "ms": 53255,
+      "seq": 186,
+      "ms": 24974,
+      "source": "SIM_TX",
+      "line": "C 42 KEEP*91"
+    },
+    {
+      "seq": 187,
+      "ms": 24982,
+      "source": "SIM_RX",
+      "line": "MP 32 16 16"
+    },
+    {
+      "seq": 188,
+      "ms": 24991,
       "source": "SIM_RX",
       "line": "ACK 42"
     },
     {
-      "seq": 180,
-      "ms": 53256,
+      "seq": 189,
+      "ms": 24992,
       "source": "SIM_RX",
       "line": "DONE 42"
     },
     {
-      "seq": 181,
-      "ms": 53382,
+      "seq": 190,
+      "ms": 25112,
       "source": "SIM_RX",
-      "line": "MP 36 10 10"
+      "line": "MP 32 18 18"
     },
     {
-      "seq": 182,
-      "ms": 53436,
+      "seq": 191,
+      "ms": 25153,
       "source": "SIM_TX",
-      "line": "C 43 KEEP*B8"
+      "line": "C 43 GET_TELEMETRY*37"
     },
     {
-      "seq": 183,
-      "ms": 53440,
+      "seq": 192,
+      "ms": 25156,
       "source": "SIM_RX",
       "line": "ACK 43"
     },
     {
-      "seq": 184,
-      "ms": 53441,
+      "seq": 193,
+      "ms": 25157,
+      "source": "SIM_RX",
+      "line": "DATA 43 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 194,
+      "ms": 25158,
+      "source": "SIM_RX",
+      "line": "DATA 43 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 195,
+      "ms": 25158,
       "source": "SIM_RX",
       "line": "DONE 43"
     },
     {
-      "seq": 185,
-      "ms": 53468,
+      "seq": 196,
+      "ms": 25168,
       "source": "SIM_TX",
-      "line": "C 44 GET_TELEMETRY*35"
+      "line": "C 44 CAMERA_FRONT CLEAR*0E"
     },
     {
-      "seq": 186,
-      "ms": 53471,
+      "seq": 197,
+      "ms": 25171,
       "source": "SIM_RX",
       "line": "ACK 44"
     },
     {
-      "seq": 187,
-      "ms": 53472,
-      "source": "SIM_RX",
-      "line": "DATA 44 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 188,
-      "ms": 53473,
-      "source": "SIM_RX",
-      "line": "DATA 44 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 189,
-      "ms": 53473,
+      "seq": 198,
+      "ms": 25172,
       "source": "SIM_RX",
       "line": "DONE 44"
     },
     {
-      "seq": 190,
-      "ms": 53537,
+      "seq": 199,
+      "ms": 25183,
       "source": "SIM_TX",
-      "line": "C 45 CAMERA_FRONT CLEAR*22"
+      "line": "C 45 KEEP*4E"
     },
     {
-      "seq": 191,
-      "ms": 53539,
-      "source": "SIM_RX",
-      "line": "MP 36 12 12"
-    },
-    {
-      "seq": 192,
-      "ms": 53540,
+      "seq": 200,
+      "ms": 25186,
       "source": "SIM_RX",
       "line": "ACK 45"
     },
     {
-      "seq": 193,
-      "ms": 53540,
+      "seq": 201,
+      "ms": 25187,
       "source": "SIM_RX",
       "line": "DONE 45"
     },
     {
-      "seq": 194,
-      "ms": 53649,
+      "seq": 202,
+      "ms": 25252,
+      "source": "SIM_RX",
+      "line": "MP 32 20 20"
+    },
+    {
+      "seq": 203,
+      "ms": 25374,
       "source": "SIM_TX",
       "line": "C 46 KEEP*35"
     },
     {
-      "seq": 195,
-      "ms": 53652,
+      "seq": 204,
+      "ms": 25376,
       "source": "SIM_RX",
-      "line": "MP 36 14 14"
+      "line": "MP 32 22 22"
     },
     {
-      "seq": 196,
-      "ms": 53665,
+      "seq": 205,
+      "ms": 25377,
       "source": "SIM_RX",
       "line": "ACK 46"
     },
     {
-      "seq": 197,
-      "ms": 53666,
+      "seq": 206,
+      "ms": 25377,
       "source": "SIM_RX",
       "line": "DONE 46"
     },
     {
-      "seq": 198,
-      "ms": 53770,
+      "seq": 207,
+      "ms": 25455,
       "source": "SIM_TX",
       "line": "C 47 GET_TELEMETRY*ED"
     },
     {
-      "seq": 199,
-      "ms": 53773,
-      "source": "SIM_RX",
-      "line": "MP 36 16 16"
-    },
-    {
-      "seq": 200,
-      "ms": 53774,
+      "seq": 208,
+      "ms": 25457,
       "source": "SIM_RX",
       "line": "ACK 47"
     },
     {
-      "seq": 201,
-      "ms": 53774,
+      "seq": 209,
+      "ms": 25458,
       "source": "SIM_RX",
       "line": "DATA 47 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 202,
-      "ms": 53775,
+      "seq": 210,
+      "ms": 25459,
       "source": "SIM_RX",
       "line": "DATA 47 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 203,
-      "ms": 53776,
+      "seq": 211,
+      "ms": 25459,
       "source": "SIM_RX",
       "line": "DONE 47"
     },
     {
-      "seq": 204,
-      "ms": 53837,
+      "seq": 212,
+      "ms": 25471,
       "source": "SIM_TX",
       "line": "C 48 CAMERA_FRONT CLEAR*D9"
     },
     {
-      "seq": 205,
-      "ms": 53839,
+      "seq": 213,
+      "ms": 25475,
       "source": "SIM_RX",
       "line": "ACK 48"
     },
     {
-      "seq": 206,
-      "ms": 53840,
+      "seq": 214,
+      "ms": 25476,
       "source": "SIM_RX",
       "line": "DONE 48"
     },
     {
-      "seq": 207,
-      "ms": 53853,
+      "seq": 215,
+      "ms": 25573,
       "source": "SIM_TX",
       "line": "C 49 KEEP*A5"
     },
     {
-      "seq": 208,
-      "ms": 53856,
+      "seq": 216,
+      "ms": 25576,
       "source": "SIM_RX",
       "line": "ACK 49"
     },
     {
-      "seq": 209,
-      "ms": 53857,
+      "seq": 217,
+      "ms": 25577,
       "source": "SIM_RX",
       "line": "DONE 49"
     },
     {
-      "seq": 210,
-      "ms": 53912,
-      "source": "SIM_RX",
-      "line": "MP 36 18 18"
-    },
-    {
-      "seq": 211,
-      "ms": 54036,
-      "source": "SIM_RX",
-      "line": "MP 36 20 20"
-    },
-    {
-      "seq": 212,
-      "ms": 54049,
+      "seq": 218,
+      "ms": 25755,
       "source": "SIM_TX",
-      "line": "C 50 KEEP*1C"
+      "line": "C 50 GET_TELEMETRY*ED"
     },
     {
-      "seq": 213,
-      "ms": 54052,
+      "seq": 219,
+      "ms": 25757,
       "source": "SIM_RX",
       "line": "ACK 50"
     },
     {
-      "seq": 214,
-      "ms": 54053,
+      "seq": 220,
+      "ms": 25758,
+      "source": "SIM_RX",
+      "line": "DATA 50 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 221,
+      "ms": 25759,
+      "source": "SIM_RX",
+      "line": "DATA 50 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 222,
+      "ms": 25759,
       "source": "SIM_RX",
       "line": "DONE 50"
     },
     {
-      "seq": 215,
-      "ms": 54070,
+      "seq": 223,
+      "ms": 25769,
       "source": "SIM_TX",
-      "line": "C 51 GET_TELEMETRY*58"
+      "line": "C 51 CAMERA_FRONT CLEAR*56"
     },
     {
-      "seq": 216,
-      "ms": 54073,
+      "seq": 224,
+      "ms": 25772,
       "source": "SIM_RX",
       "line": "ACK 51"
     },
     {
-      "seq": 217,
-      "ms": 54074,
-      "source": "SIM_RX",
-      "line": "DATA 51 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 218,
-      "ms": 54075,
-      "source": "SIM_RX",
-      "line": "DATA 51 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 219,
-      "ms": 54075,
+      "seq": 225,
+      "ms": 25773,
       "source": "SIM_RX",
       "line": "DONE 51"
     },
     {
-      "seq": 220,
-      "ms": 54138,
+      "seq": 226,
+      "ms": 25784,
       "source": "SIM_TX",
-      "line": "C 52 CAMERA_FRONT CLEAR*22"
+      "line": "C 52 KEEP*4E"
     },
     {
-      "seq": 221,
-      "ms": 54140,
+      "seq": 227,
+      "ms": 25787,
       "source": "SIM_RX",
       "line": "ACK 52"
     },
     {
-      "seq": 222,
-      "ms": 54141,
+      "seq": 228,
+      "ms": 25788,
       "source": "SIM_RX",
       "line": "DONE 52"
     },
     {
-      "seq": 223,
-      "ms": 54192,
-      "source": "SIM_RX",
-      "line": "MP 36 22 22"
-    },
-    {
-      "seq": 224,
-      "ms": 54249,
+      "seq": 229,
+      "ms": 25973,
       "source": "SIM_TX",
       "line": "C 53 KEEP*67"
     },
     {
-      "seq": 225,
-      "ms": 54252,
+      "seq": 230,
+      "ms": 25976,
       "source": "SIM_RX",
       "line": "ACK 53"
     },
     {
-      "seq": 226,
-      "ms": 54253,
+      "seq": 231,
+      "ms": 25977,
       "source": "SIM_RX",
       "line": "DONE 53"
     },
     {
-      "seq": 227,
-      "ms": 54371,
+      "seq": 232,
+      "ms": 26054,
       "source": "SIM_TX",
       "line": "C 54 GET_TELEMETRY*37"
     },
     {
-      "seq": 228,
-      "ms": 54374,
+      "seq": 233,
+      "ms": 26057,
       "source": "SIM_RX",
       "line": "ACK 54"
     },
     {
-      "seq": 229,
-      "ms": 54375,
+      "seq": 234,
+      "ms": 26058,
       "source": "SIM_RX",
       "line": "DATA 54 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 230,
-      "ms": 54376,
+      "seq": 235,
+      "ms": 26059,
       "source": "SIM_RX",
       "line": "DATA 54 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 231,
-      "ms": 54376,
+      "seq": 236,
+      "ms": 26059,
       "source": "SIM_RX",
       "line": "DONE 54"
     },
     {
-      "seq": 232,
-      "ms": 54438,
+      "seq": 237,
+      "ms": 26069,
       "source": "SIM_TX",
       "line": "C 55 CAMERA_FRONT CLEAR*E6"
     },
     {
-      "seq": 233,
-      "ms": 54440,
+      "seq": 238,
+      "ms": 26072,
       "source": "SIM_RX",
       "line": "ACK 55"
     },
     {
-      "seq": 234,
-      "ms": 54441,
+      "seq": 239,
+      "ms": 26073,
       "source": "SIM_RX",
       "line": "DONE 55"
     },
     {
-      "seq": 235,
-      "ms": 54454,
-      "source": "SIM_TX",
-      "line": "C 56 KEEP*EA"
-    },
-    {
-      "seq": 236,
-      "ms": 54457,
-      "source": "SIM_RX",
-      "line": "ACK 56"
-    },
-    {
-      "seq": 237,
-      "ms": 54458,
-      "source": "SIM_RX",
-      "line": "DONE 56"
-    },
-    {
-      "seq": 238,
-      "ms": 54651,
-      "source": "SIM_TX",
-      "line": "C 57 KEEP*C3"
-    },
-    {
-      "seq": 239,
-      "ms": 54654,
-      "source": "SIM_RX",
-      "line": "ACK 57"
-    },
-    {
       "seq": 240,
-      "ms": 54655,
-      "source": "SIM_RX",
-      "line": "DONE 57"
-    },
-    {
-      "seq": 241,
-      "ms": 54672,
-      "source": "SIM_TX",
-      "line": "C 58 GET_TELEMETRY*5E"
-    },
-    {
-      "seq": 242,
-      "ms": 54675,
-      "source": "SIM_RX",
-      "line": "ACK 58"
-    },
-    {
-      "seq": 243,
-      "ms": 54676,
-      "source": "SIM_RX",
-      "line": "DATA 58 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 244,
-      "ms": 54677,
-      "source": "SIM_RX",
-      "line": "DATA 58 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 245,
-      "ms": 54677,
-      "source": "SIM_RX",
-      "line": "DONE 58"
-    },
-    {
-      "seq": 246,
-      "ms": 54739,
-      "source": "SIM_TX",
-      "line": "C 59 CAMERA_FRONT CLEAR*31"
-    },
-    {
-      "seq": 247,
-      "ms": 54741,
-      "source": "SIM_RX",
-      "line": "ACK 59"
-    },
-    {
-      "seq": 248,
-      "ms": 54742,
-      "source": "SIM_RX",
-      "line": "DONE 59"
-    },
-    {
-      "seq": 249,
-      "ms": 54851,
-      "source": "SIM_TX",
-      "line": "C 60 KEEP*7A"
-    },
-    {
-      "seq": 250,
-      "ms": 54854,
-      "source": "SIM_RX",
-      "line": "ACK 60"
-    },
-    {
-      "seq": 251,
-      "ms": 54855,
-      "source": "SIM_RX",
-      "line": "DONE 60"
-    },
-    {
-      "seq": 252,
-      "ms": 54944,
+      "ms": 26129,
       "source": "DECISION",
       "line": "STOPPED FAULT"
     },
     {
-      "seq": 253,
-      "ms": 54945,
+      "seq": 241,
+      "ms": 26130,
       "source": "FAULT",
       "line": "no checked encoder feedback for 750ms"
     },
     {
-      "seq": 254,
-      "ms": 54945,
+      "seq": 242,
+      "ms": 26130,
       "source": "SIM_TX",
-      "line": "C 61 STOP*CF"
+      "line": "C 56 STOP*76"
+    },
+    {
+      "seq": 243,
+      "ms": 26132,
+      "source": "SIM_RX",
+      "line": "ACK 56"
+    },
+    {
+      "seq": 244,
+      "ms": 26133,
+      "source": "SIM_RX",
+      "line": "DONE 56"
+    },
+    {
+      "seq": 245,
+      "ms": 26145,
+      "source": "SIM_TX",
+      "line": "C 57 SESSION_STOP*9D"
+    },
+    {
+      "seq": 246,
+      "ms": 26147,
+      "source": "SIM_RX",
+      "line": "ACK 57"
+    },
+    {
+      "seq": 247,
+      "ms": 26148,
+      "source": "SIM_RX",
+      "line": "DONE 57 SESSION_STOPPED"
+    },
+    {
+      "seq": 248,
+      "ms": 26355,
+      "source": "SIM_TX",
+      "line": "C 58 GET_TELEMETRY*5E"
+    },
+    {
+      "seq": 249,
+      "ms": 26358,
+      "source": "SIM_RX",
+      "line": "ACK 58"
+    },
+    {
+      "seq": 250,
+      "ms": 26359,
+      "source": "SIM_RX",
+      "line": "DATA 58 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 251,
+      "ms": 26360,
+      "source": "SIM_RX",
+      "line": "DATA 58 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 252,
+      "ms": 26360,
+      "source": "SIM_RX",
+      "line": "DONE 58"
+    },
+    {
+      "seq": 253,
+      "ms": 26655,
+      "source": "SIM_TX",
+      "line": "C 59 GET_TELEMETRY*EB"
+    },
+    {
+      "seq": 254,
+      "ms": 26707,
+      "source": "SIM_RX",
+      "line": "ACK 59"
     },
     {
       "seq": 255,
-      "ms": 54947,
+      "ms": 26708,
+      "source": "SIM_RX",
+      "line": "DATA 59 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 256,
+      "ms": 26709,
+      "source": "SIM_RX",
+      "line": "DATA 59 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 257,
+      "ms": 26710,
+      "source": "SIM_RX",
+      "line": "DONE 59"
+    },
+    {
+      "seq": 258,
+      "ms": 26956,
+      "source": "SIM_TX",
+      "line": "C 60 GET_TELEMETRY*EB"
+    },
+    {
+      "seq": 259,
+      "ms": 26959,
+      "source": "SIM_RX",
+      "line": "ACK 60"
+    },
+    {
+      "seq": 260,
+      "ms": 26960,
+      "source": "SIM_RX",
+      "line": "DATA 60 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 261,
+      "ms": 26961,
+      "source": "SIM_RX",
+      "line": "DATA 60 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 262,
+      "ms": 26961,
+      "source": "SIM_RX",
+      "line": "DONE 60"
+    },
+    {
+      "seq": 263,
+      "ms": 27256,
+      "source": "SIM_TX",
+      "line": "C 61 GET_TELEMETRY*5E"
+    },
+    {
+      "seq": 264,
+      "ms": 27259,
       "source": "SIM_RX",
       "line": "ACK 61"
     },
     {
-      "seq": 256,
-      "ms": 54948,
+      "seq": 265,
+      "ms": 27260,
+      "source": "SIM_RX",
+      "line": "DATA 61 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 266,
+      "ms": 27261,
+      "source": "SIM_RX",
+      "line": "DATA 61 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 267,
+      "ms": 27261,
       "source": "SIM_RX",
       "line": "DONE 61"
     },
     {
-      "seq": 257,
-      "ms": 54960,
-      "source": "SIM_TX",
-      "line": "C 62 SESSION_STOP*3D"
-    },
-    {
-      "seq": 258,
-      "ms": 54962,
-      "source": "SIM_RX",
-      "line": "ACK 62"
-    },
-    {
-      "seq": 259,
-      "ms": 54963,
-      "source": "SIM_RX",
-      "line": "DONE 62 SESSION_STOPPED"
-    },
-    {
-      "seq": 260,
-      "ms": 54975,
-      "source": "SIM_TX",
-      "line": "C 63 GET_TELEMETRY*33"
-    },
-    {
-      "seq": 261,
-      "ms": 54977,
-      "source": "SIM_RX",
-      "line": "ACK 63"
-    },
-    {
-      "seq": 262,
-      "ms": 54978,
-      "source": "SIM_RX",
-      "line": "DATA 63 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 263,
-      "ms": 54979,
-      "source": "SIM_RX",
-      "line": "DATA 63 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 264,
-      "ms": 54979,
-      "source": "SIM_RX",
-      "line": "DONE 63"
-    },
-    {
-      "seq": 265,
-      "ms": 55274,
-      "source": "SIM_TX",
-      "line": "C 64 GET_TELEMETRY*31"
-    },
-    {
-      "seq": 266,
-      "ms": 55277,
-      "source": "SIM_RX",
-      "line": "ACK 64"
-    },
-    {
-      "seq": 267,
-      "ms": 55278,
-      "source": "SIM_RX",
-      "line": "DATA 64 HW SL 0 0 -1 -1 100 I"
-    },
-    {
       "seq": 268,
-      "ms": 55279,
-      "source": "SIM_RX",
-      "line": "DATA 64 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 269,
-      "ms": 55279,
-      "source": "SIM_RX",
-      "line": "DONE 64"
-    },
-    {
-      "seq": 270,
-      "ms": 55575,
-      "source": "SIM_TX",
-      "line": "C 65 GET_TELEMETRY*84"
-    },
-    {
-      "seq": 271,
-      "ms": 55579,
-      "source": "SIM_RX",
-      "line": "ACK 65"
-    },
-    {
-      "seq": 272,
-      "ms": 55580,
-      "source": "SIM_RX",
-      "line": "DATA 65 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 273,
-      "ms": 55581,
-      "source": "SIM_RX",
-      "line": "DATA 65 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 274,
-      "ms": 55581,
-      "source": "SIM_RX",
-      "line": "DONE 65"
-    },
-    {
-      "seq": 275,
-      "ms": 55875,
-      "source": "SIM_TX",
-      "line": "C 66 GET_TELEMETRY*5C"
-    },
-    {
-      "seq": 276,
-      "ms": 55878,
-      "source": "SIM_RX",
-      "line": "ACK 66"
-    },
-    {
-      "seq": 277,
-      "ms": 55879,
-      "source": "SIM_RX",
-      "line": "DATA 66 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 278,
-      "ms": 55880,
-      "source": "SIM_RX",
-      "line": "DATA 66 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 279,
-      "ms": 55880,
-      "source": "SIM_RX",
-      "line": "DONE 66"
-    },
-    {
-      "seq": 280,
-      "ms": 56059,
+      "ms": 27262,
       "source": "DECISION",
       "line": "STOPPED FAULT"
     },
     {
-      "seq": 281,
-      "ms": 56059,
+      "seq": 269,
+      "ms": 27262,
       "source": "FAULT",
       "line": "operator_stop"
     },
     {
-      "seq": 282,
-      "ms": 56059,
+      "seq": 270,
+      "ms": 27271,
       "source": "SIM_TX",
-      "line": "C 67 STOP*39"
+      "line": "C 62 STOP*B4"
     },
     {
-      "seq": 283,
-      "ms": 56061,
+      "seq": 271,
+      "ms": 27273,
       "source": "SIM_RX",
-      "line": "ACK 67"
+      "line": "ACK 62"
     },
     {
-      "seq": 284,
-      "ms": 56062,
+      "seq": 272,
+      "ms": 27274,
       "source": "SIM_RX",
-      "line": "DONE 67"
+      "line": "DONE 62"
     },
     {
-      "seq": 285,
-      "ms": 56074,
+      "seq": 273,
+      "ms": 27287,
       "source": "SIM_TX",
-      "line": "C 68 SESSION_STOP*CD"
+      "line": "C 63 SESSION_STOP*D8"
     },
     {
-      "seq": 286,
-      "ms": 56076,
+      "seq": 274,
+      "ms": 27289,
       "source": "SIM_RX",
-      "line": "ACK 68"
+      "line": "ACK 63"
     },
     {
-      "seq": 287,
-      "ms": 56077,
+      "seq": 275,
+      "ms": 27290,
       "source": "SIM_RX",
-      "line": "DONE 68 SESSION_STOPPED"
+      "line": "DONE 63 SESSION_STOPPED"
     },
     {
-      "seq": 288,
-      "ms": 56176,
+      "seq": 276,
+      "ms": 27556,
       "source": "SIM_TX",
-      "line": "C 69 GET_TELEMETRY*ED"
+      "line": "C 64 GET_TELEMETRY*31"
     },
     {
-      "seq": 289,
-      "ms": 56179,
+      "seq": 277,
+      "ms": 27559,
       "source": "SIM_RX",
-      "line": "ACK 69"
+      "line": "ACK 64"
     },
     {
-      "seq": 290,
-      "ms": 56180,
+      "seq": 278,
+      "ms": 27560,
       "source": "SIM_RX",
-      "line": "DATA 69 HW SL 0 0 -1 -1 100 I"
+      "line": "DATA 64 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 291,
-      "ms": 56181,
+      "seq": 279,
+      "ms": 27561,
       "source": "SIM_RX",
-      "line": "DATA 69 HW SR 0 0 -1 -1 100 I"
+      "line": "DATA 64 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 292,
-      "ms": 56181,
+      "seq": 280,
+      "ms": 27561,
       "source": "SIM_RX",
-      "line": "DONE 69"
+      "line": "DONE 64"
     },
     {
-      "seq": 293,
-      "ms": 56477,
-      "source": "SIM_TX",
-      "line": "C 70 GET_TELEMETRY*E9"
-    },
-    {
-      "seq": 294,
-      "ms": 56559,
+      "seq": 281,
+      "ms": 27759,
       "source": "CONFIG",
       "line": "saved"
     },
     {
+      "seq": 282,
+      "ms": 27857,
+      "source": "SIM_TX",
+      "line": "C 65 GET_TELEMETRY*84"
+    },
+    {
+      "seq": 283,
+      "ms": 27860,
+      "source": "SIM_RX",
+      "line": "ACK 65"
+    },
+    {
+      "seq": 284,
+      "ms": 27861,
+      "source": "SIM_RX",
+      "line": "DATA 65 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 285,
+      "ms": 27862,
+      "source": "SIM_RX",
+      "line": "DATA 65 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 286,
+      "ms": 27862,
+      "source": "SIM_RX",
+      "line": "DONE 65"
+    },
+    {
+      "seq": 287,
+      "ms": 28157,
+      "source": "SIM_TX",
+      "line": "C 66 GET_TELEMETRY*5C"
+    },
+    {
+      "seq": 288,
+      "ms": 28169,
+      "source": "SIM_RX",
+      "line": "ACK 66"
+    },
+    {
+      "seq": 289,
+      "ms": 28170,
+      "source": "SIM_RX",
+      "line": "DATA 66 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 290,
+      "ms": 28171,
+      "source": "SIM_RX",
+      "line": "DATA 66 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 291,
+      "ms": 28171,
+      "source": "SIM_RX",
+      "line": "DONE 66"
+    },
+    {
+      "seq": 292,
+      "ms": 28457,
+      "source": "SIM_TX",
+      "line": "C 67 GET_TELEMETRY*E9"
+    },
+    {
+      "seq": 293,
+      "ms": 28461,
+      "source": "SIM_RX",
+      "line": "ACK 67"
+    },
+    {
+      "seq": 294,
+      "ms": 28462,
+      "source": "SIM_RX",
+      "line": "DATA 67 HW SL 0 0 -1 -1 100 I"
+    },
+    {
       "seq": 295,
-      "ms": 56560,
+      "ms": 28462,
+      "source": "SIM_RX",
+      "line": "DATA 67 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 296,
+      "ms": 28463,
+      "source": "SIM_RX",
+      "line": "DONE 67"
+    },
+    {
+      "seq": 297,
+      "ms": 28758,
+      "source": "SIM_TX",
+      "line": "C 68 GET_TELEMETRY*58"
+    },
+    {
+      "seq": 298,
+      "ms": 28772,
+      "source": "SIM_RX",
+      "line": "ACK 68"
+    },
+    {
+      "seq": 299,
+      "ms": 28773,
+      "source": "SIM_RX",
+      "line": "DATA 68 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 300,
+      "ms": 28774,
+      "source": "SIM_RX",
+      "line": "DATA 68 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 301,
+      "ms": 28774,
+      "source": "SIM_RX",
+      "line": "DONE 68"
+    },
+    {
+      "seq": 302,
+      "ms": 29059,
+      "source": "SIM_TX",
+      "line": "C 69 GET_TELEMETRY*ED"
+    },
+    {
+      "seq": 303,
+      "ms": 29062,
+      "source": "SIM_RX",
+      "line": "ACK 69"
+    },
+    {
+      "seq": 304,
+      "ms": 29063,
+      "source": "SIM_RX",
+      "line": "DATA 69 HW SL 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 305,
+      "ms": 29064,
+      "source": "SIM_RX",
+      "line": "DATA 69 HW SR 0 0 -1 -1 100 I"
+    },
+    {
+      "seq": 306,
+      "ms": 29064,
+      "source": "SIM_RX",
+      "line": "DONE 69"
+    },
+    {
+      "seq": 307,
+      "ms": 29360,
+      "source": "SIM_TX",
+      "line": "C 70 GET_TELEMETRY*E9"
+    },
+    {
+      "seq": 308,
+      "ms": 29364,
       "source": "SIM_RX",
       "line": "ACK 70"
     },
     {
-      "seq": 296,
-      "ms": 56561,
+      "seq": 309,
+      "ms": 29365,
       "source": "SIM_RX",
       "line": "DATA 70 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 297,
-      "ms": 56562,
+      "seq": 310,
+      "ms": 29365,
       "source": "SIM_RX",
       "line": "DATA 70 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 298,
-      "ms": 56562,
+      "seq": 311,
+      "ms": 29366,
       "source": "SIM_RX",
       "line": "DONE 70"
     },
     {
-      "seq": 299,
-      "ms": 56778,
+      "seq": 312,
+      "ms": 29661,
       "source": "SIM_TX",
       "line": "C 71 GET_TELEMETRY*5C"
     },
     {
-      "seq": 300,
-      "ms": 56781,
+      "seq": 313,
+      "ms": 29664,
       "source": "SIM_RX",
       "line": "ACK 71"
     },
     {
-      "seq": 301,
-      "ms": 56782,
+      "seq": 314,
+      "ms": 29665,
       "source": "SIM_RX",
       "line": "DATA 71 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 302,
-      "ms": 56783,
+      "seq": 315,
+      "ms": 29666,
       "source": "SIM_RX",
       "line": "DATA 71 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 303,
-      "ms": 56783,
+      "seq": 316,
+      "ms": 29666,
       "source": "SIM_RX",
       "line": "DONE 71"
     },
     {
-      "seq": 304,
-      "ms": 57079,
+      "seq": 317,
+      "ms": 29961,
       "source": "SIM_TX",
       "line": "C 72 GET_TELEMETRY*84"
     },
     {
-      "seq": 305,
-      "ms": 57082,
+      "seq": 318,
+      "ms": 29964,
       "source": "SIM_RX",
       "line": "ACK 72"
     },
     {
-      "seq": 306,
-      "ms": 57083,
+      "seq": 319,
+      "ms": 29965,
       "source": "SIM_RX",
       "line": "DATA 72 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 307,
-      "ms": 57084,
+      "seq": 320,
+      "ms": 29966,
       "source": "SIM_RX",
       "line": "DATA 72 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 308,
-      "ms": 57084,
+      "seq": 321,
+      "ms": 29966,
       "source": "SIM_RX",
       "line": "DONE 72"
     },
     {
-      "seq": 309,
-      "ms": 57380,
+      "seq": 322,
+      "ms": 30262,
       "source": "SIM_TX",
       "line": "C 73 GET_TELEMETRY*31"
     },
     {
-      "seq": 310,
-      "ms": 57384,
+      "seq": 323,
+      "ms": 30266,
       "source": "SIM_RX",
       "line": "ACK 73"
     },
     {
-      "seq": 311,
-      "ms": 57385,
+      "seq": 324,
+      "ms": 30267,
       "source": "SIM_RX",
       "line": "DATA 73 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 312,
-      "ms": 57385,
+      "seq": 325,
+      "ms": 30269,
       "source": "SIM_RX",
       "line": "DATA 73 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 313,
-      "ms": 57386,
+      "seq": 326,
+      "ms": 30269,
       "source": "SIM_RX",
       "line": "DONE 73"
     },
     {
-      "seq": 314,
-      "ms": 57681,
+      "seq": 327,
+      "ms": 30563,
       "source": "SIM_TX",
       "line": "C 74 GET_TELEMETRY*33"
     },
     {
-      "seq": 315,
-      "ms": 57684,
+      "seq": 328,
+      "ms": 30566,
       "source": "SIM_RX",
       "line": "ACK 74"
     },
     {
-      "seq": 316,
-      "ms": 57685,
+      "seq": 329,
+      "ms": 30567,
       "source": "SIM_RX",
       "line": "DATA 74 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 317,
-      "ms": 57686,
+      "seq": 330,
+      "ms": 30568,
       "source": "SIM_RX",
       "line": "DATA 74 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 318,
-      "ms": 57686,
+      "seq": 331,
+      "ms": 30568,
       "source": "SIM_RX",
       "line": "DONE 74"
     },
     {
-      "seq": 319,
-      "ms": 57981,
+      "seq": 332,
+      "ms": 30863,
       "source": "SIM_TX",
       "line": "C 75 GET_TELEMETRY*86"
     },
     {
-      "seq": 320,
-      "ms": 57984,
+      "seq": 333,
+      "ms": 30866,
       "source": "SIM_RX",
       "line": "ACK 75"
     },
     {
-      "seq": 321,
-      "ms": 57985,
+      "seq": 334,
+      "ms": 30867,
       "source": "SIM_RX",
       "line": "DATA 75 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 322,
-      "ms": 57986,
+      "seq": 335,
+      "ms": 30868,
       "source": "SIM_RX",
       "line": "DATA 75 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 323,
-      "ms": 57986,
+      "seq": 336,
+      "ms": 30868,
       "source": "SIM_RX",
       "line": "DONE 75"
     },
     {
-      "seq": 324,
-      "ms": 58282,
+      "seq": 337,
+      "ms": 31164,
       "source": "SIM_TX",
       "line": "C 76 GET_TELEMETRY*5E"
     },
     {
-      "seq": 325,
-      "ms": 58286,
+      "seq": 338,
+      "ms": 31168,
       "source": "SIM_RX",
       "line": "ACK 76"
     },
     {
-      "seq": 326,
-      "ms": 58287,
+      "seq": 339,
+      "ms": 31169,
       "source": "SIM_RX",
       "line": "DATA 76 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 327,
-      "ms": 58287,
+      "seq": 340,
+      "ms": 31169,
       "source": "SIM_RX",
       "line": "DATA 76 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 328,
-      "ms": 58288,
+      "seq": 341,
+      "ms": 31170,
       "source": "SIM_RX",
       "line": "DONE 76"
     },
     {
-      "seq": 329,
-      "ms": 58583,
+      "seq": 342,
+      "ms": 31469,
       "source": "SIM_TX",
       "line": "C 77 GET_TELEMETRY*EB"
     },
     {
-      "seq": 330,
-      "ms": 58586,
+      "seq": 343,
+      "ms": 31472,
       "source": "SIM_RX",
       "line": "ACK 77"
     },
     {
-      "seq": 331,
-      "ms": 58587,
+      "seq": 344,
+      "ms": 31473,
       "source": "SIM_RX",
       "line": "DATA 77 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 332,
-      "ms": 58588,
+      "seq": 345,
+      "ms": 31474,
       "source": "SIM_RX",
       "line": "DATA 77 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 333,
-      "ms": 58588,
+      "seq": 346,
+      "ms": 31475,
       "source": "SIM_RX",
       "line": "DONE 77"
     },
     {
-      "seq": 334,
-      "ms": 58883,
+      "seq": 347,
+      "ms": 31769,
       "source": "SIM_TX",
       "line": "C 78 GET_TELEMETRY*5A"
     },
     {
-      "seq": 335,
-      "ms": 58886,
+      "seq": 348,
+      "ms": 31772,
       "source": "SIM_RX",
       "line": "ACK 78"
     },
     {
-      "seq": 336,
-      "ms": 58887,
+      "seq": 349,
+      "ms": 31773,
       "source": "SIM_RX",
       "line": "DATA 78 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 337,
-      "ms": 58888,
+      "seq": 350,
+      "ms": 31774,
       "source": "SIM_RX",
       "line": "DATA 78 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 338,
-      "ms": 58888,
+      "seq": 351,
+      "ms": 31774,
       "source": "SIM_RX",
       "line": "DONE 78"
     },
     {
-      "seq": 339,
-      "ms": 59184,
+      "seq": 352,
+      "ms": 32070,
       "source": "SIM_TX",
       "line": "C 79 GET_TELEMETRY*EF"
     },
     {
-      "seq": 340,
-      "ms": 59188,
+      "seq": 353,
+      "ms": 32074,
       "source": "SIM_RX",
       "line": "ACK 79"
     },
     {
-      "seq": 341,
-      "ms": 59189,
+      "seq": 354,
+      "ms": 32075,
       "source": "SIM_RX",
       "line": "DATA 79 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 342,
-      "ms": 59189,
+      "seq": 355,
+      "ms": 32075,
       "source": "SIM_RX",
       "line": "DATA 79 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 343,
-      "ms": 59190,
+      "seq": 356,
+      "ms": 32076,
       "source": "SIM_RX",
       "line": "DONE 79"
     },
     {
-      "seq": 344,
-      "ms": 59485,
+      "seq": 357,
+      "ms": 32370,
       "source": "SIM_TX",
       "line": "C 80 GET_TELEMETRY*F7"
     },
     {
-      "seq": 345,
-      "ms": 59488,
+      "seq": 358,
+      "ms": 32382,
       "source": "SIM_RX",
       "line": "ACK 80"
     },
     {
-      "seq": 346,
-      "ms": 59489,
+      "seq": 359,
+      "ms": 32383,
       "source": "SIM_RX",
       "line": "DATA 80 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 347,
-      "ms": 59490,
+      "seq": 360,
+      "ms": 32384,
       "source": "SIM_RX",
       "line": "DATA 80 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 348,
-      "ms": 59490,
+      "seq": 361,
+      "ms": 32384,
       "source": "SIM_RX",
       "line": "DONE 80"
     },
     {
-      "seq": 349,
-      "ms": 59785,
+      "seq": 362,
+      "ms": 32698,
       "source": "SIM_TX",
       "line": "C 81 GET_TELEMETRY*42"
     },
     {
-      "seq": 350,
-      "ms": 59788,
+      "seq": 363,
+      "ms": 32700,
       "source": "SIM_RX",
       "line": "ACK 81"
     },
     {
-      "seq": 351,
-      "ms": 59789,
+      "seq": 364,
+      "ms": 32701,
       "source": "SIM_RX",
       "line": "DATA 81 HW SL 0 0 -1 -1 100 I"
     },
     {
-      "seq": 352,
-      "ms": 59790,
+      "seq": 365,
+      "ms": 32702,
       "source": "SIM_RX",
       "line": "DATA 81 HW SR 0 0 -1 -1 100 I"
     },
     {
-      "seq": 353,
-      "ms": 59790,
+      "seq": 366,
+      "ms": 32702,
       "source": "SIM_RX",
       "line": "DONE 81"
-    },
-    {
-      "seq": 354,
-      "ms": 60086,
-      "source": "SIM_TX",
-      "line": "C 82 GET_TELEMETRY*9A"
-    },
-    {
-      "seq": 355,
-      "ms": 60090,
-      "source": "SIM_RX",
-      "line": "ACK 82"
-    },
-    {
-      "seq": 356,
-      "ms": 60091,
-      "source": "SIM_RX",
-      "line": "DATA 82 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 357,
-      "ms": 60091,
-      "source": "SIM_RX",
-      "line": "DATA 82 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 358,
-      "ms": 60092,
-      "source": "SIM_RX",
-      "line": "DONE 82"
-    },
-    {
-      "seq": 359,
-      "ms": 60386,
-      "source": "SIM_TX",
-      "line": "C 83 GET_TELEMETRY*2F"
-    },
-    {
-      "seq": 360,
-      "ms": 60389,
-      "source": "SIM_RX",
-      "line": "ACK 83"
-    },
-    {
-      "seq": 361,
-      "ms": 60390,
-      "source": "SIM_RX",
-      "line": "DATA 83 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 362,
-      "ms": 60391,
-      "source": "SIM_RX",
-      "line": "DATA 83 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 363,
-      "ms": 60391,
-      "source": "SIM_RX",
-      "line": "DONE 83"
-    },
-    {
-      "seq": 364,
-      "ms": 60686,
-      "source": "SIM_TX",
-      "line": "C 84 GET_TELEMETRY*2D"
-    },
-    {
-      "seq": 365,
-      "ms": 60689,
-      "source": "SIM_RX",
-      "line": "ACK 84"
-    },
-    {
-      "seq": 366,
-      "ms": 60690,
-      "source": "SIM_RX",
-      "line": "DATA 84 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 367,
-      "ms": 60691,
-      "source": "SIM_RX",
-      "line": "DATA 84 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 368,
-      "ms": 60691,
-      "source": "SIM_RX",
-      "line": "DONE 84"
-    },
-    {
-      "seq": 369,
-      "ms": 60987,
-      "source": "SIM_TX",
-      "line": "C 85 GET_TELEMETRY*98"
-    },
-    {
-      "seq": 370,
-      "ms": 60991,
-      "source": "SIM_RX",
-      "line": "ACK 85"
-    },
-    {
-      "seq": 371,
-      "ms": 60992,
-      "source": "SIM_RX",
-      "line": "DATA 85 HW SL 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 372,
-      "ms": 60992,
-      "source": "SIM_RX",
-      "line": "DATA 85 HW SR 0 0 -1 -1 100 I"
-    },
-    {
-      "seq": 373,
-      "ms": 60993,
-      "source": "SIM_RX",
-      "line": "DONE 85"
     }
   ]
 }

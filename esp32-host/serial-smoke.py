@@ -4,7 +4,7 @@ sys.path.insert(0,str(pathlib.Path(__file__).parent/'vendor'/'python'))
 import serial
 parser=argparse.ArgumentParser();parser.add_argument('--port',default='COM11');args=parser.parse_args()
 wire=serial.Serial(args.port,115200,timeout=.05,write_timeout=1)
-events=[];snapshots=[];buffer=bytearray();motion=None;counts=0;last_mp=last_vision=0;vision={'cat':{'detected':False},'tags':[],'front':'CLEAR'}
+events=[];snapshots=[];buffer=bytearray();motion=None;counts=0;last_mp=last_vision=0;vision={'cat':{'detected':False},'tags':[],'front':'CLEAR'};originalRoute=None
 def send(x): wire.write((json.dumps(x,separators=(',',':'))+'\n').encode())
 def crc(s):
     c=0
@@ -46,7 +46,7 @@ def pump(seconds,feed=True):
 def state():send({'op':'state'});pump(.6);assert snapshots,'no state received';return snapshots[-1]
 try:
     send({'op':'mode','mode':'SIM_UNO'});pump(2)
-    initial=state();assert initial['mode']=='SIM_UNO'
+    initial=state();assert initial['mode']=='SIM_UNO';originalRoute=initial['config']['route']
     send({'op':'config','config':{'route':[41,2,100,41,586,0]}});pump(.6)
     assert state()['config']['route']==[41,2,100,41,586,0]
     send({'op':'config','config':{'route':[-1]}});pump(.4)
@@ -58,10 +58,14 @@ try:
     # No checked movement feedback: ESP32 must stop rather than renew forever.
     pump(1.1,feed=False);stopped=state();assert stopped['phase']=='STOPPED',stopped['phase']
     send({'op':'control','action':'stop'});pump(.4)
-    send({'op':'config','config':{'route':[0,1,2,3]}});pump(.4)
+    send({'op':'config','config':{'route':originalRoute}});pump(.4)
+    assert state()['config']['route']==originalRoute,'original route not restored'
     before=state();pump(3);after=state();assert after['cameraOk'];assert after['frameSeq']>before['frameSeq'],'camera frame sequence stalled'
     result={'port':args.port,'firmware':after['firmware'],'checks':['USB JSON','ordered route with repeated ID and six nodes','invalid route rejected','CRC error rejected','tag reached and target advanced','missing encoder feedback stops','camera frames advance'], 'cameraBefore':before['frameSeq'],'cameraAfter':after['frameSeq'],'cameraVision':after.get('cameraVision'),'phase':after['phase'],'heap':after['heap'],'psram':after['psram'],'events':events}
     dest=pathlib.Path(__file__).parent/'serial-smoke-result.json';dest.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps({k:v for k,v in result.items() if k!='events'},ensure_ascii=False,indent=2))
 finally:
-    send({'op':'control','action':'stop'});wire.close()
+    try:
+        send({'op':'control','action':'stop'});pump(.3)
+        if originalRoute is not None:send({'op':'config','config':{'route':originalRoute}});pump(.3)
+    finally:wire.close()

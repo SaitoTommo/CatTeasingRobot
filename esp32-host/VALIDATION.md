@@ -45,3 +45,16 @@
 - 结束状态由 HTTP 确认：`ESP32_CAT_HOST_0.3`、`phase=IDLE`、`visionMode=OFF`、`cameraOk=true`。启动和串口工具的打开/关闭可能重置板子，运行时 IP 应以当前状态为准。
 
 结果文件：`http-smoke-result.json`、`serial-smoke-result.json`、`vision-smoke-result.json`；相机现场快照仅保留本地，不提交 Git。
+
+## 完整功能固件体积优化与烧录（2026-10-01）
+
+- 用户提供的 IDE 日志使用 `PartitionScheme=default_8MB,PSRAM=disabled`，应用槽上限 3,342,336 bytes，固件 3,656,580 bytes，导致 109% 超限。实际 COM11 为 ESP32-S3 revision v0.2，烧录器确认内置 8MiB PSRAM；正确构建采用 `PSRAM=opi,PartitionScheme=max_app_8MB`（应用分区 8,257,536 bytes）。
+- 完整体积优化尝试：全局 LTO 首先因 SDK 的 `-fno-lto` 导致插件问题，移除临时参数副本中的该开关后，又触发 SDK 核心 Xtensa 重定位错误。保留普通 SDK 核心/库、只链接优化应用对象可成功，但应用镜像仅从 3,661,696 减至 3,661,424 bytes（272 bytes）；未部署该试验镜像。
+- 最终使用可重复的普通工具链和无损 gzip 内置网页：HTML 从 6,802 减至 3,574 bytes，浏览器自动解压；猫模型 SHA-256 校验保持原值。页面、识别模型、全部 tag36h11 ID、状态机、通信与调参功能保留。网页源现为 `ESP32CatHost/debug_page.html`，`generate-debug-page.mjs` 生成头文件并检查逐字节往返一致。
+- 最终编译：程序 3,658,366 bytes（44%），静态 RAM 77,832 bytes（23%）；相较调速界面版本减少 3,180 bytes。`build.ps1 -Upload -Port COM11` 完成四段烧录及 Hash 校验，未写 NVS 区。应用镜像实际 3,658,512 bytes，区别来自镜像头和对齐。
+- USB 实机协议检查通过：JSON、包含重复 ID 的路线、非法路线拒绝、CRC 拒绝、目标推进、缺失反馈停车、摄像头持续出帧。测试恢复烧录前路线；HTTP 逐项比较确认烧录前保存的全部策略/标定配置未变化。
+- 实机确认识别后等待 200ms，新巡逻参数 45/30。通过 HTTP 保存为 46/31、回读验证后恢复 45/30。板载 HTTP gzip 页面解压后与原 HTML 字节完全一致，两种巡逻转速控件仍存在；浏览器手工点击未验收。
+- 各模式约 12 秒采样，按不重复的观测 `at` 时间戳计算：标签 25 帧、2.115Hz、平均识别 271.2ms；猫 26 帧、2.211Hz、平均识别 250.2ms；双识别 17 帧、1.494Hz、平均识别 468.7ms。三种模式均通过 JPEG 和连续五帧 MJPEG 解码；双识别采样时 PSRAM 最低 6,428,556 bytes。此为短时运行验证，不是长期稳定性、温升、识别准确率或实车运动验收。
+- 结束状态通过 HTTP 确认：`ESP32_CAT_HOST_0.3`、`phase=IDLE`、`mode=SIM_UNO`、`visionMode=OFF`、`cameraOk=true`、`stationIP=192.168.137.155`。IP 仍应以运行时状态为准。
+
+新增结果：`vision-fast-smoke-result.json`、`upload-verification-result.json`；更新 `serial-smoke-result.json` 和 `http-smoke-result.json`。运行原始日志仍保留在本地 vendor 目录。AprilTag 纠错设置保持 0，本次没有启用纠错。
