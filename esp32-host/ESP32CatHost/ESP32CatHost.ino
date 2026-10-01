@@ -64,6 +64,7 @@ void defaults() {
   policyDefaults(config);
   config["route"][0]=0;config["route"][1]=1;config["route"][2]=2;config["route"][3]=3;
   config["searchPwm"]=75;config["alignPwm"]=52;config["centerTolerancePercent"]=5.5;
+  config["patrolSearchPwm"]=45;config["patrolAlignPwm"]=30;
   config["wheelMm"]=67.5;config["trackMm"]=120;config["stopMarginCm"]=3;
   config["tagStopWidth"]=0.25;config["catNearWidth"]=0.35;config["catFarWidth"]=0.12;
   config["visionMaxAgeMs"]=1500;config["searchTimeoutMs"]=15000;

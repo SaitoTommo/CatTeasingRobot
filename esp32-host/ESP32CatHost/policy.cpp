@@ -104,8 +104,8 @@ void policyTick(){
     if(now()<patrolReadyAt)return;
     auto route=config["route"].as<JsonArray>();if(!route.size()){fail("empty route");return;}routeIndex%=route.size();int target=route[routeIndex];JsonVariant tag;for(JsonVariant v:observation["tags"].as<JsonArray>())if(v["id"].as<int>()==target){tag=v;break;}
     if(!fresh()||(observation["tagsValid"].is<bool>()&&!observation["tagsValid"].as<bool>())){stopMotor();if(now()-actionAt>setting("searchTimeoutMs"))fail("tag vision unavailable");return;}
-    if(tag.isNull()){if(swept+angle()>=360||now()-actionAt>setting("searchTimeoutMs")){fail("tag search exhausted id="+String(target));return;}int p=setting("searchPwm");move(scanDirection*p,-scanDirection*p);return;}
-    float e=tag["centerX"].as<float>()-.5f;if(fabs(e)>setting("centerTolerancePercent")/100){int p=setting("alignPwm");move(e<0?-p:p,e<0?p:-p);return;}
+    if(tag.isNull()){if(swept+angle()>=360||now()-actionAt>setting("searchTimeoutMs")){fail("tag search exhausted id="+String(target));return;}int p=setting("patrolSearchPwm");move(scanDirection*p,-scanDirection*p);return;}
+    float e=tag["centerX"].as<float>()-.5f;if(fabs(e)>setting("centerTolerancePercent")/100){int p=setting("patrolAlignPwm");move(e<0?-p:p,e<0?p:-p);return;}
     if(tag["width"].as<float>()>=setting("tagStopWidth")){stopMotor();routeIndex=(routeIndex+1)%route.size();swept=0;refusals=0;patrolReadyAt=now()+500;state("SCAN_TAG");logLine("TAG_REACHED",String(target));return;}
     if(String(observation["front"]|"INVALID")!="CLEAR"){stopMotor();if(now()-actionAt>setting("searchTimeoutMs"))fail("front unavailable or blocked");return;}
     if(frontConfirmed)move(setting("slowApproachPwm"),setting("slowApproachPwm"));

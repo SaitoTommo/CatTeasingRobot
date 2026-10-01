@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { DEFAULT_RESPONSE_POLICY, RESPONSE_POLICY_LIMITS } from '../decision-system.mjs';
-const extras={wheelMm:[20,150],trackMm:[50,300],stopMarginCm:[0,15],tagStopWidth:[.02,.9],catNearWidth:[.02,.9],catFarWidth:[.01,.8],visionMaxAgeMs:[100,5000],frontBlockBottom:[.5,1],floorRoiTop:[.5,.95],floorDifferenceThreshold:[5,100]};
+const extras={patrolSearchPwm:[30,150],patrolAlignPwm:[30,150],wheelMm:[20,150],trackMm:[50,300],stopMarginCm:[0,15],tagStopWidth:[.02,.9],catNearWidth:[.02,.9],catFarWidth:[.01,.8],visionMaxAgeMs:[100,5000],frontBlockBottom:[.5,1],floorRoiTop:[.5,.95],floorDifferenceThreshold:[5,100]};
 const limits={...RESPONSE_POLICY_LIMITS,...extras};
 const code=`#pragma once\n#include <ArduinoJson.h>\n#include <math.h>\ninline void policyDefaults(JsonDocument &d){\n${Object.entries(DEFAULT_RESPONSE_POLICY).map(([k,v])=>`d["${k}"]=${v};`).join('\n')}\n}\ninline bool validateSettings(JsonDocument &d,String &error){\n`+
 Object.entries(limits).map(([k,[min,max]])=>`if(!d["${k}"].is<float>()||!isfinite(d["${k}"].as<float>())||d["${k}"].as<float>()<${min}||d["${k}"].as<float>()>${max}){error="invalid ${k}";return false;}`).join('\n')+
