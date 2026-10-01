@@ -25,7 +25,9 @@ String logs[160]; uint32_t logSeq=0, dropped=0, lastUnoAt=0, lastPoll=0;
 uint32_t telemetryId=0,telemetryAt=0;
 uint8_t *jpegCache=nullptr; size_t jpegLen=0; uint32_t frameSeq=0;
 bool cameraOk=false;
-String visionMode="OFF";uint32_t visionIntervalMs=1500;
+// Post-inference rest, not a fixed observation period. processVision also
+// enforces at least 350 ms between inference starts.
+String visionMode="OFF";uint32_t visionIntervalMs=200;
 void emitUsb(const String &s){String *copy=new String(s);if(xQueueSend(usbPackets,&copy,0)!=pdTRUE){delete copy;}}
 void usbTask(void*){String *s;while(true){if(xQueueReceive(usbPackets,&s,portMAX_DELAY)==pdTRUE){Serial.println(*s);delete s;}}}
 uint8_t crc8(const String &s) { uint8_t c=0; for(size_t n=0;n<s.length();n++) {c^=s[n];for(int j=0;j<8;j++)c=(c<<1)^((c&128)?7:0);}return c; }
