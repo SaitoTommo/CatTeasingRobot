@@ -14,7 +14,7 @@
 
 也可连接笔记本移动热点：开启 2.4GHz 热点并接好开发板外置天线，通过 USB 或板载调试页保存热点信息。连接成功后使用状态里的 `stationIP` 访问 `http://<stationIP>/` 和 `http://<stationIP>:81/stream`；电脑测试页的视频地址也改成该流地址。固件重启会读取已保存配置自动连接。`http-smoke.py --host <stationIP>` 可验证此网络上的视频。
 
-真实 Uno UART：ESP32 D6/GPIO43 TX 接 Uno RX，Uno TX 经 5V→3.3V 电平转换接 ESP32 D7/GPIO44 RX，共地；57600 波特。USB 控制和 UART 是独立通道。先断开电机输出验证协议，再装轮验收。
+真实 Uno UART（0.5）：ESP32 D6/GPIO43 TX→LV4→HV4→Uno D12 软件接收；Uno D1/TX→HV3→LV3→ESP32 D7/GPIO44 RX，共地，9600/8N1。Uno D0只保留给USB串口桥。蜂鸣器移至Uno D13，LED使用ESP板载GPIO21；完整接线见[当前接线表](../SOFT_UART_WIRING.md)。USB控制和ESP UART是独立入口。先验证协议，再验收实体运动。
 
 ## 编译和烧录
 
@@ -51,7 +51,17 @@ Arduino IDE 中对应选项：Board 为 XIAO_ESP32S3，PSRAM 为 OPI PSRAM，Par
 
 官方说明：未接电池时，USB 接入后红色充电灯约 30 秒会熄灭，这不表示断电或过热。来源 https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/#battery-usage 。排查是否运行应看 COM11、启动日志、HTTP 状态和 uptime；本次没有实测板温或电源电压，不能据指示灯推断温度。
 
-## 构建
+## 板载 Arduino 调试网页（0.6）
+
+首页用两个明显按钮显示 `Simulated UART` / `Real UART`，选中状态来自 ESP32 的实际模式回读；收到近期 Uno 回报才显示真实接收状态。切换模式停止策略与会话，并清空旧传感器、配置回读。
+
+停止巡游后，可直接测试前进、后退、左转、右转和左/右轮各自正反转（PWM 1–255，时长 50–2000 ms），以及会话解锁、LED、蜂鸣器、PING、状态和配置查询。点击“开启测试：绕过全部避障”后，这些限时动作忽略前向标定、左右超声波和触碰；没有伪造CLEAR或测距值。开关仅作用于手动测试，自动巡游继续遵守避障；上电、模式切换、Uno重启后恢复避障。每次等待会话解锁，再发送 `TEST_MOTOR`；关闭绕过时先确认前向输入。结束后发送STOP/SESSION_STOP，CRC、会话锁、失速停止和急停保留。模拟模式只产生SIM_TX；真实模式通过GPIO43/GPIO44的9600 UART与Uno D12/D1通信，不接受HTTP模拟Uno回报。网页按钮发送成功只代表入队，执行结果看实际Uno回报。
+
+Arduino 配置面板支持左右安全距离（5–100 cm）、轮径（20–150 mm）、轮距（50–300 mm）。ESP32 逐项等待 `DONE`，最后 `GET_CONFIG` 回读核对四项值。部分设置失败可能已改变先前项；请读取当前值核对。当前 Uno 只在 RAM 中保存这些值，Arduino 重启后恢复默认。轮径和轮距还须与 ESP 策略参数匹配。前向安全常量、触碰规则、电机最小驱动值等没有可写协议的限制会说明需改 Uno 固件，不生成无效设置按钮。
+
+传感器面板独立显示超声波物理测距/控制值、编码器、四处触碰、电机请求/实际引脚输出、LED/蜂鸣器、前向判定、LIVE/DRY_RUN 及物理 I/O 掩码。每行单独计时，2.5 秒后标为过期；不会用其它新回报刷新旧读数。前向判定是上位机视觉输入，不是深度测量。板载网页复用 `hardware-telemetry.mjs`，构建时打包到 gzip，无外部 JS 请求。
+
+## 构建命令
 
 PowerShell 运行 `./build.ps1` 编译；加 `-Upload -Port COM11` 烧录。构建目录使用 Windows 临时目录的英文路径，避免当前中文项目路径导致链接失败。`generate-config.mjs` 从原网页的概率和参数范围生成校验头；修改参数定义后再运行它。模型生成脚本由构建脚本自动执行并检查 SHA-256。
 

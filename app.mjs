@@ -400,10 +400,10 @@ function receiveLine(rawLine, source) {
       resetSerialOutputs();
       resetSerialSafeDistances();
       resetPhysicalIoUi();
-      serialFirmwareVerified = line === "READY UNO_CAT_V5.6";
+      serialFirmwareVerified = line === "READY UNO_CAT_V5.8";
       if (!serialFirmwareVerified) {
-        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.6", "SYSTEM");
-        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.6。");
+        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.8", "SYSTEM");
+        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.8。");
 
       }
       unoTouches.clear();
@@ -1868,7 +1868,7 @@ async function connectSerial() {
   try {
     serialFirmwareVerified = false;
     port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 57600 });
+    await port.open({ baudRate: 9600 });
     writer = port.writable.getWriter();
     reader = port.readable.getReader();
     reading = true;
@@ -2586,7 +2586,7 @@ $("clearLog").addEventListener("click", () => { trace.length = 0; $("log").repla
 $("exportLog").addEventListener("click", () => {
   const payload = { exportedAt: new Date().toISOString(), mode,
     note: "SIM_UNO is a JavaScript mock, not Arduino firmware",
-    serialProtocol: { version: "V5.6", baudRate: 57600, cardPollMs: 250, motionFeedbackMs: 100 },
+    serialProtocol: { version: "V5.8", baudRate: 9600, cardPollMs: 250, motionFeedbackMs: 100 },
     physicalIo: Object.fromEntries(physicalIoState),
     hardwareTelemetry: Object.fromEntries(hardwareTelemetry.rows),
     responsePolicy: decisionSystem.responsePolicy, world, trace };

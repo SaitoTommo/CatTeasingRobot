@@ -1,5 +1,17 @@
 # ESP32 实机验证记录
 
+## D12 UART、辅助输出及直接电机测试（2026-10-02）
+
+- 当前部署Uno V5.8、ESP V0.6：D12软件接收9600，D1硬件回传，ESP D6/D7不变；蜂鸣器D13、LED迁至ESP板载GPIO21。当前接线见`../SOFT_UART_WIRING.md`。
+- 两块完整固件编译、上传校验通过。Uno程序27694 bytes（85%），静态RAM1055 bytes（51%，剩993）；ESP程序3676850 bytes（44%），静态RAM78304 bytes（23%）。固定协议字符串与元件名称放入Flash，保留全部模型、视觉模式和控制功能。
+- 最小D12软件接收固件的物理双向PING/PONG已通过。完整0.5/V5.7曾收到真实PING、配置、I/O、状态及完整13行遥测；连续PING为19/20，期间用户确认手动操作/重启，不能作为不受干扰的稳定性统计。后续静态验证未完成；当前0.6/V5.8新烧录后尚待用户接回信号线验证物理链路。
+- 72项Node测试通过；包括新单轮按钮参数、避障开关回读及遥测、旧观测边界/巡游/串口回归。电脑USB页面握手及波特率同步V5.8/9600，未人工浏览器验收。
+- `bench-uno-validation.json`：先读取确认14项物理I/O全部OFF，再DRY_RUN验证实际Uno上的八种TEST_MOTOR动作，BYPASS在前向无效、触碰已注入按下时仍执行至MD；SAFE前进因前向无效拒绝；2001ms和锁定会话拒绝。测试未驱动真实电机，结束SESSION_STOP并恢复LIVE/DEBUG OFF。
+- `bench-host-validation.json`：部署的ESP0.6在SIM_UNO验证八种正负左右PWM映射、等待SESSION_START、BYPASS不发CAMERA_FRONT、限时停止/SESSION_STOP、开关恢复。每个请求附expectedMode，服务端拒绝模式不匹配的操作，避免模拟测试误发真实动作。未驱动真实电机。结束SIM_UNO、STOPPED、benchBypass=false、cameraOk=true。
+- 尚未验证：新固件D12实际运动时的编码器/超声波表现、ESP LED实际开关/闪烁、D13实际蜂鸣声、真实各轮方向与电机供电。编译、DRY_RUN与模拟映射均不证明这些物理行为。
+
+下方为此前版本的历史记录，旧波特率和接线不可作为当前接线依据。
+
 日期：2026-09-30，设备：用户指定 COM11，esptool 确认 ESP32-S3 revision v0.2、8MB PSRAM。
 
 ## 已验证

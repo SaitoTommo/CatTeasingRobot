@@ -25,6 +25,7 @@ String logs[160]; uint32_t logSeq=0, dropped=0, lastUnoAt=0, lastPoll=0;
 uint32_t telemetryId=0,telemetryAt=0;
 uint8_t *jpegCache=nullptr; size_t jpegLen=0; uint32_t frameSeq=0;
 bool cameraOk=false;
+#include "host_led.h"
 // Post-inference rest, not a fixed observation period. processVision also
 // enforces at least 350 ms between inference starts.
 String visionMode="OFF";uint32_t visionIntervalMs=200;
@@ -43,6 +44,7 @@ struct Outgoing {String wire;bool physical;};
 std::deque<Outgoing> outgoing;uint32_t lastWrite=0;
 void clearTx(){outgoing.clear();}
 uint32_t sendUno(const String &command) {
+  if(command=="SESSION_STOP"||command=="DEBUG_OUTPUTS OFF"||command=="DEBUG_IO LED OFF"||command=="DEBUG_MOTOR_MODE DRY_RUN")hostLedStop();
   cmdSeq=cmdSeq%65535+1;uint32_t id=cmdSeq;String payload="C "+String(id)+" "+command;char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));
   if(outgoing.size()>=32){outgoing.clear();payload="C "+String(id)+" STOP";snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));phase="STOPPED";logLine("TX_OVERFLOW","policy stopped");}
   outgoing.push_back({payload+suffix,mode=="UART"});
@@ -52,13 +54,40 @@ void flushTx(){if(outgoing.empty()||millis()-lastWrite<15)return;auto o=outgoing
 void policyInput(const String &line);
 void policyTick();
 void policyControl(const String &action);
+#include "uno_debug.h"
 void acceptUno(String line,bool physical) {
   line.trim(); if(!line.length())return;
   if((mode=="UART")!=physical){logLine("INPUT_REJECTED","source does not match mode");return;}
+  // Uno's wire protocol is ASCII. Noise must never enter JSON logs as raw
+  // control bytes / invalid UTF-8, or count as evidence of a live Uno.
+  if(physical){
+    bool textOk=line.length()<=512;
+    for(size_t i=0;i<line.length()&&textOk;i++){uint8_t b=(uint8_t)line[i];if(b<32||b>126)textOk=false;}
+    if(!textOk){String hex="discarded bytes="+String(line.length())+" prefix=";for(size_t i=0;i<line.length()&&i<24;i++){char byte[4];snprintf(byte,sizeof(byte),"%02X ",(uint8_t)line[i]);hex+=byte;}logLine("UART_BAD_FRAME",hex);return;}
+    // A standalone Uno bench request has no motion or policy meaning. Reply
+    // once, only while stopped, and keep it out of controller freshness.
+    if(line.startsWith("EVENT UART_BENCH_REQ ")){
+      logLine("UART_BENCH_RX",line);
+      if(phase!="IDLE"&&phase!="STOPPED"){logLine("UART_BENCH_BLOCKED","stop policy before bench test");return;}
+      if(debugId||manualUntil||configStep>=0){logLine("UART_BENCH_BLOCKED","finish debug operation before bench test");return;}
+      String reply="EVENT UART_BENCH_REPLY "+line.substring(21);
+      uno.println(reply);logLine("UART_BENCH_TX",reply);return;
+    }
+    if(line.startsWith("EVENT UART_BENCH_RECEIVED ")){logLine("UART_BENCH_ACK",line);return;}
+    // A checked copy of our own command proves TX/RX loopback, never a Uno
+    // acknowledgement. Keep it out of policy input and freshness accounting.
+    if(line.startsWith("C ")){
+      int star=line.indexOf('*');String payload=star>0?line.substring(0,star):"",hex=star>0?line.substring(star+1):"";
+      bool checked=star>0&&hex.length()==2&&isxdigit(hex[0])&&isxdigit(hex[1])&&strtoul(hex.c_str(),nullptr,16)==crc8(payload);
+      logLine(checked?"UART_LOOPBACK":"UART_BAD_FRAME",line);return;
+    }
+    bool known=line.startsWith("READY ")||line.startsWith("ACK ")||line.startsWith("AK ")||line.startsWith("DONE ")||line.startsWith("ERROR ")||line.startsWith("DATA ")||line.startsWith("EVENT ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MP ")||line.startsWith("MA ");
+    if(!known){logLine("UART_BAD_FRAME","unknown ASCII reply prefix");return;}
+  }
   int star=line.indexOf('*');
   if(star>=0) {String hex=line.substring(star+1);String payload=line.substring(0,star);if(hex.length()!=2||!isxdigit(hex[0])||!isxdigit(hex[1])||strtoul(hex.c_str(),nullptr,16)!=crc8(payload)){logLine("CRC_ERROR",line);return;}line=payload;}
   else if(line.startsWith("MP ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MA ")||line.startsWith("AK ")){logLine("CRC_MISSING",line);return;}
-  lastRx=line;lastUnoAt=millis();logLine(physical?"UNO_RX":"SIM_RX",line);if(line.startsWith("DONE ")||line.startsWith("ERROR ")){if(line.substring(line.indexOf(' ')+1).toInt()==telemetryId)telemetryId=0;}policyInput(line);
+  lastRx=line;lastUnoAt=millis();if(physical)hostLedAccept(line);logLine(physical?"UNO_RX":"SIM_RX",line);debugAccept(line);if(line.startsWith("DONE ")||line.startsWith("ERROR ")){if(line.substring(line.indexOf(' ')+1).toInt()==telemetryId)telemetryId=0;}policyInput(line);
 }
 void defaults() {
   policyDefaults(config);
@@ -85,7 +114,7 @@ void defaults() {
   config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.3";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.6";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
   d["visionMode"]=visionMode;d["visionIntervalMs"]=visionIntervalMs;
@@ -97,11 +126,13 @@ String snapshot() {
 void handleInput(const Input &in) {
   JsonDocument d;if(deserializeJson(d,in.text)){logLine("INPUT_ERROR","invalid JSON");return;}
   String op=d["op"]|"";
+  if(d["expectedMode"].is<const char*>()&&String(d["expectedMode"].as<const char*>())!=mode){logLine("INPUT_REJECTED","mode changed before requested operation");return;}
   if(op=="uno")acceptUno(d["line"]|"",in.physical);
   else if(op=="state"){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String out=snapshot();xSemaphoreGiveRecursive(stateLock);emitUsb(out);}
-  else if(op=="control")policyControl(d["action"]|"");
-  else if(op=="command") {if(phase!="IDLE"&&phase!="STOPPED"){logLine("INPUT_ERROR","stop policy before manual commands");return;}String command=d["command"]|"PING";command.trim();if(!command.length()||command.length()>96||command.indexOf('\n')>=0||command.indexOf('\r')>=0){logLine("INPUT_ERROR","invalid command line");return;}sendUno(command);}
-  else if(op=="mode") {policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";lastUnoAt=0;telemetryId=0;observation.clear();policyInput("READY SOURCE_CHANGED");logLine("MODE",mode);}
+  else if(op=="control") {debugCancel();policyControl(d["action"]|"");}
+  else if(op=="manual_test"||op=="uno_config"||op=="bench_safety")debugInput(d);
+  else if(op=="command") {if((phase!="IDLE"&&phase!="STOPPED")||debugId||manualUntil||configStep>=0){logLine("INPUT_ERROR","stop policy and finish debug operation before raw commands");return;}String command=d["command"]|"PING";command.trim();if(!command.length()||command.length()>96||command.indexOf('\n')>=0||command.indexOf('\r')>=0){logLine("INPUT_ERROR","invalid command line");return;}sendUno(command);}
+  else if(op=="mode") {hostLedStop();policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
   else if(op=="vision" && mode=="SIM_UNO") {observation=d["vision"];observation["source"]="SIM_CAMERA";observation["at"]=millis();}
   else if(op=="camera"&&in.physical) {if(visionMode!="OFF"&&String(d["vision"]["mode"]|"")==visionMode){realVision=d["vision"];if(mode=="UART")observation=realVision;}}
   else if(op=="vision_mode") {String m=d["mode"]|"OFF";if(m!="OFF"&&m!="TAGS"&&m!="CAT"&&m!="BOTH"){logLine("INPUT_ERROR","invalid vision mode");return;}visionMode=m;realVision.clear();if(mode=="UART")observation.clear();logLine("VISION_MODE",visionMode);}
@@ -155,15 +186,16 @@ void initCamera() {
   if(cameraOk){auto s=esp_camera_sensor_get();if(s->id.PID==OV3660_PID)s->set_vflip(s,1);jpegCache=(uint8_t*)ps_malloc(160000);if(jpegCache){xTaskCreatePinnedToCore(cameraTask,"camera",4096,nullptr,2,nullptr,0);xTaskCreatePinnedToCore(visionTask,"vision",16384,nullptr,1,nullptr,0);}else cameraOk=false;}
 }
 void setup() {
-  heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
+  hostLedInit();
+  heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(9600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
   prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
   WiFi.mode(WIFI_AP_STA);WiFi.softAP("ESP32-CatHost","catrobot32");String ssid=prefs.getString("ssid","");if(ssid.length())WiFi.begin(ssid.c_str(),prefs.getString("password","").c_str());
-  logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO");initCamera();startServers();
+  logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=9600 mode=SIM_UNO");initCamera();startServers();
 }
 void readLines(Stream &s,String &buffer,bool physical) {static Input in;static bool usbOverflow=false,uartOverflow=false;bool &overflow=physical?uartOverflow:usbOverflow;int count=0;while(s.available()&&count++<1024){char c=s.read();if(c=='\n'){if(!overflow){if(physical)acceptUno(buffer,true);else {buffer.toCharArray(in.text,sizeof(in.text));handleInput(in);}}overflow=false;buffer="";}else if(c!='\r'&&!overflow){if(buffer.length()<4095)buffer+=c;else{buffer="";overflow=true;logLine("OVERFLOW","serial line discarded");}}}}
 void loop() {
   xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);readLines(Serial,usbLine,false);readLines(uno,uartLine,true);static Input in;for(int i=0;i<4&&xQueueReceive(inputs,&in,0)==pdTRUE;i++)handleInput(in);
-  policyTick();xSemaphoreGiveRecursive(stateLock);
+  debugTick();policyTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
   if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis()+1700;logLine("TELEMETRY_TIMEOUT","retry in 2s");}
   if((int32_t)(millis()-lastPoll)>=300&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
   flushTx();

@@ -4,6 +4,14 @@ import { HardwareTelemetry, TelemetryPoller, confirmSceneMotion, encodeSerialCom
   decodeSerialFrame, serialCrc8, encoderWheelTravel } from "./hardware-telemetry.mjs";
 import { MockUno, initialWorld } from "./core.mjs";
 
+test("remote LED telemetry does not read the reassigned Uno D13 as LED", () => {
+  const model = new HardwareTelemetry();
+  model.accept("DATA 6 HW OUT 1 1 -1 1 0 0", 100);
+  const text = model.display("OUT", 200).text;
+  assert.match(text, /LED 指令 亮 → 交由 ESP 输出/);
+  assert.match(text, /蜂鸣器指令 停 → LOW/);
+});
+
 test("motor telemetry separates received command from disabled physical output", () => {
   const model = new HardwareTelemetry();
   model.accept("DATA 1 HW ML 80 0 0 0 0 0", 100);
@@ -39,6 +47,7 @@ test("a partial or malformed frame cannot refresh an older sensor row", () => {
   model.accept("DATA 5 HW STATE 4000 IDLE 1 1 0", 4000);
   assert.equal(model.display("EL", 4000).state, "stale");
   assert.equal(model.display("STATE", 4000).state, "fresh");
+  assert.match(model.display("STATE", 4000).text, /DRY_RUN（禁止物理输出）/);
   assert.equal(model.accept("DATA 5 HW EL 1 1 broken 0.0 P", 4000), null);
   assert.equal(model.accept("DATA 5 HW EL 1 1 11", 4000), null);
   assert.equal(model.display("EL", 4000).state, "stale");

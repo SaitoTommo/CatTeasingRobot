@@ -1,5 +1,8 @@
 # Arduino Uno 固件：UnoCatController
 
+当前版本已更新到V5.8：ESP发送端使用Uno D12软件接收，回传使用D1，UART及Uno USB均为9600；D13用于蜂鸣器，机器人LED转移到ESP板载灯。当前接线以[SOFT_UART_WIRING](../SOFT_UART_WIRING.md)为准，下方V5.6接线/波特率描述属于历史版本。电脑测试页的握手与USB波特率也已更新为V5.8/9600。
+
+新增 `TEST_MOTOR <leftPWM> <rightPWM> <durationMs> SAFE|BYPASS`，左右PWM为-255..255且至少一侧非零，时长50..2000ms。仅BYPASS测试忽略前向输入、侧向超声波和触碰；每次结束清除绕过状态，普通运动及巡游遵守原避障。会话锁、CRC、停止命令、限时截止和编码器失速检查保留。DRY_RUN验证见`esp32-host/bench-uno-validation.json`，不是实际电机运动证明。
 本目录是 2026-09-30 的 Git 源码快照；原工作目录为 ../../uno-firmware。两个 .ino 文件按字节复制并校对，编译产物不入库。后续固件改动须同步本目录并与网页一起提交。仓库根目录可用 arduino-cli compile --fqbn arduino:avr:uno firmware/UnoCatController 编译主固件。
 
 V5.6 新增硬件实时读数：默认打开“硬件测试”，桌面采用四列元件卡片，开关与读数同卡显示。约每 250 ms 请求一次 GET_TELEMETRY，同一时刻最多一个请求，响应丢失时退避；不依赖模拟场景是否暂停。三组互动策略与共享日志默认折叠。

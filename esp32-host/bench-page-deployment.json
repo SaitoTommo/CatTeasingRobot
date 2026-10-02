@@ -1,0 +1,10 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.6",
+  "pageMatchesCompiledHeader": true,
+  "fourWheelButtons": true,
+  "bypassButton": true,
+  "mode": "SIM_UNO",
+  "benchBypass": false,
+  "cameraOk": true,
+  "physicalMotionIssued": false
+}

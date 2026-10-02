@@ -2,8 +2,13 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <SoftwareSerial.h>
 
-// Arduino Uno R3. D0/D1 are reserved for the 57600-baud command channel.
+// D12 receives the ESP command channel at 9600; D1 remains hardware TX.
+// SoftwareSerial requires a TX pin but its write methods are never used.
+// USB commands remain available on D0 with their own line assembly buffer.
+constexpr uint8_t PIN_HOST_RX = 12;
+SoftwareSerial hostRx(PIN_HOST_RX, 1);
 constexpr uint8_t PIN_ENC_LEFT = 2;
 constexpr uint8_t PIN_ENC_RIGHT = 3;
 constexpr uint8_t PIN_L_IN1 = 4;
@@ -14,10 +19,9 @@ constexpr uint8_t PIN_R_IN1 = 8;
 constexpr uint8_t PIN_R_IN2 = 9;
 constexpr uint8_t SONAR_TRIG_PINS[2] = { 10, A4 };  // LEFT, RIGHT
 constexpr uint8_t SONAR_ECHO_PINS[2] = { 11, A5 };
-constexpr uint8_t PIN_BUZZER = 12;
-constexpr uint8_t PIN_LED = 13;
+constexpr uint8_t PIN_BUZZER = 13;  // LED output is delegated to ESP GPIO21.
 constexpr uint8_t TOUCH_PINS[4] = { A0, A1, A2, A3 };
-const char *const TOUCH_NAMES[4] = { "TOP", "LEFT", "RIGHT", "REAR" };
+const char TOUCH_NAMES[4][6] PROGMEM = { "TOP", "LEFT", "RIGHT", "REAR" };
 
 #ifndef UNO_ENABLE_DEBUG_COMMANDS
 #define UNO_ENABLE_DEBUG_COMMANDS 1
@@ -93,7 +97,7 @@ bool sessionStopped = false;
 bool debugEnabled = false;
 bool boardDryRun = false; // Allows simulated inputs, independently of physical outputs.
 enum IoChannel : uint8_t { MOTOR_LEFT, MOTOR_RIGHT, LED_OUT, BUZZER_OUT, SONAR_LEFT_TRIG, SONAR_RIGHT_TRIG, SONAR_LEFT_ECHO, SONAR_RIGHT_ECHO, ENCODER_LEFT, ENCODER_RIGHT, TOUCH_TOP, TOUCH_LEFT, TOUCH_RIGHT, TOUCH_REAR, IO_COUNT };
-const char *const IO_NAMES[IO_COUNT] = { "MOTOR_LEFT", "MOTOR_RIGHT", "LED", "BUZZER", "SONAR_LEFT_TRIG", "SONAR_RIGHT_TRIG", "SONAR_LEFT_ECHO", "SONAR_RIGHT_ECHO", "ENCODER_LEFT", "ENCODER_RIGHT", "TOUCH_TOP", "TOUCH_LEFT", "TOUCH_RIGHT", "TOUCH_REAR" };
+const char IO_NAMES[IO_COUNT][17] PROGMEM = { "MOTOR_LEFT", "MOTOR_RIGHT", "LED", "BUZZER", "SONAR_LEFT_TRIG", "SONAR_RIGHT_TRIG", "SONAR_LEFT_ECHO", "SONAR_RIGHT_ECHO", "ENCODER_LEFT", "ENCODER_RIGHT", "TOUCH_TOP", "TOUCH_LEFT", "TOUCH_RIGHT", "TOUCH_REAR" };
 bool physicalIo[IO_COUNT] = { true,true,true,true,true,true,true,true,true,true,true,true,true,true };
 bool ledOn = false;
 bool ledFlash = false;
@@ -101,6 +105,8 @@ uint32_t ledFlashUntilMs = 0;
 uint32_t ledFlashIntervalMs = 0;
 uint32_t ledFlashStartedMs = 0;
 uint32_t buzzerUntilMs = 0;
+uint8_t remoteLedMode = 0;
+uint32_t remoteLedDeadline = 0, remoteLedInterval = 0;
 float wheelDiameterMm = DEFAULT_WHEEL_DIAMETER_MM;
 float trackWidthMm = 0;  // Must be measured before ROTATE is enabled.
 float rpm[2] = { 0, 0 };
@@ -127,10 +133,12 @@ struct Motion {
   bool estimated;
 };
 Motion motion = { MOTION_NONE, 0, 0, 0, 0, 0, { 0, 0 }, { 0, 0 }, { 0, 0 }, 0, false };
+// Applies only to one bounded TEST_MOTOR transaction, never patrol commands.
+bool motionBypassAvoidance = false;
 
-char inputLine[128];
-uint8_t inputLength = 0;
-bool inputOverflow = false;
+char inputLine[2][128];
+uint8_t inputLength[2] = { 0, 0 };
+bool inputOverflow[2] = { false, false };
 
 void getPulses(uint32_t &left, uint32_t &right) {
   noInterrupts();
@@ -219,6 +227,7 @@ void abortMotion(const __FlashStringHelper *reason) {
   leftPulses -= motion.basePulses[0];
   rightPulses -= motion.basePulses[1];
   motion.kind = MOTION_NONE;
+  motionBypassAvoidance = false;
   stopOutputs();
   char line[88];
   snprintf_P(line, sizeof(line), PSTR("MA %u %S %lu %lu"), id,
@@ -233,6 +242,7 @@ void finishMotion() {
   leftPulses -= motion.basePulses[0];
   rightPulses -= motion.basePulses[1];
   motion.kind = MOTION_NONE;
+  motionBypassAvoidance = false;
   stopOutputs();
   char line[34];
   snprintf_P(line, sizeof(line), PSTR("MD %u %lu %lu"), id, leftPulses, rightPulses);
@@ -253,13 +263,13 @@ void setTouch(uint8_t index, bool pressed, const __FlashStringHelper *source) {
   Serial.print(F("EVENT "));
   Serial.print(source);
   Serial.print(F(" TOUCH "));
-  Serial.print(TOUCH_NAMES[index]);
+  Serial.print(reinterpret_cast<const __FlashStringHelper *>(TOUCH_NAMES[index]));
   Serial.print(pressed ? F(" PRESS ") : F(" RELEASE "));
   Serial.print(now);
   if (pressed) {
     touch.pressedAt = now;
     Serial.println();
-    abortMotion(F("TOUCH"));
+    if (!motionBypassAvoidance) abortMotion(F("TOUCH"));
   } else {
     Serial.print(' ');
     Serial.println(now - touch.pressedAt);
@@ -403,7 +413,7 @@ void tickDryRun(uint32_t now) {
 
 void tickMotion(uint32_t now) {
   if (motion.kind == MOTION_NONE) return;
-  const __FlashStringHelper *safetyReason = motionSafetyReason(motion.left, motion.right, now, true);
+  const __FlashStringHelper *safetyReason = motionBypassAvoidance ? nullptr : motionSafetyReason(motion.left, motion.right, now, true);
   if (safetyReason) {
     abortMotion(safetyReason);
     return;
@@ -464,7 +474,14 @@ void tickOutputs(uint32_t now) {
     ledFlash = false;
     ledOn = false;
   }
-  digitalWrite(PIN_LED, physicalIo[LED_OUT] && (ledFlash ? ((now - ledFlashStartedMs) / ledFlashIntervalMs) % 2 == 0 : ledOn));
+  const uint8_t requestedMode = !physicalIo[LED_OUT] ? 0 : ledFlash ? 2 : ledOn ? 1 : 0;
+  if (requestedMode != remoteLedMode || (requestedMode == 2 && (remoteLedDeadline != ledFlashUntilMs || remoteLedInterval != ledFlashIntervalMs))) {
+    remoteLedMode = requestedMode; remoteLedDeadline = ledFlashUntilMs; remoteLedInterval = ledFlashIntervalMs;
+    char eventLine[64];
+    if (requestedMode == 2) snprintf_P(eventLine, sizeof(eventLine), PSTR("EVENT HOST_LED FLASH %lu %lu"), (unsigned long)ledFlashIntervalMs, (unsigned long)(ledFlashUntilMs-now));
+    else snprintf_P(eventLine, sizeof(eventLine), PSTR("EVENT HOST_LED %s"), requestedMode == 1 ? "ON" : "OFF");
+    printProtectedLine(eventLine);
+  }
   digitalWrite(PIN_BUZZER, physicalIo[BUZZER_OUT] && buzzerUntilMs != 0 && !deadlineReached(now, buzzerUntilMs));
 }
 
@@ -487,7 +504,7 @@ bool parseFloat(const char *text, float minValue, float maxValue, float &value) 
 
 void startMotion(uint16_t id, MotionKind kind, int16_t left, int16_t right,
                  uint32_t durationMs, uint32_t targetPulses, bool estimated,
-                 const __FlashStringHelper *name, bool gentleWiggle = false) {
+                 const __FlashStringHelper *name, bool gentleWiggle = false, bool bypassAvoidance = false) {
   if (sessionStopped) {
     error(id, F("SESSION_STOPPED"));
     return;
@@ -496,11 +513,11 @@ void startMotion(uint16_t id, MotionKind kind, int16_t left, int16_t right,
     error(id, F("BUSY"));
     return;
   }
-  if (anyTouchPressed() && !gentleWiggle) {
+  if (anyTouchPressed() && !gentleWiggle && !bypassAvoidance) {
     error(id, F("TOUCH_ACTIVE"));
     return;
   }
-  const __FlashStringHelper *safetyReason = motionSafetyReason(left, right, millis(), false);
+  const __FlashStringHelper *safetyReason = bypassAvoidance ? nullptr : motionSafetyReason(left, right, millis(), false);
   if (safetyReason) {
     error(id, safetyReason);
     return;
@@ -510,6 +527,7 @@ void startMotion(uint16_t id, MotionKind kind, int16_t left, int16_t right,
   }
   const uint32_t now = millis();
   motion.kind = kind;
+  motionBypassAvoidance = bypassAvoidance;
   motion.id = id;
   motion.left = left;
   motion.right = right;
@@ -550,7 +568,7 @@ void printStatus(uint16_t id) {
 
 int8_t touchIndex(const char *name) {
   for (uint8_t i = 0; i < 4; ++i)
-    if (!strcmp(name, TOUCH_NAMES[i])) return i;
+    if (!strcmp_P(name, TOUCH_NAMES[i])) return i;
   return -1;
 }
 
@@ -594,7 +612,7 @@ void setBoardDryRun(bool enabled) {
 void printIo(uint16_t id) {
   for (uint8_t i = 0; i < IO_COUNT; ++i) {
     Serial.print(F("DATA ")); Serial.print(id); Serial.print(F(" IO "));
-    Serial.print(IO_NAMES[i]); Serial.println(physicalIo[i] ? F(" ON") : F(" OFF")); pumpSerialIn();
+    Serial.print(reinterpret_cast<const __FlashStringHelper *>(IO_NAMES[i])); Serial.println(physicalIo[i] ? F(" ON") : F(" OFF")); pumpSerialIn();
   }
 }
 // Compact rows stay below 60 bytes including CRLF. Send only with enough TX room
@@ -642,7 +660,7 @@ void tickHardwareTelemetry(uint32_t now) {
     Serial.println(distanceOverride[side] != DISTANCE_AUTO ? F("I") : physicalIo[SONAR_LEFT_TRIG + side] && physicalIo[SONAR_LEFT_ECHO + side] ? F("P") : F("O"));
   } else if (telemetryStage <= 10) {
     const uint8_t index = telemetryStage - 7;
-    Serial.print(F("T ")); Serial.print(TOUCH_NAMES[index]); Serial.print(' ');
+    Serial.print(F("T ")); Serial.print(reinterpret_cast<const __FlashStringHelper *>(TOUCH_NAMES[index])); Serial.print(' ');
     Serial.print(physicalIo[TOUCH_TOP + index]); Serial.print(' ');
     Serial.print(physicalIo[TOUCH_TOP + index] ? digitalRead(TOUCH_PINS[index]) : -1); Serial.print(' ');
     Serial.print(touches[index].stable); Serial.print(' ');
@@ -650,7 +668,8 @@ void tickHardwareTelemetry(uint32_t now) {
   } else if (telemetryStage == 11) {
     const bool ledRequested = ledFlash ? ((now - ledFlashStartedMs) / ledFlashIntervalMs) % 2 == 0 : ledOn;
     Serial.print(F("OUT ")); Serial.print(physicalIo[LED_OUT]); Serial.print(' '); Serial.print(ledRequested);
-    Serial.print(' '); Serial.print(digitalRead(PIN_LED)); Serial.print(' '); Serial.print(physicalIo[BUZZER_OUT]);
+    Serial.print(' '); Serial.print(-1);  // LED GPIO belongs to ESP.
+    Serial.print(' '); Serial.print(physicalIo[BUZZER_OUT]);
     Serial.print(' '); Serial.print(buzzerUntilMs && !deadlineReached(now, buzzerUntilMs));
     Serial.print(' '); Serial.println(digitalRead(PIN_BUZZER));
   } else {
@@ -663,7 +682,7 @@ void tickHardwareTelemetry(uint32_t now) {
 void processCommand(char *line) {
   // Web commands carry CRC-8. Unprotected manual commands remain available.
   char *star = strchr(line, '*');
-  if (!strncmp(line, "C ", 2) && !star) { error(0, F("BAD_CHECKSUM")); return; }
+  if (!strncmp_P(line, PSTR("C "), 2) && !star) { error(0, F("BAD_CHECKSUM")); return; }
   if (star) {
     if (strlen(star + 1) != 2 || !isxdigit(star[1]) || !isxdigit(star[2])) {
       error(0, F("BAD_CHECKSUM")); return;
@@ -683,7 +702,7 @@ void processCommand(char *line) {
     words[count++] = token;
   }
   long rawId;
-  if (count < 3 || (strcmp(words[0], "CMD") && strcmp(words[0], "C")) || !parseLong(words[1], 1, 65535, rawId)) {
+  if (count < 3 || (strcmp_P(words[0], PSTR("CMD")) && strcmp_P(words[0], PSTR("C"))) || !parseLong(words[1], 1, 65535, rawId)) {
     error(0, F("BAD_ENVELOPE"));
     return;
   }
@@ -693,34 +712,34 @@ void processCommand(char *line) {
   const char *a = n > 0 ? words[3] : nullptr;
   const char *b = n > 1 ? words[4] : nullptr;
   const char *c = n > 2 ? words[5] : nullptr;
-  if (!strcmp(verb, "CF")) verb = "CAMERA_FRONT";
-  else if (!strcmp(verb, "GT")) verb = "GET_TELEMETRY";
-  else if (!strcmp(verb, "DI")) {
+  if (!strcmp_P(verb, PSTR("CF"))) verb = "CAMERA_FRONT";
+  else if (!strcmp_P(verb, PSTR("GT"))) verb = "GET_TELEMETRY";
+  else if (!strcmp_P(verb, PSTR("DI"))) {
     verb = "DEBUG_INJECT";
-    if (a && !strcmp(a, "S")) a = "SONAR";
-    if (b && !strcmp(b, "L")) b = "LEFT";
-    else if (b && !strcmp(b, "R")) b = "RIGHT";
+    if (a && !strcmp_P(a, PSTR("S"))) a = "SONAR";
+    if (b && !strcmp_P(b, PSTR("L"))) b = "LEFT";
+    else if (b && !strcmp_P(b, PSTR("R"))) b = "RIGHT";
   }
   long x, y;
   float f, g;
 
-  if (!strcmp(verb, "PING") && n == 0) {
+  if (!strcmp_P(verb, PSTR("PING")) && n == 0) {
     ack(id);
     done(id, F("PONG"));
     return;
   }
-  if (!strcmp(verb, "GET_TELEMETRY") && n == 0) {
+  if (!strcmp_P(verb, PSTR("GET_TELEMETRY")) && n == 0) {
     if (telemetryId) { error(id, F("TELEMETRY_BUSY")); return; }
     telemetryId = id; telemetryStage = 0; ack(id); return;
   }
-  if (!strcmp(verb, "GET_IO") && n == 0) { ack(id); printIo(id); done(id); return; }
-  if (!strcmp(verb, "GET_STATUS") && n == 0) {
+  if (!strcmp_P(verb, PSTR("GET_IO")) && n == 0) { ack(id); printIo(id); done(id); return; }
+  if (!strcmp_P(verb, PSTR("GET_STATUS")) && n == 0) {
     ack(id);
     printStatus(id);
     done(id);
     return;
   }
-  if (!strcmp(verb, "GET_DISTANCE") && n == 0) {
+  if (!strcmp_P(verb, PSTR("GET_DISTANCE")) && n == 0) {
     ack(id);
     Serial.print(F("DATA "));
     Serial.print(id);
@@ -750,7 +769,7 @@ void processCommand(char *line) {
     done(id);
     return;
   }
-  if (!strcmp(verb, "GET_ENCODER") && n == 0) {
+  if (!strcmp_P(verb, PSTR("GET_ENCODER")) && n == 0) {
     uint32_t left, right;
     getPulses(left, right);
     ack(id);
@@ -770,7 +789,7 @@ void processCommand(char *line) {
     done(id);
     return;
   }
-  if (!strcmp(verb, "GET_CONFIG") && n == 0) {
+  if (!strcmp_P(verb, PSTR("GET_CONFIG")) && n == 0) {
     ack(id);
     Serial.print(F("DATA "));
     Serial.print(id);
@@ -787,10 +806,10 @@ void processCommand(char *line) {
     done(id);
     return;
   }
-  if (!strcmp(verb, "CAMERA_FRONT") && n == 1) {
-    if (!strcmp(a, "CLEAR")) cameraFrontState = CAMERA_CLEAR;
-    else if (!strcmp(a, "BLOCKED")) cameraFrontState = CAMERA_BLOCKED;
-    else if (!strcmp(a, "INVALID")) cameraFrontState = CAMERA_INVALID;
+  if (!strcmp_P(verb, PSTR("CAMERA_FRONT")) && n == 1) {
+    if (!strcmp_P(a, PSTR("CLEAR"))) cameraFrontState = CAMERA_CLEAR;
+    else if (!strcmp_P(a, PSTR("BLOCKED"))) cameraFrontState = CAMERA_BLOCKED;
+    else if (!strcmp_P(a, PSTR("INVALID"))) cameraFrontState = CAMERA_INVALID;
     else if (parseFloat(a, 0, 400, f)) {
       cameraFrontDistanceCm = f;
       cameraFrontState = CAMERA_DISTANCE;
@@ -803,7 +822,7 @@ void processCommand(char *line) {
     done(id, F("CAMERA_FRONT_SET"));
     return;
   }
-  if (!strcmp(verb, "SET_GEOMETRY") && n == 2 && parseFloat(a, 20, 150, f) && parseFloat(b, 50, 300, g)) {
+  if (!strcmp_P(verb, PSTR("SET_GEOMETRY")) && n == 2 && parseFloat(a, 20, 150, f) && parseFloat(b, 50, 300, g)) {
     if (motion.kind != MOTION_NONE) {
       error(id, F("BUSY"));
       return;
@@ -814,7 +833,7 @@ void processCommand(char *line) {
     done(id, F("GEOMETRY_SET"));
     return;
   }
-  if (!strcmp(verb, "SET_SAFE_DISTANCE") && n == 2 && (!strcmp(a, "LEFT") || !strcmp(a, "RIGHT"))) {
+  if (!strcmp_P(verb, PSTR("SET_SAFE_DISTANCE")) && n == 2 && (!strcmp_P(a, PSTR("LEFT")) || !strcmp_P(a, PSTR("RIGHT")))) {
     if (!parseFloat(b, MIN_SAFE_CM, MAX_SAFE_CM, f)) {
       error(id, F("INVALID_ARGUMENT"));
       return;
@@ -823,18 +842,18 @@ void processCommand(char *line) {
       error(id, F("BUSY"));
       return;
     }
-    safeDistanceCm[!strcmp(a, "LEFT") ? 0 : 1] = f;
+    safeDistanceCm[!strcmp_P(a, PSTR("LEFT")) ? 0 : 1] = f;
     ack(id);
     done(id, F("SAFE_DISTANCE_SET"));
     return;
   }
-  if (!strcmp(verb, "SESSION_START") && n == 0) {
+  if (!strcmp_P(verb, PSTR("SESSION_START")) && n == 0) {
     sessionStopped = false;
     ack(id);
     done(id, F("SESSION_STARTED"));
     return;
   }
-  if (!strcmp(verb, "SESSION_STOP") && n == 0) {
+  if (!strcmp_P(verb, PSTR("SESSION_STOP")) && n == 0) {
     ack(id);
     sessionStopped = true;
     abortMotion(F("SESSION_STOP"));
@@ -847,31 +866,31 @@ void processCommand(char *line) {
     done(id, F("SESSION_STOPPED"));
     return;
   }
-  if (!strcmp(verb, "STOP") && n == 0) {
+  if (!strcmp_P(verb, PSTR("STOP")) && n == 0) {
     ack(id);
     abortMotion(F("STOP_COMMAND"));
     done(id, F("MOTOR_STOPPED"));
     return;
   }
-  if (!strcmp(verb, "KEEP") && n == 0) {
+  if (!strcmp_P(verb, PSTR("KEEP")) && n == 0) {
     if (motion.kind != MOTION_LEASE) { error(id, F("NO_ACTIVE_MOTOR")); return; }
     motion.deadlineMs = millis() + MOTOR_LEASE_MS;
     done(id, F("LEASE_RENEWED")); return;
   }
-  if (!strcmp(verb, "MOVE") && n == 3 && (!strcmp(a, "FORWARD") || !strcmp(a, "BACKWARD")) && parseLong(b, 1, 255, x) && parseLong(c, 1, 10000, y)) {
-    const int16_t speed = !strcmp(a, "FORWARD") ? x : -x;
+  if (!strcmp_P(verb, PSTR("MOVE")) && n == 3 && (!strcmp_P(a, PSTR("FORWARD")) || !strcmp_P(a, PSTR("BACKWARD"))) && parseLong(b, 1, 255, x) && parseLong(c, 1, 10000, y)) {
+    const int16_t speed = !strcmp_P(a, PSTR("FORWARD")) ? x : -x;
     startMotion(id, MOTION_TIMED, speed, speed, y, 0, false,
                 speed > 0 ? F("MOVE_FORWARD") : F("MOVE_BACKWARD"));
     return;
   }
-  if (!strcmp(verb, "TURN") && n == 3 && (!strcmp(a, "LEFT") || !strcmp(a, "RIGHT")) && parseLong(b, 1, 255, x) && parseLong(c, 1, 10000, y)) {
-    const int16_t speed = !strcmp(a, "RIGHT") ? x : -x;
+  if (!strcmp_P(verb, PSTR("TURN")) && n == 3 && (!strcmp_P(a, PSTR("LEFT")) || !strcmp_P(a, PSTR("RIGHT"))) && parseLong(b, 1, 255, x) && parseLong(c, 1, 10000, y)) {
+    const int16_t speed = !strcmp_P(a, PSTR("RIGHT")) ? x : -x;
     startMotion(id, MOTION_TIMED, speed, -speed, y, 0, false,
                 speed > 0 ? F("TURN_RIGHT") : F("TURN_LEFT"),
                 x <= 90 && y <= 400);
     return;
   }
-  if (!strcmp(verb, "MOTOR") && n == 2 && parseLong(a, -255, 255, x) && parseLong(b, -255, 255, y)) {
+  if (!strcmp_P(verb, PSTR("MOTOR")) && n == 2 && parseLong(a, -255, 255, x) && parseLong(b, -255, 255, y)) {
     if (x == 0 && y == 0) {
       ack(id);
       abortMotion(F("MOTOR_ZERO"));
@@ -886,14 +905,14 @@ void processCommand(char *line) {
     startMotion(id, MOTION_LEASE, x, y, MOTOR_LEASE_MS, 0, false, F("MOTOR"));
     return;
   }
-  if (!strcmp(verb, "DRIVE") && n == 2 && parseFloat(a, -100, 100, f) && f != 0 && parseLong(b, 1, 255, x)) {
+  if (!strcmp_P(verb, PSTR("DRIVE")) && n == 2 && parseFloat(a, -100, 100, f) && f != 0 && parseLong(b, 1, 255, x)) {
     const float circumference = PI * wheelDiameterMm;
     const uint32_t pulses = max(1L, lroundf(fabs(f) * 10.0f / circumference * SLOTS_PER_WHEEL_REV));
     const int16_t speed = f > 0 ? x : -x;
     startMotion(id, MOTION_PULSES, speed, speed, 10000, pulses, true, F("DRIVE"));
     return;
   }
-  if (!strcmp(verb, "ROTATE") && n == 2 && parseFloat(a, -360, 360, f) && f != 0 && parseLong(b, 1, 255, x)) {
+  if (!strcmp_P(verb, PSTR("ROTATE")) && n == 2 && parseFloat(a, -360, 360, f) && f != 0 && parseLong(b, 1, 255, x)) {
     if (trackWidthMm == 0) {
       error(id, F("TRACK_NOT_SET"));
       return;
@@ -904,19 +923,19 @@ void processCommand(char *line) {
     startMotion(id, MOTION_PULSES, speed, -speed, 10000, pulses, true, F("ROTATE"));
     return;
   }
-  if (!strcmp(verb, "LED") && n == 1 && (!strcmp(a, "ON") || !strcmp(a, "OFF"))) {
-    if (sessionStopped && strcmp(a, "OFF")) {
+  if (!strcmp_P(verb, PSTR("LED")) && n == 1 && (!strcmp_P(a, PSTR("ON")) || !strcmp_P(a, PSTR("OFF")))) {
+    if (sessionStopped && strcmp_P(a, PSTR("OFF"))) {
       error(id, F("SESSION_STOPPED"));
       return;
     }
     ledFlash = false;
-    ledOn = !strcmp(a, "ON");
+    ledOn = !strcmp_P(a, PSTR("ON"));
     tickOutputs(millis());
     ack(id);
     done(id, ledOn ? F("LED_ON") : F("LED_OFF"));
     return;
   }
-  if (!strcmp(verb, "LED") && n == 3 && !strcmp(a, "FLASH") && parseLong(b, 20, 5000, x) && parseLong(c, 20, 10000, y)) {
+  if (!strcmp_P(verb, PSTR("LED")) && n == 3 && !strcmp_P(a, PSTR("FLASH")) && parseLong(b, 20, 5000, x) && parseLong(c, 20, 10000, y)) {
     if (sessionStopped) {
       error(id, F("SESSION_STOPPED"));
       return;
@@ -929,7 +948,7 @@ void processCommand(char *line) {
     done(id, F("LED_FLASH_STARTED"));
     return;
   }
-  if (!strcmp(verb, "BEEP") && n == 1 && parseLong(a, 1, 5000, x)) {
+  if (!strcmp_P(verb, PSTR("BEEP")) && n == 1 && parseLong(a, 1, 5000, x)) {
     if (sessionStopped) {
       error(id, F("SESSION_STOPPED"));
       return;
@@ -941,18 +960,29 @@ void processCommand(char *line) {
   }
 
 #if UNO_ENABLE_DEBUG_COMMANDS
-  if ((!strcmp(verb, "DEBUG_IO") && n == 2) || (!strcmp(verb, "DEBUG_OUTPUTS") && n == 1 && !strcmp(a, "OFF"))) {
+  if (!strcmp_P(verb, PSTR("TEST_MOTOR")) && n == 4) {
+    long duration;
+    if (!parseLong(a, -255, 255, x) || !parseLong(b, -255, 255, y) || (x == 0 && y == 0)
+        || !parseLong(c, 50, 2000, duration)
+        || (strcmp_P(words[6], PSTR("SAFE")) && strcmp_P(words[6], PSTR("BYPASS")))) {
+      error(id, F("INVALID_ARGUMENT")); return;
+    }
+    startMotion(id, MOTION_TIMED, x, y, duration, 0, false, F("TEST_MOTOR"), false,
+                !strcmp_P(words[6], PSTR("BYPASS")));
+    return;
+  }
+  if ((!strcmp_P(verb, PSTR("DEBUG_IO")) && n == 2) || (!strcmp_P(verb, PSTR("DEBUG_OUTPUTS")) && n == 1 && !strcmp_P(a, PSTR("OFF")))) {
     if (!debugEnabled) { error(id, F("DEBUG_DISABLED")); return; }
     int8_t channel = -1;
-    if (!strcmp(verb, "DEBUG_IO")) {
-      for (uint8_t i = 0; i < IO_COUNT; ++i) if (!strcmp(a, IO_NAMES[i])) channel = i;
-      if (channel < 0 || (strcmp(b, "ON") && strcmp(b, "OFF"))) { error(id, F("INVALID_ARGUMENT")); return; }
+    if (!strcmp_P(verb, PSTR("DEBUG_IO"))) {
+      for (uint8_t i = 0; i < IO_COUNT; ++i) if (!strcmp_P(a, IO_NAMES[i])) channel = i;
+      if (channel < 0 || (strcmp_P(b, PSTR("ON")) && strcmp_P(b, PSTR("OFF")))) { error(id, F("INVALID_ARGUMENT")); return; }
     }
     abortMotion(F("IO_CHANGE")); ledOn = ledFlash = false; buzzerUntilMs = 0;
     if (channel < 0) { for (uint8_t i = 0; i <= SONAR_RIGHT_TRIG; ++i) physicalIo[i] = false; }
     else {
-      const bool changed = physicalIo[channel] != !strcmp(b, "ON");
-      physicalIo[channel] = !strcmp(b, "ON");
+      const bool changed = physicalIo[channel] != !strcmp_P(b, PSTR("ON"));
+      physicalIo[channel] = !strcmp_P(b, PSTR("ON"));
       if (changed && (channel == ENCODER_LEFT || channel == ENCODER_RIGHT || channel == MOTOR_LEFT || channel == MOTOR_RIGHT)) {
         const uint8_t side = channel == ENCODER_RIGHT || channel == MOTOR_RIGHT ? 1 : 0;
         noInterrupts(); wheelPulses[side] = 0; lastEdgeUs[side] = 0; interrupts();
@@ -967,9 +997,9 @@ void processCommand(char *line) {
     clearDebugInputs(); stopOutputs(); tickOutputs(millis());
     ack(id); printIo(id); done(id, F("IO_SET")); return;
   }
-  if (!strcmp(verb, "DEBUG_MODE") && n == 1 && (!strcmp(a, "ON") || !strcmp(a, "OFF"))) {
+  if (!strcmp_P(verb, PSTR("DEBUG_MODE")) && n == 1 && (!strcmp_P(a, PSTR("ON")) || !strcmp_P(a, PSTR("OFF")))) {
     abortMotion(F("DEBUG_MODE_CHANGE"));
-    debugEnabled = !strcmp(a, "ON");
+    debugEnabled = !strcmp_P(a, PSTR("ON"));
     if (!debugEnabled) {
       boardDryRun = false;
       clearDebugInputs();
@@ -978,51 +1008,51 @@ void processCommand(char *line) {
     done(id, debugEnabled ? F("DEBUG_ON") : F("DEBUG_OFF"));
     return;
   }
-  if (!strcmp(verb, "DEBUG_MOTOR_MODE") && n == 1 && (!strcmp(a, "DRY_RUN") || !strcmp(a, "LIVE"))) {
+  if (!strcmp_P(verb, PSTR("DEBUG_MOTOR_MODE")) && n == 1 && (!strcmp_P(a, PSTR("DRY_RUN")) || !strcmp_P(a, PSTR("LIVE")))) {
     if (!debugEnabled) {
       error(id, F("DEBUG_DISABLED"));
       return;
     }
     abortMotion(F("DEBUG_MODE_CHANGE"));
-    setBoardDryRun(!strcmp(a, "DRY_RUN"));
+    setBoardDryRun(!strcmp_P(a, PSTR("DRY_RUN")));
     ack(id);
     done(id, boardDryRun ? F("DRY_RUN") : F("LIVE"));
     return;
   }
-  if (!strcmp(verb, "DEBUG_INJECT")) {
+  if (!strcmp_P(verb, PSTR("DEBUG_INJECT"))) {
     if (!debugEnabled) {
       error(id, F("DEBUG_DISABLED"));
       return;
     }
-    if (n == 3 && !strcmp(a, "TOUCH") && touchIndex(b) >= 0 && (!strcmp(c, "PRESS") || !strcmp(c, "RELEASE") || !strcmp(c, "AUTO"))) {
-      if (physicalIo[TOUCH_TOP + touchIndex(b)] && strcmp(c, "AUTO")) {
+    if (n == 3 && !strcmp_P(a, PSTR("TOUCH")) && touchIndex(b) >= 0 && (!strcmp_P(c, PSTR("PRESS")) || !strcmp_P(c, PSTR("RELEASE")) || !strcmp_P(c, PSTR("AUTO")))) {
+      if (physicalIo[TOUCH_TOP + touchIndex(b)] && strcmp_P(c, PSTR("AUTO"))) {
         error(id, F("DRY_RUN_REQUIRED"));
         return;
       }
       const uint8_t index = touchIndex(b);
       ack(id);
-      if (!strcmp(c, "AUTO")) {
+      if (!strcmp_P(c, PSTR("AUTO"))) {
         touches[index].overrideValue = -1;
         touches[index].physicalRaw = physicalIo[TOUCH_TOP + index] && digitalRead(TOUCH_PINS[index]) == LOW;
         touches[index].changedAt = millis();
         if (!physicalIo[TOUCH_TOP + index]) setTouch(index, false, F("DRY_RUN_DEFAULT"));
         else setTouch(index, touches[index].physicalRaw, F("PHYSICAL"));
       } else {
-        const bool pressed = !strcmp(c, "PRESS");
+        const bool pressed = !strcmp_P(c, PSTR("PRESS"));
         touches[index].overrideValue = pressed ? 1 : 0;
         setTouch(index, pressed, F("DEBUG_INJECT"));
       }
       done(id);
       return;
     }
-    if (n == 3 && !strcmp(a, "SONAR") && (!strcmp(b, "LEFT") || !strcmp(b, "RIGHT"))) {
-      if ((!boardDryRun || (physicalIo[SONAR_LEFT_TRIG + (!strcmp(b, "LEFT") ? 0 : 1)] && physicalIo[SONAR_LEFT_ECHO + (!strcmp(b, "LEFT") ? 0 : 1)])) && strcmp(c, "AUTO")) {
+    if (n == 3 && !strcmp_P(a, PSTR("SONAR")) && (!strcmp_P(b, PSTR("LEFT")) || !strcmp_P(b, PSTR("RIGHT")))) {
+      if ((!boardDryRun || (physicalIo[SONAR_LEFT_TRIG + (!strcmp_P(b, PSTR("LEFT")) ? 0 : 1)] && physicalIo[SONAR_LEFT_ECHO + (!strcmp_P(b, PSTR("LEFT")) ? 0 : 1)])) && strcmp_P(c, PSTR("AUTO"))) {
         error(id, F("DRY_RUN_REQUIRED"));
         return;
       }
-      const uint8_t side = !strcmp(b, "LEFT") ? 0 : 1;
-      if (!strcmp(c, "AUTO")) distanceOverride[side] = DISTANCE_AUTO;
-      else if (!strcmp(c, "INVALID")) distanceOverride[side] = DISTANCE_INVALID;
+      const uint8_t side = !strcmp_P(b, PSTR("LEFT")) ? 0 : 1;
+      if (!strcmp_P(c, PSTR("AUTO"))) distanceOverride[side] = DISTANCE_AUTO;
+      else if (!strcmp_P(c, PSTR("INVALID"))) distanceOverride[side] = DISTANCE_INVALID;
       else if (parseFloat(c, 0, 400, f)) {
         distanceOverride[side] = DISTANCE_VALUE;
         injectedDistanceCm[side] = f;
@@ -1035,7 +1065,7 @@ void processCommand(char *line) {
       done(id);
       return;
     }
-    if (n == 3 && !strcmp(a, "ENCODER") && parseLong(b, 0, 10000, x) && parseLong(c, 0, 10000, y)) {
+    if (n == 3 && !strcmp_P(a, PSTR("ENCODER")) && parseLong(b, 0, 10000, x) && parseLong(c, 0, 10000, y)) {
       if (!boardDryRun || physicalIo[ENCODER_LEFT] || physicalIo[ENCODER_RIGHT] || physicalIo[MOTOR_LEFT] || physicalIo[MOTOR_RIGHT]) {
         error(id, F("DRY_RUN_REQUIRED"));
         return;
@@ -1056,7 +1086,7 @@ void processCommand(char *line) {
     return;
   }
 #else
-  if (!strncmp(verb, "DEBUG_", 6)) {
+  if (!strncmp_P(verb, PSTR("DEBUG_"), 6)) {
     error(id, F("DEBUG_UNAVAILABLE"));
     return;
   }
@@ -1098,19 +1128,19 @@ void dispatchCommandLine(char *line) {
   dispatchingCommand = false;
 }
 
-void processInputByte(const char ch) {
-  const int8_t result = assembleInputChar(ch, inputLine, inputLength, inputOverflow);
+void processInputByte(const char ch, const uint8_t source) {
+  const int8_t result = assembleInputChar(ch, inputLine[source], inputLength[source], inputOverflow[source]);
   if (result == -1) {
     if (!dispatchingCommand) error(0, F("LINE_TOO_LONG"));
     return;
   }
   if (result != 1) return;
   if (!dispatchingCommand) {
-    dispatchCommandLine(inputLine);
+    dispatchCommandLine(inputLine[source]);
     return;
   }
   if (pumpedReady) return;
-  strncpy(pumpedLine, inputLine, sizeof(pumpedLine) - 1);
+  strncpy(pumpedLine, inputLine[source], sizeof(pumpedLine) - 1);
   pumpedLine[sizeof(pumpedLine) - 1] = '\0';
   pumpedReady = true;
 }
@@ -1121,7 +1151,15 @@ void pumpSerialIn() {
   static bool pumping = false;
   if (pumping) return;
   pumping = true;
-  while (Serial.available() > 0) processInputByte((char)Serial.read());
+  while (hostRx.available() > 0) {
+    if (hostRx.overflow()) { inputLength[0] = 0; inputOverflow[0] = true; }
+    processInputByte((char)hostRx.read(), 0);
+  }
+  while (Serial.available() > 0) processInputByte((char)Serial.read(), 1);
+  if (hostRx.overflow()) {
+    // Never execute the tail of a truncated software-UART command.
+    inputLength[0] = 0; inputOverflow[0] = true;
+  }
   pumping = false;
 }
 
@@ -1147,9 +1185,7 @@ void setup() {
     digitalWrite(SONAR_TRIG_PINS[side], LOW);
     pinMode(SONAR_ECHO_PINS[side], INPUT);
   }
-  pinMode(PIN_LED, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
-  digitalWrite(PIN_LED, LOW);
   digitalWrite(PIN_BUZZER, LOW);
   for (uint8_t i = 0; i < 4; ++i) {
     pinMode(TOUCH_PINS[i], INPUT_PULLUP);
@@ -1159,10 +1195,13 @@ void setup() {
   pinMode(PIN_ENC_RIGHT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PIN_ENC_LEFT), onLeftPulse, FALLING);
   attachInterrupt(digitalPinToInterrupt(PIN_ENC_RIGHT), onRightPulse, FALLING);
-  Serial.begin(57600);
+  hostRx.begin(9600);
+  Serial.begin(9600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V5.6"));
+  Serial.println(F("READY UNO_CAT_V5.8"));
+  Serial.println(F("EVENT HOST_LED OFF"));
+  Serial.println(F("EVENT UART_SOFT_RX D12 BAUD=9600 TX=D1"));
   // V5.1: keep assembling host commands while Serial.print waits for TX headroom, so
   // command bursts (sensor injections + ROTATE/DRIVE) can no longer overrun the RX ring.
 }

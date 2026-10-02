@@ -35,9 +35,9 @@ export class HardwareTelemetry {
     else if (["EL", "ER"].includes(key)) text = `${v[2]} 脉冲 · ${v[3]} RPM\n数字输入 ${level(v[1])} · ${source(v[4])}`;
     else if (["SL", "SR"].includes(key)) text = `物理测距 ${distance(v[3])}\n控制读数 ${distance(v[4])} · ${source(v[5])}\nTRIG ${Number(v[0]) ? "开启" : "关闭"} / ECHO ${Number(v[1]) ? "开启" : "关闭"} · ${level(v[2])}`;
     else if (key.startsWith("T_")) text = `输入 ${level(v[2])} · ${Number(v[3]) ? "按下" : "松开"}\n${source(v[4])}`;
-    else if (key === "OUT") text = `LED 指令 ${Number(v[1]) ? "亮" : "灭"} → ${level(v[2])}（${Number(v[0]) ? "开启" : "关闭"}）\n蜂鸣器指令 ${Number(v[4]) ? "响" : "停"} → ${level(v[5])}（${Number(v[3]) ? "开启" : "关闭"}）`;
+    else if (key === "OUT") text = `LED 指令 ${Number(v[1]) ? "亮" : "灭"} → ${Number(v[2])===-1?"交由 ESP 输出":level(v[2])}（${Number(v[0]) ? "开启" : "关闭"}）\n蜂鸣器指令 ${Number(v[4]) ? "响" : "停"} → ${level(v[5])}（${Number(v[3]) ? "开启" : "关闭"}）`;
     else if (key === "FRONT") text = `${distance(v[0])} · ${source(v[1])}\n通过串口接收前向判定`;
-    else text = `${v[1]} · 运行 ${(Number(v[0]) / 1000).toFixed(1)} s`;
+    else text = `${v[1]} · 运行 ${(Number(v[0]) / 1000).toFixed(1)} s\n调试模式 ${Number(v[2]) ? 'ON' : 'OFF'} · 电机 ${Number(v[3]) ? 'DRY_RUN（禁止物理输出）' : 'LIVE'}\n物理 I/O 掩码 ${v[4]}`;
     return { text, state: "fresh" };
   }
 }
