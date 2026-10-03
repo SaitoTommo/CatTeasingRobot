@@ -400,10 +400,10 @@ function receiveLine(rawLine, source) {
       resetSerialOutputs();
       resetSerialSafeDistances();
       resetPhysicalIoUi();
-      serialFirmwareVerified = line === "READY UNO_CAT_V5.8";
+      serialFirmwareVerified = line === "READY UNO_CAT_V5.9";
       if (!serialFirmwareVerified) {
-        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.8", "SYSTEM");
-        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.8。");
+        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.9", "SYSTEM");
+        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.9。");
 
       }
       unoTouches.clear();
@@ -1868,7 +1868,7 @@ async function connectSerial() {
   try {
     serialFirmwareVerified = false;
     port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 9600 });
+    await port.open({ baudRate: 57600 });
     writer = port.writable.getWriter();
     reader = port.readable.getReader();
     reading = true;
@@ -2242,7 +2242,7 @@ function tickHardwareTelemetry(now) {
     output.dataset.state = connected ? row.state : "waiting";
   }
   const state = hardwareTelemetry.rows.get("STATE");
-  $("hardwareTelemetryStatus").textContent = !connected ? "未连接 V5.6 Uno 固件" : !refresh ? "实时刷新已暂停" : !state ? "等待首次读数" : now - state.at > 2500 ? "读数过期 · 检查串口" : hardwareTelemetry.display("STATE", now).text;
+  $("hardwareTelemetryStatus").textContent = !connected ? "未连接 V5.9 Uno 固件" : !refresh ? "实时刷新已暂停" : !state ? "等待首次读数" : now - state.at > 2500 ? "读数过期 · 检查串口" : hardwareTelemetry.display("STATE", now).text;
 }
 
 function frame(now) {
@@ -2465,7 +2465,7 @@ $("prepareComponentTest").addEventListener("click", () => {
   showToast("已发送元器件测试设置与几何参数；请确认 GET_STATUS、GET_CONFIG 和距离回报后再开始动作。未填写轮距时使用名义值 120 mm。");
 });
 $("prepareBoardSimulation").addEventListener("click", async () => {
-  if (mode !== "serial" || !serialFirmwareVerified) return showToast("请连接并烧录 V5.6 固件。");
+  if (mode !== "serial" || !serialFirmwareVerified) return showToast("请连接并烧录 V5.9 固件。");
   cancelBehavior("OUTPUTS_OFF"); catInput.stop(); autoControlEnabled = false; autoDecisionVersion += 1;
   try { await sendAndWaitDone("DEBUG_MODE ON", "DEBUG_ON"); await sendAndWaitDone("DEBUG_OUTPUTS OFF", "IO_SET"); send("GET_STATUS"); }
   catch (error) { showToast("关闭输出失败：" + error.message); send("GET_IO"); }
@@ -2586,7 +2586,7 @@ $("clearLog").addEventListener("click", () => { trace.length = 0; $("log").repla
 $("exportLog").addEventListener("click", () => {
   const payload = { exportedAt: new Date().toISOString(), mode,
     note: "SIM_UNO is a JavaScript mock, not Arduino firmware",
-    serialProtocol: { version: "V5.8", baudRate: 9600, cardPollMs: 250, motionFeedbackMs: 100 },
+    serialProtocol: { version: "V5.9", baudRate: 57600, cardPollMs: 250, motionFeedbackMs: 100 },
     physicalIo: Object.fromEntries(physicalIoState),
     hardwareTelemetry: Object.fromEntries(hardwareTelemetry.rows),
     responsePolicy: decisionSystem.responsePolicy, world, trace };

@@ -14,6 +14,17 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('diagnostic log decodes hexadecimal heartbeat and reset breadcrumbs',()=>{
+  const describe=line=>vm.runInContext(`describeDiag(${JSON.stringify(line)})`,context);
+  const heartbeat=describe('EVENT DIAG H 3e8 a 14 10 6 3 2 1');
+  assert.match(heartbeat,/Uno 1000 ms/);assert.match(heartbeat,/最长 20 ms/);
+  assert.match(heartbeat,/遥测 16\/6/);assert.match(heartbeat,/超声波 TX 空间/);
+  assert.match(heartbeat,/RX 溢出 2，丢弃命令 1/);
+  assert.match(describe('EVENT DIAG S 36 99'),/遥测右超声波，命令 99/);
+  assert.match(describe('EVENT DIAG_BOOT PREV_STAGE=21 CMD=99'),/校验帧发送/);
+  assert.equal(describe('EVENT DIAG H malformed'),'');
+});
+
 test('page reports ESP active-low LED control separately from Uno buzzer',()=>{
   sync({...base,hostLed:{pin:'onboard/GPIO21',on:true,mode:'ON',gpioLevel:0}});
   assert.match(element('hostLed').textContent,/板载 LED：ON，亮/);

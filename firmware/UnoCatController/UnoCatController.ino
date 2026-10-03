@@ -4,19 +4,56 @@
 #include <string.h>
 #include <SoftwareSerial.h>
 
-// D12 receives the ESP command channel at 9600; D1 remains hardware TX.
+// D12 receives the ESP command channel at 57600; D1 remains hardware TX.
 // SoftwareSerial requires a TX pin but its write methods are never used.
 // USB commands remain available on D0 with their own line assembly buffer.
 constexpr uint8_t PIN_HOST_RX = 12;
 SoftwareSerial hostRx(PIN_HOST_RX, 1);
+
+// SRAM breadcrumbs survive some resets, not loss of power. No EEPROM writes,
+// watchdog reset or serial output from an interrupt is used for diagnostics.
+struct DiagnosticBreadcrumb {
+  uint16_t magic, command, commandInverse;
+  uint8_t stage, stageInverse;
+};
+volatile DiagnosticBreadcrumb diagBreadcrumb __attribute__((section(".noinit")));
+uint8_t diagMode = 1; // 0 off, 1 heartbeat, 2 command/telemetry trace as well.
+uint16_t diagLoops = 0, diagMaxLoopMs = 0, diagRxOverflow = 0, diagDropped = 0;
+uint32_t diagLastAt = 0;
+
+void diagStage(uint8_t stage) {
+  diagBreadcrumb.stage = stage;
+  diagBreadcrumb.stageInverse = static_cast<uint8_t>(~stage);
+}
+void diagCommand(uint16_t id) {
+  diagBreadcrumb.command = id;
+  diagBreadcrumb.commandInverse = static_cast<uint16_t>(~id);
+}
+void diagWrite(const char *line) {
+  const size_t length = strlen(line);
+  // Write only a whole line that fits the TX ring; never wait for headroom.
+  if (length + 2 > static_cast<size_t>(Serial.availableForWrite())) return;
+  Serial.write(reinterpret_cast<const uint8_t *>(line), length);
+  Serial.write('\r'); Serial.write('\n');
+}
+void diagTrace(uint8_t stage) {
+  diagStage(stage);
+  if (diagMode != 2) return;
+  char line[40];
+  snprintf_P(line, sizeof(line), PSTR("EVENT DIAG S %u %u"), stage, diagBreadcrumb.command);
+  diagWrite(line);
+}
+// L298N: left wheel OUT3/OUT4 (IN3/IN4/ENB); right wheel OUT1/OUT2 (IN1/IN2/ENA).
 constexpr uint8_t PIN_ENC_LEFT = 2;
 constexpr uint8_t PIN_ENC_RIGHT = 3;
-constexpr uint8_t PIN_L_IN1 = 4;
-constexpr uint8_t PIN_L_PWM = 5;
-constexpr uint8_t PIN_R_PWM = 6;
-constexpr uint8_t PIN_L_IN2 = 7;
-constexpr uint8_t PIN_R_IN1 = 8;
-constexpr uint8_t PIN_R_IN2 = 9;
+constexpr uint8_t PIN_L_IN1 = 8;
+constexpr uint8_t PIN_L_PWM = 6;
+constexpr uint8_t PIN_R_PWM = 5;
+constexpr uint8_t PIN_L_IN2 = 9;
+constexpr uint8_t PIN_R_IN1 = 4;
+constexpr uint8_t PIN_R_IN2 = 7;
+// Measured on this chassis: nonzero drive requires at least PWM 120/255.
+constexpr uint8_t MOTOR_MIN_DRIVE_PWM = 120;
 constexpr uint8_t SONAR_TRIG_PINS[2] = { 10, A4 };  // LEFT, RIGHT
 constexpr uint8_t SONAR_ECHO_PINS[2] = { 11, A5 };
 constexpr uint8_t PIN_BUZZER = 13;  // LED output is delegated to ESP GPIO21.
@@ -159,6 +196,7 @@ uint8_t serialCrc8(const char *text) {
 }
 
 void printProtectedLine(const char *line) {
+  diagStage(21);
   const uint8_t crc = serialCrc8(line);
   Serial.print(line); Serial.print('*');
   if (crc < 16) Serial.print('0');
@@ -172,6 +210,7 @@ void ack(uint16_t id) {
   printProtectedLine(line);
 }
 void done(uint16_t id, const __FlashStringHelper *suffix = nullptr) {
+  diagStage(22);
   Serial.print(F("DONE "));
   Serial.print(id);
   if (suffix) {
@@ -182,6 +221,7 @@ void done(uint16_t id, const __FlashStringHelper *suffix = nullptr) {
   pumpSerialIn();
 }
 void error(uint16_t id, const __FlashStringHelper *reason) {
+  diagStage(23);
   Serial.print(F("ERROR "));
   Serial.print(id);
   Serial.print(' ');
@@ -200,6 +240,11 @@ uint32_t motionFeedbackAtMs = 0;
 
 void setMotorSide(uint8_t pwmPin, uint8_t in1, uint8_t in2, int16_t value) {
   const uint8_t side = pwmPin == PIN_L_PWM ? 0 : 1;
+  // Preserve STOP and direction; floor only nonzero physical motor output.
+  if (value != 0 && physicalIo[MOTOR_LEFT + side]) {
+    const int16_t magnitude = constrain(abs(value), MOTOR_MIN_DRIVE_PWM, 255);
+    value = value > 0 ? magnitude : -magnitude;
+  }
   appliedMotor[side] = physicalIo[MOTOR_LEFT + side] ? value : 0;
   if (value == 0 || !physicalIo[MOTOR_LEFT + side]) {
     analogWrite(pwmPin, 0);
@@ -624,6 +669,8 @@ void tickHardwareTelemetry(uint32_t now) {
   }
   uint32_t leftCount, rightCount;
   getPulses(leftCount, rightCount);
+  diagCommand(telemetryId);
+  diagTrace(30 + telemetryStage);
   Serial.print(F("DATA ")); Serial.print(telemetryId); Serial.print(F(" HW "));
   if (telemetryStage == 0) {
     Serial.print(F("STATE ")); Serial.print(now); Serial.print(' ');
@@ -707,6 +754,8 @@ void processCommand(char *line) {
     return;
   }
   const uint16_t id = static_cast<uint16_t>(rawId);
+  diagCommand(id);
+  diagTrace(20);
   const char *verb = words[2];
   const uint8_t n = count - 3;
   const char *a = n > 0 ? words[3] : nullptr;
@@ -722,6 +771,11 @@ void processCommand(char *line) {
   }
   long x, y;
   float f, g;
+
+  if (!strcmp_P(verb, PSTR("DEBUG_DIAG")) && n == 1 && parseLong(a, 0, 2, x)) {
+    diagMode = static_cast<uint8_t>(x);
+    ack(id); done(id, F("DIAG_SET")); return;
+  }
 
   if (!strcmp_P(verb, PSTR("PING")) && n == 0) {
     ack(id);
@@ -1124,7 +1178,9 @@ int8_t assembleInputChar(const char ch, char *buf, uint8_t &len, bool &overflow)
 
 void dispatchCommandLine(char *line) {
   dispatchingCommand = true;
+  diagStage(20);
   processCommand(line);
+  diagTrace(24);
   dispatchingCommand = false;
 }
 
@@ -1139,7 +1195,7 @@ void processInputByte(const char ch, const uint8_t source) {
     dispatchCommandLine(inputLine[source]);
     return;
   }
-  if (pumpedReady) return;
+  if (pumpedReady) { ++diagDropped; return; }
   strncpy(pumpedLine, inputLine[source], sizeof(pumpedLine) - 1);
   pumpedLine[sizeof(pumpedLine) - 1] = '\0';
   pumpedReady = true;
@@ -1152,11 +1208,12 @@ void pumpSerialIn() {
   if (pumping) return;
   pumping = true;
   while (hostRx.available() > 0) {
-    if (hostRx.overflow()) { inputLength[0] = 0; inputOverflow[0] = true; }
+    if (hostRx.overflow()) { ++diagRxOverflow; inputLength[0] = 0; inputOverflow[0] = true; }
     processInputByte((char)hostRx.read(), 0);
   }
   while (Serial.available() > 0) processInputByte((char)Serial.read(), 1);
   if (hostRx.overflow()) {
+    ++diagRxOverflow;
     // Never execute the tail of a truncated software-UART command.
     inputLength[0] = 0; inputOverflow[0] = true;
   }
@@ -1170,6 +1227,20 @@ void readSerial() {
     dispatchCommandLine(pumpedLine);
     pumpSerialIn();
   }
+}
+
+void tickDiagnostics(uint32_t now) {
+  if (!diagMode || now - diagLastAt < 1000) return;
+  const uint8_t wait = (sonarPhase != SONAR_IDLE ? 1 : 0) |
+                       (Serial.availableForWrite() < 60 ? 2 : 0);
+  char line[64];
+  // Hex keeps worst-case heartbeat short enough for the 63-byte TX ring.
+  snprintf_P(line, sizeof(line), PSTR("EVENT DIAG H %lx %x %x %x %x %x %x %x"),
+             static_cast<unsigned long>(now), diagLoops, diagMaxLoopMs,
+             telemetryId, telemetryStage, wait, diagRxOverflow, diagDropped);
+  if (strlen(line) + 2 > static_cast<size_t>(Serial.availableForWrite())) return;
+  diagWrite(line);
+  diagLastAt = now; diagLoops = 0; diagMaxLoopMs = 0;
 }
 
 void setup() {
@@ -1195,25 +1266,46 @@ void setup() {
   pinMode(PIN_ENC_RIGHT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PIN_ENC_LEFT), onLeftPulse, FALLING);
   attachInterrupt(digitalPinToInterrupt(PIN_ENC_RIGHT), onRightPulse, FALLING);
-  hostRx.begin(9600);
-  Serial.begin(9600);
+  hostRx.begin(57600);
+  Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V5.8"));
+  Serial.println(F("READY UNO_CAT_V5.9"));
+  if (diagBreadcrumb.magic == 0xD159 &&
+      static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
+      static_cast<uint16_t>(~diagBreadcrumb.command) == diagBreadcrumb.commandInverse) {
+    Serial.print(F("EVENT DIAG_BOOT PREV_STAGE=")); Serial.print(diagBreadcrumb.stage);
+    Serial.print(F(" CMD=")); Serial.println(diagBreadcrumb.command);
+  } else Serial.println(F("EVENT DIAG_BOOT NO_VALID_BREADCRUMB"));
+  diagBreadcrumb.magic = 0xD159; diagCommand(0); diagStage(0);
   Serial.println(F("EVENT HOST_LED OFF"));
-  Serial.println(F("EVENT UART_SOFT_RX D12 BAUD=9600 TX=D1"));
+  Serial.println(F("EVENT UART_SOFT_RX D12 BAUD=57600 TX=D1"));
   // V5.1: keep assembling host commands while Serial.print waits for TX headroom, so
   // command bursts (sensor injections + ROTATE/DRIVE) can no longer overrun the RX ring.
 }
 
 void loop() {
+  const uint32_t loopStart = micros();
+  diagStage(1);
   readSerial();
   const uint32_t now = millis();
+  diagStage(2);
   tickTouches(now);
+  diagStage(3);
   tickSonar(now);
+  diagStage(4);
   tickDryRun(now);
+  diagStage(5);
   tickMotion(now);
+  diagStage(6);
   tickRpm(now);
+  diagStage(7);
   tickOutputs(now);
+  diagStage(8);
   tickHardwareTelemetry(now);
+  if (diagLoops != UINT16_MAX) ++diagLoops;
+  const uint32_t elapsedMs = (micros() - loopStart) / 1000;
+  if (elapsedMs > diagMaxLoopMs) diagMaxLoopMs = min(elapsedMs, static_cast<uint32_t>(UINT16_MAX));
+  diagStage(9);
+  tickDiagnostics(millis());
 }
