@@ -8,15 +8,15 @@ uint32_t debugId=0, debugAt=0, manualUntil=0, manualFrontAt=0, manualDuration=0;
 int debugStage=0, configStep=-1;
 float configExpected[4]={};
 bool configReadback=false;
-bool benchBypass=false, manualBypass=false;
+bool benchBypass=false, manualBypass=false, manualForward=false;
 String manualFront(){
   bool fresh=observation["at"].is<uint32_t>() && millis()-observation["at"].as<uint32_t>()<config["visionMaxAgeMs"].as<uint32_t>();
   bool source=(mode=="SIM_UNO")==(String(observation["source"]|"")=="SIM_CAMERA");
   String front=fresh&&source?String(observation["front"]|"INVALID"):"INVALID";
   return front=="CLEAR"||front=="BLOCKED"?front:"INVALID";
 }
-void debugReset(){for(auto &r:hardwareRows){r.line="";r.at=0;}unoConfigRow.line="";unoConfigRow.at=0;debugId=manualUntil=0;debugStage=0;configStep=-1;pendingManual="";benchBypass=manualBypass=false;debugResult="等待 Uno 回报";}
-void debugCancel(){debugId=manualUntil=0;debugStage=0;configStep=-1;pendingManual="";manualBypass=false;}
+void debugReset(){for(auto &r:hardwareRows){r.line="";r.at=0;}unoConfigRow.line="";unoConfigRow.at=0;debugId=manualUntil=0;debugStage=0;configStep=-1;pendingManual="";benchBypass=manualBypass=manualForward=false;debugResult="等待 Uno 回报";}
+void debugCancel(){debugId=manualUntil=0;debugStage=0;configStep=-1;pendingManual="";manualBypass=manualForward=false;}
 void debugSend(const String &command){debugId=sendUno(command);debugAt=millis();}
 void debugFail(const String &reason){debugCancel();policyControl("stop");debugResult=reason;logLine("DEBUG_ERROR",reason);}
 void debugAccept(const String &line){
@@ -36,8 +36,7 @@ void debugAccept(const String &line){
   if(sscanf(line.c_str(),"DONE %u",&id)!=1||id!=debugId)return;
   debugId=0;
   if(configStep>=0){if(++configStep<3)debugSend(configCommands[configStep]);else if(configStep==3){configReadback=false;debugSend("GET_CONFIG");debugResult="Arduino 已确认设置，正在回读核对";}else{configStep=-1;debugResult=configReadback?"Arduino 设置成功，四项参数回读一致":"回读缺失或不一致；请重新读取并核对，部分设置可能已生效";}return;}
-  if(debugStage==1&&!manualBypass){debugStage=2;debugSend("CAMERA_FRONT "+manualFront());}
-  else if(debugStage==1||debugStage==2){debugStage=0;sendUno(pendingManual);pendingManual="";manualUntil=millis()+manualDuration+100;debugResult=manualBypass?"限时测试已下发：前向、侧向和触碰避障已绕过":"限时测试已下发：避障保持开启";}
+  if(debugStage==1||debugStage==2){debugStage=0;sendUno(pendingManual);pendingManual="";manualUntil=millis()+manualDuration+100;debugResult=manualBypass?"限时测试已下发：前向、侧向和触碰避障已绕过":"限时测试已下发：避障保持开启";}
 }
 void debugSnapshot(JsonDocument &d){
   JsonArray rows=d["unoTelemetry"].to<JsonArray>();
@@ -49,7 +48,7 @@ void debugTick(){
   if(debugId&&millis()-debugAt>2500){debugFail("Uno 确认超时；请检查 UART 接线与固件");return;}
   if(!manualUntil)return;
   if((int32_t)(millis()-manualUntil)>=0){debugCancel();policyControl("stop");debugResult="限时测试结束，已发送 STOP / SESSION_STOP";return;}
-  if(!debugStage&&!manualBypass&&millis()-manualFrontAt>=250){manualFrontAt=millis();sendUno("CAMERA_FRONT "+manualFront());}
+  if(!debugStage&&!manualBypass&&manualForward&&(config["frontAvoidanceEnabled"]|true)&&manualFront()!="CLEAR")debugFail("ESP 前向观测无效或存在障碍，已停止测试");
 }
 void debugInput(JsonDocument &d){
   String op=d["op"]|"",action=d["action"]|"";
@@ -62,7 +61,7 @@ void debugInput(JsonDocument &d){
   }
   if(op=="uno_config"){
     float l=d["leftCm"]|0.0f,r=d["rightCm"]|0.0f,w=d["wheelMm"]|0.0f,t=d["trackMm"]|0.0f;
-    if(!isfinite(l)||!isfinite(r)||!isfinite(w)||!isfinite(t)||l<5||l>100||r<5||r>100||w<20||w>150||t<50||t>300){debugResult="参数范围错误";logLine("DEBUG_ERROR",debugResult);return;}
+    if(!isfinite(l)||!isfinite(r)||!isfinite(w)||!isfinite(t)||l<1||l>100||r<1||r>100||w<20||w>150||t<50||t>300){debugResult="参数范围错误";logLine("DEBUG_ERROR",debugResult);return;}
     configCommands[0]="SET_SAFE_DISTANCE LEFT "+String(l,1);configCommands[1]="SET_SAFE_DISTANCE RIGHT "+String(r,1);configCommands[2]="SET_GEOMETRY "+String(w,1)+" "+String(t,1);
     configExpected[0]=l;configExpected[1]=r;configExpected[2]=w;configExpected[3]=t;
     configStep=0;debugResult="正在逐项设置，等待 Arduino 确认";debugSend(configCommands[0]);return;
@@ -90,9 +89,9 @@ void debugInput(JsonDocument &d){
     else if(action=="left_reverse")left=-pwm;
     else if(action=="right_forward")right=pwm;
     else right=-pwm;
-    if(!benchBypass&&(left>0&&right>=0||right>0&&left>=0)&&manualFront()!="CLEAR"){debugResult="前向观测无效；可打开测试绕过避障，或先完成标定";logLine("DEBUG_ERROR",debugResult);return;}
-    manualBypass=benchBypass;
-    pendingManual="TEST_MOTOR "+String(left)+" "+String(right)+" "+String(duration)+(manualBypass?" BYPASS":" SAFE");sendUno("STOP");debugStage=1;manualDuration=duration;debugSend("SESSION_START");manualUntil=millis()+duration+5500;debugResult=manualBypass?"等待会话解锁；本次测试绕过全部避障":"等待会话解锁和前向输入确认";return;
+    if(!benchBypass&&(config["frontAvoidanceEnabled"]|true)&&(left>0&&right>=0||right>0&&left>=0)&&manualFront()!="CLEAR"){debugResult="前向观测无效；可打开测试绕过避障，或先完成标定";logLine("DEBUG_ERROR",debugResult);return;}
+    manualBypass=benchBypass;manualForward=(left>0&&right>=0)||(right>0&&left>=0);
+    pendingManual="TEST_MOTOR "+String(left)+" "+String(right)+" "+String(duration)+(manualBypass?" BYPASS":" SAFE");sendUno("STOP");debugStage=1;manualDuration=duration;debugSend("SESSION_START");manualUntil=millis()+duration+5500;debugResult=manualBypass?"等待会话解锁；本次测试绕过全部避障":"等待会话解锁；前向判定由 ESP 负责";return;
   }else{debugResult="未知测试动作";return;}
   sendUno(command);debugResult="已下发 "+command+"；请查看 Uno 回报";
 }

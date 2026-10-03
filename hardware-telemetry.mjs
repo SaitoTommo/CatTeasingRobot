@@ -1,3 +1,4 @@
+import { CompactTelemetry } from './compact-telemetry.mjs';
 export const IO_CHANNELS = ["MOTOR_LEFT", "MOTOR_RIGHT", "LED", "BUZZER", "SONAR_LEFT_TRIG", "SONAR_RIGHT_TRIG", "SONAR_LEFT_ECHO", "SONAR_RIGHT_ECHO", "ENCODER_LEFT", "ENCODER_RIGHT", "TOUCH_TOP", "TOUCH_LEFT", "TOUCH_RIGHT", "TOUCH_REAR"];
 const lengths = { STATE: 5, ML: 6, MR: 6, EL: 5, ER: 5, SL: 6, SR: 6, T: 5, OUT: 6, FRONT: 2 };
 const sourceNames = { P: "物理输入", V: "虚拟脉冲", I: "测试注入", O: "输入关闭", TEST: "电脑模拟", HOST: "上位机" };
@@ -9,8 +10,13 @@ const direction = value => Number(value) > 0 ? "正转" : Number(value) < 0 ? "�
 // Rows are independently timestamped; a partial reply must not make older rows fresh.
 export class HardwareTelemetry {
   constructor() { this.reset(); }
-  reset() { this.rows = new Map(); }
+  reset() { this.rows = new Map(); this.compact = new CompactTelemetry(); }
   accept(line, now) {
+    if(line.startsWith('TB ')||/^DONE \d+ TELEMETRY\*/.test(line)) {
+      const rows=this.compact.accept(line,now); if(!rows)return null;
+      for(const row of rows)this.accept(row,now);
+      return this.rows.get('STATE');
+    }
     const match = /^DATA (\d+) HW (\S+) (.*)$/.exec(line);
     if (!match || !lengths[match[2]]) return null;
     const kind = match[2];
@@ -97,7 +103,7 @@ export function decodeSerialFrame(raw) {
     const payload = line.slice(0, star);
     if (!/^[0-9A-F]{2}$/.test(line.slice(star + 1)) || serialCrc8(payload) !== line.slice(star + 1)) return null;
     line = payload;
-  } else if (/^(?:MS|MD|MA|MP|AK)\b/.test(line)) return null;
+  } else if (/^(?:TB|MS|MD|MA|MP|AK)\b/.test(line)) return null;
   let match;
   if ((match = /^MS (\d+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_STARTED ${match[1]} LEFT_BASE=${match[2]} RIGHT_BASE=${match[3]}`;
   if ((match = /^MD (\d+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_DONE ${match[1]} LEFT_PULSES=${match[2]} RIGHT_PULSES=${match[3]}`;

@@ -65,14 +65,13 @@ function resetPhysicalIoUi() {
 }
 let serialTrackConfigured = false;
 let serialGeometry = { wheelMm: 67.5, trackMm: 120 };
-const serialSafeSideCm = { LEFT: 5, RIGHT: 5 };
+const serialSafeSideCm = { LEFT: 1, RIGHT: 1 };
 let patrolWaypointIndex = 0;
 const PATROL_TAGS = ["A", "B", "C", "D"];
 const pendingSceneMotions = new Map();
 let activeSceneMotion = null;
 let activeDistanceTravel = null;
 let manualBenchMotors = [0, 0];
-let manualBenchRenewedAt = 0;
 let manualRobotRevision = 0;
 let sceneDisplayPose = null;
 let sceneDisplayRevision = -1;
@@ -340,8 +339,9 @@ function receiveLine(rawLine, source) {
   if (!routineTelemetry && !line.startsWith("EVENT MOTION_PROGRESS")) addLog(type, line, source);
   if (source === "SERIAL") {
     const now = performance.now();
-    const hardware = hardwareTelemetry.accept(line, now);
+    const hardware = hardwareTelemetry.accept(line.startsWith("TB ") || /^DONE \d+ TELEMETRY/.test(line) ? rawLine.trim() : line, now);
     if (hardware?.kind === "STATE") {
+      for (const [key,side] of [["EL","left"],["ER","right"]]) { const row=hardwareTelemetry.rows.get(key); if(row)serialEncoder[side]=Number(row.values[2]); }
       realState = hardware.values[1];
       const mask = Number(hardware.values[4]);
       IO_CHANNELS.forEach((channel, index) => {
@@ -400,10 +400,10 @@ function receiveLine(rawLine, source) {
       resetSerialOutputs();
       resetSerialSafeDistances();
       resetPhysicalIoUi();
-      serialFirmwareVerified = line === "READY UNO_CAT_V5.9";
+      serialFirmwareVerified = line === "READY UNO_CAT_V6.4";
       if (!serialFirmwareVerified) {
-        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V5.9", "SYSTEM");
-        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V5.9。");
+        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V6.4", "SYSTEM");
+        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V6.4。");
 
       }
       unoTouches.clear();
@@ -516,7 +516,7 @@ function receiveLine(rawLine, source) {
     resetPhysicalIoUi();
     $("streamSceneSensors").checked = false;
   }
-  if (source === "SERIAL" && /^(FRONT_OBSTACLE_OR_CAMERA_INVALID|SIDE_(LEFT|RIGHT)_OBSTACLE_OR_SENSOR_INVALID)$/.test(error?.[2] || "")) {
+  if (source === "SERIAL" && /^(FRONT_OBSTACLE_OR_CAMERA_INVALID|SIDE_(LEFT|RIGHT)_OBSTACLE)$/.test(error?.[2] || "")) {
     obstacleBlockedUntil = performance.now() + 5000;
     if (performance.now() >= nextObstacleStatusQueryAt) {
       showToast(`Uno 拒绝动作：${error[2]}。请核对摄像头与左右超声波读数。`);
@@ -640,14 +640,13 @@ function send(command, preflight = true) {
     const sceneMotion = sceneMotionFromCommand(normalized);
     if (sceneMotion && normalized !== "MOTOR 0 0") pendingSceneMotions.set(id, {
       ...sceneMotion, startPose: { ...world.robot }, manualRobotRevision,
-      renewalOf: normalized.startsWith("MOTOR ") && activeSceneMotion && !activeSceneMotion.haltedByCommand && sceneMotion.left === activeSceneMotion.left && sceneMotion.right === activeSceneMotion.right ? activeSceneMotion.id : null,
     });
     if (normalized === "STOP" || normalized === "SESSION_STOP" || normalized === "MOTOR 0 0") {
       manualBenchMotors = [0, 0];
       if (activeSceneMotion) activeSceneMotion.haltedByCommand = true;
     }
   }
-  if (normalized !== "GET_TELEMETRY" && normalized !== "KEEP") addLog("command", line, mode === "mock" ? "TX·SIM" : "TX·SERIAL");
+  if (normalized !== "GET_TELEMETRY") addLog("command", line, mode === "mock" ? "TX·SIM" : "TX·SERIAL");
   if (mode === "mock") {
     const wireLine = applyWireFault(line);
     if (wireLine !== null) mock.receiveWire(wireLine, performance.now());
@@ -670,9 +669,8 @@ async function runContinuousDistance(distanceCm, pwm) {
   const travel = { id: nextCommandId, stopping: false, error: null };
   activeDistanceTravel = travel;
   send(`MOTOR ${speed} ${speed}`, false);
-  let renewedAt = performance.now();
-  const startedAt = renewedAt;
-  const deadline = renewedAt + 30000;
+  const startedAt = performance.now();
+  const deadline = startedAt + 30000;
   try {
     while (performance.now() < deadline) {
       if (token !== behaviorToken) throw new Error("BEHAVIOR_CANCELLED");
@@ -681,11 +679,6 @@ async function runContinuousDistance(distanceCm, pwm) {
       if (motion?.travelCm >= targetCm) return;
       if (performance.now() - (motion?.progressAt ?? startedAt) > 750)
         throw new Error("MOTION_FEEDBACK_TIMEOUT");
-      if (performance.now() - renewedAt >= 200) {
-        // Renew the same motion without stopping wheels or resetting its pulse base.
-        send("KEEP", false);
-        renewedAt = performance.now();
-      }
       await sleep(20);
     }
     throw new Error("MOTION_TIMEOUT");
@@ -798,6 +791,7 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
   let lastEncoderQueryAt = -Infinity;
   let swept = 0;
   let lastCommandAt = -Infinity;
+  let sentScanDirection = 0;
   let motorStarted = false;
   let turnDirection = direction;
   let reversed = false;
@@ -827,7 +821,7 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
           lastCommandAt = -Infinity;
           continue;
         }
-        if (/^SIDE_(LEFT|RIGHT)_OBSTACLE_OR_SENSOR_INVALID$/.test(scan.abortReason)) {
+        if (/^SIDE_(LEFT|RIGHT)_OBSTACLE$/.test(scan.abortReason)) {
           const reason = scan.abortReason;
           scan.abortReason = null;
           blockedReason = reason;
@@ -871,10 +865,13 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
             return { found: false, reason: "BOTH_SIDES_BLOCKED", sweptDeg: degrees(swept) };
         }
         blockedReason = null;
-        streamSceneSensors(now, true, { left: turnDirection * pwm, right: -turnDirection * pwm });
-        scan.commandIds.add(nextCommandId);
-        send(`MOTOR ${turnDirection * pwm} ${-turnDirection * pwm}`, false);
-        motorStarted = true;
+        if(!motorStarted || sentScanDirection!==turnDirection || lastCommandAt===-Infinity) {
+          streamSceneSensors(now, true, { left: turnDirection * pwm, right: -turnDirection * pwm });
+          scan.commandIds.add(nextCommandId);
+          send(`MOTOR ${turnDirection * pwm} ${-turnDirection * pwm}`, false);
+          motorStarted = true;
+          sentScanDirection = turnDirection;
+        }
         lastCommandAt = now;
       }
       await new Promise(resolve => setTimeout(resolve, 25));
@@ -934,7 +931,7 @@ async function alignToCat(token) {
           if (!await waitForTouchRelease(token, decisionSystem.responsePolicy.touchReleaseTimeoutMs)) return false;
           continue;
         }
-        if (/^SIDE_(LEFT|RIGHT)_OBSTACLE_OR_SENSOR_INVALID$/.test(reason)) {
+        if (/^SIDE_(LEFT|RIGHT)_OBSTACLE$/.test(reason)) {
           lastBlockedReason = reason;
           await new Promise(resolve => setTimeout(resolve, 25));
           continue;
@@ -1091,7 +1088,7 @@ async function scanForRouteTag(name, token) {
   if (token !== behaviorToken || interactionPhase !== "PATROL") return false;
   if (!result.found) {
     addLog("error", `PATROL_SCAN_STOP tag=${name} reason=${result.reason} sweep_deg=${result.sweptDeg.toFixed(1)}`, "ESP32·SIM");
-    throw new Error(/^(SIDE_(LEFT|RIGHT)_OBSTACLE_OR_SENSOR_INVALID|BOTH_SIDES_BLOCKED)$/.test(result.reason)
+    throw new Error(/^(SIDE_(LEFT|RIGHT)_OBSTACLE|BOTH_SIDES_BLOCKED)$/.test(result.reason)
       ? result.reason : "ROUTE_TAG_NOT_FOUND");
   }
   addLog("event", `PATROL_SCAN_STOP tag=${name} reason=TAG_DETECTED sweep_deg=${result.sweptDeg.toFixed(1)}`, "ESP32·SIM");
@@ -1499,7 +1496,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
           autoDecisionVersion += 1;
           autoBusy = false;
           addLog("event", "DECISION_STOP reason=ROUTE_TAG_NOT_FOUND", "ESP32·SIM");
-        } else if (/^(FRONT_OBSTACLE_OR_CAMERA_INVALID|SIDE_(LEFT|RIGHT)_OBSTACLE_OR_SENSOR_INVALID|BOTH_SIDES_BLOCKED|TOUCH_ACTIVE|DETOUR_NO_PATH|DETOUR_TURN_TIMEOUT|DETOUR_STEP_LIMIT)$/.test(error.message)) {
+        } else if (/^(FRONT_OBSTACLE_OR_CAMERA_INVALID|SIDE_(LEFT|RIGHT)_OBSTACLE|BOTH_SIDES_BLOCKED|TOUCH_ACTIVE|DETOUR_NO_PATH|DETOUR_TURN_TIMEOUT|DETOUR_STEP_LIMIT)$/.test(error.message)) {
           $("routeStatus").textContent = `巡游暂停：${error.message}；等待安全条件恢复`;
           obstacleBlockedUntil = performance.now() + 5000;
         } else {
@@ -2248,10 +2245,6 @@ function tickHardwareTelemetry(now) {
 function frame(now) {
   const elapsedSeconds = clamp((now - lastFrameAt) / 1000, 0, .05);
   lastFrameAt = now;
-  if (manualBenchMotors.some(Boolean) && now - manualBenchRenewedAt >= 200) {
-    send("KEEP", false);
-    manualBenchRenewedAt = now;
-  }
   if (!paused) {
 
     for (const event of catInput.step(now, elapsedSeconds)) {
@@ -2387,8 +2380,8 @@ for (const id of ["catScenarioBehavior", "attackArea", "catSpeedCmS", "attackHol
 function setSafeDistance(side) {
   const input = $(side === "LEFT" ? "safeLeftCm" : "safeRightCm");
   const cm = Number(input.value);
-  if (!input.value.trim() || !Number.isFinite(cm) || cm < 5 || cm > 100)
-    return showToast("侧边最小安全距离须在 5–100 cm 之间。");
+  if (!input.value.trim() || !Number.isFinite(cm) || cm < 1 || cm > 100)
+    return showToast("侧边最小安全距离须在 1–100 cm 之间。");
   send(`SET_SAFE_DISTANCE ${side} ${cm.toFixed(1)}`);
 }
 $("setSafeLeft").addEventListener("click", () => setSafeDistance("LEFT"));
@@ -2402,7 +2395,6 @@ async function toggleManualMotors(left, right) {
   try {
     await sendAndWaitDone("SESSION_START", "SESSION_STARTED");
     manualBenchMotors = [left, right];
-    manualBenchRenewedAt = performance.now();
     send(`MOTOR ${manualBenchMotors[0]} ${manualBenchMotors[1]}`);
   } catch (error) { showToast(error.message); send("STOP"); }
 }
@@ -2493,7 +2485,7 @@ document.querySelectorAll('[data-bench-motor]').forEach(button => button.addEven
   cancelBehavior("MANUAL_MOTOR");
   try {
     await sendAndWaitDone("SESSION_START", "SESSION_STARTED");
-    manualBenchMotors = next; manualBenchRenewedAt = performance.now();
+    manualBenchMotors = next;
     send(`MOTOR ${next[0]} ${next[1]}`);
     button.setAttribute("aria-pressed", String(Boolean(next[side])));
   } catch (error) { manualBenchMotors = [0, 0]; send("STOP"); showToast("电机测试：" + error.message); }

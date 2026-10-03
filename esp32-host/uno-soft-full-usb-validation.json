@@ -1,0 +1,38 @@
+{
+  "baud": 9600,
+  "source": "USB_control_only_not_ESP_GPIO_test",
+  "motorCommandsIssued": false,
+  "outputRowSixFields": true,
+  "results": [
+    {
+      "id": 701,
+      "command": "PING",
+      "raw": "AK 701*7F\r\nDONE 701 PONG\r\n",
+      "done": true
+    },
+    {
+      "id": 702,
+      "command": "GET_CONFIG",
+      "raw": "AK 702*76\r\nDATA 702 CONFIG WHEEL_MM=67.5 TRACK_MM=0.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=5.0\r\nDONE 702\r\n",
+      "done": true
+    },
+    {
+      "id": 703,
+      "command": "GET_IO",
+      "raw": "AK 703*71\r\nDATA 703 IO MOTOR_LEFT ON\r\nDATA 703 IO MOTOR_RIGHT ON\r\nDATA 703 IO LED ON\r\nDATA 703 IO BUZZER ON\r\nDATA 703 IO SONAR_LEFT_TRIG ON\r\nDATA 703 IO SONAR_RIGHT_TRIG ON\r\nDATA 703 IO SONAR_LEFT_ECHO ON\r\nDATA 703 IO SONAR_RIGHT_ECHO ON\r\nDATA 703 IO ENCODER_LEFT ON\r\nDATA 703 IO ENCODER_RIGHT ON\r\nDATA 703 IO TOUCH_TOP ON\r\nDATA 703 IO TOUCH_LEFT ON\r\nDATA 703 IO TOUCH_RIGHT ON\r\nDATA 703 IO TOUCH_REAR ON\r\nDONE 703\r\n",
+      "done": true
+    },
+    {
+      "id": 704,
+      "command": "GET_TELEMETRY",
+      "raw": "AK 704*64\r\nDATA 704 HW STATE 1128 IDLE 0 0 16383\r\nDATA 704 HW ML 0 0 0 1 0 0\r\nDATA 704 HW MR 0 0 0 1 0 0\r\nDATA 704 HW EL 1 1 0 0.0 P\r\nDATA 704 HW ER 1 1 0 0.0 P\r\nDATA 704 HW SL 1 1 0 40.0 40.0 P\r\nDATA 704 HW SR 1 1 0 -1.0 -1.0 P\r\nDATA 704 HW T TOP 1 1 0 P\r\nDATA 704 HW T LEFT 1 1 0 P\r\nDATA 704 HW T RIGHT 1 1 0 P\r\nDATA 704 HW T REAR 1 1 0 P\r\nDATA 704 HW OUT 1 0 -1 1 0 0\r\nDATA 704 HW FRONT -1.0 HOST\r\nDONE 704 TELEMETRY\r\n",
+      "done": true
+    },
+    {
+      "id": 705,
+      "command": "GET_STATUS",
+      "raw": "AK 705*63\r\nDATA 705 STATUS IDLE LED=OFF BUZZER=OFF DEBUG=OFF INPUT_MODE=LIVE MOTOR_MODE=LIVE\r\nDONE 705\r\n",
+      "done": true
+    }
+  ]
+}

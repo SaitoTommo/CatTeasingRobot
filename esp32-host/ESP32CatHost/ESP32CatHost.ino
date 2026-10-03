@@ -42,7 +42,11 @@ uint32_t cmdSeq=0;
 void enqueueCamera(const String &out) {Input in={};in.physical=true;out.toCharArray(in.text,sizeof(in.text));xQueueSend(inputs,&in,0);}
 struct Outgoing {String wire;bool physical;};
 std::deque<Outgoing> outgoing;uint32_t lastWrite=0;
-void clearTx(){outgoing.clear();}
+uint32_t stopPendingId=0,stopSentAt=0;uint8_t stopRetries=0;bool stopUnconfirmed=false;
+String stopWire;
+void policyCommandSent(uint32_t id);
+void policyStopUnconfirmed();
+void clearTx(){outgoing.clear();telemetryId=0;lastPoll=millis();}
 uint32_t sendUno(const String &command) {
   if(command=="SESSION_STOP"||command=="DEBUG_OUTPUTS OFF"||command=="DEBUG_IO LED OFF"||command=="DEBUG_MOTOR_MODE DRY_RUN")hostLedStop();
   cmdSeq=cmdSeq%65535+1;uint32_t id=cmdSeq;String payload="C "+String(id)+" "+command;char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));
@@ -50,14 +54,39 @@ uint32_t sendUno(const String &command) {
   outgoing.push_back({payload+suffix,mode=="UART"});
   return id;
 }
-void flushTx(){if(outgoing.empty()||millis()-lastWrite<15)return;auto o=outgoing.front();outgoing.pop_front();lastWrite=millis();lastTx=o.wire;logLine(o.physical?"UNO_TX":"SIM_TX",lastTx);if(o.physical)uno.println(lastTx);}
+void flushTx(){
+  if(stopPendingId){
+    if(millis()-stopSentAt>=300){
+      if(stopRetries<3){stopRetries++;stopSentAt=millis();lastWrite=millis();uno.println(stopWire);logLine("STOP_RETRY",stopWire);}
+      else if(!stopUnconfirmed){stopUnconfirmed=true;outgoing.clear();telemetryId=0;logLine("STOP_UNCONFIRMED","No checked MOTOR_STOPPED reply; further motor commands blocked");policyStopUnconfirmed();}
+    }
+    if(!stopUnconfirmed)return;
+    // Only a new explicit STOP may restart the bounded confirmation attempt.
+    while(!outgoing.empty()&&(!outgoing.front().physical||outgoing.front().wire.indexOf(" STOP*")<0)){logLine("TX_BLOCKED","stop is unconfirmed: "+outgoing.front().wire);outgoing.pop_front();}
+    if(outgoing.empty())return;
+    stopPendingId=0;
+  }
+  if(outgoing.empty()||millis()-lastWrite<15)return;
+  auto o=outgoing.front();outgoing.pop_front();lastWrite=millis();lastTx=o.wire;
+  logLine(o.physical?"UNO_TX":"SIM_TX",lastTx);
+  if(o.physical){
+    if(o.wire.indexOf(" STOP*")>=0){stopPendingId=o.wire.substring(2).toInt();stopWire=o.wire;stopSentAt=millis();stopRetries=0;stopUnconfirmed=false;}
+    uno.println(lastTx);
+  }
+  if(o.wire.indexOf(" MOTOR ")>=0)policyCommandSent(o.wire.substring(2).toInt());
+}
 void policyInput(const String &line);
 void policyTick();
 void policyControl(const String &action);
+bool policyPreparing();
+void policySnapshot(JsonDocument &);
 #include "uno_debug.h"
+#include "compact_telemetry.h"
+CompactTelemetry compactTelemetry;
 void acceptUno(String line,bool physical) {
   line.trim(); if(!line.length())return;
-  if((mode=="UART")!=physical){logLine("INPUT_REJECTED","source does not match mode");return;}
+  bool pendingStopReply=physical&&stopPendingId&&line.startsWith("DONE "+String(stopPendingId)+" MOTOR_STOPPED*");
+  if((mode=="UART")!=physical&&!pendingStopReply){logLine("INPUT_REJECTED","source does not match mode");return;}
   // Uno's wire protocol is ASCII. Noise must never enter JSON logs as raw
   // control bytes / invalid UTF-8, or count as evidence of a live Uno.
   if(physical){
@@ -81,17 +110,21 @@ void acceptUno(String line,bool physical) {
       bool checked=star>0&&hex.length()==2&&isxdigit(hex[0])&&isxdigit(hex[1])&&strtoul(hex.c_str(),nullptr,16)==crc8(payload);
       logLine(checked?"UART_LOOPBACK":"UART_BAD_FRAME",line);return;
     }
-    bool known=line.startsWith("READY ")||line.startsWith("ACK ")||line.startsWith("AK ")||line.startsWith("DONE ")||line.startsWith("ERROR ")||line.startsWith("DATA ")||line.startsWith("EVENT ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MP ")||line.startsWith("MA ");
+    bool known=line.startsWith("TB ")||line.startsWith("READY ")||line.startsWith("ACK ")||line.startsWith("AK ")||line.startsWith("DONE ")||line.startsWith("ERROR ")||line.startsWith("DATA ")||line.startsWith("EVENT ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MP ")||line.startsWith("MA ");
     if(!known){logLine("UART_BAD_FRAME","unknown ASCII reply prefix");return;}
   }
   int star=line.indexOf('*');
-  if(star>=0) {String hex=line.substring(star+1);String payload=line.substring(0,star);if(hex.length()!=2||!isxdigit(hex[0])||!isxdigit(hex[1])||strtoul(hex.c_str(),nullptr,16)!=crc8(payload)){logLine("CRC_ERROR",line);return;}line=payload;}
-  else if(line.startsWith("MP ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MA ")||line.startsWith("AK ")){logLine("CRC_MISSING",line);return;}
+  if(star>=0) {String hex=line.substring(star+1);String payload=line.substring(0,star);if(hex.length()!=2||!isxdigit(hex[0])||!isxdigit(hex[1])||strtoul(hex.c_str(),nullptr,16)!=crc8(payload)){if(line.startsWith("TB ")||line.startsWith("DONE "))compactTelemetry.reset();logLine("CRC_ERROR",line);return;}line=payload;}
+  else if(line.startsWith("TB ")||(line.startsWith("DONE ")&&line.endsWith(" TELEMETRY")&&compactTelemetry.id)||line.startsWith("MP ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MA ")||line.startsWith("AK ")){logLine("CRC_MISSING",line);return;}
+  if(physical&&stopPendingId&&star>=0&&line=="DONE "+String(stopPendingId)+" MOTOR_STOPPED"){stopPendingId=0;stopUnconfirmed=false;stopWire="";logLine("STOP_CONFIRMED",line);if(mode!="UART")return;}
+  if(line.startsWith("READY "))compactTelemetry.reset();
+  if(line.startsWith("TB ")){if(!compactTelemetry.add(line,millis())){logLine("TELEMETRY_BAD_FRAME",line);return;}lastRx=line;lastUnoAt=millis();logLine(physical?"UNO_RX":"SIM_RX",line);return;}
+  if(line.startsWith("DONE ")&&line.endsWith(" TELEMETRY")&&compactTelemetry.id){if(!compactTelemetry.finish(line,millis(),[](const String &row){debugAccept(row);policyInput(row);})){logLine("TELEMETRY_INCOMPLETE",line);return;}}
   lastRx=line;lastUnoAt=millis();if(physical)hostLedAccept(line);logLine(physical?"UNO_RX":"SIM_RX",line);debugAccept(line);if(line.startsWith("DONE ")||line.startsWith("ERROR ")){if(line.substring(line.indexOf(' ')+1).toInt()==telemetryId)telemetryId=0;}policyInput(line);
 }
 void defaults() {
   policyDefaults(config);
-  config["route"][0]=0;config["route"][1]=1;config["route"][2]=2;config["route"][3]=3;
+  config["route"].to<JsonArray>(); // Route is supplied by the operator.
   config["searchPwm"]=75;config["alignPwm"]=52;config["centerTolerancePercent"]=5.5;
   config["patrolSearchPwm"]=45;config["patrolAlignPwm"]=30;
   config["wheelMm"]=67.5;config["trackMm"]=120;config["stopMarginCm"]=3;
@@ -111,11 +144,12 @@ void defaults() {
   config["probePause1Ms"]=700;config["probePause2Ms"]=900;config["probePause3Ms"]=600;
   config["catProbeCooldownSeconds"]=15;config["robotProbeCooldownSeconds"]=15;config["touchReleaseTimeoutMs"]=4000;
   config["decisionIntervalMs"]=2500;config["signalFlashMs"]=1400;config["signalBeepMs"]=180;
-  config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
+  config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.7";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.11";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
+  d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
   d["visionMode"]=visionMode;d["visionIntervalMs"]=visionIntervalMs;
   d["apIP"]=WiFi.softAPIP().toString();d["stationIP"]=WiFi.localIP().toString();d["config"]=config;d["vision"]=observation;d["cameraVision"]=realVision;
@@ -129,10 +163,16 @@ void handleInput(const Input &in) {
   if(d["expectedMode"].is<const char*>()&&String(d["expectedMode"].as<const char*>())!=mode){logLine("INPUT_REJECTED","mode changed before requested operation");return;}
   if(op=="uno")acceptUno(d["line"]|"",in.physical);
   else if(op=="state"){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String out=snapshot();xSemaphoreGiveRecursive(stateLock);emitUsb(out);}
-  else if(op=="control") {debugCancel();policyControl(d["action"]|"");}
+  else if(op=="control") {
+    String control=d["action"]|"";
+    if((control=="start"||control=="resume")&&mode=="UART"&&config["route"].size()&&visionMode!="TAGS"&&visionMode!="BOTH"){
+      visionMode="BOTH";realVision.clear();observation.clear();logLine("VISION_MODE","BOTH automatically enabled for patrol");
+    }
+    debugCancel();policyControl(control);
+  }
   else if(op=="manual_test"||op=="uno_config"||op=="bench_safety")debugInput(d);
   else if(op=="command") {if((phase!="IDLE"&&phase!="STOPPED")||debugId||manualUntil||configStep>=0){logLine("INPUT_ERROR","stop policy and finish debug operation before raw commands");return;}String command=d["command"]|"PING";command.trim();if(!command.length()||command.length()>96||command.indexOf('\n')>=0||command.indexOf('\r')>=0){logLine("INPUT_ERROR","invalid command line");return;}sendUno(command);}
-  else if(op=="mode") {hostLedStop();policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
+  else if(op=="mode") {hostLedStop();policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();compactTelemetry.reset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
   else if(op=="vision" && mode=="SIM_UNO") {observation=d["vision"];observation["source"]="SIM_CAMERA";observation["at"]=millis();}
   else if(op=="camera"&&in.physical) {if(visionMode!="OFF"&&String(d["vision"]["mode"]|"")==visionMode){realVision=d["vision"];if(mode=="UART")observation=realVision;}}
   else if(op=="vision_mode") {String m=d["mode"]|"OFF";if(m!="OFF"&&m!="TAGS"&&m!="CAT"&&m!="BOTH"){logLine("INPUT_ERROR","invalid vision mode");return;}visionMode=m;realVision.clear();if(mode=="UART")observation.clear();logLine("VISION_MODE",visionMode);}
@@ -196,8 +236,8 @@ void readLines(Stream &s,String &buffer,bool physical) {static Input in;static b
 void loop() {
   xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);readLines(Serial,usbLine,false);readLines(uno,uartLine,true);static Input in;for(int i=0;i<4&&xQueueReceive(inputs,&in,0)==pdTRUE;i++)handleInput(in);
   debugTick();policyTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
-  if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis()+1700;logLine("TELEMETRY_TIMEOUT","retry in 2s");}
-  if((int32_t)(millis()-lastPoll)>=300&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
+  if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis();logLine("TELEMETRY_TIMEOUT","retry in 2s");}
+  if(!policyPreparing()&&(int32_t)(millis()-lastPoll)>=2000&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
   flushTx();
   delay(2);
 }

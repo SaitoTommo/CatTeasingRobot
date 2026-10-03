@@ -1,0 +1,32 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.10",
+  "mode": "UART",
+  "rows": 13,
+  "verifiedBatchId": 42,
+  "batchPublishMsRange": [
+    101595,
+    101596
+  ],
+  "pollIntervalMin": 1999,
+  "pollIntervalMax": 2015,
+  "errors": [],
+  "memory": [
+    "EVENT DIAG M 617 617 0 0 0 0",
+    "EVENT DIAG M 617 617 0 0 0 0",
+    "EVENT DIAG M 617 617 0 0 0 0"
+  ],
+  "motors": [
+    "DATA 42 HW ML 0 0 0 1 0 0",
+    "DATA 42 HW MR 0 0 0 1 0 0"
+  ],
+  "snapshotFrames": [
+    "TB 42 0 01A30B030001FF3F000000000000000000",
+    "TB 42 1 0300000000000000000000000000000000",
+    "TB 42 2 7B007B006002600200000F000000F6FF"
+  ],
+  "route": [
+    46,
+    40
+  ],
+  "frontAvoidanceEnabled": false
+}

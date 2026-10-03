@@ -1,5 +1,9 @@
 # Arduino Uno 固件：UnoCatController
 
+当前 V6.4：左右超声波安全距离默认 1 cm，可设置范围 1–100 cm。Uno 仅在对应方向收到有效且新鲜的测距、距离严格小于阈值时停车或拒绝动作；无回波、无效和过期读数不停车，遥测仍如实显示无效，不伪造远距离。停车原因改为 SIDE_LEFT_OBSTACLE / SIDE_RIGHT_OBSTACLE。阈值保存在 RAM，复位恢复默认 1 cm。ESP 判断前向并发 STOP；触碰、编码器失速检查、会话关闭和限时动作仍有效。MOTOR 无 KEEP 和续租截止时间。下文旧版本的 5 cm 最小值及无效输入停车描述属于历史记录。
+
+2026-10-03 本轮更新：用户指定默认轮距为 **120 mm**，源码 `trackWidthMm=120.0f`。复位后恢复此默认值；`SET_GEOMETRY` 仍可临时覆盖。这是用户指定配置，不是本轮实测。此前默认 0 会使 ESP 巡游的几何检查失败，现已避免这一默认配置问题。ESP32 0.8 的前向避障开关见 [ESP 使用说明](../esp32-host/README.md)，不影响 Uno 内存诊断和通信停车。
+
 ## V6.1 内存与失联诊断（2026-10-03）
 
 V6.0 分离当前执行命令、待执行命令和两路接收缓冲，避免 ACK/DONE 接收新命令时覆盖正在使用的参数。四个 128 字节缓冲都有前后边界哨兵。
@@ -66,7 +70,7 @@ V5.1 加固了串口接收：`ack`/`done`/`error` 等输出原语在 `Serial.pri
 
 左右轮各有一个光槽传感器。光栅盘位于**车轮轴**，每圈 **20 槽**；固件只计每个槽的一次下降沿，即 **20 脉冲/车轮圈**。单通道传感器不能单独判定转向，方向仅取自电机命令。`GET_ENCODER` 返回累计脉冲和最近约 500 ms 的无符号 RPM。供电、有效电平以及左右电机正反方向需按实际模块检查；如果正方向反了，交换对应电机两根线，或调整代码中的方向映射。
 
-[底盘商品页](https://www.tinytronics.nl/en/mechanics-and-actuators/kits/car-kit-diy-round)列出两只轮子和两只测速光栅盘，整车外形尺寸为 150×140×80 mm。[配套车轮商品信息](https://www.tinytronics.nl/en/mechanics-and-actuators/parts/wheels)标称直径 **65 mm**；固件将其作为可修改的初值。**左右轮中心距尚未测量**，不能从整车宽度推断。默认 `TRACK_MM=0`，故角度命令 `ROTATE` 会返回 `TRACK_NOT_SET`。测量轮中心距后用 `SET_GEOMETRY <wheel_mm> <track_mm>` 设置，设置仅在当前通电期间有效。轮胎压缩和打滑也会影响里程；距离/角度回报始终标 `ESTIMATED`。
+[底盘商品页](https://www.tinytronics.nl/en/mechanics-and-actuators/kits/car-kit-diy-round)列出两只轮子和两只测速光栅盘，整车外形尺寸为 150×140×80 mm。[配套车轮商品信息](https://www.tinytronics.nl/en/mechanics-and-actuators/parts/wheels)标称直径 **65 mm**；固件将其作为可修改的初值。**左右轮中心距尚未测量**，不能从整车宽度推断。历史版本默认 `TRACK_MM=0`，角度命令 `ROTATE` 返回 `TRACK_NOT_SET`；本轮按用户要求改为默认 120 mm。测量轮中心距后用 `SET_GEOMETRY <wheel_mm> <track_mm>` 设置，设置仅在当前通电期间有效。轮胎压缩和打滑也会影响里程；距离/角度回报始终标 `ESTIMATED`。
 
 ## 安装与编译
 
@@ -91,7 +95,7 @@ V5.1 加固了串口接收：`ack`/`done`/`error` 等输出原语在 `Serial.pri
 | `TURN LEFT\|RIGHT <pwm> <ms>` | 原地定时旋转 | 不承诺角度 |
 | `DRIVE <cm> <pwm>` | `cm=-100..100`，非零 | 双轮分别达到目标光槽计数后停止；最多 10 秒 |
 | `ROTATE <degrees> <pwm>` | `degrees=-360..360`，正数向右 | 需要设置轮距；按车轮计数近似旋转；最多 10 秒 |
-| `MOTOR <left_pwm> <right_pwm>` | 每轮 `-255..255` | 连续电机控制；每条指令只生效 500 ms，须续发；`MOTOR 0 0` 停止 |
+| `MOTOR <left_pwm> <right_pwm>` | 每轮 `-255..255` | 连续电机控制，无需续发；新 MOTOR 改速，STOP 或 MOTOR 0 0 停止 |
 | `LED ON\|OFF\|FLASH <interval_ms> <duration_ms>` | 灯控制 | 闪烁间隔 20..5000 ms、总时长 20..10000 ms |
 | `BEEP <ms>` | 有源蜂鸣器 | 1..5000 ms |
 | `GET_STATUS` / `GET_DISTANCE` / `GET_ENCODER` / `GET_CONFIG` | 读取状态、距离、累计编码器与速度、几何参数 | `DATA <id> ...` 后 `DONE <id>` |
@@ -101,7 +105,7 @@ V5.1 加固了串口接收：`ack`/`done`/`error` 等输出原语在 `Serial.pri
 
 例如 ESP32 客户端确定测试场地左侧允许 10 cm 最小净空时，向 Uno 发送 `CMD 21 SET_SAFE_DISTANCE LEFT 10`；收到 `ACK 21` 和 `DONE 21 SAFE_DISTANCE_SET` 后，可用 `CMD 22 GET_CONFIG` 核对。该命令配置的是安全阈值，不提供实时距离；左转时仍以 Uno 左侧超声波的有效读数作最终判断。
 
-例如寻找猫时，上位机发送 `MOTOR -75 75` 并在 500 ms 内重复发送；上位机通过摄像头发现猫进入画面时发送 `STOP`。**不要求猫处于画面中央**。`SEARCH_CAT_START` / `SEARCH_CAT_STOP` 是上位机动作，不是 Uno 命令。缓慢接近、走停试探、快速直线逃跑、被抓左右轻摇等动作同样由上位机拆成上述底层命令。
+例如寻找猫时，上位机发送一次 `MOTOR -75 75`；通过摄像头发现猫进入画面时发送 `STOP`。**不要求猫处于画面中央**。`SEARCH_CAT_START` / `SEARCH_CAT_STOP` 是上位机动作，不是 Uno 命令。缓慢接近、走停试探、快速直线逃跑、被抓左右轻摇等动作同样由上位机拆成上述底层命令。
 
 ## 本地安全规则
 
@@ -143,7 +147,7 @@ V5.2 观测边界修正：删除空板默认 400 cm 侧面净空，并为模拟�
 
 ## GET_TELEMETRY 回报格式
 
-接收 CMD <id> GET_TELEMETRY 后 ACK，按顺序回报以下紧凑行，再 DONE <id> TELEMETRY。逐行发送只在超声波空闲且 TX 至少空出 60 字节时进行，无新增大缓冲；每行少于 60 字节。输入、状态和安全循环仍在每行之间执行。各行采样时间略有不同，并非同时锁存。
+V6.3 接收 GET_TELEMETRY 后回 AK，采集一次 50 字节快照，发送三条 `TB <id> <part> <hex>*HH`，再发送 `DONE <id> TELEMETRY*HH`。每条 TB 含 17/17/16 字节的十六进制内容，含 CRLF 最长 50 字节；CRC-8 多项式为 0x07。只在超声波空闲且 TX 空出 60 字节时发送。50 字节缓冲两侧有边界标记，纳入内存异常检测。采样过程很短但各 GPIO 并非同一硬件时刻锁存；编码器计数由关中断快照取得。ESP 收齐匹配编号、校验完整的三帧和 DONE 后才一起更新读数；损坏、缺帧或超时不刷新旧读数。以下 DATA HW 行是网页解码后的显示格式，不再逐条通过 UART 发送。字节布局见 `compact_telemetry.h` 和 `compact-telemetry.mjs`。
 
 | 行类型（DATA <id> HW 后） | 位置字段 |
 | --- | --- |
@@ -167,7 +171,7 @@ P 为物理输入，V 为虚拟脉冲，I 为测试注入，O 为输入关闭；
 
 ## V5.6 持续开关控制
 
-前进和后退在串口模式下使用 MOTOR 开启、KEEP 每 200 ms 续期、STOP 关闭，由电脑根据 MP 累计脉冲决定停止；距离控制需要真实电机对应的真实编码器。续期不切断引脚，也不重置运动编号或脉冲基准。相同 MOTOR 命令同样只续期。通信中断超过 500 ms、电机堵转、障碍和触碰仍由 Uno 停止。电脑超过 750 ms 没有有效运动反馈，会停止距离动作。
+V5.9 历史实现使用 MOTOR/KEEP/STOP 续租。当前 V6.3 改为 MOTOR 开启、STOP 关闭，无 KEEP；新 MOTOR 替换旧运动编号和脉冲基准。电脑依据 MP 累计脉冲决定距离停车，超过 750 ms 无有效运动反馈时发 STOP。MP 间隔为 200 ms。电机堵转、侧向障碍和触碰仍由 Uno 停止；通信中断本身不再触发 Uno 的租约停车。DONE 回报统一加 CRC，ESP 的停车确认和有限 STOP 重试机制见 ESP 文档。
 
 巡游取消每 12 cm 必停的上限，持续接近标签，仍会因标签对齐、障碍或停靠而停止。默认提前停止余量 3 cm，可在几何参数区调整。硬件卡片正/反转按钮改为开/关，再按同方向按钮关闭该轮，可组合左右轮；总停止按钮关闭两轮。
 

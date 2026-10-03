@@ -3,9 +3,10 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 
 const root = new URL('./ESP32CatHost/', import.meta.url);
 const template = await readFile(new URL('debug_page.html', root), 'utf8');
-const telemetry = (await readFile(new URL('../hardware-telemetry.mjs', import.meta.url), 'utf8')).replace(/^export /gm, '');
+const compact = (await readFile(new URL('../compact-telemetry.mjs', import.meta.url), 'utf8')).replace(/^export /gm, '');
+const telemetry = (await readFile(new URL('../hardware-telemetry.mjs', import.meta.url), 'utf8')).replace(/^import[^\n]*\n/gm, '').replace(/^export /gm, '');
 if (!template.includes('/* HARDWARE_TELEMETRY */')) throw new Error('Missing telemetry bundle marker');
-const html = Buffer.from(template.replace('/* HARDWARE_TELEMETRY */', () => telemetry));
+const html = Buffer.from(template.replace('/* HARDWARE_TELEMETRY */', () => compact + telemetry));
 const compressed = gzipSync(html, { level: 9 });
 if (!gunzipSync(compressed).equals(html)) throw new Error('Debug page compression round-trip failed');
 const rows = [];

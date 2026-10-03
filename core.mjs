@@ -149,7 +149,7 @@ export class MockUno {
     this.now = now;
     this.sideOverrides = { LEFT: undefined, RIGHT: undefined };
     this.sideOverrideAt = { LEFT: -Infinity, RIGHT: -Infinity };
-    this.safeSideCm = { LEFT: 5, RIGHT: 5 };
+    this.safeSideCm = { LEFT: 1, RIGHT: 1 };
     this.touch = Object.fromEntries(TOUCH_AREAS.map(area => [area, false]));
     this.touchStarted = {};
     this.autoArea = null;
@@ -178,19 +178,16 @@ export class MockUno {
   }
 
   safetyReason(left, right) {
-    const forward = (left > 0 && right >= 0) || (right > 0 && left >= 0);
-    const front = this.distanceCm();
-    if (forward && (front === null || front < 15))
-      return ["FRONT_OBSTACLE_OR_CAMERA_INVALID", "FRONT", front];
+    // Match Uno: front clearance is enforced by the host controller.
     if (left < right) {
       const distance = this.sideDistanceCm("LEFT");
-      if (distance === null || distance < this.safeSideCm.LEFT)
-        return ["SIDE_LEFT_OBSTACLE_OR_SENSOR_INVALID", "LEFT", distance];
+      if (distance !== null && distance < this.safeSideCm.LEFT)
+        return ["SIDE_LEFT_OBSTACLE", "LEFT", distance];
     }
     if (left > right) {
       const distance = this.sideDistanceCm("RIGHT");
-      if (distance === null || distance < this.safeSideCm.RIGHT)
-        return ["SIDE_RIGHT_OBSTACLE_OR_SENSOR_INVALID", "RIGHT", distance];
+      if (distance !== null && distance < this.safeSideCm.RIGHT)
+        return ["SIDE_RIGHT_OBSTACLE", "RIGHT", distance];
     }
     return null;
   }
@@ -307,7 +304,7 @@ export class MockUno {
       return this.done(id, "CAMERA_FRONT_SET");
     }
     if (verb === "SET_SAFE_DISTANCE" && words.length === 3 && ["LEFT", "RIGHT"].includes(a)) {
-      const distance = numberArg(b, 5, 100);
+      const distance = numberArg(b, 1, 100);
       if (distance === null) return this.error(id, "INVALID_ARGUMENT");
       if (this.active) return this.error(id, "BUSY");
       this.safeSideCm[a] = distance;
@@ -336,11 +333,6 @@ export class MockUno {
       this.stopMotion("STOP_COMMAND");
       return this.done(id, "MOTOR_STOPPED");
     }
-    if (verb === "KEEP" && words.length === 1) {
-      if (this.active?.kind !== "MOTOR") return this.error(id, "NO_ACTIVE_MOTOR");
-      this.active.endAt = now + 500;
-      return this.done(id, "LEASE_RENEWED");
-    }
     if (verb === "MOVE" && words.length === 4 && ["FORWARD", "BACKWARD"].includes(a)) {
       const pwm = numberArg(b, 1, 255);
       const duration = numberArg(c, 1, 10000);
@@ -364,12 +356,8 @@ export class MockUno {
         this.stopMotion("MOTOR_ZERO");
         return this.done(id, "MOTOR_STOPPED");
       }
-      if (this.active?.kind === "MOTOR" && this.active.left === left / 255 && this.active.right === right / 255) {
-        this.active.endAt = now + 500;
-        return this.done(id, "LEASE_RENEWED");
-      }
       if (this.active?.kind === "MOTOR") this.stopMotion("REPLACED");
-      return this.startMotion(id, left / 255, right / 255, 500, "MOTOR", now);
+      return this.startMotion(id, left / 255, right / 255, Infinity, "MOTOR", now);
     }
     if (verb === "DRIVE" && words.length === 3) {
       const cm = numberArg(a, -100, 100);

@@ -1,0 +1,1271 @@
+{
+  "host": "192.168.137.15",
+  "durationSeconds": 6.485,
+  "failure": "Uno reset or error: ERROR 0 BAD_CHECKSUM",
+  "motionCommandsIssued": false,
+  "commands": [],
+  "events": [
+    {
+      "seq": 342,
+      "ms": 289224,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 343,
+      "ms": 289723,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 344,
+      "ms": 290224,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 345,
+      "ms": 290701,
+      "source": "DECISION",
+      "line": "STOPPED FAULT"
+    },
+    {
+      "seq": 346,
+      "ms": 290701,
+      "source": "FAULT",
+      "line": "operator_stop"
+    },
+    {
+      "seq": 347,
+      "ms": 290702,
+      "source": "MODE",
+      "line": "UART"
+    },
+    {
+      "seq": 348,
+      "ms": 290702,
+      "source": "SIM_TX",
+      "line": "C 43 STOP*24"
+    },
+    {
+      "seq": 349,
+      "ms": 290718,
+      "source": "SIM_TX",
+      "line": "C 44 SESSION_STOP*00"
+    },
+    {
+      "seq": 350,
+      "ms": 290724,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 351,
+      "ms": 290733,
+      "source": "UNO_TX",
+      "line": "C 45 STOP*D2"
+    },
+    {
+      "seq": 352,
+      "ms": 290739,
+      "source": "UNO_RX",
+      "line": "AK 45"
+    },
+    {
+      "seq": 353,
+      "ms": 290742,
+      "source": "UNO_RX",
+      "line": "DONE 45 MOTOR_STOPPED"
+    },
+    {
+      "seq": 354,
+      "ms": 290749,
+      "source": "UNO_TX",
+      "line": "C 46 SESSION_STOP*CD"
+    },
+    {
+      "seq": 355,
+      "ms": 290757,
+      "source": "UNO_RX",
+      "line": "AK 46"
+    },
+    {
+      "seq": 356,
+      "ms": 290760,
+      "source": "UNO_RX",
+      "line": "DONE 46 SESSION_STOPPED"
+    },
+    {
+      "seq": 357,
+      "ms": 290765,
+      "source": "UNO_TX",
+      "line": "C 47 GET_CONFIG*23"
+    },
+    {
+      "seq": 358,
+      "ms": 290771,
+      "source": "UNO_RX",
+      "line": "AK 47"
+    },
+    {
+      "seq": 359,
+      "ms": 290780,
+      "source": "UNO_TX",
+      "line": "C 48 GET_TELEMETRY*5C"
+    },
+    {
+      "seq": 360,
+      "ms": 290789,
+      "source": "UNO_RX",
+      "line": "DATA 47 CONFIG WHEEL_MM=67.5 TRACK_MM=0.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=5.0"
+    },
+    {
+      "seq": 361,
+      "ms": 290790,
+      "source": "UNO_RX",
+      "line": "DONE 47"
+    },
+    {
+      "seq": 362,
+      "ms": 291223,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1ec30 1c4b 9 0 0 0 0 0"
+    },
+    {
+      "seq": 363,
+      "ms": 291724,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 364,
+      "ms": 292223,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1f018 1d0d 0 0 0 0 0 0"
+    },
+    {
+      "seq": 365,
+      "ms": 292724,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 366,
+      "ms": 293223,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1f400 1d04 0 0 0 0 0 0"
+    },
+    {
+      "seq": 367,
+      "ms": 293724,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 368,
+      "ms": 294223,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1f7e8 1d0e 0 0 0 0 0 0"
+    },
+    {
+      "seq": 369,
+      "ms": 294723,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 370,
+      "ms": 294799,
+      "source": "UNO_TX",
+      "line": "C 49 PING*40"
+    },
+    {
+      "seq": 371,
+      "ms": 294807,
+      "source": "UNO_RX",
+      "line": "ERROR 0 BAD_CHECKSUM"
+    },
+    {
+      "seq": 372,
+      "ms": 294808,
+      "source": "UNO_PROTOCOL_ERROR",
+      "line": "unidentified command: BAD_CHECKSUM"
+    }
+  ],
+  "state": {
+    "firmware": "ESP32_CAT_HOST_0.7",
+    "ms": 295115,
+    "mode": "UART",
+    "phase": "STOPPED",
+    "unoTelemetry": [],
+    "unoConfig": {
+      "line": "DATA 47 CONFIG WHEEL_MM=67.5 TRACK_MM=0.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=5.0",
+      "at": 290790,
+      "source": "UNO_RX"
+    },
+    "debugResult": "等待 Uno 回报",
+    "debugBusy": false,
+    "benchBypass": false,
+    "hostLed": {
+      "pin": "onboard/GPIO21",
+      "on": false,
+      "mode": "OFF",
+      "gpioLevel": 1,
+      "source": "ESP_GPIO_CONTROL"
+    },
+    "lastUnoAgeMs": 308,
+    "lastRx": "ERROR 0 BAD_CHECKSUM",
+    "lastTx": "C 49 PING*40",
+    "cameraOk": true,
+    "frameSeq": 1473,
+    "heap": 39988,
+    "psram": 8168076,
+    "visionMode": "OFF",
+    "visionIntervalMs": 200,
+    "apIP": "192.168.4.1",
+    "stationIP": "192.168.137.15",
+    "config": {
+      "explorationBranchPercent": 20,
+      "touchFlashPercent": 20,
+      "touchPreyPercent": 20,
+      "touchSlowEscapePercent": 40,
+      "touchFastEscapePercent": 40,
+      "catFollowProbePercent": 5,
+      "catFollowObservePercent": 35,
+      "catFollowPatrolPercent": 60,
+      "endingAfterRounds": 3,
+      "endingInactivitySeconds": 12,
+      "endingPatrolPercent": 40,
+      "endingSilentPercent": 30,
+      "endingSignalPercent": 30,
+      "captureWaitMaxSeconds": 15,
+      "captureCueFlashMs": 2200,
+      "captureCueBeepMs": 360,
+      "robotFarApproachPercent": 85,
+      "robotFarProbePercent": 15,
+      "robotNearSignalPercent": 20,
+      "robotNearObservePercent": 40,
+      "robotNearStayPercent": 40,
+      "catProbeCooldownSeconds": 15,
+      "robotProbeCooldownSeconds": 15,
+      "farCatThresholdCm": 40,
+      "initialLookSeconds": 5,
+      "postEscapeWaitSeconds": 10,
+      "touchDebounceMs": 1000,
+      "catLeaveDistanceCm": 70,
+      "catLeaveSeconds": 5,
+      "sessionLimitSeconds": 60,
+      "decisionIntervalMs": 2500,
+      "searchTimeoutMs": 15000,
+      "finalSearchTimeoutMs": 8000,
+      "alignTimeoutMs": 5000,
+      "touchReleaseTimeoutMs": 4000,
+      "searchPwm": 75,
+      "centerTolerancePercent": 5.5,
+      "alignPwm": 52,
+      "slowApproachCm": 9,
+      "slowApproachPwm": 95,
+      "probeStep1Cm": 3,
+      "probeStep2Cm": 4,
+      "probeStep3Cm": 3,
+      "probePause1Ms": 700,
+      "probePause2Ms": 900,
+      "probePause3Ms": 600,
+      "probePwm": 90,
+      "signalFlashMs": 1400,
+      "signalBeepMs": 180,
+      "touchFeedbackBeepMs": 180,
+      "escapeDistanceCm": 26,
+      "slowEscapePwm": 95,
+      "fastEscapePwm": 210,
+      "route": [
+        0
+      ],
+      "patrolSearchPwm": 45,
+      "patrolAlignPwm": 30,
+      "wheelMm": 67.5,
+      "trackMm": 120,
+      "stopMarginCm": 3,
+      "tagStopWidth": 0.25,
+      "catNearWidth": 0.35,
+      "catFarWidth": 0.12,
+      "visionMaxAgeMs": 1500,
+      "frontCalibrated": false,
+      "frontBlockBottom": 0.88,
+      "floorRoiTop": 0.75,
+      "floorDifferenceThreshold": 35,
+      "floorReference": []
+    },
+    "vision": {
+      "policy": {
+        "action": "FAULT",
+        "targetIndex": 0,
+        "rounds": 0
+      }
+    },
+    "cameraVision": null,
+    "droppedLogs": 212,
+    "logs": [
+      {
+        "seq": 213,
+        "ms": 232724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 214,
+        "ms": 233225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 215,
+        "ms": 233724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 216,
+        "ms": 234225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 217,
+        "ms": 234725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 218,
+        "ms": 235226,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 219,
+        "ms": 235724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 220,
+        "ms": 236225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 221,
+        "ms": 236537,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 222,
+        "ms": 236725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 223,
+        "ms": 237225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 224,
+        "ms": 237724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 225,
+        "ms": 238225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 226,
+        "ms": 238538,
+        "source": "SIM_TX",
+        "line": "C 35 GET_TELEMETRY*8E"
+      },
+      {
+        "seq": 227,
+        "ms": 238725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 228,
+        "ms": 239224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 229,
+        "ms": 239723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 230,
+        "ms": 240226,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 231,
+        "ms": 240724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 232,
+        "ms": 241225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 233,
+        "ms": 241725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 234,
+        "ms": 242225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 235,
+        "ms": 242724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 236,
+        "ms": 243225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 237,
+        "ms": 243539,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 238,
+        "ms": 243725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 239,
+        "ms": 244225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 240,
+        "ms": 244724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 241,
+        "ms": 245225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 242,
+        "ms": 245539,
+        "source": "SIM_TX",
+        "line": "C 36 GET_TELEMETRY*56"
+      },
+      {
+        "seq": 243,
+        "ms": 245724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 244,
+        "ms": 246225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 245,
+        "ms": 246723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 246,
+        "ms": 247226,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 247,
+        "ms": 247725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 248,
+        "ms": 248225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 249,
+        "ms": 248723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 250,
+        "ms": 249224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 251,
+        "ms": 249725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 252,
+        "ms": 250225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 253,
+        "ms": 250541,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 254,
+        "ms": 250725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 255,
+        "ms": 251225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 256,
+        "ms": 251723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 257,
+        "ms": 252224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 258,
+        "ms": 252541,
+        "source": "SIM_TX",
+        "line": "C 37 GET_TELEMETRY*E3"
+      },
+      {
+        "seq": 259,
+        "ms": 252724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 260,
+        "ms": 253225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 261,
+        "ms": 253723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 262,
+        "ms": 254224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 263,
+        "ms": 254725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 264,
+        "ms": 255225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 265,
+        "ms": 255723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 266,
+        "ms": 256224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 267,
+        "ms": 256725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 268,
+        "ms": 257225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 269,
+        "ms": 257543,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 270,
+        "ms": 257725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 271,
+        "ms": 258224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 272,
+        "ms": 258723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 273,
+        "ms": 259224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 274,
+        "ms": 259543,
+        "source": "SIM_TX",
+        "line": "C 38 GET_TELEMETRY*52"
+      },
+      {
+        "seq": 275,
+        "ms": 259724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 276,
+        "ms": 260225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 277,
+        "ms": 260723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 278,
+        "ms": 261224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 279,
+        "ms": 261725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 280,
+        "ms": 262225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 281,
+        "ms": 262724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 282,
+        "ms": 263224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 283,
+        "ms": 263723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 284,
+        "ms": 264224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 285,
+        "ms": 264545,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 286,
+        "ms": 264723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 287,
+        "ms": 265224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 288,
+        "ms": 265723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 289,
+        "ms": 266224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 290,
+        "ms": 266545,
+        "source": "SIM_TX",
+        "line": "C 39 GET_TELEMETRY*E7"
+      },
+      {
+        "seq": 291,
+        "ms": 266724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 292,
+        "ms": 267225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 293,
+        "ms": 267723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 294,
+        "ms": 268224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 295,
+        "ms": 268725,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 296,
+        "ms": 269225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 297,
+        "ms": 269723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 298,
+        "ms": 270224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 299,
+        "ms": 270723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 300,
+        "ms": 271224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 301,
+        "ms": 271547,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 302,
+        "ms": 271723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 303,
+        "ms": 272224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 304,
+        "ms": 272723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 305,
+        "ms": 273224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 306,
+        "ms": 273547,
+        "source": "SIM_TX",
+        "line": "C 40 GET_TELEMETRY*EF"
+      },
+      {
+        "seq": 307,
+        "ms": 273724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 308,
+        "ms": 274225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 309,
+        "ms": 274723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 310,
+        "ms": 275224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 311,
+        "ms": 275724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 312,
+        "ms": 276225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 313,
+        "ms": 276723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 314,
+        "ms": 277224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 315,
+        "ms": 277723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 316,
+        "ms": 278224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 317,
+        "ms": 278549,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 318,
+        "ms": 278723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 319,
+        "ms": 279224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 320,
+        "ms": 279723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 321,
+        "ms": 280224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 322,
+        "ms": 280549,
+        "source": "SIM_TX",
+        "line": "C 41 GET_TELEMETRY*5A"
+      },
+      {
+        "seq": 323,
+        "ms": 280724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 324,
+        "ms": 281224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 325,
+        "ms": 281723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 326,
+        "ms": 282224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 327,
+        "ms": 282724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 328,
+        "ms": 283225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 329,
+        "ms": 283723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 330,
+        "ms": 284224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 331,
+        "ms": 284724,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 332,
+        "ms": 285224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 333,
+        "ms": 285551,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 334,
+        "ms": 285723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 335,
+        "ms": 286224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 336,
+        "ms": 286723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 337,
+        "ms": 287224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 338,
+        "ms": 287551,
+        "source": "SIM_TX",
+        "line": "C 42 GET_TELEMETRY*82"
+      },
+      {
+        "seq": 339,
+        "ms": 287722,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 340,
+        "ms": 288225,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 341,
+        "ms": 288723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 342,
+        "ms": 289224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 343,
+        "ms": 289723,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 344,
+        "ms": 290224,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 345,
+        "ms": 290701,
+        "source": "DECISION",
+        "line": "STOPPED FAULT"
+      },
+      {
+        "seq": 346,
+        "ms": 290701,
+        "source": "FAULT",
+        "line": "operator_stop"
+      },
+      {
+        "seq": 347,
+        "ms": 290702,
+        "source": "MODE",
+        "line": "UART"
+      },
+      {
+        "seq": 348,
+        "ms": 290702,
+        "source": "SIM_TX",
+        "line": "C 43 STOP*24"
+      },
+      {
+        "seq": 349,
+        "ms": 290718,
+        "source": "SIM_TX",
+        "line": "C 44 SESSION_STOP*00"
+      },
+      {
+        "seq": 350,
+        "ms": 290724,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 351,
+        "ms": 290733,
+        "source": "UNO_TX",
+        "line": "C 45 STOP*D2"
+      },
+      {
+        "seq": 352,
+        "ms": 290739,
+        "source": "UNO_RX",
+        "line": "AK 45"
+      },
+      {
+        "seq": 353,
+        "ms": 290742,
+        "source": "UNO_RX",
+        "line": "DONE 45 MOTOR_STOPPED"
+      },
+      {
+        "seq": 354,
+        "ms": 290749,
+        "source": "UNO_TX",
+        "line": "C 46 SESSION_STOP*CD"
+      },
+      {
+        "seq": 355,
+        "ms": 290757,
+        "source": "UNO_RX",
+        "line": "AK 46"
+      },
+      {
+        "seq": 356,
+        "ms": 290760,
+        "source": "UNO_RX",
+        "line": "DONE 46 SESSION_STOPPED"
+      },
+      {
+        "seq": 357,
+        "ms": 290765,
+        "source": "UNO_TX",
+        "line": "C 47 GET_CONFIG*23"
+      },
+      {
+        "seq": 358,
+        "ms": 290771,
+        "source": "UNO_RX",
+        "line": "AK 47"
+      },
+      {
+        "seq": 359,
+        "ms": 290780,
+        "source": "UNO_TX",
+        "line": "C 48 GET_TELEMETRY*5C"
+      },
+      {
+        "seq": 360,
+        "ms": 290789,
+        "source": "UNO_RX",
+        "line": "DATA 47 CONFIG WHEEL_MM=67.5 TRACK_MM=0.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=5.0"
+      },
+      {
+        "seq": 361,
+        "ms": 290790,
+        "source": "UNO_RX",
+        "line": "DONE 47"
+      },
+      {
+        "seq": 362,
+        "ms": 291223,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG H 1ec30 1c4b 9 0 0 0 0 0"
+      },
+      {
+        "seq": 363,
+        "ms": 291724,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 364,
+        "ms": 292223,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG H 1f018 1d0d 0 0 0 0 0 0"
+      },
+      {
+        "seq": 365,
+        "ms": 292724,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 366,
+        "ms": 293223,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG H 1f400 1d04 0 0 0 0 0 0"
+      },
+      {
+        "seq": 367,
+        "ms": 293724,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 368,
+        "ms": 294223,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG H 1f7e8 1d0e 0 0 0 0 0 0"
+      },
+      {
+        "seq": 369,
+        "ms": 294723,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 370,
+        "ms": 294799,
+        "source": "UNO_TX",
+        "line": "C 49 PING*40"
+      },
+      {
+        "seq": 371,
+        "ms": 294807,
+        "source": "UNO_RX",
+        "line": "ERROR 0 BAD_CHECKSUM"
+      },
+      {
+        "seq": 372,
+        "ms": 294808,
+        "source": "UNO_PROTOCOL_ERROR",
+        "line": "unidentified command: BAD_CHECKSUM"
+      }
+    ]
+  }
+}

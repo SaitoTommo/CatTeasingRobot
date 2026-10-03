@@ -1,0 +1,38 @@
+{
+  "durationSeconds": 6.1,
+  "usbWrites": 0,
+  "wiringConfirmed": false,
+  "ports": {
+    "COM10": {
+      "baud": 9600,
+      "bytes": 80,
+      "zeroBytes": 0,
+      "roundTrips": 0,
+      "timeouts": 0,
+      "requestsReceived": 0,
+      "rawLines": 0,
+      "error": null,
+      "lines": [
+        "READY UNO_CAT_V5.7",
+        "EVENT HOST_LED OFF",
+        "EVENT UART_SOFT_RX D12 BAUD=9600 TX=D1"
+      ]
+    },
+    "COM11": {
+      "baud": 115200,
+      "bytes": 321,
+      "zeroBytes": 0,
+      "roundTrips": 0,
+      "timeouts": 0,
+      "requestsReceived": 0,
+      "rawLines": 0,
+      "error": null,
+      "lines": [
+        "{\"seq\":11769,\"ms\":702982,\"source\":\"UNO_RX\",\"line\":\"DATA READY UNO_CAT_V5.7\"}",
+        "{\"seq\":11770,\"ms\":703003,\"source\":\"UNO_RX\",\"line\":\"EVENT HOST_LED OFF\"}",
+        "{\"seq\":11771,\"ms\":703044,\"source\":\"UNO_RX\",\"line\":\"EVENT UART_SOFT_RX D12 BAUD=9600 TX=D1\"}",
+        "{\"seq\":11772,\"ms\":706293,\"source\":\"TELEMETRY_TIMEOUT\",\"line\":\"retry in 2s\"}"
+      ]
+    }
+  }
+}

@@ -123,13 +123,14 @@ if(!d["frontBlockBottom"].is<float>()||!isfinite(d["frontBlockBottom"].as<float>
 if(!d["floorRoiTop"].is<float>()||!isfinite(d["floorRoiTop"].as<float>())||d["floorRoiTop"].as<float>()<0.5||d["floorRoiTop"].as<float>()>0.95){error="invalid floorRoiTop";return false;}
 if(!d["floorDifferenceThreshold"].is<float>()||!isfinite(d["floorDifferenceThreshold"].as<float>())||d["floorDifferenceThreshold"].as<float>()<5||d["floorDifferenceThreshold"].as<float>()>100){error="invalid floorDifferenceThreshold";return false;}
 for(auto route=d["route"].as<JsonArray>();JsonVariant id:route){if(!id.is<int>()||id.as<int>()<0||id.as<int>()>586){error="invalid tag ID";return false;}}
-if(!d["route"].is<JsonArray>()||!d["route"].size()||d["route"].size()>128){error="route size 1..128";return false;}
+if(!d["route"].is<JsonArray>()||d["route"].size()>128){error="route size 0..128 (save a nonempty route before starting)";return false;}
 if(d["catFarWidth"].as<float>()>=d["catNearWidth"].as<float>()){error="catFarWidth must be less than catNearWidth";return false;}
 if(fabs(d["touchPreyPercent"].as<float>()+d["touchSlowEscapePercent"].as<float>()+d["touchFastEscapePercent"].as<float>()-100)>0.01){error="probability group must sum to 100: touchPreyPercent";return false;}
 if(fabs(d["catFollowProbePercent"].as<float>()+d["catFollowObservePercent"].as<float>()+d["catFollowPatrolPercent"].as<float>()-100)>0.01){error="probability group must sum to 100: catFollowProbePercent";return false;}
 if(fabs(d["endingPatrolPercent"].as<float>()+d["endingSilentPercent"].as<float>()+d["endingSignalPercent"].as<float>()-100)>0.01){error="probability group must sum to 100: endingPatrolPercent";return false;}
 if(fabs(d["robotFarApproachPercent"].as<float>()+d["robotFarProbePercent"].as<float>()-100)>0.01){error="probability group must sum to 100: robotFarApproachPercent";return false;}
 if(fabs(d["robotNearSignalPercent"].as<float>()+d["robotNearObservePercent"].as<float>()+d["robotNearStayPercent"].as<float>()-100)>0.01){error="probability group must sum to 100: robotNearSignalPercent";return false;}
+if(!d["frontAvoidanceEnabled"].is<bool>()){error="invalid front avoidance flag";return false;}
 if(!d["frontCalibrated"].is<bool>()){error="invalid calibration flag";return false;}
 if(d["floorReference"].size()!=0&&d["floorReference"].size()!=72){error="invalid floor reference";return false;}
 for(JsonVariant v:d["floorReference"].as<JsonArray>())if(!v.is<float>()||v.as<float>()<0||v.as<float>()>255){error="invalid floor reference";return false;}

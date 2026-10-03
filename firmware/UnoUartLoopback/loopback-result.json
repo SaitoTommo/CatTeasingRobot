@@ -1,0 +1,10 @@
+{
+  "stage": "uno_D1_to_D0_direct_loopback",
+  "port": "COM10",
+  "baud": 57600,
+  "serialReadOnly": true,
+  "okCount": 4,
+  "timeoutCount": 0,
+  "raw": "READY UNO_UART_LOOPBACK_1 baud=57600\r\nLB_TEST:1:0123456789:AbCdEf\r\nLOOPBACK_OK id=1 passed=1 failed=0\r\nLB_TEST:2:0123456789:AbCdEf\r\nLOOPBACK_OK id=2 passed=2 failed=0\r\nLB_TEST:3:0123456789:AbCdEf\r\nLOOPBACK_OK id=3 passed=3 failed=0\r\nLB_TEST:4:0123456789:AbCdEf\r\nLOOPBACK_OK id=4 passed=4 failed=0\r\n",
+  "wiringConfirmedByUser": true
+}

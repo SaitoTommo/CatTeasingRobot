@@ -1,0 +1,3868 @@
+{
+  "initial": {
+    "firmware": "ESP32_CAT_HOST_0.9",
+    "ms": 74682,
+    "mode": "UART",
+    "phase": "STOPPED",
+    "unoTelemetry": [
+      {
+        "line": "DATA 17 HW STATE 103600 IDLE 0 0 16383",
+        "at": 74520,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW ML 0 0 0 1 0 0",
+        "at": 74524,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW MR 0 0 0 1 0 0",
+        "at": 74529,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW EL 1 0 0 0.0 P",
+        "at": 74534,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW ER 1 0 0 0.0 P",
+        "at": 74543,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW SL 1 1 0 -1.0 -1.0 P",
+        "at": 74548,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW SR 1 1 0 55.1 55.1 P",
+        "at": 74553,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW T TOP 1 1 0 P",
+        "at": 74558,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW T LEFT 1 1 0 P",
+        "at": 74563,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW T RIGHT 1 1 0 P",
+        "at": 74568,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW T REAR 1 1 0 P",
+        "at": 74573,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW OUT 1 0 -1 1 0 0",
+        "at": 74578,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 17 HW FRONT -1.0 HOST",
+        "at": 74581,
+        "source": "UNO_RX"
+      }
+    ],
+    "unoConfig": {
+      "line": "",
+      "at": 0,
+      "source": "UNO_RX"
+    },
+    "debugResult": "等待 Uno 回报",
+    "debugBusy": false,
+    "benchBypass": false,
+    "hostLed": {
+      "pin": "onboard/GPIO21",
+      "on": false,
+      "mode": "OFF",
+      "gpioLevel": 1,
+      "source": "ESP_GPIO_CONTROL"
+    },
+    "patrolStatus": {
+      "action": "FAULT",
+      "lastFault": "operator_stop",
+      "lastMotionFailure": "",
+      "motorId": 0,
+      "motorConfirmed": false,
+      "leftPwm": 0,
+      "rightPwm": 0,
+      "targetIndex": 0
+    },
+    "lastUnoAgeMs": 98,
+    "lastRx": "DONE 17 TELEMETRY",
+    "lastTx": "C 17 GET_TELEMETRY*E7",
+    "cameraOk": true,
+    "frameSeq": 371,
+    "heap": 37376,
+    "psram": 8167688,
+    "visionMode": "OFF",
+    "visionIntervalMs": 200,
+    "apIP": "192.168.4.1",
+    "stationIP": "192.168.137.15",
+    "config": {
+      "explorationBranchPercent": 20,
+      "touchFlashPercent": 20,
+      "touchPreyPercent": 20,
+      "touchSlowEscapePercent": 40,
+      "touchFastEscapePercent": 40,
+      "catFollowProbePercent": 5,
+      "catFollowObservePercent": 35,
+      "catFollowPatrolPercent": 60,
+      "endingAfterRounds": 3,
+      "endingInactivitySeconds": 12,
+      "endingPatrolPercent": 40,
+      "endingSilentPercent": 30,
+      "endingSignalPercent": 30,
+      "captureWaitMaxSeconds": 15,
+      "captureCueFlashMs": 2200,
+      "captureCueBeepMs": 360,
+      "robotFarApproachPercent": 85,
+      "robotFarProbePercent": 15,
+      "robotNearSignalPercent": 20,
+      "robotNearObservePercent": 40,
+      "robotNearStayPercent": 40,
+      "catProbeCooldownSeconds": 15,
+      "robotProbeCooldownSeconds": 15,
+      "farCatThresholdCm": 40,
+      "initialLookSeconds": 5,
+      "postEscapeWaitSeconds": 10,
+      "touchDebounceMs": 1000,
+      "catLeaveDistanceCm": 70,
+      "catLeaveSeconds": 5,
+      "sessionLimitSeconds": 60,
+      "decisionIntervalMs": 2500,
+      "searchTimeoutMs": 15000,
+      "finalSearchTimeoutMs": 8000,
+      "alignTimeoutMs": 5000,
+      "touchReleaseTimeoutMs": 4000,
+      "searchPwm": 75,
+      "centerTolerancePercent": 5.5,
+      "alignPwm": 52,
+      "slowApproachCm": 9,
+      "slowApproachPwm": 95,
+      "probeStep1Cm": 3,
+      "probeStep2Cm": 4,
+      "probeStep3Cm": 3,
+      "probePause1Ms": 700,
+      "probePause2Ms": 900,
+      "probePause3Ms": 600,
+      "probePwm": 90,
+      "signalFlashMs": 1400,
+      "signalBeepMs": 180,
+      "touchFeedbackBeepMs": 180,
+      "escapeDistanceCm": 26,
+      "slowEscapePwm": 95,
+      "fastEscapePwm": 210,
+      "route": [
+        41,
+        47
+      ],
+      "patrolSearchPwm": 45,
+      "patrolAlignPwm": 30,
+      "wheelMm": 67.5,
+      "trackMm": 120,
+      "stopMarginCm": 3,
+      "tagStopWidth": 0.25,
+      "catNearWidth": 0.35,
+      "catFarWidth": 0.12,
+      "visionMaxAgeMs": 1500,
+      "frontAvoidanceEnabled": false,
+      "frontCalibrated": false,
+      "frontBlockBottom": 0.88,
+      "floorRoiTop": 0.75,
+      "floorDifferenceThreshold": 35,
+      "floorReference": []
+    },
+    "vision": {
+      "policy": {
+        "action": "FAULT",
+        "targetIndex": 0,
+        "rounds": 0
+      }
+    },
+    "cameraVision": null,
+    "droppedLogs": 44,
+    "logs": [
+      {
+        "seq": 45,
+        "ms": 18919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 46,
+        "ms": 19419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 47,
+        "ms": 19520,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 48,
+        "ms": 19918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 49,
+        "ms": 20419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 50,
+        "ms": 20919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 51,
+        "ms": 21418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 52,
+        "ms": 21521,
+        "source": "SIM_TX",
+        "line": "C 4 GET_TELEMETRY*89"
+      },
+      {
+        "seq": 53,
+        "ms": 21919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 54,
+        "ms": 22418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 55,
+        "ms": 22919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 56,
+        "ms": 23419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 57,
+        "ms": 23919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 58,
+        "ms": 24418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 59,
+        "ms": 24920,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 60,
+        "ms": 25418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 61,
+        "ms": 25919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 62,
+        "ms": 26419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 63,
+        "ms": 26523,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 64,
+        "ms": 26919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 65,
+        "ms": 27418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 66,
+        "ms": 27919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 67,
+        "ms": 28418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 68,
+        "ms": 28523,
+        "source": "SIM_TX",
+        "line": "C 5 GET_TELEMETRY*3C"
+      },
+      {
+        "seq": 69,
+        "ms": 28918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 70,
+        "ms": 29417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 71,
+        "ms": 29919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 72,
+        "ms": 30419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 73,
+        "ms": 30919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 74,
+        "ms": 31419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 75,
+        "ms": 31919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 76,
+        "ms": 32418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 77,
+        "ms": 32918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 78,
+        "ms": 33419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 79,
+        "ms": 33526,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 80,
+        "ms": 33918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 81,
+        "ms": 34417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 82,
+        "ms": 34918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 83,
+        "ms": 35418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 84,
+        "ms": 35527,
+        "source": "SIM_TX",
+        "line": "C 6 GET_TELEMETRY*E4"
+      },
+      {
+        "seq": 85,
+        "ms": 35918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 86,
+        "ms": 36417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 87,
+        "ms": 36919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 88,
+        "ms": 37418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 89,
+        "ms": 37919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 90,
+        "ms": 38418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 91,
+        "ms": 38919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 92,
+        "ms": 39419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 93,
+        "ms": 39919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 94,
+        "ms": 40419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 95,
+        "ms": 40528,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 96,
+        "ms": 40918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 97,
+        "ms": 41418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 98,
+        "ms": 41919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 99,
+        "ms": 42440,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 100,
+        "ms": 42529,
+        "source": "SIM_TX",
+        "line": "C 7 GET_TELEMETRY*51"
+      },
+      {
+        "seq": 101,
+        "ms": 42918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 102,
+        "ms": 43417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 103,
+        "ms": 43920,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 104,
+        "ms": 44418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 105,
+        "ms": 44918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 106,
+        "ms": 45418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 107,
+        "ms": 45919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 108,
+        "ms": 46418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 109,
+        "ms": 46919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 110,
+        "ms": 47418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 111,
+        "ms": 47531,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 112,
+        "ms": 47919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 113,
+        "ms": 48418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 114,
+        "ms": 48919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 115,
+        "ms": 49419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 116,
+        "ms": 49531,
+        "source": "SIM_TX",
+        "line": "C 8 GET_TELEMETRY*E0"
+      },
+      {
+        "seq": 117,
+        "ms": 49919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 118,
+        "ms": 50418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 119,
+        "ms": 50918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 120,
+        "ms": 51419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 121,
+        "ms": 51919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 122,
+        "ms": 52417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 123,
+        "ms": 52918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 124,
+        "ms": 53417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 125,
+        "ms": 53918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 126,
+        "ms": 54417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 127,
+        "ms": 54532,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 128,
+        "ms": 54918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 129,
+        "ms": 55417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 130,
+        "ms": 55919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 131,
+        "ms": 56418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 132,
+        "ms": 56533,
+        "source": "SIM_TX",
+        "line": "C 9 GET_TELEMETRY*55"
+      },
+      {
+        "seq": 133,
+        "ms": 56918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 134,
+        "ms": 57417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 135,
+        "ms": 57918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 136,
+        "ms": 58419,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 137,
+        "ms": 58918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 138,
+        "ms": 59418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 139,
+        "ms": 59960,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 140,
+        "ms": 60418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 141,
+        "ms": 60918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 142,
+        "ms": 61417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 143,
+        "ms": 61534,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 144,
+        "ms": 61918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 145,
+        "ms": 62418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 146,
+        "ms": 62917,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 147,
+        "ms": 63418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 148,
+        "ms": 63535,
+        "source": "SIM_TX",
+        "line": "C 10 GET_TELEMETRY*E5"
+      },
+      {
+        "seq": 149,
+        "ms": 63919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 150,
+        "ms": 64418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 151,
+        "ms": 64917,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 152,
+        "ms": 65418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 153,
+        "ms": 65918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 154,
+        "ms": 66417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 155,
+        "ms": 66918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 156,
+        "ms": 67418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 157,
+        "ms": 67919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 158,
+        "ms": 68417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 159,
+        "ms": 68536,
+        "source": "TELEMETRY_TIMEOUT",
+        "line": "retry in 2s"
+      },
+      {
+        "seq": 160,
+        "ms": 68918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 161,
+        "ms": 69417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 162,
+        "ms": 69917,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 163,
+        "ms": 70418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 164,
+        "ms": 70536,
+        "source": "SIM_TX",
+        "line": "C 11 GET_TELEMETRY*50"
+      },
+      {
+        "seq": 165,
+        "ms": 70919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 166,
+        "ms": 71417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 167,
+        "ms": 71918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 168,
+        "ms": 72418,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 169,
+        "ms": 72919,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 170,
+        "ms": 73417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 171,
+        "ms": 73918,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 172,
+        "ms": 74417,
+        "source": "INPUT_REJECTED",
+        "line": "source does not match mode"
+      },
+      {
+        "seq": 173,
+        "ms": 74425,
+        "source": "DECISION",
+        "line": "STOPPED FAULT"
+      },
+      {
+        "seq": 174,
+        "ms": 74426,
+        "source": "FAULT",
+        "line": "operator_stop"
+      },
+      {
+        "seq": 175,
+        "ms": 74426,
+        "source": "MODE",
+        "line": "UART"
+      },
+      {
+        "seq": 176,
+        "ms": 74427,
+        "source": "SIM_TX",
+        "line": "C 12 STOP*A7"
+      },
+      {
+        "seq": 177,
+        "ms": 74443,
+        "source": "SIM_TX",
+        "line": "C 13 SESSION_STOP*DA"
+      },
+      {
+        "seq": 178,
+        "ms": 74459,
+        "source": "UNO_TX",
+        "line": "C 14 STOP*51"
+      },
+      {
+        "seq": 179,
+        "ms": 74471,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG RX 55 1F 51 8A29A560537DAFEFEFAFC8FF"
+      },
+      {
+        "seq": 180,
+        "ms": 74474,
+        "source": "UNO_TX",
+        "line": "C 15 SESSION_STOP*8A"
+      },
+      {
+        "seq": 181,
+        "ms": 74477,
+        "source": "UNO_RX",
+        "line": "ERROR 0 BAD_CHECKSUM"
+      },
+      {
+        "seq": 182,
+        "ms": 74478,
+        "source": "UNO_PROTOCOL_ERROR",
+        "line": "unidentified command: BAD_CHECKSUM"
+      },
+      {
+        "seq": 183,
+        "ms": 74488,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG RX 20 C2 8A 4F2031352053455353494F4E"
+      },
+      {
+        "seq": 184,
+        "ms": 74489,
+        "source": "UNO_TX",
+        "line": "C 16 GET_CONFIG*B4"
+      },
+      {
+        "seq": 185,
+        "ms": 74491,
+        "source": "UNO_RX",
+        "line": "ERROR 0 BAD_CHECKSUM"
+      },
+      {
+        "seq": 186,
+        "ms": 74492,
+        "source": "UNO_PROTOCOL_ERROR",
+        "line": "unidentified command: BAD_CHECKSUM"
+      },
+      {
+        "seq": 187,
+        "ms": 74498,
+        "source": "UNO_RX",
+        "line": "ERROR 0 BAD_ENVELOPE"
+      },
+      {
+        "seq": 188,
+        "ms": 74499,
+        "source": "UNO_PROTOCOL_ERROR",
+        "line": "unidentified command: BAD_ENVELOPE"
+      },
+      {
+        "seq": 189,
+        "ms": 74505,
+        "source": "UNO_TX",
+        "line": "C 17 GET_TELEMETRY*E7"
+      },
+      {
+        "seq": 190,
+        "ms": 74513,
+        "source": "UNO_RX",
+        "line": "AK 17"
+      },
+      {
+        "seq": 191,
+        "ms": 74520,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW STATE 103600 IDLE 0 0 16383"
+      },
+      {
+        "seq": 192,
+        "ms": 74523,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 193,
+        "ms": 74528,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 194,
+        "ms": 74533,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW EL 1 0 0 0.0 P"
+      },
+      {
+        "seq": 195,
+        "ms": 74542,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW ER 1 0 0 0.0 P"
+      },
+      {
+        "seq": 196,
+        "ms": 74547,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 197,
+        "ms": 74552,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW SR 1 1 0 55.1 55.1 P"
+      },
+      {
+        "seq": 198,
+        "ms": 74557,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 199,
+        "ms": 74562,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 200,
+        "ms": 74567,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 201,
+        "ms": 74572,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 202,
+        "ms": 74577,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 203,
+        "ms": 74580,
+        "source": "UNO_RX",
+        "line": "DATA 17 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 204,
+        "ms": 74585,
+        "source": "UNO_RX",
+        "line": "DONE 17 TELEMETRY"
+      }
+    ]
+  },
+  "events": [
+    {
+      "seq": 205,
+      "ms": 74746,
+      "source": "UNO_TX",
+      "line": "C 18 GET_TELEMETRY*56"
+    },
+    {
+      "seq": 206,
+      "ms": 74753,
+      "source": "UNO_RX",
+      "line": "AK 18"
+    },
+    {
+      "seq": 207,
+      "ms": 74760,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW STATE 103841 IDLE 0 0 16383"
+    },
+    {
+      "seq": 208,
+      "ms": 74765,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seq": 209,
+      "ms": 74770,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seq": 210,
+      "ms": 74775,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seq": 211,
+      "ms": 74781,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW ER 1 0 0 0.0 P"
+    },
+    {
+      "seq": 212,
+      "ms": 74786,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 213,
+      "ms": 74793,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW SR 1 1 0 55.6 55.6 P"
+    },
+    {
+      "seq": 214,
+      "ms": 74796,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 215,
+      "ms": 74801,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 216,
+      "ms": 74806,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 217,
+      "ms": 74811,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 218,
+      "ms": 74816,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 219,
+      "ms": 74821,
+      "source": "UNO_RX",
+      "line": "DATA 18 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 220,
+      "ms": 74824,
+      "source": "UNO_RX",
+      "line": "DONE 18 TELEMETRY"
+    },
+    {
+      "seq": 221,
+      "ms": 74917,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 19640 1b59 3 0 d 0 0 0"
+    },
+    {
+      "seq": 222,
+      "ms": 75046,
+      "source": "UNO_TX",
+      "line": "C 19 GET_TELEMETRY*E3"
+    },
+    {
+      "seq": 223,
+      "ms": 75053,
+      "source": "UNO_RX",
+      "line": "AK 19"
+    },
+    {
+      "seq": 224,
+      "ms": 75060,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW STATE 104141 IDLE 0 0 16383"
+    },
+    {
+      "seq": 225,
+      "ms": 75065,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seq": 226,
+      "ms": 75070,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seq": 227,
+      "ms": 75075,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seq": 228,
+      "ms": 75155,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW ER 1 0 0 0.0 P"
+    },
+    {
+      "seq": 229,
+      "ms": 75159,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 230,
+      "ms": 75160,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seq": 231,
+      "ms": 75161,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 232,
+      "ms": 75162,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 233,
+      "ms": 75164,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 234,
+      "ms": 75166,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 235,
+      "ms": 75167,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 236,
+      "ms": 75168,
+      "source": "UNO_RX",
+      "line": "DATA 19 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 237,
+      "ms": 75169,
+      "source": "UNO_RX",
+      "line": "DONE 19 TELEMETRY"
+    },
+    {
+      "seq": 238,
+      "ms": 75182,
+      "source": "VISION_MODE",
+      "line": "BOTH automatically enabled for patrol"
+    },
+    {
+      "seq": 239,
+      "ms": 75182,
+      "source": "FRONT_AVOIDANCE",
+      "line": "disabled by operator; ESP front check skipped; calibration unchanged"
+    },
+    {
+      "seq": 240,
+      "ms": 75183,
+      "source": "DECISION",
+      "line": "STARTING WAIT_PATROL_STOP"
+    },
+    {
+      "seq": 241,
+      "ms": 75183,
+      "source": "UNO_TX",
+      "line": "C 20 STOP*93"
+    },
+    {
+      "seq": 242,
+      "ms": 75190,
+      "source": "UNO_RX",
+      "line": "AK 20"
+    },
+    {
+      "seq": 243,
+      "ms": 75193,
+      "source": "UNO_RX",
+      "line": "DONE 20 MOTOR_STOPPED"
+    },
+    {
+      "seq": 244,
+      "ms": 75194,
+      "source": "DECISION",
+      "line": "STARTING WAIT_PATROL_CONFIG"
+    },
+    {
+      "seq": 245,
+      "ms": 75198,
+      "source": "UNO_TX",
+      "line": "C 21 GET_CONFIG*9B"
+    },
+    {
+      "seq": 246,
+      "ms": 75204,
+      "source": "UNO_RX",
+      "line": "AK 21"
+    },
+    {
+      "seq": 247,
+      "ms": 75222,
+      "source": "UNO_RX",
+      "line": "DATA 21 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=5.0"
+    },
+    {
+      "seq": 248,
+      "ms": 75223,
+      "source": "UNO_RX",
+      "line": "DONE 21"
+    },
+    {
+      "seq": 249,
+      "ms": 75224,
+      "source": "DECISION",
+      "line": "STARTING WAIT_SESSION_START"
+    },
+    {
+      "seq": 250,
+      "ms": 75224,
+      "source": "UNO_TX",
+      "line": "C 22 SESSION_START*16"
+    },
+    {
+      "seq": 251,
+      "ms": 75232,
+      "source": "UNO_RX",
+      "line": "AK 22"
+    },
+    {
+      "seq": 252,
+      "ms": 75236,
+      "source": "UNO_RX",
+      "line": "DONE 22 SESSION_STARTED"
+    },
+    {
+      "seq": 253,
+      "ms": 75237,
+      "source": "DECISION",
+      "line": "PATROL SCAN_TAG"
+    },
+    {
+      "seq": 254,
+      "ms": 75419,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 255,
+      "ms": 75920,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 19a28 1ba3 b 0 d 1 0 0"
+    },
+    {
+      "seq": 256,
+      "ms": 76222,
+      "source": "UNO_TX",
+      "line": "C 23 GET_TELEMETRY*3B"
+    },
+    {
+      "seq": 257,
+      "ms": 76232,
+      "source": "UNO_RX",
+      "line": "AK 23"
+    },
+    {
+      "seq": 258,
+      "ms": 76236,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW STATE 105317 IDLE 0 0 16383"
+    },
+    {
+      "seq": 259,
+      "ms": 76238,
+      "source": "UNO_TX",
+      "line": "C 24 MOTOR 45 -45*49"
+    },
+    {
+      "seq": 260,
+      "ms": 76241,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seq": 261,
+      "ms": 76247,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seq": 262,
+      "ms": 76251,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seq": 263,
+      "ms": 76255,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW ER 1 0 0 0.0 P"
+    },
+    {
+      "seq": 264,
+      "ms": 76260,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 265,
+      "ms": 76267,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seq": 266,
+      "ms": 76271,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 267,
+      "ms": 76275,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 268,
+      "ms": 76302,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 269,
+      "ms": 76308,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 270,
+      "ms": 76312,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 271,
+      "ms": 76316,
+      "source": "UNO_RX",
+      "line": "DATA 23 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 272,
+      "ms": 76320,
+      "source": "UNO_RX",
+      "line": "DONE 23 TELEMETRY"
+    },
+    {
+      "seq": 273,
+      "ms": 76419,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 274,
+      "ms": 76721,
+      "source": "UNO_TX",
+      "line": "C 25 STOP*1E"
+    },
+    {
+      "seq": 275,
+      "ms": 76734,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG RX 32 E0 1E DFBFFEFFFFABFF7FFDF7FFBF"
+    },
+    {
+      "seq": 276,
+      "ms": 76738,
+      "source": "UNO_RX",
+      "line": "ERROR 0 BAD_CHECKSUM"
+    },
+    {
+      "seq": 277,
+      "ms": 76739,
+      "source": "UNO_PROTOCOL_ERROR",
+      "line": "unidentified command: BAD_CHECKSUM"
+    },
+    {
+      "seq": 278,
+      "ms": 76919,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 19e10 1bf5 3 0 d 0 0 0"
+    },
+    {
+      "seq": 279,
+      "ms": 76954,
+      "source": "UNO_TX",
+      "line": "C 26 MOTOR 45 -45*84"
+    },
+    {
+      "seq": 280,
+      "ms": 76961,
+      "source": "UNO_RX",
+      "line": "AK 26"
+    },
+    {
+      "seq": 281,
+      "ms": 76965,
+      "source": "UNO_RX",
+      "line": "MS 26 0 0"
+    },
+    {
+      "seq": 282,
+      "ms": 76966,
+      "source": "UNO_RX",
+      "line": "MP 26 0 0"
+    },
+    {
+      "seq": 283,
+      "ms": 77064,
+      "source": "UNO_RX",
+      "line": "MP 26 0 1"
+    },
+    {
+      "seq": 284,
+      "ms": 77157,
+      "source": "UNO_TX",
+      "line": "C 27 KEEP*D0"
+    },
+    {
+      "seq": 285,
+      "ms": 77166,
+      "source": "UNO_RX",
+      "line": "DONE 27 LEASE_RENEWED"
+    },
+    {
+      "seq": 286,
+      "ms": 77167,
+      "source": "UNO_RX",
+      "line": "MP 26 0 2"
+    },
+    {
+      "seq": 287,
+      "ms": 77223,
+      "source": "UNO_TX",
+      "line": "C 28 GET_TELEMETRY*50"
+    },
+    {
+      "seq": 288,
+      "ms": 77232,
+      "source": "UNO_RX",
+      "line": "AK 28"
+    },
+    {
+      "seq": 289,
+      "ms": 77239,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW STATE 106318 MOVING 0 0 16383"
+    },
+    {
+      "seq": 290,
+      "ms": 77264,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW ML 45 120 120 1 1 0"
+    },
+    {
+      "seq": 291,
+      "ms": 77266,
+      "source": "UNO_RX",
+      "line": "MP 26 0 4"
+    },
+    {
+      "seq": 292,
+      "ms": 77271,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW MR -45 -120 120 1 0 1"
+    },
+    {
+      "seq": 293,
+      "ms": 77276,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW EL 1 0 1 0.0 P"
+    },
+    {
+      "seq": 294,
+      "ms": 77281,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW ER 1 0 5 0.0 P"
+    },
+    {
+      "seq": 295,
+      "ms": 77286,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 296,
+      "ms": 77293,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW SR 1 1 0 56.4 56.4 P"
+    },
+    {
+      "seq": 297,
+      "ms": 77297,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 298,
+      "ms": 77302,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 299,
+      "ms": 77307,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 300,
+      "ms": 77312,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 301,
+      "ms": 77317,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 302,
+      "ms": 77322,
+      "source": "UNO_RX",
+      "line": "DATA 28 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 303,
+      "ms": 77323,
+      "source": "UNO_RX",
+      "line": "DONE 28 TELEMETRY"
+    },
+    {
+      "seq": 304,
+      "ms": 77357,
+      "source": "UNO_TX",
+      "line": "C 29 KEEP*69"
+    },
+    {
+      "seq": 305,
+      "ms": 77368,
+      "source": "UNO_RX",
+      "line": "DONE 29 LEASE_RENEWED"
+    },
+    {
+      "seq": 306,
+      "ms": 77381,
+      "source": "UNO_RX",
+      "line": "MP 26 2 7"
+    },
+    {
+      "seq": 307,
+      "ms": 77419,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 120 -120 0"
+    },
+    {
+      "seq": 308,
+      "ms": 77502,
+      "source": "UNO_RX",
+      "line": "MP 26 4 9"
+    },
+    {
+      "seq": 309,
+      "ms": 77557,
+      "source": "UNO_TX",
+      "line": "C 30 KEEP*D0"
+    },
+    {
+      "seq": 310,
+      "ms": 77565,
+      "source": "UNO_RX",
+      "line": "DONE 30 LEASE_RENEWED"
+    },
+    {
+      "seq": 311,
+      "ms": 77622,
+      "source": "UNO_RX",
+      "line": "MP 26 5 12"
+    },
+    {
+      "seq": 312,
+      "ms": 77742,
+      "source": "UNO_RX",
+      "line": "MP 26 6 14"
+    },
+    {
+      "seq": 313,
+      "ms": 77758,
+      "source": "UNO_TX",
+      "line": "C 31 KEEP*F9"
+    },
+    {
+      "seq": 314,
+      "ms": 77765,
+      "source": "UNO_RX",
+      "line": "DONE 31 LEASE_RENEWED"
+    },
+    {
+      "seq": 315,
+      "ms": 77863,
+      "source": "UNO_RX",
+      "line": "MP 26 6 17"
+    },
+    {
+      "seq": 316,
+      "ms": 77920,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1a1f8 153e 3 0 d 0 0 0"
+    },
+    {
+      "seq": 317,
+      "ms": 77958,
+      "source": "UNO_TX",
+      "line": "C 32 KEEP*82"
+    },
+    {
+      "seq": 318,
+      "ms": 77967,
+      "source": "UNO_RX",
+      "line": "DONE 32 LEASE_RENEWED"
+    },
+    {
+      "seq": 319,
+      "ms": 77981,
+      "source": "UNO_RX",
+      "line": "MP 26 6 19"
+    },
+    {
+      "seq": 320,
+      "ms": 78101,
+      "source": "UNO_RX",
+      "line": "MP 26 6 21"
+    },
+    {
+      "seq": 321,
+      "ms": 78160,
+      "source": "UNO_TX",
+      "line": "C 33 KEEP*AB"
+    },
+    {
+      "seq": 322,
+      "ms": 78168,
+      "source": "UNO_RX",
+      "line": "DONE 33 LEASE_RENEWED"
+    },
+    {
+      "seq": 323,
+      "ms": 78223,
+      "source": "UNO_RX",
+      "line": "MP 26 6 24"
+    },
+    {
+      "seq": 324,
+      "ms": 78224,
+      "source": "UNO_TX",
+      "line": "C 34 GET_TELEMETRY*3B"
+    },
+    {
+      "seq": 325,
+      "ms": 78233,
+      "source": "UNO_RX",
+      "line": "AK 34"
+    },
+    {
+      "seq": 326,
+      "ms": 78240,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW STATE 107319 MOVING 0 0 16383"
+    },
+    {
+      "seq": 327,
+      "ms": 78244,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW ML 45 120 120 1 1 0"
+    },
+    {
+      "seq": 328,
+      "ms": 78251,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW MR -45 -120 120 1 0 1"
+    },
+    {
+      "seq": 329,
+      "ms": 78255,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW EL 1 0 6 18.0 P"
+    },
+    {
+      "seq": 330,
+      "ms": 78264,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW ER 1 0 25 66.0 P"
+    },
+    {
+      "seq": 331,
+      "ms": 78270,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 332,
+      "ms": 78277,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW SR 1 1 0 56.5 56.5 P"
+    },
+    {
+      "seq": 333,
+      "ms": 78281,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 334,
+      "ms": 78286,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 335,
+      "ms": 78289,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 336,
+      "ms": 78294,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 337,
+      "ms": 78300,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 338,
+      "ms": 78304,
+      "source": "UNO_RX",
+      "line": "DATA 34 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 339,
+      "ms": 78308,
+      "source": "UNO_RX",
+      "line": "DONE 34 TELEMETRY"
+    },
+    {
+      "seq": 340,
+      "ms": 78342,
+      "source": "UNO_RX",
+      "line": "MP 26 6 26"
+    },
+    {
+      "seq": 341,
+      "ms": 78361,
+      "source": "UNO_TX",
+      "line": "C 35 KEEP*5D"
+    },
+    {
+      "seq": 342,
+      "ms": 78369,
+      "source": "UNO_RX",
+      "line": "DONE 35 LEASE_RENEWED"
+    },
+    {
+      "seq": 343,
+      "ms": 78420,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 120 -120 0"
+    },
+    {
+      "seq": 344,
+      "ms": 78463,
+      "source": "UNO_RX",
+      "line": "MP 26 6 29"
+    },
+    {
+      "seq": 345,
+      "ms": 78561,
+      "source": "UNO_TX",
+      "line": "C 36 KEEP*26"
+    },
+    {
+      "seq": 346,
+      "ms": 78569,
+      "source": "UNO_RX",
+      "line": "DONE 36 LEASE_RENEWED"
+    },
+    {
+      "seq": 347,
+      "ms": 78584,
+      "source": "UNO_RX",
+      "line": "MP 26 6 31"
+    },
+    {
+      "seq": 348,
+      "ms": 78703,
+      "source": "UNO_RX",
+      "line": "MP 26 6 34"
+    },
+    {
+      "seq": 349,
+      "ms": 78761,
+      "source": "UNO_TX",
+      "line": "C 37 KEEP*0F"
+    },
+    {
+      "seq": 350,
+      "ms": 78770,
+      "source": "UNO_RX",
+      "line": "DONE 37 LEASE_RENEWED"
+    },
+    {
+      "seq": 351,
+      "ms": 78823,
+      "source": "UNO_RX",
+      "line": "MP 26 6 36"
+    },
+    {
+      "seq": 352,
+      "ms": 78886,
+      "source": "UNO_RX",
+      "line": "MA 26 ENCODER_STALL 6 37"
+    },
+    {
+      "seq": 353,
+      "ms": 78887,
+      "source": "MOTION_FAILED",
+      "line": "ENCODER_STALL"
+    },
+    {
+      "seq": 354,
+      "ms": 78888,
+      "source": "DECISION",
+      "line": "STOPPED FAULT"
+    },
+    {
+      "seq": 355,
+      "ms": 78888,
+      "source": "FAULT",
+      "line": "ENCODER_STALL"
+    },
+    {
+      "seq": 356,
+      "ms": 78888,
+      "source": "UNO_TX",
+      "line": "C 38 STOP*03"
+    },
+    {
+      "seq": 357,
+      "ms": 78894,
+      "source": "UNO_RX",
+      "line": "AK 38"
+    },
+    {
+      "seq": 358,
+      "ms": 78897,
+      "source": "UNO_RX",
+      "line": "DONE 38 MOTOR_STOPPED"
+    },
+    {
+      "seq": 359,
+      "ms": 78904,
+      "source": "UNO_TX",
+      "line": "C 39 SESSION_STOP*47"
+    },
+    {
+      "seq": 360,
+      "ms": 78912,
+      "source": "UNO_RX",
+      "line": "AK 39"
+    },
+    {
+      "seq": 361,
+      "ms": 78915,
+      "source": "UNO_RX",
+      "line": "DONE 39 SESSION_STOPPED"
+    },
+    {
+      "seq": 362,
+      "ms": 78922,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1a5e0 14ed 4 0 d 2 0 0"
+    },
+    {
+      "seq": 363,
+      "ms": 79187,
+      "source": "UNO_TX",
+      "line": "C 40 GET_TELEMETRY*EF"
+    },
+    {
+      "seq": 364,
+      "ms": 79194,
+      "source": "UNO_RX",
+      "line": "AK 40"
+    },
+    {
+      "seq": 365,
+      "ms": 79203,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW STATE 108282 STOPPED 0 0 16383"
+    },
+    {
+      "seq": 366,
+      "ms": 79206,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seq": 367,
+      "ms": 79212,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seq": 368,
+      "ms": 79215,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW EL 1 0 6 0.0 P"
+    },
+    {
+      "seq": 369,
+      "ms": 79224,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW ER 1 1 38 60.0 P"
+    },
+    {
+      "seq": 370,
+      "ms": 79229,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 371,
+      "ms": 79234,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW SR 1 1 0 55.3 55.3 P"
+    },
+    {
+      "seq": 372,
+      "ms": 79239,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 373,
+      "ms": 79244,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 374,
+      "ms": 79249,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 375,
+      "ms": 79254,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 376,
+      "ms": 79259,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 377,
+      "ms": 79262,
+      "source": "UNO_RX",
+      "line": "DATA 40 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 378,
+      "ms": 79267,
+      "source": "UNO_RX",
+      "line": "DONE 40 TELEMETRY"
+    },
+    {
+      "seq": 379,
+      "ms": 79420,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 698 698 0 0 0 0"
+    },
+    {
+      "seq": 380,
+      "ms": 79489,
+      "source": "UNO_TX",
+      "line": "C 41 GET_TELEMETRY*5A"
+    },
+    {
+      "seq": 381,
+      "ms": 79496,
+      "source": "UNO_RX",
+      "line": "AK 41"
+    },
+    {
+      "seq": 382,
+      "ms": 79505,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW STATE 108583 STOPPED 0 0 16383"
+    },
+    {
+      "seq": 383,
+      "ms": 79510,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seq": 384,
+      "ms": 79513,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seq": 385,
+      "ms": 79518,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW EL 1 0 6 0.0 P"
+    },
+    {
+      "seq": 386,
+      "ms": 79544,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW ER 1 1 38 0.0 P"
+    },
+    {
+      "seq": 387,
+      "ms": 79549,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 388,
+      "ms": 79554,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seq": 389,
+      "ms": 79559,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 390,
+      "ms": 79564,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 391,
+      "ms": 79569,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 392,
+      "ms": 79572,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 393,
+      "ms": 79578,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 394,
+      "ms": 79583,
+      "source": "UNO_RX",
+      "line": "DATA 41 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 395,
+      "ms": 79587,
+      "source": "UNO_RX",
+      "line": "DONE 41 TELEMETRY"
+    },
+    {
+      "seq": 396,
+      "ms": 79788,
+      "source": "UNO_TX",
+      "line": "C 42 GET_TELEMETRY*82"
+    },
+    {
+      "seq": 397,
+      "ms": 79795,
+      "source": "UNO_RX",
+      "line": "AK 42"
+    },
+    {
+      "seq": 398,
+      "ms": 79804,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW STATE 108883 STOPPED 0 0 16383"
+    },
+    {
+      "seq": 399,
+      "ms": 79813,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seq": 400,
+      "ms": 79814,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seq": 401,
+      "ms": 79819,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW EL 1 0 6 0.0 P"
+    },
+    {
+      "seq": 402,
+      "ms": 79824,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW ER 1 1 38 0.0 P"
+    },
+    {
+      "seq": 403,
+      "ms": 79831,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 404,
+      "ms": 79836,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seq": 405,
+      "ms": 79841,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 406,
+      "ms": 79845,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 407,
+      "ms": 79850,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 408,
+      "ms": 79854,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 409,
+      "ms": 79859,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 410,
+      "ms": 79864,
+      "source": "UNO_RX",
+      "line": "DATA 42 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 411,
+      "ms": 79867,
+      "source": "UNO_RX",
+      "line": "DONE 42 TELEMETRY"
+    },
+    {
+      "seq": 412,
+      "ms": 79918,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1a9c8 1b3a 4 0 d 0 0 0"
+    },
+    {
+      "seq": 413,
+      "ms": 80090,
+      "source": "UNO_TX",
+      "line": "C 43 GET_TELEMETRY*37"
+    },
+    {
+      "seq": 414,
+      "ms": 80097,
+      "source": "UNO_RX",
+      "line": "AK 43"
+    },
+    {
+      "seq": 415,
+      "ms": 80106,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW STATE 109185 STOPPED 0 0 16383"
+    },
+    {
+      "seq": 416,
+      "ms": 80110,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seq": 417,
+      "ms": 80114,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seq": 418,
+      "ms": 80119,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW EL 1 0 6 0.0 P"
+    },
+    {
+      "seq": 419,
+      "ms": 80145,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW ER 1 1 38 0.0 P"
+    },
+    {
+      "seq": 420,
+      "ms": 80151,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW SL 1 1 0 -1.0 -1.0 P"
+    },
+    {
+      "seq": 421,
+      "ms": 80158,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seq": 422,
+      "ms": 80162,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW T TOP 1 1 0 P"
+    },
+    {
+      "seq": 423,
+      "ms": 80166,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seq": 424,
+      "ms": 80170,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seq": 425,
+      "ms": 80176,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW T REAR 1 1 0 P"
+    },
+    {
+      "seq": 426,
+      "ms": 80181,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seq": 427,
+      "ms": 80189,
+      "source": "UNO_RX",
+      "line": "DATA 43 HW FRONT -1.0 HOST"
+    },
+    {
+      "seq": 428,
+      "ms": 80191,
+      "source": "UNO_RX",
+      "line": "DONE 43 TELEMETRY"
+    }
+  ],
+  "samples": [
+    {
+      "ms": 77085,
+      "phase": "PATROL",
+      "visionMode": "BOTH",
+      "patrolStatus": {
+        "action": "SCAN_TAG",
+        "lastFault": "",
+        "lastMotionFailure": "",
+        "motorId": 26,
+        "motorConfirmed": true,
+        "leftPwm": 45,
+        "rightPwm": -45,
+        "targetIndex": 0
+      }
+    },
+    {
+      "ms": 80192,
+      "phase": "STOPPED",
+      "visionMode": "BOTH",
+      "patrolStatus": {
+        "action": "FAULT",
+        "lastFault": "ENCODER_STALL",
+        "lastMotionFailure": "ENCODER_STALL",
+        "motorId": 0,
+        "motorConfirmed": false,
+        "leftPwm": 45,
+        "rightPwm": -45,
+        "targetIndex": 0
+      }
+    }
+  ],
+  "bothEncoderMoved": true,
+  "final": {
+    "firmware": "ESP32_CAT_HOST_0.9",
+    "ms": 83036,
+    "mode": "UART",
+    "phase": "STOPPED",
+    "unoTelemetry": [
+      {
+        "line": "DATA 52 HW STATE 111893 STOPPED 0 0 16383",
+        "at": 82813,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW ML 0 0 0 1 0 0",
+        "at": 82817,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW MR 0 0 0 1 0 0",
+        "at": 82826,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW EL 1 0 6 0.0 P",
+        "at": 82833,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW ER 1 1 38 0.0 P",
+        "at": 82837,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW SL 1 1 0 -1.0 -1.0 P",
+        "at": 82841,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW SR 1 1 0 55.2 55.2 P",
+        "at": 82848,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW T TOP 1 1 0 P",
+        "at": 82852,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW T LEFT 1 1 0 P",
+        "at": 82856,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW T RIGHT 1 1 0 P",
+        "at": 82860,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW T REAR 1 1 0 P",
+        "at": 82867,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW OUT 1 0 -1 1 0 0",
+        "at": 82871,
+        "source": "UNO_RX"
+      },
+      {
+        "line": "DATA 52 HW FRONT -1.0 HOST",
+        "at": 82875,
+        "source": "UNO_RX"
+      }
+    ],
+    "unoConfig": {
+      "line": "DATA 21 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=5.0",
+      "at": 75222,
+      "source": "UNO_RX"
+    },
+    "debugResult": "等待 Uno 回报",
+    "debugBusy": false,
+    "benchBypass": false,
+    "hostLed": {
+      "pin": "onboard/GPIO21",
+      "on": false,
+      "mode": "OFF",
+      "gpioLevel": 1,
+      "source": "ESP_GPIO_CONTROL"
+    },
+    "patrolStatus": {
+      "action": "FAULT",
+      "lastFault": "operator_stop",
+      "lastMotionFailure": "ENCODER_STALL",
+      "motorId": 0,
+      "motorConfirmed": false,
+      "leftPwm": 45,
+      "rightPwm": -45,
+      "targetIndex": 0
+    },
+    "lastUnoAgeMs": 58,
+    "lastRx": "DONE 54 SESSION_STOPPED",
+    "lastTx": "C 54 SESSION_STOP*B5",
+    "cameraOk": true,
+    "frameSeq": 412,
+    "heap": 26880,
+    "psram": 7015416,
+    "visionMode": "BOTH",
+    "visionIntervalMs": 200,
+    "apIP": "192.168.4.1",
+    "stationIP": "192.168.137.15",
+    "config": {
+      "explorationBranchPercent": 20,
+      "touchFlashPercent": 20,
+      "touchPreyPercent": 20,
+      "touchSlowEscapePercent": 40,
+      "touchFastEscapePercent": 40,
+      "catFollowProbePercent": 5,
+      "catFollowObservePercent": 35,
+      "catFollowPatrolPercent": 60,
+      "endingAfterRounds": 3,
+      "endingInactivitySeconds": 12,
+      "endingPatrolPercent": 40,
+      "endingSilentPercent": 30,
+      "endingSignalPercent": 30,
+      "captureWaitMaxSeconds": 15,
+      "captureCueFlashMs": 2200,
+      "captureCueBeepMs": 360,
+      "robotFarApproachPercent": 85,
+      "robotFarProbePercent": 15,
+      "robotNearSignalPercent": 20,
+      "robotNearObservePercent": 40,
+      "robotNearStayPercent": 40,
+      "catProbeCooldownSeconds": 15,
+      "robotProbeCooldownSeconds": 15,
+      "farCatThresholdCm": 40,
+      "initialLookSeconds": 5,
+      "postEscapeWaitSeconds": 10,
+      "touchDebounceMs": 1000,
+      "catLeaveDistanceCm": 70,
+      "catLeaveSeconds": 5,
+      "sessionLimitSeconds": 60,
+      "decisionIntervalMs": 2500,
+      "searchTimeoutMs": 15000,
+      "finalSearchTimeoutMs": 8000,
+      "alignTimeoutMs": 5000,
+      "touchReleaseTimeoutMs": 4000,
+      "searchPwm": 75,
+      "centerTolerancePercent": 5.5,
+      "alignPwm": 52,
+      "slowApproachCm": 9,
+      "slowApproachPwm": 95,
+      "probeStep1Cm": 3,
+      "probeStep2Cm": 4,
+      "probeStep3Cm": 3,
+      "probePause1Ms": 700,
+      "probePause2Ms": 900,
+      "probePause3Ms": 600,
+      "probePwm": 90,
+      "signalFlashMs": 1400,
+      "signalBeepMs": 180,
+      "touchFeedbackBeepMs": 180,
+      "escapeDistanceCm": 26,
+      "slowEscapePwm": 95,
+      "fastEscapePwm": 210,
+      "route": [
+        41,
+        47
+      ],
+      "patrolSearchPwm": 45,
+      "patrolAlignPwm": 30,
+      "wheelMm": 67.5,
+      "trackMm": 120,
+      "stopMarginCm": 3,
+      "tagStopWidth": 0.25,
+      "catNearWidth": 0.35,
+      "catFarWidth": 0.12,
+      "visionMaxAgeMs": 1500,
+      "frontAvoidanceEnabled": false,
+      "frontCalibrated": false,
+      "frontBlockBottom": 0.88,
+      "floorRoiTop": 0.75,
+      "floorDifferenceThreshold": 35,
+      "floorReference": []
+    },
+    "vision": {
+      "source": "OV_CAMERA",
+      "at": 82088,
+      "frameWidth": 320,
+      "frameHeight": 240,
+      "cat": {
+        "detected": false,
+        "valid": true
+      },
+      "mode": "BOTH",
+      "tags": [],
+      "tagsValid": true,
+      "floorSignature": [
+        86.2125,
+        86.2125,
+        86.2125,
+        132.86,
+        132.86,
+        132.86,
+        139.0475,
+        139.0475,
+        139.0475,
+        143.5175,
+        143.5175,
+        143.5175,
+        121.165,
+        121.165,
+        121.165,
+        121.305,
+        121.305,
+        121.305,
+        170.5825,
+        170.5825,
+        170.5825,
+        158.0425,
+        158.0425,
+        158.0425,
+        175.44,
+        175.44,
+        175.44,
+        146.3525,
+        146.3525,
+        146.3525,
+        155.885,
+        155.885,
+        155.885,
+        125.46,
+        125.46,
+        125.46,
+        168.63,
+        168.63,
+        168.63,
+        145.15,
+        145.15,
+        145.15,
+        105.6525,
+        105.6525,
+        105.6525,
+        108.495,
+        108.495,
+        108.495,
+        165.7525,
+        165.7525,
+        165.7525,
+        145.665,
+        145.665,
+        145.665,
+        145.885,
+        145.885,
+        145.885,
+        123.355,
+        123.355,
+        123.355,
+        127.52,
+        127.52,
+        127.52,
+        136.1775,
+        136.1775,
+        136.1775,
+        119.4925,
+        119.4925,
+        119.4925,
+        91.3325,
+        91.3325,
+        91.3325
+      ],
+      "floorDifference": 175.44,
+      "frontCalibrated": false,
+      "front": "INVALID",
+      "latencyMs": 502,
+      "policy": {
+        "action": "FAULT",
+        "targetIndex": 0,
+        "rounds": 0
+      }
+    },
+    "cameraVision": {
+      "source": "OV_CAMERA",
+      "at": 82088,
+      "frameWidth": 320,
+      "frameHeight": 240,
+      "cat": {
+        "detected": false,
+        "valid": true
+      },
+      "mode": "BOTH",
+      "tags": [],
+      "tagsValid": true,
+      "floorSignature": [
+        86.2125,
+        86.2125,
+        86.2125,
+        132.86,
+        132.86,
+        132.86,
+        139.0475,
+        139.0475,
+        139.0475,
+        143.5175,
+        143.5175,
+        143.5175,
+        121.165,
+        121.165,
+        121.165,
+        121.305,
+        121.305,
+        121.305,
+        170.5825,
+        170.5825,
+        170.5825,
+        158.0425,
+        158.0425,
+        158.0425,
+        175.44,
+        175.44,
+        175.44,
+        146.3525,
+        146.3525,
+        146.3525,
+        155.885,
+        155.885,
+        155.885,
+        125.46,
+        125.46,
+        125.46,
+        168.63,
+        168.63,
+        168.63,
+        145.15,
+        145.15,
+        145.15,
+        105.6525,
+        105.6525,
+        105.6525,
+        108.495,
+        108.495,
+        108.495,
+        165.7525,
+        165.7525,
+        165.7525,
+        145.665,
+        145.665,
+        145.665,
+        145.885,
+        145.885,
+        145.885,
+        123.355,
+        123.355,
+        123.355,
+        127.52,
+        127.52,
+        127.52,
+        136.1775,
+        136.1775,
+        136.1775,
+        119.4925,
+        119.4925,
+        119.4925,
+        91.3325,
+        91.3325,
+        91.3325
+      ],
+      "floorDifference": 175.44,
+      "frontCalibrated": false,
+      "front": "INVALID",
+      "latencyMs": 502
+    },
+    "droppedLogs": 426,
+    "logs": [
+      {
+        "seq": 427,
+        "ms": 80189,
+        "source": "UNO_RX",
+        "line": "DATA 43 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 428,
+        "ms": 80191,
+        "source": "UNO_RX",
+        "line": "DONE 43 TELEMETRY"
+      },
+      {
+        "seq": 429,
+        "ms": 80391,
+        "source": "UNO_TX",
+        "line": "C 44 GET_TELEMETRY*35"
+      },
+      {
+        "seq": 430,
+        "ms": 80398,
+        "source": "UNO_RX",
+        "line": "AK 44"
+      },
+      {
+        "seq": 431,
+        "ms": 80406,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW STATE 109486 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 432,
+        "ms": 80409,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 433,
+        "ms": 80414,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 434,
+        "ms": 80421,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 435,
+        "ms": 80424,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 436,
+        "ms": 80429,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 437,
+        "ms": 80434,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 438,
+        "ms": 80441,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW SR 1 1 0 55.4 55.4 P"
+      },
+      {
+        "seq": 439,
+        "ms": 80446,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 440,
+        "ms": 80450,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 441,
+        "ms": 80455,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 442,
+        "ms": 80458,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 443,
+        "ms": 80464,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 444,
+        "ms": 80468,
+        "source": "UNO_RX",
+        "line": "DATA 44 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 445,
+        "ms": 80472,
+        "source": "UNO_RX",
+        "line": "DONE 44 TELEMETRY"
+      },
+      {
+        "seq": 446,
+        "ms": 80691,
+        "source": "UNO_TX",
+        "line": "C 45 GET_TELEMETRY*80"
+      },
+      {
+        "seq": 447,
+        "ms": 80698,
+        "source": "UNO_RX",
+        "line": "AK 45"
+      },
+      {
+        "seq": 448,
+        "ms": 80707,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW STATE 109787 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 449,
+        "ms": 80710,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 450,
+        "ms": 80715,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 451,
+        "ms": 80745,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 452,
+        "ms": 80751,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 453,
+        "ms": 80756,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 454,
+        "ms": 80761,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW SR 1 1 0 57.4 57.4 P"
+      },
+      {
+        "seq": 455,
+        "ms": 80766,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 456,
+        "ms": 80770,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 457,
+        "ms": 80775,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 458,
+        "ms": 80779,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 459,
+        "ms": 80786,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 460,
+        "ms": 80791,
+        "source": "UNO_RX",
+        "line": "DATA 45 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 461,
+        "ms": 80794,
+        "source": "UNO_RX",
+        "line": "DONE 45 TELEMETRY"
+      },
+      {
+        "seq": 462,
+        "ms": 80918,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG H 1adb0 1b3a 4 0 d 0 0 0"
+      },
+      {
+        "seq": 463,
+        "ms": 80992,
+        "source": "UNO_TX",
+        "line": "C 46 GET_TELEMETRY*58"
+      },
+      {
+        "seq": 464,
+        "ms": 80999,
+        "source": "UNO_RX",
+        "line": "AK 46"
+      },
+      {
+        "seq": 465,
+        "ms": 81008,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW STATE 110088 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 466,
+        "ms": 81012,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 467,
+        "ms": 81017,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 468,
+        "ms": 81024,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 469,
+        "ms": 81029,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 470,
+        "ms": 81034,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 471,
+        "ms": 81041,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW SR 1 1 0 55.2 55.2 P"
+      },
+      {
+        "seq": 472,
+        "ms": 81045,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 473,
+        "ms": 81050,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 474,
+        "ms": 81055,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 475,
+        "ms": 81059,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 476,
+        "ms": 81064,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 477,
+        "ms": 81068,
+        "source": "UNO_RX",
+        "line": "DATA 46 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 478,
+        "ms": 81072,
+        "source": "UNO_RX",
+        "line": "DONE 46 TELEMETRY"
+      },
+      {
+        "seq": 479,
+        "ms": 81294,
+        "source": "UNO_TX",
+        "line": "C 47 GET_TELEMETRY*ED"
+      },
+      {
+        "seq": 480,
+        "ms": 81301,
+        "source": "UNO_RX",
+        "line": "AK 47"
+      },
+      {
+        "seq": 481,
+        "ms": 81309,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW STATE 110389 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 482,
+        "ms": 81312,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 483,
+        "ms": 81317,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 484,
+        "ms": 81344,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 485,
+        "ms": 81349,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 486,
+        "ms": 81355,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 487,
+        "ms": 81361,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW SR 1 1 0 57.4 57.4 P"
+      },
+      {
+        "seq": 488,
+        "ms": 81365,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 489,
+        "ms": 81370,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 490,
+        "ms": 81375,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 491,
+        "ms": 81378,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 492,
+        "ms": 81385,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 493,
+        "ms": 81390,
+        "source": "UNO_RX",
+        "line": "DATA 47 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 494,
+        "ms": 81393,
+        "source": "UNO_RX",
+        "line": "DONE 47 TELEMETRY"
+      },
+      {
+        "seq": 495,
+        "ms": 81418,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 496,
+        "ms": 81594,
+        "source": "UNO_TX",
+        "line": "C 48 GET_TELEMETRY*5C"
+      },
+      {
+        "seq": 497,
+        "ms": 81601,
+        "source": "UNO_RX",
+        "line": "AK 48"
+      },
+      {
+        "seq": 498,
+        "ms": 81610,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW STATE 110689 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 499,
+        "ms": 81614,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 500,
+        "ms": 81618,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 501,
+        "ms": 81626,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 502,
+        "ms": 81631,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 503,
+        "ms": 81636,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 504,
+        "ms": 81641,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW SR 1 1 0 55.1 55.1 P"
+      },
+      {
+        "seq": 505,
+        "ms": 81646,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 506,
+        "ms": 81651,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 507,
+        "ms": 81656,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 508,
+        "ms": 81660,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 509,
+        "ms": 81665,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 510,
+        "ms": 81670,
+        "source": "UNO_RX",
+        "line": "DATA 48 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 511,
+        "ms": 81673,
+        "source": "UNO_RX",
+        "line": "DONE 48 TELEMETRY"
+      },
+      {
+        "seq": 512,
+        "ms": 81894,
+        "source": "UNO_TX",
+        "line": "C 49 GET_TELEMETRY*E9"
+      },
+      {
+        "seq": 513,
+        "ms": 81901,
+        "source": "UNO_RX",
+        "line": "AK 49"
+      },
+      {
+        "seq": 514,
+        "ms": 81910,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW STATE 110990 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 515,
+        "ms": 81913,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 516,
+        "ms": 81920,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG H 1b198 1b10 4 31 2 2 0 0"
+      },
+      {
+        "seq": 517,
+        "ms": 81945,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 518,
+        "ms": 81950,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 519,
+        "ms": 81955,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 520,
+        "ms": 81960,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 521,
+        "ms": 81967,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW SR 1 1 0 57.4 57.4 P"
+      },
+      {
+        "seq": 522,
+        "ms": 81970,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 523,
+        "ms": 81975,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 524,
+        "ms": 81980,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 525,
+        "ms": 81985,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 526,
+        "ms": 81990,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 527,
+        "ms": 81995,
+        "source": "UNO_RX",
+        "line": "DATA 49 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 528,
+        "ms": 81998,
+        "source": "UNO_RX",
+        "line": "DONE 49 TELEMETRY"
+      },
+      {
+        "seq": 529,
+        "ms": 82196,
+        "source": "UNO_TX",
+        "line": "C 50 GET_TELEMETRY*ED"
+      },
+      {
+        "seq": 530,
+        "ms": 82203,
+        "source": "UNO_RX",
+        "line": "AK 50"
+      },
+      {
+        "seq": 531,
+        "ms": 82212,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW STATE 111291 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 532,
+        "ms": 82216,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 533,
+        "ms": 82220,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 534,
+        "ms": 82226,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 535,
+        "ms": 82231,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 536,
+        "ms": 82238,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 537,
+        "ms": 82242,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW SR 1 1 0 56.4 56.4 P"
+      },
+      {
+        "seq": 538,
+        "ms": 82246,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 539,
+        "ms": 82252,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 540,
+        "ms": 82256,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 541,
+        "ms": 82261,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 542,
+        "ms": 82265,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 543,
+        "ms": 82271,
+        "source": "UNO_RX",
+        "line": "DATA 50 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 544,
+        "ms": 82273,
+        "source": "UNO_RX",
+        "line": "DONE 50 TELEMETRY"
+      },
+      {
+        "seq": 545,
+        "ms": 82418,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG M 698 698 0 0 0 0"
+      },
+      {
+        "seq": 546,
+        "ms": 82496,
+        "source": "UNO_TX",
+        "line": "C 51 GET_TELEMETRY*58"
+      },
+      {
+        "seq": 547,
+        "ms": 82503,
+        "source": "UNO_RX",
+        "line": "AK 51"
+      },
+      {
+        "seq": 548,
+        "ms": 82512,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW STATE 111592 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 549,
+        "ms": 82516,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 550,
+        "ms": 82521,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 551,
+        "ms": 82546,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 552,
+        "ms": 82551,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 553,
+        "ms": 82556,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 554,
+        "ms": 82563,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW SR 1 1 0 57.4 57.4 P"
+      },
+      {
+        "seq": 555,
+        "ms": 82567,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 556,
+        "ms": 82571,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 557,
+        "ms": 82577,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 558,
+        "ms": 82590,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 559,
+        "ms": 82591,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 560,
+        "ms": 82597,
+        "source": "UNO_RX",
+        "line": "DATA 51 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 561,
+        "ms": 82598,
+        "source": "UNO_RX",
+        "line": "DONE 51 TELEMETRY"
+      },
+      {
+        "seq": 562,
+        "ms": 82798,
+        "source": "UNO_TX",
+        "line": "C 52 GET_TELEMETRY*80"
+      },
+      {
+        "seq": 563,
+        "ms": 82806,
+        "source": "UNO_RX",
+        "line": "AK 52"
+      },
+      {
+        "seq": 564,
+        "ms": 82813,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW STATE 111893 STOPPED 0 0 16383"
+      },
+      {
+        "seq": 565,
+        "ms": 82817,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW ML 0 0 0 1 0 0"
+      },
+      {
+        "seq": 566,
+        "ms": 82826,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW MR 0 0 0 1 0 0"
+      },
+      {
+        "seq": 567,
+        "ms": 82832,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW EL 1 0 6 0.0 P"
+      },
+      {
+        "seq": 568,
+        "ms": 82836,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW ER 1 1 38 0.0 P"
+      },
+      {
+        "seq": 569,
+        "ms": 82841,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW SL 1 1 0 -1.0 -1.0 P"
+      },
+      {
+        "seq": 570,
+        "ms": 82847,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW SR 1 1 0 55.2 55.2 P"
+      },
+      {
+        "seq": 571,
+        "ms": 82851,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW T TOP 1 1 0 P"
+      },
+      {
+        "seq": 572,
+        "ms": 82856,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW T LEFT 1 1 0 P"
+      },
+      {
+        "seq": 573,
+        "ms": 82860,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW T RIGHT 1 1 0 P"
+      },
+      {
+        "seq": 574,
+        "ms": 82866,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW T REAR 1 1 0 P"
+      },
+      {
+        "seq": 575,
+        "ms": 82870,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW OUT 1 0 -1 1 0 0"
+      },
+      {
+        "seq": 576,
+        "ms": 82875,
+        "source": "UNO_RX",
+        "line": "DATA 52 HW FRONT -1.0 HOST"
+      },
+      {
+        "seq": 577,
+        "ms": 82878,
+        "source": "UNO_RX",
+        "line": "DONE 52 TELEMETRY"
+      },
+      {
+        "seq": 578,
+        "ms": 82918,
+        "source": "UNO_RX",
+        "line": "EVENT DIAG H 1b580 1ae8 3 0 d 0 0 0"
+      },
+      {
+        "seq": 579,
+        "ms": 82951,
+        "source": "DECISION",
+        "line": "STOPPED FAULT"
+      },
+      {
+        "seq": 580,
+        "ms": 82951,
+        "source": "FAULT",
+        "line": "operator_stop"
+      },
+      {
+        "seq": 581,
+        "ms": 82952,
+        "source": "UNO_TX",
+        "line": "C 53 STOP*FB"
+      },
+      {
+        "seq": 582,
+        "ms": 82958,
+        "source": "UNO_RX",
+        "line": "AK 53"
+      },
+      {
+        "seq": 583,
+        "ms": 82962,
+        "source": "UNO_RX",
+        "line": "DONE 53 MOTOR_STOPPED"
+      },
+      {
+        "seq": 584,
+        "ms": 82968,
+        "source": "UNO_TX",
+        "line": "C 54 SESSION_STOP*B5"
+      },
+      {
+        "seq": 585,
+        "ms": 82976,
+        "source": "UNO_RX",
+        "line": "AK 54"
+      },
+      {
+        "seq": 586,
+        "ms": 82980,
+        "source": "UNO_RX",
+        "line": "DONE 54 SESSION_STOPPED"
+      }
+    ]
+  }
+}

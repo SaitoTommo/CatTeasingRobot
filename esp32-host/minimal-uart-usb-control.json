@@ -1,0 +1,9 @@
+{
+  "test": "USB_to_Uno_parser_control",
+  "baud": 9600,
+  "usbBytesWritten": 9,
+  "request": "PING ESP",
+  "D6_to_D0_disconnectedConfirmed": true,
+  "pongObserved": true,
+  "raw": "DBG UNO RXHEX 50 49 4E 47 20 45 53 50\r\nPONG UNO\r\nDBG UNO REPLIED_TO_ESP\r\nPING UNO\r\n"
+}

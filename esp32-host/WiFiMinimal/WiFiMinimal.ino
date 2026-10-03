@@ -19,9 +19,9 @@ void setup() {
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     Serial.printf("CONNECTED IP=%s RSSI=%d uptime=%lus\n",
-      WiFi.localIP().toString().c_str(), WiFi.RSSI(), millis()/1000);
+                  WiFi.localIP().toString().c_str(), WiFi.RSSI(), millis() / 1000);
   } else {
-    Serial.printf("WAIT status=%d uptime=%lus\n", WiFi.status(), millis()/1000);
+    Serial.printf("WAIT status=%d uptime=%lus\n", WiFi.status(), millis() / 1000);
   }
   delay(1000);
 }

@@ -166,7 +166,7 @@ test("staggered encoder edges cannot flip straight heading or rewind a turn", ()
   assert.ok(c.travelCm > b.travelCm);
 });
 
-test("same motor command renews without a stop, restart or encoder baseline reset", () => {
+test("continuous motor needs no renewal; a new command replaces its ID and STOP ends it", () => {
   const lines = [];
   const mock = new MockUno(initialWorld(), line => lines.push(line));
   mock.receiveWire("CMD 1 SESSION_START", 0);
@@ -175,13 +175,16 @@ test("same motor command renews without a stop, restart or encoder baseline rese
   const original = mock.active;
   mock.step(200);
   mock.receiveWire("CMD 6 CAMERA_FRONT 100", 250);
-  mock.receiveWire("CMD 3 MOTOR 100 100", 250);
   assert.equal(mock.active, original);
   assert.equal(mock.active.id, 2);
   mock.step(600);
   assert.equal(mock.active, original);
   assert.equal(lines.filter(line => line.includes("MOTION_STARTED")).length, 1);
   assert.equal(lines.some(line => line.includes("REPLACED")), false);
+  mock.receiveWire("CMD 6 CAMERA_FRONT 100", 600);
+  mock.receiveWire("CMD 3 MOTOR 120 120", 600);
+  assert.equal(mock.active.id,3);
+  assert.equal(lines.some(line => line.includes("REPLACED")),true);
   mock.receiveWire("CMD 4 STOP", 610);
   assert.equal(mock.active, null);
 });

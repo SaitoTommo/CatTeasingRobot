@@ -1,0 +1,20 @@
+{
+  "durationSeconds": 0.109,
+  "failure": "Uno memory warning during check: EVENT DIAG M 698 698 5 0 0 0*D1",
+  "unoUsbWrites": 0,
+  "motionCommandsIssued": false,
+  "commands": [],
+  "records": [
+    {
+      "seconds": 0.0,
+      "port": "COM10",
+      "line": "df 1d04 0 0 d 0 6 0"
+    },
+    {
+      "seconds": 0.0,
+      "port": "COM10",
+      "line": "EVENT DIAG M 698 698 5 0 0 0*D1"
+    }
+  ],
+  "state": null
+}

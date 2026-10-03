@@ -14,6 +14,57 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('Arduino panel accepts a 1 cm threshold without rounding it to the old minimum',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  element('safeLeft').value='1';element('safeRight').value='1';element('unoWheel').value='67.5';element('unoTrack').value='120';
+  vm.runInContext('saveUnoConfig()',context);
+  assert.deepEqual(requests.at(-1),{op:'uno_config',leftCm:1,rightCm:1,wheelMm:67.5,trackMm:120});
+});
+
+test('an unconfirmed stop is visible even when the policy phase says STOPPED',()=>{
+  const render=d=>vm.runInContext(`syncPatrolStatus(${JSON.stringify(d)})`,context);
+  const patrolStatus={action:'FAULT',motorId:0};
+  render({...base,patrolStatus,stopPendingId:123,stopUnconfirmed:false});
+  assert.match(element('patrolProgress').textContent,/等待 Uno 确认停车/);
+  render({...base,patrolStatus,stopPendingId:123,stopUnconfirmed:true});
+  assert.match(element('patrolProgress').textContent,/停车未确认.*电机命令已阻止/);
+  render({...base,patrolStatus,stopPendingId:0,stopUnconfirmed:false});
+  assert.doesNotMatch(element('patrolProgress').textContent,/停车未确认|等待 Uno 确认停车/);
+});
+
+test('patrol failure remains visible even after the rolling log no longer contains it',()=>{
+  const render=d=>vm.runInContext(`syncPatrolStatus(${JSON.stringify(d)})`,context);
+  render({...base,logs:[],patrolStatus:{action:'FAULT',lastFault:'geometry not confirmed in current GET_CONFIG reply',motorId:0}});
+  assert.match(element('patrolProgress').textContent,/geometry not confirmed/);
+  render({...base,patrolStatus:{action:'SCAN_TAG',lastMotionFailure:'SIDE_LEFT_OBSTACLE_OR_SENSOR_INVALID',motorId:42,leftPwm:45,rightPwm:-45,motorConfirmed:true}});
+  assert.match(element('patrolProgress').textContent,/SIDE_LEFT_OBSTACLE_OR_SENSOR_INVALID/);
+  assert.match(element('patrolProgress').textContent,/#42：45\/-45，Uno 已确认/);
+});
+
+test('front avoidance switch uses saved board state and is locked while running',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  const render=d=>{sync(d);vm.runInContext(`syncFrontAvoidance(${JSON.stringify(d)})`,context);};
+  render({...base,config:{frontAvoidanceEnabled:true,route:[586,9,9,0]}});
+  assert.equal(element('frontAvoidance').disabled,false);
+  vm.runInContext('toggleFrontAvoidance()',context);
+  assert.deepEqual(requests.at(-1),{op:'config',config:{frontAvoidanceEnabled:false}});
+  render({...base,phase:'PATROL',config:{frontAvoidanceEnabled:false,route:[586,9,9,0]},vision:{policy:{targetIndex:2}}});
+  assert.equal(element('frontAvoidance').disabled,true);
+  assert.match(element('frontAvoidanceStatus').textContent,/无需地面校准/);
+  assert.match(element('savedRoute').textContent,/\[586,9,9,0\].*当前目标 ID：9/);
+  render(base);assert.equal(element('frontAvoidance').disabled,true);
+});
+
+test('user route preserves count, order and repeated IDs when saved',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  element('route').value='[586,9,9,0]';element('settings').value='{"route":[4],"frontAvoidanceEnabled":false}';
+  vm.runInContext('saveRoute()',context);
+  assert.deepEqual(requests.at(-1),{op:'config',config:{route:[586,9,9,0]}});
+  assert.deepEqual(JSON.parse(element('settings').value),{route:[586,9,9,0],frontAvoidanceEnabled:false});
+  const count=requests.length;for(const invalid of ['[]','[587]','[1.5]']){element('route').value=invalid;vm.runInContext('saveRoute()',context);}
+  assert.equal(requests.length,count);
+});
+
 test('diagnostic log decodes hexadecimal heartbeat and reset breadcrumbs',()=>{
   const describe=line=>vm.runInContext(`describeDiag(${JSON.stringify(line)})`,context);
   const heartbeat=describe('EVENT DIAG H 3e8 a 14 10 6 3 2 1');

@@ -53,7 +53,7 @@ constexpr uint8_t PIN_L_IN2 = 9;
 constexpr uint8_t PIN_R_IN1 = 4;
 constexpr uint8_t PIN_R_IN2 = 7;
 // Measured on this chassis: nonzero drive requires at least PWM 120/255.
-constexpr uint8_t MOTOR_MIN_DRIVE_PWM = 120;
+constexpr uint8_t MOTOR_MIN_DRIVE_PWM = 1;
 constexpr uint8_t SONAR_TRIG_PINS[2] = { 10, A4 };  // LEFT, RIGHT
 constexpr uint8_t SONAR_ECHO_PINS[2] = { 11, A5 };
 constexpr uint8_t PIN_BUZZER = 13;  // LED output is delegated to ESP GPIO21.
@@ -66,16 +66,14 @@ const char TOUCH_NAMES[4][6] PROGMEM = { "TOP", "LEFT", "RIGHT", "REAR" };
 
 constexpr uint8_t SLOTS_PER_WHEEL_REV = 20;         // One FALLING edge per slot, on the wheel axle.
 constexpr float DEFAULT_WHEEL_DIAMETER_MM = 67.5f;  // Measured wheel diameter.
-constexpr float DEFAULT_SAFE_CM = 5.0f;
-constexpr float FRONT_CAMERA_SAFE_CM = 15.0f;
-constexpr float MIN_SAFE_CM = 5.0f;
+constexpr float DEFAULT_SAFE_CM = 1.0f;
+constexpr float MIN_SAFE_CM = 1.0f;
 constexpr float MAX_SAFE_CM = 100.0f;
 constexpr uint32_t TOUCH_DEBOUNCE_MS = 45;
 constexpr uint32_t SONAR_PERIOD_MS = 60;
 constexpr uint32_t SONAR_TIMEOUT_US = 24000;
 constexpr uint32_t SONAR_FRESH_MS = 500;
 constexpr uint32_t CAMERA_FRESH_MS = 500;
-constexpr uint32_t MOTOR_LEASE_MS = 500;
 constexpr uint32_t ENCODER_STALL_MS = 1200;
 
 volatile uint32_t wheelPulses[2] = { 0, 0 };
@@ -145,7 +143,7 @@ uint32_t buzzerUntilMs = 0;
 uint8_t remoteLedMode = 0;
 uint32_t remoteLedDeadline = 0, remoteLedInterval = 0;
 float wheelDiameterMm = DEFAULT_WHEEL_DIAMETER_MM;
-float trackWidthMm = 0;  // Must be measured before ROTATE is enabled.
+float trackWidthMm = 120.0f;  // User-selected default; SET_GEOMETRY may override it.
 float rpm[2] = { 0, 0 };
 uint32_t rpmAtMs = 0;
 uint32_t rpmPulses[2] = { 0, 0 };
@@ -155,7 +153,7 @@ uint32_t dryRunAtMs = 0;
 enum MotionKind : uint8_t { MOTION_NONE,
                             MOTION_TIMED,
                             MOTION_PULSES,
-                            MOTION_LEASE };
+                            MOTION_CONTINUOUS };
 struct Motion {
   MotionKind kind;
   uint16_t id;
@@ -217,14 +215,10 @@ void ack(uint16_t id) {
 }
 void done(uint16_t id, const __FlashStringHelper *suffix = nullptr) {
   diagStage(22);
-  Serial.print(F("DONE "));
-  Serial.print(id);
-  if (suffix) {
-    Serial.print(' ');
-    Serial.print(suffix);
-  }
-  Serial.println();
-  pumpSerialIn();
+  char line[40];
+  if(suffix)snprintf_P(line,sizeof(line),PSTR("DONE %u %S"),id,reinterpret_cast<PGM_P>(suffix));
+  else snprintf_P(line,sizeof(line),PSTR("DONE %u"),id);
+  printProtectedLine(line);
 }
 void error(uint16_t id, const __FlashStringHelper *reason) {
   diagStage(23);
@@ -246,7 +240,7 @@ uint32_t motionFeedbackAtMs = 0;
 
 void setMotorSide(uint8_t pwmPin, uint8_t in1, uint8_t in2, int16_t value) {
   const uint8_t side = pwmPin == PIN_L_PWM ? 0 : 1;
-  // Preserve STOP and direction; floor only nonzero physical motor output.
+  // Apply requested PWM directly; retain the valid 1..255 bounds and STOP.
   if (value != 0 && physicalIo[MOTOR_LEFT + side]) {
     const int16_t magnitude = constrain(abs(value), MOTOR_MIN_DRIVE_PWM, 255);
     value = value > 0 ? magnitude : -magnitude;
@@ -398,44 +392,30 @@ bool currentDistance(float &distance, uint32_t now) {
   return true;
 }
 
-bool movesTowardFront(int16_t left, int16_t right);
-
+// Camera/front decisions belong to ESP. Uno checks its local side sonars here.
 const __FlashStringHelper *motionSafetyReason(int16_t left, int16_t right, uint32_t now, bool report) {
   float distance;
-  if (movesTowardFront(left, right) && (!currentDistance(distance, now) || distance < FRONT_CAMERA_SAFE_CM)) {
-    if (report) {
-      Serial.print(F("EVENT OBSTACLE_NEAR FRONT "));
-      if (currentDistance(distance, now)) Serial.println(distance, 1);
-      else Serial.println(F("INVALID"));
-      pumpSerialIn();
-    }
-    return F("FRONT_OBSTACLE_OR_CAMERA_INVALID");
-  }
   if (left < right) {
-    if (currentSideDistance(0, distance, now) && distance >= safeDistanceCm[0]) return nullptr;
+    if (!currentSideDistance(0, distance, now) || distance >= safeDistanceCm[0]) return nullptr;
     if (report) {
       Serial.print(F("EVENT OBSTACLE_NEAR LEFT "));
       if (currentSideDistance(0, distance, now)) Serial.println(distance, 1);
       else Serial.println(F("INVALID"));
       pumpSerialIn();
     }
-    return F("SIDE_LEFT_OBSTACLE_OR_SENSOR_INVALID");
+    return F("SIDE_LEFT_OBSTACLE");
   }
   if (left > right) {
-    if (currentSideDistance(1, distance, now) && distance >= safeDistanceCm[1]) return nullptr;
+    if (!currentSideDistance(1, distance, now) || distance >= safeDistanceCm[1]) return nullptr;
     if (report) {
       Serial.print(F("EVENT OBSTACLE_NEAR RIGHT "));
       if (currentSideDistance(1, distance, now)) Serial.println(distance, 1);
       else Serial.println(F("INVALID"));
       pumpSerialIn();
     }
-    return F("SIDE_RIGHT_OBSTACLE_OR_SENSOR_INVALID");
+    return F("SIDE_RIGHT_OBSTACLE");
   }
   return nullptr;
-}
-
-bool movesTowardFront(int16_t left, int16_t right) {
-  return (left > 0 && right >= 0) || (right > 0 && left >= 0);
 }
 
 void tickDryRun(uint32_t now) {
@@ -473,7 +453,7 @@ void tickMotion(uint32_t now) {
   getPulses(leftCount, rightCount);
   const uint32_t counts[2] = { leftCount, rightCount };
   // Compact movement feedback only, independent of slow sensor-card polling.
-  if (now - motionFeedbackAtMs >= 100 && sonarPhase == SONAR_IDLE && Serial.availableForWrite() >= 44) {
+  if (now - motionFeedbackAtMs >= 200 && sonarPhase == SONAR_IDLE && Serial.availableForWrite() >= 44) {
     char line[34];
     snprintf_P(line, sizeof(line), PSTR("MP %u %lu %lu"), motion.id,
       leftCount - motion.basePulses[0], rightCount - motion.basePulses[1]);
@@ -501,9 +481,8 @@ void tickMotion(uint32_t now) {
       return;
     }
   }
-  if (deadlineReached(now, motion.deadlineMs)) {
-    if (motion.kind == MOTION_LEASE) abortMotion(F("DEADMAN_TIMEOUT"));
-    else if (motion.kind == MOTION_PULSES) abortMotion(F("MOTION_TIMEOUT"));
+  if (motion.kind != MOTION_CONTINUOUS && deadlineReached(now, motion.deadlineMs)) {
+    if (motion.kind == MOTION_PULSES) abortMotion(F("MOTION_TIMEOUT"));
     else finishMotion();
   }
 }
@@ -671,70 +650,59 @@ void printIo(uint16_t id) {
     Serial.print(reinterpret_cast<const __FlashStringHelper *>(IO_NAMES[i])); Serial.println(physicalIo[i] ? F(" ON") : F(" OFF")); pumpSerialIn();
   }
 }
-// Compact rows stay below 60 bytes including CRLF. Send only with enough TX room
-// and between sonar measurements, so telemetry never waits on TX or loses an echo.
+// 50-byte coherent snapshot. Each encoded frame fits the AVR TX ring.
+struct GuardedSnapshot {
+  uint16_t before=0xA55A;
+  uint8_t data[50];
+  uint16_t after=0x5AA5;
+  bool valid() const { return before==0xA55A && after==0x5AA5; }
+} snapshotBuffer;
+#define telemetrySnapshot snapshotBuffer.data
+void snapshotPut16(uint8_t o, uint16_t n) { telemetrySnapshot[o]=n; telemetrySnapshot[o+1]=n>>8; }
+void snapshotPut32(uint8_t o, uint32_t n) { snapshotPut16(o,n); snapshotPut16(o+2,n>>16); }
+int16_t snapshotDistance(float n) { return n < 0 ? -10 : lroundf(n*10); }
+void captureSnapshot(uint32_t now) {
+  memset(telemetrySnapshot,0,sizeof(telemetrySnapshot));
+  telemetrySnapshot[0]=1; snapshotPut32(1,now);
+  telemetrySnapshot[5]=sessionStopped | ((motion.kind!=MOTION_NONE)<<1) | (debugEnabled<<2) | (boardDryRun<<3);
+  uint16_t mask=0; for(uint8_t i=0;i<IO_COUNT;i++) if(physicalIo[i])mask|=uint16_t(1)<<i;
+  snapshotPut16(6,mask);
+  uint32_t counts[2]; getPulses(counts[0],counts[1]);
+  for(uint8_t i=0;i<2;i++) {
+    snapshotPut16(8+i*2,motion.kind==MOTION_NONE?0:i==0?motion.left:motion.right);
+    snapshotPut16(12+i*2,appliedMotor[i]);
+    telemetrySnapshot[16]|=digitalRead(i==0?PIN_L_IN1:PIN_R_IN1)<<(i*2);
+    telemetrySnapshot[16]|=digitalRead(i==0?PIN_L_IN2:PIN_R_IN2)<<(i*2+1);
+    if(physicalIo[ENCODER_LEFT+i])telemetrySnapshot[17]|=digitalRead(i==0?PIN_ENC_LEFT:PIN_ENC_RIGHT)<<i;
+    snapshotPut32(18+i*4,counts[i]);
+    static_assert(sizeof(float)==4,"snapshot requires float32");
+    memcpy(telemetrySnapshot+26+i*4,&rpm[i],4);
+    const bool valid=physicalIo[SONAR_LEFT_TRIG+i]&&physicalIo[SONAR_LEFT_ECHO+i]&&physicalDistanceValid[i]&&now-lastDistanceMs[i]<=SONAR_FRESH_MS;
+    snapshotPut16(34+i*4,snapshotDistance(valid?physicalDistanceCm[i]:-1));
+    float d; snapshotPut16(36+i*4,snapshotDistance(currentSideDistance(i,d,now)?d:-1));
+    if(physicalIo[SONAR_LEFT_ECHO+i])telemetrySnapshot[42]|=digitalRead(SONAR_ECHO_PINS[i])<<i;
+    telemetrySnapshot[43]|=(distanceOverride[i]!=DISTANCE_AUTO)<<i;
+  }
+  for(uint8_t i=0;i<4;i++) {
+    if(physicalIo[TOUCH_TOP+i])telemetrySnapshot[44]|=digitalRead(TOUCH_PINS[i])<<i;
+    telemetrySnapshot[45]|=touches[i].stable<<i;
+    telemetrySnapshot[46]|=(touches[i].overrideValue>=0)<<i;
+  }
+  const bool led=ledFlash?((now-ledFlashStartedMs)/ledFlashIntervalMs)%2==0:ledOn;
+  telemetrySnapshot[47]=led | ((buzzerUntilMs&&!deadlineReached(now,buzzerUntilMs))<<1) | (digitalRead(PIN_BUZZER)<<2);
+  float d; snapshotPut16(48,snapshotDistance(currentDistance(d,now)?d:-1));
+}
 void tickHardwareTelemetry(uint32_t now) {
-  if (!telemetryId || sonarPhase != SONAR_IDLE || Serial.availableForWrite() < 60) return;
-  if (telemetryStage == 13) {
-    const uint16_t id = telemetryId; telemetryId = 0; done(id, F("TELEMETRY")); return;
-  }
-  uint32_t leftCount, rightCount;
-  getPulses(leftCount, rightCount);
-  diagCommand(telemetryId);
-  diagTrace(30 + telemetryStage);
-  Serial.print(F("DATA ")); Serial.print(telemetryId); Serial.print(F(" HW "));
-  if (telemetryStage == 0) {
-    Serial.print(F("STATE ")); Serial.print(now); Serial.print(' ');
-    Serial.print(sessionStopped ? F("STOPPED") : motion.kind == MOTION_NONE ? F("IDLE") : F("MOVING"));
-    Serial.print(' '); Serial.print(debugEnabled); Serial.print(' '); Serial.print(boardDryRun);
-    uint16_t mask = 0;
-    for (uint8_t i = 0; i < IO_COUNT; ++i) if (physicalIo[i]) mask |= static_cast<uint16_t>(1) << i;
-    Serial.print(' '); Serial.println(mask);
-  } else if (telemetryStage <= 2) {
-    const uint8_t side = telemetryStage - 1;
-    Serial.print(side == 0 ? F("ML ") : F("MR "));
-    Serial.print(motion.kind == MOTION_NONE ? 0 : side == 0 ? motion.left : motion.right);
-    Serial.print(' '); Serial.print(appliedMotor[side]); Serial.print(' '); Serial.print(abs(appliedMotor[side]));
-    Serial.print(' '); Serial.print(physicalIo[MOTOR_LEFT + side]);
-    Serial.print(' '); Serial.print(digitalRead(side == 0 ? PIN_L_IN1 : PIN_R_IN1));
-    Serial.print(' '); Serial.println(digitalRead(side == 0 ? PIN_L_IN2 : PIN_R_IN2));
-  } else if (telemetryStage <= 4) {
-    const uint8_t side = telemetryStage - 3;
-    Serial.print(side == 0 ? F("EL ") : F("ER "));
-    Serial.print(physicalIo[ENCODER_LEFT + side]); Serial.print(' ');
-    Serial.print(physicalIo[ENCODER_LEFT + side] ? digitalRead(side == 0 ? PIN_ENC_LEFT : PIN_ENC_RIGHT) : -1);
-    Serial.print(' '); Serial.print(side == 0 ? leftCount : rightCount);
-    Serial.print(' '); Serial.print(rpm[side], 1); Serial.print(' ');
-    Serial.println(physicalIo[ENCODER_LEFT + side] ? F("P") : boardDryRun && !physicalIo[MOTOR_LEFT + side] ? F("V") : F("O"));
-  } else if (telemetryStage <= 6) {
-    const uint8_t side = telemetryStage - 5;
-    Serial.print(side == 0 ? F("SL ") : F("SR "));
-    Serial.print(physicalIo[SONAR_LEFT_TRIG + side]); Serial.print(' ');
-    Serial.print(physicalIo[SONAR_LEFT_ECHO + side]); Serial.print(' ');
-    Serial.print(physicalIo[SONAR_LEFT_ECHO + side] ? digitalRead(SONAR_ECHO_PINS[side]) : -1); Serial.print(' ');
-    const bool valid = physicalIo[SONAR_LEFT_TRIG + side] && physicalIo[SONAR_LEFT_ECHO + side] && physicalDistanceValid[side] && now - lastDistanceMs[side] <= SONAR_FRESH_MS;
-    Serial.print(valid ? physicalDistanceCm[side] : -1.0f, 1); Serial.print(' ');
-    float distance; Serial.print(currentSideDistance(side, distance, now) ? distance : -1.0f, 1); Serial.print(' ');
-    Serial.println(distanceOverride[side] != DISTANCE_AUTO ? F("I") : physicalIo[SONAR_LEFT_TRIG + side] && physicalIo[SONAR_LEFT_ECHO + side] ? F("P") : F("O"));
-  } else if (telemetryStage <= 10) {
-    const uint8_t index = telemetryStage - 7;
-    Serial.print(F("T ")); Serial.print(reinterpret_cast<const __FlashStringHelper *>(TOUCH_NAMES[index])); Serial.print(' ');
-    Serial.print(physicalIo[TOUCH_TOP + index]); Serial.print(' ');
-    Serial.print(physicalIo[TOUCH_TOP + index] ? digitalRead(TOUCH_PINS[index]) : -1); Serial.print(' ');
-    Serial.print(touches[index].stable); Serial.print(' ');
-    Serial.println(touches[index].overrideValue >= 0 ? F("I") : physicalIo[TOUCH_TOP + index] ? F("P") : F("O"));
-  } else if (telemetryStage == 11) {
-    const bool ledRequested = ledFlash ? ((now - ledFlashStartedMs) / ledFlashIntervalMs) % 2 == 0 : ledOn;
-    Serial.print(F("OUT ")); Serial.print(physicalIo[LED_OUT]); Serial.print(' '); Serial.print(ledRequested);
-    Serial.print(' '); Serial.print(-1);  // LED GPIO belongs to ESP.
-    Serial.print(' '); Serial.print(physicalIo[BUZZER_OUT]);
-    Serial.print(' '); Serial.print(buzzerUntilMs && !deadlineReached(now, buzzerUntilMs));
-    Serial.print(' '); Serial.println(digitalRead(PIN_BUZZER));
-  } else {
-    float distance; Serial.print(F("FRONT ")); Serial.print(currentDistance(distance, now) ? distance : -1.0f, 1);
-    Serial.print(' '); Serial.println(boardDryRun ? F("TEST") : F("HOST"));
-  }
-  ++telemetryStage;
+  if(!telemetryId||sonarPhase!=SONAR_IDLE||Serial.availableForWrite()<60)return;
+  diagCommand(telemetryId); diagStage(30+telemetryStage);
+  if(telemetryStage==3){char terminal[24];snprintf_P(terminal,sizeof(terminal),PSTR("DONE %u TELEMETRY"),telemetryId);telemetryId=0;printProtectedLine(terminal);return;}
+  if(!telemetryStage)captureSnapshot(now);
+  char line[46];
+  uint8_t at=snprintf_P(line,sizeof(line),PSTR("TB %u %u "),telemetryId,telemetryStage);
+  const char digits[]="0123456789ABCDEF";
+  uint8_t length=telemetryStage==2?16:17;
+  for(uint8_t i=0;i<length;i++){uint8_t n=telemetrySnapshot[telemetryStage*17+i];line[at++]=digits[n>>4];line[at++]=digits[n&15];}
+  line[at]=0; printProtectedLine(line); ++telemetryStage;
 }
 
 void diagBadChecksum(const char *line, uint8_t calculated, uint8_t received) {
@@ -954,11 +922,6 @@ void processCommand(char *line) {
     done(id, F("MOTOR_STOPPED"));
     return;
   }
-  if (!strcmp_P(verb, PSTR("KEEP")) && n == 0) {
-    if (motion.kind != MOTION_LEASE) { error(id, F("NO_ACTIVE_MOTOR")); return; }
-    motion.deadlineMs = millis() + MOTOR_LEASE_MS;
-    done(id, F("LEASE_RENEWED")); return;
-  }
   if (!strcmp_P(verb, PSTR("MOVE")) && n == 3 && (!strcmp_P(a, PSTR("FORWARD")) || !strcmp_P(a, PSTR("BACKWARD"))) && parseLong(b, 1, 255, x) && parseLong(c, 1, 10000, y)) {
     const int16_t speed = !strcmp_P(a, PSTR("FORWARD")) ? x : -x;
     startMotion(id, MOTION_TIMED, speed, speed, y, 0, false,
@@ -979,12 +942,8 @@ void processCommand(char *line) {
       done(id, F("MOTOR_STOPPED"));
       return;
     }
-    if (motion.kind == MOTION_LEASE && motion.left == x && motion.right == y) {
-      motion.deadlineMs = millis() + MOTOR_LEASE_MS;
-      done(id, F("LEASE_RENEWED")); return;
-    }
-    if (motion.kind == MOTION_LEASE) abortMotion(F("REPLACED"));
-    startMotion(id, MOTION_LEASE, x, y, MOTOR_LEASE_MS, 0, false, F("MOTOR"));
+    if (motion.kind == MOTION_CONTINUOUS) abortMotion(F("REPLACED"));
+    startMotion(id, MOTION_CONTINUOUS, x, y, 0, 0, false, F("MOTOR"));
     return;
   }
   if (!strcmp_P(verb, PSTR("DRIVE")) && n == 2 && parseFloat(a, -100, 100, f) && f != 0 && parseLong(b, 1, 255, x)) {
@@ -1275,7 +1234,7 @@ void checkMemoryState() {
   diagMinFree = min(diagMinFree, static_cast<uint16_t>(max(0, freeBytes)));
   uint8_t flags = 0;
   if (!inputBuffers[0].valid() || !inputBuffers[1].valid() ||
-      !pendingBuffer.valid() || !executingBuffer.valid()) flags |= 1;
+      !pendingBuffer.valid() || !executingBuffer.valid() || !snapshotBuffer.valid()) flags |= 1;
   if (appliedMotor[0] < -255 || appliedMotor[0] > 255 ||
       appliedMotor[1] < -255 || appliedMotor[1] > 255) flags |= 2;
   if (freeBytes < 128) flags |= 4;
@@ -1348,7 +1307,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.1"));
+  Serial.println(F("READY UNO_CAT_V6.5"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
       static_cast<uint16_t>(~diagBreadcrumb.command) == diagBreadcrumb.commandInverse) {

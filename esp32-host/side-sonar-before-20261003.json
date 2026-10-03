@@ -1,0 +1,1335 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.10",
+  "ms": 742783,
+  "mode": "UART",
+  "phase": "STOPPED",
+  "unoTelemetry": [
+    {
+      "line": "DATA 424 HW STATE 138463 STOPPED 0 0 16383",
+      "at": 741963,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW ML 0 0 0 1 0 0",
+      "at": 741964,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW MR 0 0 0 1 0 0",
+      "at": 741964,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW EL 1 0 77 0.0 P",
+      "at": 741964,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW ER 1 0 73 0.0 P",
+      "at": 741964,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW SL 1 1 0 221.1 221.1 P",
+      "at": 741964,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW SR 1 1 0 136.8 136.8 P",
+      "at": 741964,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW T TOP 1 1 0 P",
+      "at": 741965,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW T LEFT 1 1 0 P",
+      "at": 741965,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW T RIGHT 1 1 0 P",
+      "at": 741965,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW T REAR 1 1 0 P",
+      "at": 741965,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW OUT 1 0 -1 1 0 0",
+      "at": 741965,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 424 HW FRONT -1.0 HOST",
+      "at": 741965,
+      "source": "UNO_RX"
+    }
+  ],
+  "unoConfig": {
+    "line": "DATA 354 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=5.0",
+    "at": 616232,
+    "source": "UNO_RX"
+  },
+  "debugResult": "等待 Uno 回报",
+  "debugBusy": false,
+  "benchBypass": false,
+  "hostLed": {
+    "pin": "onboard/GPIO21",
+    "on": false,
+    "mode": "OFF",
+    "gpioLevel": 1,
+    "source": "ESP_GPIO_CONTROL"
+  },
+  "patrolStatus": {
+    "action": "FAULT",
+    "lastFault": "SIDE_LEFT_OBSTACLE_OR_SENSOR_INVALID",
+    "lastMotionFailure": "SIDE_LEFT_OBSTACLE_OR_SENSOR_INVALID",
+    "motorId": 0,
+    "motorConfirmed": false,
+    "leftPwm": -30,
+    "rightPwm": 30,
+    "targetIndex": 0
+  },
+  "lastUnoAgeMs": 306,
+  "lastRx": "EVENT DIAG H 21ef8 1c18 3 0 3 1 0 0",
+  "lastTx": "C 424 GET_TELEMETRY*04",
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "cameraOk": true,
+  "frameSeq": 3709,
+  "heap": 28560,
+  "psram": 7013336,
+  "visionMode": "BOTH",
+  "visionIntervalMs": 200,
+  "apIP": "192.168.4.1",
+  "stationIP": "192.168.137.15",
+  "config": {
+    "explorationBranchPercent": 20,
+    "touchFlashPercent": 20,
+    "touchPreyPercent": 20,
+    "touchSlowEscapePercent": 40,
+    "touchFastEscapePercent": 40,
+    "catFollowProbePercent": 5,
+    "catFollowObservePercent": 35,
+    "catFollowPatrolPercent": 60,
+    "endingAfterRounds": 3,
+    "endingInactivitySeconds": 12,
+    "endingPatrolPercent": 40,
+    "endingSilentPercent": 30,
+    "endingSignalPercent": 30,
+    "captureWaitMaxSeconds": 15,
+    "captureCueFlashMs": 2200,
+    "captureCueBeepMs": 360,
+    "robotFarApproachPercent": 85,
+    "robotFarProbePercent": 15,
+    "robotNearSignalPercent": 20,
+    "robotNearObservePercent": 40,
+    "robotNearStayPercent": 40,
+    "catProbeCooldownSeconds": 15,
+    "robotProbeCooldownSeconds": 15,
+    "farCatThresholdCm": 40,
+    "initialLookSeconds": 5,
+    "postEscapeWaitSeconds": 10,
+    "touchDebounceMs": 1000,
+    "catLeaveDistanceCm": 70,
+    "catLeaveSeconds": 5,
+    "sessionLimitSeconds": 60,
+    "decisionIntervalMs": 2500,
+    "searchTimeoutMs": 15000,
+    "finalSearchTimeoutMs": 8000,
+    "alignTimeoutMs": 5000,
+    "touchReleaseTimeoutMs": 4000,
+    "searchPwm": 75,
+    "centerTolerancePercent": 5.5,
+    "alignPwm": 52,
+    "slowApproachCm": 9,
+    "slowApproachPwm": 95,
+    "probeStep1Cm": 3,
+    "probeStep2Cm": 4,
+    "probeStep3Cm": 3,
+    "probePause1Ms": 700,
+    "probePause2Ms": 900,
+    "probePause3Ms": 600,
+    "probePwm": 90,
+    "signalFlashMs": 1400,
+    "signalBeepMs": 180,
+    "touchFeedbackBeepMs": 180,
+    "escapeDistanceCm": 26,
+    "slowEscapePwm": 95,
+    "fastEscapePwm": 210,
+    "route": [
+      46,
+      40
+    ],
+    "patrolSearchPwm": 45,
+    "patrolAlignPwm": 30,
+    "wheelMm": 67.5,
+    "trackMm": 120,
+    "stopMarginCm": 3,
+    "tagStopWidth": 0.25,
+    "catNearWidth": 0.35,
+    "catFarWidth": 0.12,
+    "visionMaxAgeMs": 1500,
+    "frontAvoidanceEnabled": false,
+    "frontCalibrated": false,
+    "frontBlockBottom": 0.88,
+    "floorRoiTop": 0.75,
+    "floorDifferenceThreshold": 35,
+    "floorReference": []
+  },
+  "vision": {
+    "source": "OV_CAMERA",
+    "at": 742021,
+    "frameWidth": 320,
+    "frameHeight": 240,
+    "cat": {
+      "detected": false,
+      "valid": true
+    },
+    "mode": "BOTH",
+    "tags": [],
+    "tagsValid": true,
+    "floorSignature": [
+      215.36,
+      215.36,
+      215.36,
+      220.12,
+      220.12,
+      220.12,
+      220.495,
+      220.495,
+      220.495,
+      206.4775,
+      206.4775,
+      206.4775,
+      145.32,
+      145.32,
+      145.32,
+      138.7775,
+      138.7775,
+      138.7775,
+      121.0925,
+      121.0925,
+      121.0925,
+      103.48,
+      103.48,
+      103.48,
+      206.1675,
+      206.1675,
+      206.1675,
+      210.78,
+      210.78,
+      210.78,
+      213.32,
+      213.32,
+      213.32,
+      206.4825,
+      206.4825,
+      206.4825,
+      184.7275,
+      184.7275,
+      184.7275,
+      141.97,
+      141.97,
+      141.97,
+      124.775,
+      124.775,
+      124.775,
+      93.045,
+      93.045,
+      93.045,
+      196.51,
+      196.51,
+      196.51,
+      201.53,
+      201.53,
+      201.53,
+      203.48,
+      203.48,
+      203.48,
+      202.48,
+      202.48,
+      202.48,
+      194.075,
+      194.075,
+      194.075,
+      175.595,
+      175.595,
+      175.595,
+      143.25,
+      143.25,
+      143.25,
+      73.7325,
+      73.7325,
+      73.7325
+    ],
+    "floorDifference": 220.495,
+    "frontCalibrated": false,
+    "front": "INVALID",
+    "latencyMs": 455,
+    "policy": {
+      "action": "FAULT",
+      "targetIndex": 0,
+      "rounds": 0
+    }
+  },
+  "cameraVision": {
+    "source": "OV_CAMERA",
+    "at": 742021,
+    "frameWidth": 320,
+    "frameHeight": 240,
+    "cat": {
+      "detected": false,
+      "valid": true
+    },
+    "mode": "BOTH",
+    "tags": [],
+    "tagsValid": true,
+    "floorSignature": [
+      215.36,
+      215.36,
+      215.36,
+      220.12,
+      220.12,
+      220.12,
+      220.495,
+      220.495,
+      220.495,
+      206.4775,
+      206.4775,
+      206.4775,
+      145.32,
+      145.32,
+      145.32,
+      138.7775,
+      138.7775,
+      138.7775,
+      121.0925,
+      121.0925,
+      121.0925,
+      103.48,
+      103.48,
+      103.48,
+      206.1675,
+      206.1675,
+      206.1675,
+      210.78,
+      210.78,
+      210.78,
+      213.32,
+      213.32,
+      213.32,
+      206.4825,
+      206.4825,
+      206.4825,
+      184.7275,
+      184.7275,
+      184.7275,
+      141.97,
+      141.97,
+      141.97,
+      124.775,
+      124.775,
+      124.775,
+      93.045,
+      93.045,
+      93.045,
+      196.51,
+      196.51,
+      196.51,
+      201.53,
+      201.53,
+      201.53,
+      203.48,
+      203.48,
+      203.48,
+      202.48,
+      202.48,
+      202.48,
+      194.075,
+      194.075,
+      194.075,
+      175.595,
+      175.595,
+      175.595,
+      143.25,
+      143.25,
+      143.25,
+      73.7325,
+      73.7325,
+      73.7325
+    ],
+    "floorDifference": 220.495,
+    "frontCalibrated": false,
+    "front": "INVALID",
+    "latencyMs": 455
+  },
+  "droppedLogs": 3920,
+  "logs": [
+    {
+      "seq": 3921,
+      "ms": 710976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3922,
+      "ms": 711477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1a5e0 1c5c 0 0 3 0 0 0"
+    },
+    {
+      "seq": 3923,
+      "ms": 711920,
+      "source": "UNO_TX",
+      "line": "C 409 GET_TELEMETRY*DC"
+    },
+    {
+      "seq": 3924,
+      "ms": 711928,
+      "source": "UNO_RX",
+      "line": "AK 409"
+    },
+    {
+      "seq": 3925,
+      "ms": 711952,
+      "source": "UNO_RX",
+      "line": "TB 409 0 01B8A7010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3926,
+      "ms": 711961,
+      "source": "UNO_RX",
+      "line": "TB 409 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3927,
+      "ms": 711968,
+      "source": "UNO_RX",
+      "line": "TB 409 2 F6FFF6FFF6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 3928,
+      "ms": 711974,
+      "source": "UNO_RX",
+      "line": "DONE 409 TELEMETRY"
+    },
+    {
+      "seq": 3929,
+      "ms": 711979,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3930,
+      "ms": 712479,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1a9c8 1c0b 4 0 3 0 0 0"
+    },
+    {
+      "seq": 3931,
+      "ms": 712977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3932,
+      "ms": 713537,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1adb0 1c59 0 0 3 0 0 0"
+    },
+    {
+      "seq": 3933,
+      "ms": 713921,
+      "source": "UNO_TX",
+      "line": "C 410 GET_TELEMETRY*D8"
+    },
+    {
+      "seq": 3934,
+      "ms": 713931,
+      "source": "UNO_RX",
+      "line": "AK 410"
+    },
+    {
+      "seq": 3935,
+      "ms": 713938,
+      "source": "UNO_RX",
+      "line": "TB 410 0 0178AF010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3936,
+      "ms": 713945,
+      "source": "UNO_RX",
+      "line": "TB 410 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3937,
+      "ms": 713955,
+      "source": "UNO_RX",
+      "line": "TB 410 2 AC00AC004802480200000F000000F6FF"
+    },
+    {
+      "seq": 3938,
+      "ms": 713959,
+      "source": "UNO_RX",
+      "line": "DONE 410 TELEMETRY"
+    },
+    {
+      "seq": 3939,
+      "ms": 713977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3940,
+      "ms": 714478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1b198 1c13 4 0 3 0 0 0"
+    },
+    {
+      "seq": 3941,
+      "ms": 714976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3942,
+      "ms": 715476,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1b580 1c4a 0 0 3 1 0 0"
+    },
+    {
+      "seq": 3943,
+      "ms": 715922,
+      "source": "UNO_TX",
+      "line": "C 411 GET_TELEMETRY*6D"
+    },
+    {
+      "seq": 3944,
+      "ms": 715930,
+      "source": "UNO_RX",
+      "line": "AK 411"
+    },
+    {
+      "seq": 3945,
+      "ms": 715938,
+      "source": "UNO_RX",
+      "line": "TB 411 0 0149B7010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3946,
+      "ms": 715946,
+      "source": "UNO_RX",
+      "line": "TB 411 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3947,
+      "ms": 715973,
+      "source": "UNO_RX",
+      "line": "TB 411 2 8C038C034802480200000F000000F6FF"
+    },
+    {
+      "seq": 3948,
+      "ms": 715980,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3949,
+      "ms": 715986,
+      "source": "UNO_RX",
+      "line": "DONE 411 TELEMETRY"
+    },
+    {
+      "seq": 3950,
+      "ms": 716477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1b968 1c0d 2 0 3 0 0 0"
+    },
+    {
+      "seq": 3951,
+      "ms": 716977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3952,
+      "ms": 717478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1bd50 1c56 0 0 3 0 0 0"
+    },
+    {
+      "seq": 3953,
+      "ms": 717921,
+      "source": "UNO_TX",
+      "line": "C 412 GET_TELEMETRY*B5"
+    },
+    {
+      "seq": 3954,
+      "ms": 717930,
+      "source": "UNO_RX",
+      "line": "AK 412"
+    },
+    {
+      "seq": 3955,
+      "ms": 717937,
+      "source": "UNO_RX",
+      "line": "TB 412 0 0119BF010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3956,
+      "ms": 717946,
+      "source": "UNO_RX",
+      "line": "TB 412 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3957,
+      "ms": 717955,
+      "source": "UNO_RX",
+      "line": "TB 412 2 43034303AE04AE0400000F000000F6FF"
+    },
+    {
+      "seq": 3958,
+      "ms": 717959,
+      "source": "UNO_RX",
+      "line": "DONE 412 TELEMETRY"
+    },
+    {
+      "seq": 3959,
+      "ms": 717976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3960,
+      "ms": 718477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1c138 1c01 4 0 3 0 0 0"
+    },
+    {
+      "seq": 3961,
+      "ms": 718976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3962,
+      "ms": 719478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1c520 1c5e 0 0 3 0 0 0"
+    },
+    {
+      "seq": 3963,
+      "ms": 719921,
+      "source": "UNO_TX",
+      "line": "C 413 GET_TELEMETRY*00"
+    },
+    {
+      "seq": 3964,
+      "ms": 719930,
+      "source": "UNO_RX",
+      "line": "AK 413"
+    },
+    {
+      "seq": 3965,
+      "ms": 719938,
+      "source": "UNO_RX",
+      "line": "TB 413 0 01EAC6010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3966,
+      "ms": 719946,
+      "source": "UNO_RX",
+      "line": "TB 413 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3967,
+      "ms": 719958,
+      "source": "UNO_RX",
+      "line": "TB 413 2 F902F9024902490200000F000000F6FF"
+    },
+    {
+      "seq": 3968,
+      "ms": 719961,
+      "source": "UNO_RX",
+      "line": "DONE 413 TELEMETRY"
+    },
+    {
+      "seq": 3969,
+      "ms": 720031,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3970,
+      "ms": 720476,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1c908 1c08 3 0 3 0 0 0"
+    },
+    {
+      "seq": 3971,
+      "ms": 720978,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3972,
+      "ms": 721478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1ccf0 1c58 0 0 3 0 0 0"
+    },
+    {
+      "seq": 3973,
+      "ms": 721921,
+      "source": "UNO_TX",
+      "line": "C 414 GET_TELEMETRY*02"
+    },
+    {
+      "seq": 3974,
+      "ms": 721930,
+      "source": "UNO_RX",
+      "line": "AK 414"
+    },
+    {
+      "seq": 3975,
+      "ms": 721938,
+      "source": "UNO_RX",
+      "line": "TB 414 0 01BACE010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3976,
+      "ms": 721946,
+      "source": "UNO_RX",
+      "line": "TB 414 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3977,
+      "ms": 721954,
+      "source": "UNO_RX",
+      "line": "TB 414 2 0E010E014802480200000F000000F6FF"
+    },
+    {
+      "seq": 3978,
+      "ms": 721961,
+      "source": "UNO_RX",
+      "line": "DONE 414 TELEMETRY"
+    },
+    {
+      "seq": 3979,
+      "ms": 721977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3980,
+      "ms": 722477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1d0d8 1c10 4 0 3 0 0 0"
+    },
+    {
+      "seq": 3981,
+      "ms": 722978,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3982,
+      "ms": 723476,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1d4c0 1c5c 0 0 3 0 0 0"
+    },
+    {
+      "seq": 3983,
+      "ms": 723922,
+      "source": "UNO_TX",
+      "line": "C 415 GET_TELEMETRY*B7"
+    },
+    {
+      "seq": 3984,
+      "ms": 723930,
+      "source": "UNO_RX",
+      "line": "AK 415"
+    },
+    {
+      "seq": 3985,
+      "ms": 723939,
+      "source": "UNO_RX",
+      "line": "TB 415 0 018AD6010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3986,
+      "ms": 723947,
+      "source": "UNO_RX",
+      "line": "TB 415 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3987,
+      "ms": 723955,
+      "source": "UNO_RX",
+      "line": "TB 415 2 EF03EF032705270500000F000000F6FF"
+    },
+    {
+      "seq": 3988,
+      "ms": 723962,
+      "source": "UNO_RX",
+      "line": "DONE 415 TELEMETRY"
+    },
+    {
+      "seq": 3989,
+      "ms": 723977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3990,
+      "ms": 724478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1d8a8 1c11 3 0 3 1 0 0"
+    },
+    {
+      "seq": 3991,
+      "ms": 724976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 3992,
+      "ms": 725477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1dc90 1c4f 0 0 3 0 0 0"
+    },
+    {
+      "seq": 3993,
+      "ms": 725921,
+      "source": "UNO_TX",
+      "line": "C 416 GET_TELEMETRY*6F"
+    },
+    {
+      "seq": 3994,
+      "ms": 725930,
+      "source": "UNO_RX",
+      "line": "AK 416"
+    },
+    {
+      "seq": 3995,
+      "ms": 725939,
+      "source": "UNO_RX",
+      "line": "TB 416 0 015ADE010001FF3F000000000000000000"
+    },
+    {
+      "seq": 3996,
+      "ms": 725946,
+      "source": "UNO_RX",
+      "line": "TB 416 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 3997,
+      "ms": 725954,
+      "source": "UNO_RX",
+      "line": "TB 416 2 FD04FD044802480200000F000000F6FF"
+    },
+    {
+      "seq": 3998,
+      "ms": 725961,
+      "source": "UNO_RX",
+      "line": "DONE 416 TELEMETRY"
+    },
+    {
+      "seq": 3999,
+      "ms": 725976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4000,
+      "ms": 726478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1e078 1c1a 4 0 3 0 0 0"
+    },
+    {
+      "seq": 4001,
+      "ms": 726977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4002,
+      "ms": 727477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1e460 1c56 0 0 3 1 0 0"
+    },
+    {
+      "seq": 4003,
+      "ms": 727923,
+      "source": "UNO_TX",
+      "line": "C 417 GET_TELEMETRY*DA"
+    },
+    {
+      "seq": 4004,
+      "ms": 727931,
+      "source": "UNO_RX",
+      "line": "AK 417"
+    },
+    {
+      "seq": 4005,
+      "ms": 727940,
+      "source": "UNO_RX",
+      "line": "TB 417 0 012BE6010001FF3F000000000000000000"
+    },
+    {
+      "seq": 4006,
+      "ms": 727947,
+      "source": "UNO_RX",
+      "line": "TB 417 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4007,
+      "ms": 727957,
+      "source": "UNO_RX",
+      "line": "TB 417 2 CD0BCD0B4902490200000F000000F6FF"
+    },
+    {
+      "seq": 4008,
+      "ms": 727961,
+      "source": "UNO_RX",
+      "line": "DONE 417 TELEMETRY"
+    },
+    {
+      "seq": 4009,
+      "ms": 727978,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4010,
+      "ms": 728478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1e848 1c1a 3 0 3 0 0 0"
+    },
+    {
+      "seq": 4011,
+      "ms": 728976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4012,
+      "ms": 729478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1ec30 1c58 0 0 3 0 0 0"
+    },
+    {
+      "seq": 4013,
+      "ms": 729923,
+      "source": "UNO_TX",
+      "line": "C 418 GET_TELEMETRY*6B"
+    },
+    {
+      "seq": 4014,
+      "ms": 729932,
+      "source": "UNO_RX",
+      "line": "AK 418"
+    },
+    {
+      "seq": 4015,
+      "ms": 729940,
+      "source": "UNO_RX",
+      "line": "TB 418 0 01FBED010001FF3F000000000000000000"
+    },
+    {
+      "seq": 4016,
+      "ms": 729948,
+      "source": "UNO_RX",
+      "line": "TB 418 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4017,
+      "ms": 729955,
+      "source": "UNO_RX",
+      "line": "TB 418 2 970297029404940400000F000000F6FF"
+    },
+    {
+      "seq": 4018,
+      "ms": 729962,
+      "source": "UNO_RX",
+      "line": "DONE 418 TELEMETRY"
+    },
+    {
+      "seq": 4019,
+      "ms": 729977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4020,
+      "ms": 730478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1f018 1c09 4 0 3 0 0 0"
+    },
+    {
+      "seq": 4021,
+      "ms": 730976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4022,
+      "ms": 731477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1f400 1c59 0 0 3 0 0 0"
+    },
+    {
+      "seq": 4023,
+      "ms": 731924,
+      "source": "UNO_TX",
+      "line": "C 419 GET_TELEMETRY*DE"
+    },
+    {
+      "seq": 4024,
+      "ms": 731933,
+      "source": "UNO_RX",
+      "line": "AK 419"
+    },
+    {
+      "seq": 4025,
+      "ms": 731941,
+      "source": "UNO_RX",
+      "line": "TB 419 0 01CDF5010001FF3F000000000000000000"
+    },
+    {
+      "seq": 4026,
+      "ms": 731950,
+      "source": "UNO_RX",
+      "line": "TB 419 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4027,
+      "ms": 731957,
+      "source": "UNO_RX",
+      "line": "TB 419 2 AC00AC004902490200000F000000F6FF"
+    },
+    {
+      "seq": 4028,
+      "ms": 731963,
+      "source": "UNO_RX",
+      "line": "DONE 419 TELEMETRY"
+    },
+    {
+      "seq": 4029,
+      "ms": 731977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4030,
+      "ms": 732477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1f7e8 1c16 2 0 3 0 0 0"
+    },
+    {
+      "seq": 4031,
+      "ms": 732976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4032,
+      "ms": 733477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1fbd0 1c5a 0 0 3 1 0 0"
+    },
+    {
+      "seq": 4033,
+      "ms": 733925,
+      "source": "UNO_TX",
+      "line": "C 420 GET_TELEMETRY*DE"
+    },
+    {
+      "seq": 4034,
+      "ms": 733934,
+      "source": "UNO_RX",
+      "line": "AK 420"
+    },
+    {
+      "seq": 4035,
+      "ms": 733942,
+      "source": "UNO_RX",
+      "line": "TB 420 0 019EFD010001FF3F000000000000000000"
+    },
+    {
+      "seq": 4036,
+      "ms": 733950,
+      "source": "UNO_RX",
+      "line": "TB 420 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4037,
+      "ms": 733958,
+      "source": "UNO_RX",
+      "line": "TB 420 2 970297024802480200000F000000F6FF"
+    },
+    {
+      "seq": 4038,
+      "ms": 733965,
+      "source": "UNO_RX",
+      "line": "DONE 420 TELEMETRY"
+    },
+    {
+      "seq": 4039,
+      "ms": 733977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4040,
+      "ms": 734478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 1ffb8 1c0a 3 0 3 0 0 0"
+    },
+    {
+      "seq": 4041,
+      "ms": 734978,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4042,
+      "ms": 735477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 203a0 1c60 0 0 3 0 0 0"
+    },
+    {
+      "seq": 4043,
+      "ms": 735925,
+      "source": "UNO_TX",
+      "line": "C 421 GET_TELEMETRY*6B"
+    },
+    {
+      "seq": 4044,
+      "ms": 735935,
+      "source": "UNO_RX",
+      "line": "AK 421"
+    },
+    {
+      "seq": 4045,
+      "ms": 735943,
+      "source": "UNO_RX",
+      "line": "TB 421 0 016E05020001FF3F000000000000000000"
+    },
+    {
+      "seq": 4046,
+      "ms": 735950,
+      "source": "UNO_RX",
+      "line": "TB 421 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4047,
+      "ms": 735958,
+      "source": "UNO_RX",
+      "line": "TB 421 2 940094000E050E0500000F000000F6FF"
+    },
+    {
+      "seq": 4048,
+      "ms": 735965,
+      "source": "UNO_RX",
+      "line": "DONE 421 TELEMETRY"
+    },
+    {
+      "seq": 4049,
+      "ms": 735977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4050,
+      "ms": 736479,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 20788 1c03 4 0 3 1 0 0"
+    },
+    {
+      "seq": 4051,
+      "ms": 736976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4052,
+      "ms": 737477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 20b70 1c54 0 0 3 0 0 0"
+    },
+    {
+      "seq": 4053,
+      "ms": 737926,
+      "source": "UNO_TX",
+      "line": "C 422 GET_TELEMETRY*B3"
+    },
+    {
+      "seq": 4054,
+      "ms": 737935,
+      "source": "UNO_RX",
+      "line": "AK 422"
+    },
+    {
+      "seq": 4055,
+      "ms": 737942,
+      "source": "UNO_RX",
+      "line": "TB 422 0 013F0D020001FF3F000000000000000000"
+    },
+    {
+      "seq": 4056,
+      "ms": 737952,
+      "source": "UNO_RX",
+      "line": "TB 422 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4057,
+      "ms": 737959,
+      "source": "UNO_RX",
+      "line": "TB 422 2 F6FFF6FF4802480200000F000000F6FF"
+    },
+    {
+      "seq": 4058,
+      "ms": 737966,
+      "source": "UNO_RX",
+      "line": "DONE 422 TELEMETRY"
+    },
+    {
+      "seq": 4059,
+      "ms": 737976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4060,
+      "ms": 738477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 20f58 1c04 3 0 3 0 0 0"
+    },
+    {
+      "seq": 4061,
+      "ms": 738977,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4062,
+      "ms": 739477,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 21340 1c49 0 0 3 1 0 0"
+    },
+    {
+      "seq": 4063,
+      "ms": 739926,
+      "source": "UNO_TX",
+      "line": "C 423 GET_TELEMETRY*06"
+    },
+    {
+      "seq": 4064,
+      "ms": 739935,
+      "source": "UNO_RX",
+      "line": "AK 423"
+    },
+    {
+      "seq": 4065,
+      "ms": 739944,
+      "source": "UNO_RX",
+      "line": "TB 423 0 010F15020001FF3F000000000000000000"
+    },
+    {
+      "seq": 4066,
+      "ms": 739951,
+      "source": "UNO_RX",
+      "line": "TB 423 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4067,
+      "ms": 739977,
+      "source": "UNO_RX",
+      "line": "TB 423 2 F6FFF6FF4902490200000F000000F6FF"
+    },
+    {
+      "seq": 4068,
+      "ms": 739983,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4069,
+      "ms": 739990,
+      "source": "UNO_RX",
+      "line": "DONE 423 TELEMETRY"
+    },
+    {
+      "seq": 4070,
+      "ms": 740476,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 21728 1c00 4 0 3 0 0 0"
+    },
+    {
+      "seq": 4071,
+      "ms": 740978,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4072,
+      "ms": 741478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 21b10 1c60 0 0 3 0 0 0"
+    },
+    {
+      "seq": 4073,
+      "ms": 741926,
+      "source": "UNO_TX",
+      "line": "C 424 GET_TELEMETRY*04"
+    },
+    {
+      "seq": 4074,
+      "ms": 741935,
+      "source": "UNO_RX",
+      "line": "AK 424"
+    },
+    {
+      "seq": 4075,
+      "ms": 741943,
+      "source": "UNO_RX",
+      "line": "TB 424 0 01DF1C020001FF3F000000000000000000"
+    },
+    {
+      "seq": 4076,
+      "ms": 741951,
+      "source": "UNO_RX",
+      "line": "TB 424 1 004D000000490000000000000000000000"
+    },
+    {
+      "seq": 4077,
+      "ms": 741959,
+      "source": "UNO_RX",
+      "line": "TB 424 2 A308A3085805580500000F000000F6FF"
+    },
+    {
+      "seq": 4078,
+      "ms": 741966,
+      "source": "UNO_RX",
+      "line": "DONE 424 TELEMETRY"
+    },
+    {
+      "seq": 4079,
+      "ms": 741976,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 617 617 0 0 0 0"
+    },
+    {
+      "seq": 4080,
+      "ms": 742478,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 21ef8 1c18 3 0 3 1 0 0"
+    }
+  ]
+}

@@ -18,6 +18,7 @@ const files = new Map([
   ["/route-planner.mjs", ["route-planner.mjs", "text/javascript; charset=utf-8"]],
   ["/escape-planner.mjs", ["escape-planner.mjs", "text/javascript; charset=utf-8"]],
   ["/hardware-telemetry.mjs", ["hardware-telemetry.mjs", "text/javascript; charset=utf-8"]],
+  ["/compact-telemetry.mjs", ["compact-telemetry.mjs", "text/javascript; charset=utf-8"]],
   ["/robot-observations.mjs", ["robot-observations.mjs", "text/javascript; charset=utf-8"]],
   ["/app.mjs", ["app.mjs", "text/javascript; charset=utf-8"]],
 ]);
