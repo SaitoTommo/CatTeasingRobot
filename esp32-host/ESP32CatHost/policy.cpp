@@ -18,6 +18,9 @@ String initiator,escape="SLOW_STRAIGHT_ESCAPE",touchNext,pendingCommand,lastFaul
 String catFailure,catFailureReason;
 uint32_t actionAt=0,sessionAt=0,lastTouch=0,due=0,farAt=0,feedbackAt=0;
 uint32_t motorId=0,sessionId=0,stopId=0,sessionCommandAt=0,lastRobotProbe=0,lastCatProbe=0;
+bool scanConfigRetryPending=false;
+uint32_t scanConfigRetryAt=0;
+String scanConfigRetryReason;
 uint32_t generation=1,scanId=0,scanAt=0,scanStep=0,scanFrame=0,lastVqUsed=0,checkStep=0,checkAt=0;
 uint32_t lastDecisionFrame=0,arrivalFrame=0,catFailureAt=0;
 uint32_t encoder[2]={},encoderAt[2]={},quietEncoder[2]={},quietAt=0;
@@ -47,10 +50,16 @@ bool frontClear(){return !frontEnabled()||fresh()&&String(observation["front"]|"
 bool closeSide(int i){return sideAt[i]&&!elapsed(sideAt[i],2500)&&side[i]>=0&&side[i]<safe[i];}
 void state(const String &s){action=s;actionAt=now();logLine("DECISION",phase+" "+s);}
 void resetMotor(){motorId=0;motorConfirmed=motorDispatched=motorRunning=false;leftPwm=rightPwm=0;pulsesL=pulsesR=0;}
-void invalidate(){generation=generation%2147483647+1;scanId=scanStep=scanFrame=0;checkPending=checkReady=false;cancelVision();}
+void invalidate(){generation=generation%2147483647+1;scanId=scanStep=scanFrame=0;scanConfigRetryPending=false;checkPending=checkReady=false;cancelVision();}
 void quietOutputs(){sendUno("LED OFF");sendUno("BEEP 0");}
 void fail(const String &reason){lastFault=reason;invalidate();clearTx();resetMotor();stopId=sessionId=0;sendUno("STOP");sendUno("SESSION_STOP");quietOutputs();phase="STOPPED";state("FAULT");logLine("FAULT",reason);}
-void waitCommand(const String &next,const String &command){pendingCommand=command;sessionId=sendUno(command);sessionCommandAt=now();sessionRetries=0;state(next);}
+void retryScanConfig(const String &reason){
+  if(scanConfigRetryPending)return;
+  if(sessionRetries>=3){fail("scan configuration failed after 3 retries: "+reason);return;}
+  scanConfigRetryPending=true;scanConfigRetryAt=now();scanConfigRetryReason=reason;
+  logLine("SCAN_CONFIG_RETRY_WAIT",String(sessionRetries+1)+"/3 in 100ms: "+reason);
+}
+void waitCommand(const String &next,const String &command){scanConfigRetryPending=false;pendingCommand=command;sessionId=sendUno(command);sessionCommandAt=now();sessionRetries=0;state(next);}
 void awaitStop(const String &next){invalidate();clearTx();sessionId=0;resetMotor();afterStop=next;stopId=sendUno("STOP");quietOutputs();state("WAIT_STOP");}
 void requestConfig(){geometryConfirmed=false;waitCommand("WAIT_PATROL_CONFIG","GET_CONFIG");}
 void beginSession(){phase="STARTING";waitCommand("WAIT_SESSION_START","SESSION_START");}
@@ -63,7 +72,7 @@ void move(int l,int r){if(motorId&&leftPwm==l&&rightPwm==r)return;if(motorId){aw
 void drive(float cm,int pwm,const String &s){driveCm=cm;leftPwm=rightPwm=pwm;pulsesL=pulsesR=0;motorId=sendUno("DRIVE "+String(cm,2)+" "+String(pwm));motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(s);}
 void rotate(float degrees,int pwm,const String &s){turnDeg=degrees;leftPwm=degrees>0?pwm:-pwm;rightPwm=-leftPwm;pulsesL=pulsesR=0;motorId=sendUno("ROTATE "+String(degrees,1)+" "+String(pwm));motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(s);}
 void beginScan(const String &kind,const String &next,int flags=0,int spent=0){
-  invalidate();scanKind=kind;scanNext=next;scanFlags=flags;scanOrigin=spent;scanUsed=spent;lastVqUsed=0;scanDoneSeen=false;scanBudget=max(1,(int)lroundf(720.0f*20*track/(360*wheel)));scanAt=now();
+  invalidate();clearTx();scanKind=kind;scanNext=next;scanFlags=flags;scanOrigin=spent;scanUsed=spent;lastVqUsed=0;scanDoneSeen=false;scanBudget=max(1,(int)lroundf(720.0f*20*track/(360*wheel)));scanAt=now();
   int steps=(scanBudget-scanUsed+(int)setting("scanStepPulses")-1)/(int)setting("scanStepPulses");
   uint32_t total=min(uint32_t(600000),(uint32_t)(steps*(setting("scanVisionTimeoutMs")+setting("scanSettleTimeoutMs")+10000)+1000));
   waitCommand("WAIT_SCAN_CONFIG","SC "+String((int)setting("scanMinimumMs"))+" "+String((int)setting("scanQuietMs"))+" "+String((int)setting("scanVisionTimeoutMs"))+" "+String(total)+" "+String((int)setting("scanSettleTimeoutMs")));
@@ -108,7 +117,7 @@ void motionFailure(const String &reason){if(reason.startsWith("SIDE_")&&scanId&&
 }
 void policyCommandSent(uint32_t id){if(matchesPending(id,motorId)){motorDispatched=true;feedbackAt=now();}}
 void policyStopUnconfirmed(){lastFault="STOP_UNCONFIRMED: motor stop has not been confirmed";invalidate();clearTx();resetMotor();stopId=sessionId=0;phase="STOPPED";state("FAULT");}
-bool policyPreparing(){return phase=="STARTING"||phase=="ENDING";}
+bool policyPreparing(){return phase=="STARTING"||phase=="ENDING"||action=="WAIT_SCAN_CONFIG";}
 int policyTargetId(){return phase=="PATROL"&&config["route"].size()?config["route"][routeIndex].as<int>():-1;}
 String policyVisionMode(){
   if((action=="CAT_DRIVE"||action=="PROBE_MOVE"||action=="ESCAPE_MOVE")&&frontEnabled())return "FLOOR";
@@ -166,7 +175,9 @@ void policyInput(const String &line){
   }
   if(line.startsWith("AK ")||line.startsWith("ACK ")){sscanf(line.c_str(),line.startsWith("AK ")?"AK %u":"ACK %u",&id);if(matchesPending(id,motorId))motorConfirmed=true;return;}
   if(line.startsWith("MA ")){char reason[100];if(sscanf(line.c_str(),"MA %u %99s %lu %lu",&id,reason,&l,&r)==4&&matchesPending(id,motorId)){pulsesL=l;pulsesR=r;motionFailure(reason);}return;}
-  if(line.startsWith("ERROR ")){char reason[100];if(sscanf(line.c_str(),"ERROR %u %99s",&id,reason)==2){if(!id)logLine("UNO_PROTOCOL_ERROR",reason);else if(matchesPending(id,motorId))motionFailure(reason);else if(matchesPending(id,sessionId)||matchesPending(id,stopId))fail(String("required command: ")+reason);}return;}
+  if(line.startsWith("ERROR ")){char reason[100];if(sscanf(line.c_str(),"ERROR %u %99s",&id,reason)==2){
+    if(action=="WAIT_SCAN_CONFIG"&&sessionId&&(!id||matchesPending(id,sessionId))&&(!strcmp(reason,"BAD_CHECKSUM")||!strcmp(reason,"BAD_ENVELOPE"))){retryScanConfig(reason);return;}
+    if(!id)logLine("UNO_PROTOCOL_ERROR",reason);else if(matchesPending(id,motorId))motionFailure(reason);else if(matchesPending(id,sessionId)||matchesPending(id,stopId))fail(String("required command: ")+reason);}return;}
   if(action=="WAIT_PATROL_CONFIG"&&line.indexOf(" CONFIG ")>=0&&sscanf(line.c_str(),"DATA %u",&id)==1&&matchesPending(id,sessionId)){int wi=line.indexOf("WHEEL_MM="),ti=line.indexOf("TRACK_MM="),sl=line.indexOf("SAFE_LEFT_CM="),sr=line.indexOf("SAFE_RIGHT_CM=");float w=wi>=0?line.substring(wi+9).toFloat():0,t=ti>=0?line.substring(ti+9).toFloat():0;if(w>=20&&w<=150&&t>=50&&t<=300){wheel=w;track=t;geometryConfirmed=true;if(sl>=0)safe[0]=line.substring(sl+13).toFloat();if(sr>=0)safe[1]=line.substring(sr+14).toFloat();}}
   if(line.startsWith("EVENT")&&line.indexOf(" TOUCH ")>=0){String rest=line.substring(line.indexOf(" TOUCH ")+7);int a=rest.startsWith("LEFT ")?0:rest.startsWith("RIGHT ")?1:rest.startsWith("REAR ")?2:rest.startsWith("TOP ")?3:-1;if(a>=0){if(rest.indexOf(" PRESS")>=0)onTouch(a,rest.substring(rest.indexOf(" PRESS")+7).toInt());else if(rest.indexOf(" RELEASE")>=0)touch[a]=false;}return;}
   if(line.startsWith("DATA ")&&line.indexOf(" HW ")>=0){unsigned long uptime=0;if(sscanf(line.c_str(),"DATA %u HW STATE %lu",&id,&uptime)==2)telemetryUnoAt=uptime;char kind[4],area[8],src[12];int en,raw,pressed;unsigned long count;float rpm;
@@ -176,7 +187,9 @@ void policyInput(const String &line){
   }
   if(line.startsWith("DONE ")){sscanf(line.c_str(),"DONE %u",&id);
     if(matchesPending(id,stopId)&&line=="DONE "+String(stopId)+" MOTOR_STOPPED"){stopId=0;if(touchCue){touchCue=false;sendUno("LED FLASH 120 "+String((int)setting("signalFlashMs")));sendUno("BEEP "+String((int)setting("touchFeedbackBeepMs")));}state(afterStop);return;}
-    if(!matchesPending(id,sessionId))return;if(action=="WAIT_PATROL_STOP"&&!line.endsWith(" MOTOR_STOPPED"))return;sessionId=0;
+    if(!matchesPending(id,sessionId))return;if(action=="WAIT_PATROL_STOP"&&!line.endsWith(" MOTOR_STOPPED"))return;
+    if(action=="WAIT_SCAN_CONFIG"&&line!="DONE "+String(sessionId)+" SCAN_CONFIGURED")return;
+    scanConfigRetryPending=false;sessionId=0;
     if(action=="WAIT_PATROL_STOP"&&line.endsWith(" MOTOR_STOPPED")){if(mode=="SIM_UNO")waitCommand("WAIT_PATROL_GEOMETRY","SET_GEOMETRY "+String(setting("wheelMm"))+" "+String(setting("trackMm")));else requestConfig();}
     else if(action=="WAIT_PATROL_GEOMETRY")requestConfig();
     else if(action=="WAIT_PATROL_CONFIG"){if(!geometryConfirmed)fail("geometry not confirmed");else beginSession();}
@@ -192,7 +205,13 @@ void policyTick(){
   if(phase=="IDLE"||phase=="STOPPED")return;
   if(mode=="UART"&&(!lastUnoAt||elapsed(lastUnoAt,2500))){fail("Uno link timeout");return;}
   if(action=="WAIT_STOP"){if(elapsed(actionAt,2500))fail("STOP confirmation timeout");return;}
-  if(sessionId){if(elapsed(sessionCommandAt,2500)){if(scanId||action=="WAIT_SCAN_CONFIG"){fail("scan configuration timeout");return;}if(sessionRetries++<2){sessionId=sendUno(pendingCommand);sessionCommandAt=now();if(action=="WAIT_PATROL_CONFIG")geometryConfirmed=false;}else fail("confirmation timeout: "+action);}return;}
+  if(sessionId){
+    if(action=="WAIT_SCAN_CONFIG"){
+      if(scanConfigRetryPending){if(elapsed(scanConfigRetryAt,100)){scanConfigRetryPending=false;++sessionRetries;sessionId=sendUno(pendingCommand);sessionCommandAt=now();logLine("SCAN_CONFIG_RETRY",String(sessionRetries)+"/3 command="+String(sessionId)+" reason="+scanConfigRetryReason);}return;}
+      if(elapsed(sessionCommandAt,2500))retryScanConfig("confirmation timeout");return;
+    }
+    if(elapsed(sessionCommandAt,2500)){if(scanId){fail("scan configuration timeout");return;}if(sessionRetries++<2){sessionId=sendUno(pendingCommand);sessionCommandAt=now();if(action=="WAIT_PATROL_CONFIG")geometryConfirmed=false;}else fail("confirmation timeout: "+action);}return;
+  }
   if(motorId&&motorDispatched&&motorRunning&&elapsed(feedbackAt,750)){fail("no checked encoder feedback for 750ms");return;}
   if(motorId&&motorDispatched&&!motorConfirmed&&elapsed(feedbackAt,2500)){fail("motion start not confirmed");return;}
   if(scanId){if(elapsed(scanAt,600000))fail("scan transaction timeout");return;}

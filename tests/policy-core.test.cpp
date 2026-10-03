@@ -47,6 +47,35 @@ void frame(bool detected=true,bool valid=true,unsigned n=2){
 void settled(){policyTick();CHECK(action=="SETTLE");tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="SETTLE");tick+=150;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="CAT_CHECK");}
 void scanRequest(){policyInput("VQ "+String(scanId)+" 1 "+String(generation)+" 2");CHECK(requests.back().mode=="CAT");CHECK(!motorRunning);}
 int main(){
+ // Reproduce a corrupted SC after route wrap: only SC is retried, never motion.
+ fixture();routeIndex=1;state("TAG_ARRIVAL");policyTick();CHECK(routeIndex==0);policyTick();
+ CHECK(action=="WAIT_SCAN_CONFIG");CHECK(policyPreparing());auto originalConfig=sessionId;auto originalCommand=pendingCommand;
+ policyInput("ERROR 0 BAD_CHECKSUM");CHECK(scanConfigRetryPending);CHECK(sessionRetries==0);CHECK(!motorId);
+ auto queued=commands.size();tick+=99;policyTick();CHECK(commands.size()==queued);
+ policyInput("ERROR 0 BAD_CHECKSUM");tick++;policyTick();CHECK(sessionRetries==1);CHECK(commands.size()==queued+1);CHECK(commands.back().text==originalCommand);CHECK(sessionId!=originalConfig);
+ policyInput("DONE "+String(originalConfig)+" SCAN_CONFIGURED");CHECK(!scanId);
+ policyInput("DONE "+String(sessionId)+" ACCEPTED");CHECK(!scanId);CHECK(sessionId!=0);
+ policyInput("ERROR "+String(originalConfig)+" BAD_CHECKSUM");CHECK(!scanConfigRetryPending);
+ configDone();CHECK(action=="SCAN_TAG_ACTIVE");CHECK(!policyPreparing());CHECK(!scanConfigRetryPending);
+ // Three retransmissions in addition to the initial send; failure sends STOP.
+ fixture();beginScan("TAG","APPROACH_TAG");
+ for(int attempt=1;attempt<=3;attempt++){auto previous=sessionId;policyInput("ERROR 0 BAD_ENVELOPE");tick+=100;policyTick();CHECK(sessionRetries==attempt);CHECK(sessionId!=previous);CHECK(!motorId);CHECK(commands.back().text.startsWith("SC "));}
+ policyInput("ERROR 0 BAD_CHECKSUM");CHECK(phase=="STOPPED");CHECK(lastFault.indexOf("3 retries")>=0);CHECK(lastFault.indexOf("BAD_CHECKSUM")>=0);CHECK(!scanId);CHECK(commands.front().text=="STOP");
+ queued=commands.size();tick+=10000;policyTick();CHECK(commands.size()==queued);
+ // No response waits for 2500ms before scheduling the 100ms retry gap.
+ fixture();beginScan("TAG","APPROACH_TAG");queued=commands.size();tick+=2499;policyTick();CHECK(!scanConfigRetryPending);CHECK(commands.size()==queued);tick++;policyTick();CHECK(scanConfigRetryPending);CHECK(commands.size()==queued);tick+=100;policyTick();CHECK(sessionRetries==1);
+ // A valid success arriving in the gap cancels retry; operator stop does too.
+ fixture();beginScan("TAG","APPROACH_TAG");policyInput("ERROR 0 BAD_CHECKSUM");configDone();queued=commands.size();tick+=100;policyTick();CHECK(commands.size()==queued);
+ fixture();beginScan("TAG","APPROACH_TAG");policyInput("ERROR 0 BAD_CHECKSUM");policyControl("stop");queued=commands.size();tick+=100;policyTick();CHECK(commands.size()==queued);CHECK(!scanConfigRetryPending);
+ fixture();beginScan("TAG","APPROACH_TAG");policyInput("ERROR "+String(sessionId)+" INVALID_ARGUMENT");CHECK(phase=="STOPPED");CHECK(!scanConfigRetryPending);
+ fixture();policyInput("ERROR 0 BAD_CHECKSUM");CHECK(!scanConfigRetryPending);CHECK(phase=="PATROL");
+ // Retry accounting starts afresh for each scan and works over millis wrap.
+ fixture();tick=UINT32_MAX-50;beginScan("TAG","APPROACH_TAG");policyInput("ERROR 0 BAD_CHECKSUM");tick=48;policyTick();CHECK(sessionRetries==0);tick=49;policyTick();CHECK(sessionRetries==1);configDone();beginScan("TAG","APPROACH_TAG");CHECK(sessionRetries==0);
+ fixture();beginScan("TAG","APPROACH_TAG");mode="UART";
+ for(int attempt=1;attempt<=3;attempt++){tick+=2500;lastUnoAt=tick;policyTick();CHECK(scanConfigRetryPending);tick+=100;lastUnoAt=tick;policyTick();CHECK(sessionRetries==attempt);CHECK(phase=="PATROL");}
+ tick+=2500;lastUnoAt=tick;policyTick();CHECK(phase=="STOPPED");CHECK(lastFault.indexOf("confirmation timeout")>=0);
+ fixture();beginScan("TAG","APPROACH_TAG");mode="UART";lastUnoAt=tick;tick+=2500;policyTick();CHECK(lastFault=="Uno link timeout");CHECK(!scanConfigRetryPending);
+ fixture();move(30,30);policyInput("ERROR "+String(motorId)+" BAD_CHECKSUM");CHECK(!scanConfigRetryPending);CHECK(phase=="STOPPED");
  fixture();pulsesL=pulsesR=1;CHECK(fabs(angle()-10.125)<.001);pulsesL=2;pulsesR=0;CHECK(fabs(angle()-10.125)<.001);
  fixture();observation["tags"][0]["id"]=9;observation["tags"][0]["width"]=.3;observation["tags"][0]["centerX"]=.9;policyTick();CHECK(action=="WAIT_STOP");CHECK(routeIndex==0);auto id=stopId;policyInput("DONE 0 MOTOR_STOPPED");CHECK(stopId==id);policyInput("DONE "+String(id)+" ACCEPTED");CHECK(routeIndex==0);stopped();policyTick();CHECK(routeIndex==1);CHECK(action=="SCAN_TAG");
  fixture();config["route"][1]=9;observation["tags"][0]["id"]=9;observation["tags"][0]["width"]=.3;policyTick();stopped();policyTick();CHECK(action=="TAG_REARM");observation["frameSeq"]=2;policyTick();CHECK(action=="TAG_REARM");observation["frameSeq"]=3;observation["tags"][0]["width"]=.1;policyTick();CHECK(action=="SCAN_TAG");
