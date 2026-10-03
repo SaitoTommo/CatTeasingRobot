@@ -1,0 +1,5771 @@
+{
+  "port": "COM10",
+  "baud": 57600,
+  "usbWrites": 0,
+  "durationSeconds": 60.125,
+  "receivedBytes": 42346,
+  "failure": null,
+  "partial": "E",
+  "lines": [
+    {
+      "seconds": 23.531,
+      "line": "READY UNO_CAT_V6.1"
+    },
+    {
+      "seconds": 23.531,
+      "line": "EVENT DIAG_BOOT PREV_STAGE=2 CMD=1137"
+    },
+    {
+      "seconds": 23.531,
+      "line": "EVENT HOST_LED OFF"
+    },
+    {
+      "seconds": 23.547,
+      "line": "EVENT UART_SOFT_RX D12 BAUD=57600 TX=D1"
+    },
+    {
+      "seconds": 24.531,
+      "line": "EVENT DIAG H 3e8 1c73 0 0 0 0 0 0"
+    },
+    {
+      "seconds": 25.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 25.531,
+      "line": "EVENT DIAG H 7d0 1cbc 0 0 0 0 0 0"
+    },
+    {
+      "seconds": 25.922,
+      "line": "AK 1156*B3"
+    },
+    {
+      "seconds": 25.922,
+      "line": "DATA 1156 HW STATE 2397 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 25.938,
+      "line": "DATA 1156 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 25.938,
+      "line": "DATA 1156 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 25.938,
+      "line": "DATA 1156 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 25.953,
+      "line": "DATA 1156 HW ER 1 0 2 0.0 P"
+    },
+    {
+      "seconds": 25.953,
+      "line": "DATA 1156 HW SL 1 1 0 28.0 28.0 P"
+    },
+    {
+      "seconds": 25.953,
+      "line": "DATA 1156 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 25.969,
+      "line": "DATA 1156 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 25.969,
+      "line": "DATA 1156 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 25.969,
+      "line": "DATA 1156 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 25.985,
+      "line": "DATA 1156 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 25.985,
+      "line": "DATA 1156 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 26.0,
+      "line": "DATA 1156 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 26.0,
+      "line": "DONE 1156 TELEMETRY"
+    },
+    {
+      "seconds": 26.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 26.531,
+      "line": "EVENT DIAG H bb8 1c58 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 27.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 27.531,
+      "line": "EVENT DIAG H fa0 1cf0 0 0 d 0 0 0"
+    },
+    {
+      "seconds": 28.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 28.531,
+      "line": "EVENT DIAG H 1388 1ce9 0 0 d 0 0 0"
+    },
+    {
+      "seconds": 29.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 29.531,
+      "line": "EVENT DIAG H 1770 1cf1 0 0 d 0 0 0"
+    },
+    {
+      "seconds": 30.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 30.531,
+      "line": "EVENT DIAG H 1b58 1ce9 0 0 d 0 0 0"
+    },
+    {
+      "seconds": 31.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 31.531,
+      "line": "EVENT DIAG H 1f40 1cf0 0 0 d 0 0 0"
+    },
+    {
+      "seconds": 32.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 32.531,
+      "line": "EVENT DIAG H 2328 1cf2 0 0 d 0 0 0"
+    },
+    {
+      "seconds": 32.922,
+      "line": "AK 1157*B4"
+    },
+    {
+      "seconds": 32.938,
+      "line": "DATA 1157 HW STATE 9400 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 32.938,
+      "line": "DATA 1157 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 32.938,
+      "line": "DATA 1157 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 32.938,
+      "line": "DATA 1157 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 32.953,
+      "line": "DATA 1157 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 32.953,
+      "line": "DATA 1157 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 32.969,
+      "line": "DATA 1157 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 32.969,
+      "line": "DATA 1157 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 32.969,
+      "line": "DATA 1157 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 32.985,
+      "line": "DATA 1157 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 32.985,
+      "line": "DATA 1157 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 32.985,
+      "line": "DATA 1157 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 33.0,
+      "line": "DATA 1157 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 33.0,
+      "line": "DONE 1157 TELEMETRY"
+    },
+    {
+      "seconds": 33.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 33.219,
+      "line": "AK 1158*99"
+    },
+    {
+      "seconds": 33.235,
+      "line": "DATA 1158 HW STATE 9701 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 33.235,
+      "line": "DATA 1158 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 33.235,
+      "line": "DATA 1158 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 33.25,
+      "line": "DATA 1158 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 33.25,
+      "line": "DATA 1158 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 33.25,
+      "line": "DATA 1158 HW SL 1 1 0 30.0 30.0 P"
+    },
+    {
+      "seconds": 33.266,
+      "line": "DATA 1158 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 33.266,
+      "line": "DATA 1158 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 33.266,
+      "line": "DATA 1158 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 33.281,
+      "line": "DATA 1158 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 33.281,
+      "line": "DATA 1158 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 33.281,
+      "line": "DATA 1158 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 33.297,
+      "line": "DATA 1158 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 33.297,
+      "line": "DONE 1158 TELEMETRY"
+    },
+    {
+      "seconds": 33.531,
+      "line": "AK 1159*9E"
+    },
+    {
+      "seconds": 33.531,
+      "line": "EVENT DIAG H 2711 1bb4 3 487 0 2 0 0"
+    },
+    {
+      "seconds": 33.531,
+      "line": "DATA 1159 HW STATE 10008 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 33.547,
+      "line": "DATA 1159 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 33.547,
+      "line": "DATA 1159 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 33.547,
+      "line": "DATA 1159 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 33.563,
+      "line": "DATA 1159 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 33.563,
+      "line": "DATA 1159 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 33.578,
+      "line": "DATA 1159 HW SR 1 1 0 54.7 54.7 P"
+    },
+    {
+      "seconds": 33.578,
+      "line": "DATA 1159 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 33.578,
+      "line": "DATA 1159 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 33.578,
+      "line": "DATA 1159 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 33.594,
+      "line": "DATA 1159 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 33.594,
+      "line": "DATA 1159 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 33.61,
+      "line": "DATA 1159 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 33.61,
+      "line": "DONE 1159 TELEMETRY"
+    },
+    {
+      "seconds": 33.828,
+      "line": "AK 1160*9E"
+    },
+    {
+      "seconds": 33.828,
+      "line": "DATA 1160 HW STATE 10301 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 33.844,
+      "line": "DATA 1160 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 33.844,
+      "line": "DATA 1160 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 33.844,
+      "line": "DATA 1160 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 33.86,
+      "line": "DATA 1160 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 33.86,
+      "line": "DATA 1160 HW SL 1 1 0 27.8 27.8 P"
+    },
+    {
+      "seconds": 33.86,
+      "line": "DATA 1160 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 33.875,
+      "line": "DATA 1160 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 33.875,
+      "line": "DATA 1160 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 33.875,
+      "line": "DATA 1160 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 33.891,
+      "line": "DATA 1160 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 33.891,
+      "line": "DATA 1160 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 33.891,
+      "line": "DATA 1160 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 33.891,
+      "line": "DONE 1160 TELEMETRY"
+    },
+    {
+      "seconds": 34.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 34.125,
+      "line": "AK 1161*99"
+    },
+    {
+      "seconds": 34.125,
+      "line": "DATA 1161 HW STATE 10601 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 34.141,
+      "line": "DATA 1161 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 34.141,
+      "line": "DATA 1161 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 34.141,
+      "line": "DATA 1161 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 34.156,
+      "line": "DATA 1161 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 34.156,
+      "line": "DATA 1161 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 34.172,
+      "line": "DATA 1161 HW SR 1 1 0 56.3 56.3 P"
+    },
+    {
+      "seconds": 34.172,
+      "line": "DATA 1161 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 34.172,
+      "line": "DATA 1161 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 34.188,
+      "line": "DATA 1161 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 34.188,
+      "line": "DATA 1161 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 34.188,
+      "line": "DATA 1161 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 34.203,
+      "line": "DATA 1161 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 34.203,
+      "line": "DONE 1161 TELEMETRY"
+    },
+    {
+      "seconds": 34.422,
+      "line": "AK 1162*90"
+    },
+    {
+      "seconds": 34.438,
+      "line": "DATA 1162 HW STATE 10902 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 34.438,
+      "line": "DATA 1162 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 34.438,
+      "line": "DATA 1162 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 34.453,
+      "line": "DATA 1162 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 34.453,
+      "line": "DATA 1162 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 34.453,
+      "line": "DATA 1162 HW SL 1 1 0 27.9 27.9 P"
+    },
+    {
+      "seconds": 34.469,
+      "line": "DATA 1162 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 34.469,
+      "line": "DATA 1162 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 34.469,
+      "line": "DATA 1162 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 34.485,
+      "line": "DATA 1162 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 34.485,
+      "line": "DATA 1162 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 34.485,
+      "line": "DATA 1162 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 34.5,
+      "line": "DATA 1162 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 34.5,
+      "line": "DONE 1162 TELEMETRY"
+    },
+    {
+      "seconds": 34.531,
+      "line": "EVENT DIAG H 2af9 1ae4 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 34.735,
+      "line": "AK 1163*97"
+    },
+    {
+      "seconds": 34.735,
+      "line": "DATA 1163 HW STATE 11203 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 34.735,
+      "line": "DATA 1163 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 34.75,
+      "line": "DATA 1163 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 34.75,
+      "line": "DATA 1163 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 34.766,
+      "line": "DATA 1163 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 34.766,
+      "line": "DATA 1163 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 34.766,
+      "line": "DATA 1163 HW SR 1 1 0 55.1 55.1 P"
+    },
+    {
+      "seconds": 34.781,
+      "line": "DATA 1163 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 34.781,
+      "line": "DATA 1163 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 34.781,
+      "line": "DATA 1163 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 34.797,
+      "line": "DATA 1163 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 34.797,
+      "line": "DATA 1163 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 34.797,
+      "line": "DATA 1163 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 34.797,
+      "line": "DONE 1163 TELEMETRY"
+    },
+    {
+      "seconds": 35.031,
+      "line": "AK 1164*82"
+    },
+    {
+      "seconds": 35.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 35.047,
+      "line": "DATA 1164 HW STATE 11509 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 35.047,
+      "line": "DATA 1164 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.047,
+      "line": "DATA 1164 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.063,
+      "line": "DATA 1164 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 35.063,
+      "line": "DATA 1164 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 35.063,
+      "line": "DATA 1164 HW SL 1 1 0 29.7 29.7 P"
+    },
+    {
+      "seconds": 35.078,
+      "line": "DATA 1164 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 35.078,
+      "line": "DATA 1164 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 35.078,
+      "line": "DATA 1164 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 35.094,
+      "line": "DATA 1164 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 35.094,
+      "line": "DATA 1164 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 35.094,
+      "line": "DATA 1164 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 35.11,
+      "line": "DATA 1164 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 35.11,
+      "line": "DONE 1164 TELEMETRY"
+    },
+    {
+      "seconds": 35.328,
+      "line": "AK 1165*85"
+    },
+    {
+      "seconds": 35.328,
+      "line": "DATA 1165 HW STATE 11803 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 35.344,
+      "line": "DATA 1165 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.344,
+      "line": "DATA 1165 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.36,
+      "line": "DATA 1165 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 35.36,
+      "line": "DATA 1165 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 35.36,
+      "line": "DATA 1165 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 35.375,
+      "line": "DATA 1165 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 35.375,
+      "line": "DATA 1165 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 35.375,
+      "line": "DATA 1165 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 35.391,
+      "line": "DATA 1165 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 35.391,
+      "line": "DATA 1165 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 35.391,
+      "line": "DATA 1165 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 35.406,
+      "line": "DATA 1165 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 35.406,
+      "line": "DONE 1165 TELEMETRY"
+    },
+    {
+      "seconds": 35.531,
+      "line": "EVENT DIAG H 2ee1 1b44 4 0 d 1 0 0"
+    },
+    {
+      "seconds": 35.625,
+      "line": "AK 1166*8C"
+    },
+    {
+      "seconds": 35.641,
+      "line": "DATA 1166 HW STATE 12103 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 35.641,
+      "line": "DATA 1166 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.641,
+      "line": "DATA 1166 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.656,
+      "line": "DATA 1166 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 35.656,
+      "line": "DATA 1166 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 35.656,
+      "line": "DATA 1166 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 35.672,
+      "line": "DATA 1166 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 35.672,
+      "line": "DATA 1166 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 35.672,
+      "line": "DATA 1166 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 35.688,
+      "line": "DATA 1166 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 35.688,
+      "line": "DATA 1166 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 35.688,
+      "line": "DATA 1166 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 35.703,
+      "line": "DATA 1166 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 35.703,
+      "line": "DONE 1166 TELEMETRY"
+    },
+    {
+      "seconds": 35.938,
+      "line": "AK 1167*8B"
+    },
+    {
+      "seconds": 35.953,
+      "line": "DATA 1167 HW STATE 12418 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 35.953,
+      "line": "DATA 1167 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.953,
+      "line": "DATA 1167 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 35.969,
+      "line": "DATA 1167 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 35.969,
+      "line": "DATA 1167 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 35.969,
+      "line": "DATA 1167 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 35.985,
+      "line": "DATA 1167 HW SR 1 1 0 55.3 55.3 P"
+    },
+    {
+      "seconds": 35.985,
+      "line": "DATA 1167 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 35.985,
+      "line": "DATA 1167 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 36.0,
+      "line": "DATA 1167 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 36.0,
+      "line": "DATA 1167 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 36.0,
+      "line": "DATA 1167 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 36.016,
+      "line": "DATA 1167 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 36.016,
+      "line": "DONE 1167 TELEMETRY"
+    },
+    {
+      "seconds": 36.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 36.25,
+      "line": "AK 1168*A6"
+    },
+    {
+      "seconds": 36.25,
+      "line": "DATA 1168 HW STATE 12723 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 36.25,
+      "line": "DATA 1168 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 36.266,
+      "line": "DATA 1168 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 36.266,
+      "line": "DATA 1168 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 36.266,
+      "line": "DATA 1168 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 36.281,
+      "line": "DATA 1168 HW SL 1 1 0 29.1 29.1 P"
+    },
+    {
+      "seconds": 36.281,
+      "line": "DATA 1168 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 36.281,
+      "line": "DATA 1168 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 36.297,
+      "line": "DATA 1168 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 36.297,
+      "line": "DATA 1168 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 36.297,
+      "line": "DATA 1168 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 36.313,
+      "line": "DATA 1168 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 36.313,
+      "line": "DATA 1168 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 36.328,
+      "line": "DONE 1168 TELEMETRY"
+    },
+    {
+      "seconds": 36.531,
+      "line": "EVENT DIAG H 32c9 1b4e 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 36.547,
+      "line": "AK 1169*A1"
+    },
+    {
+      "seconds": 36.547,
+      "line": "DATA 1169 HW STATE 13025 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 36.563,
+      "line": "DATA 1169 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 36.563,
+      "line": "DATA 1169 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 36.563,
+      "line": "DATA 1169 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 36.578,
+      "line": "DATA 1169 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 36.578,
+      "line": "DATA 1169 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 36.594,
+      "line": "DATA 1169 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 36.594,
+      "line": "DATA 1169 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 36.594,
+      "line": "DATA 1169 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 36.594,
+      "line": "DATA 1169 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 36.61,
+      "line": "DATA 1169 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 36.61,
+      "line": "DATA 1169 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 36.61,
+      "line": "DATA 1169 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 36.625,
+      "line": "DONE 1169 TELEMETRY"
+    },
+    {
+      "seconds": 36.844,
+      "line": "AK 1170*8B"
+    },
+    {
+      "seconds": 36.86,
+      "line": "DATA 1170 HW STATE 13323 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 36.86,
+      "line": "DATA 1170 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 36.86,
+      "line": "DATA 1170 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 36.86,
+      "line": "DATA 1170 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 36.875,
+      "line": "DATA 1170 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 36.875,
+      "line": "DATA 1170 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 36.891,
+      "line": "DATA 1170 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 36.891,
+      "line": "DATA 1170 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 36.891,
+      "line": "DATA 1170 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 36.906,
+      "line": "DATA 1170 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 36.906,
+      "line": "DATA 1170 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 36.906,
+      "line": "DATA 1170 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 36.922,
+      "line": "DATA 1170 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 36.922,
+      "line": "DONE 1170 TELEMETRY"
+    },
+    {
+      "seconds": 37.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 37.141,
+      "line": "AK 1171*8C"
+    },
+    {
+      "seconds": 37.156,
+      "line": "DATA 1171 HW STATE 13626 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 37.156,
+      "line": "DATA 1171 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 37.172,
+      "line": "DATA 1171 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 37.172,
+      "line": "DATA 1171 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 37.172,
+      "line": "DATA 1171 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 37.188,
+      "line": "DATA 1171 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 37.188,
+      "line": "DATA 1171 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 37.188,
+      "line": "DATA 1171 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 37.203,
+      "line": "DATA 1171 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 37.203,
+      "line": "DATA 1171 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 37.203,
+      "line": "DATA 1171 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 37.219,
+      "line": "DATA 1171 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 37.219,
+      "line": "DATA 1171 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 37.219,
+      "line": "DONE 1171 TELEMETRY"
+    },
+    {
+      "seconds": 37.453,
+      "line": "AK 1172*85"
+    },
+    {
+      "seconds": 37.453,
+      "line": "DATA 1172 HW STATE 13924 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 37.453,
+      "line": "DATA 1172 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 37.469,
+      "line": "DATA 1172 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 37.469,
+      "line": "DATA 1172 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 37.469,
+      "line": "DATA 1172 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 37.485,
+      "line": "DATA 1172 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 37.485,
+      "line": "DATA 1172 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 37.485,
+      "line": "DATA 1172 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 37.5,
+      "line": "DATA 1172 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 37.5,
+      "line": "DATA 1172 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 37.5,
+      "line": "DATA 1172 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 37.516,
+      "line": "DATA 1172 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 37.516,
+      "line": "DATA 1172 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 37.516,
+      "line": "DONE 1172 TELEMETRY"
+    },
+    {
+      "seconds": 37.531,
+      "line": "EVENT DIAG H 36b1 1ab9 3 0 d 0 0 0"
+    },
+    {
+      "seconds": 37.75,
+      "line": "AK 1173*82"
+    },
+    {
+      "seconds": 37.75,
+      "line": "DATA 1173 HW STATE 14226 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 37.766,
+      "line": "DATA 1173 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 37.766,
+      "line": "DATA 1173 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 37.766,
+      "line": "DATA 1173 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 37.781,
+      "line": "DATA 1173 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 37.781,
+      "line": "DATA 1173 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 37.781,
+      "line": "DATA 1173 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 37.797,
+      "line": "DATA 1173 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 37.797,
+      "line": "DATA 1173 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 37.797,
+      "line": "DATA 1173 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 37.813,
+      "line": "DATA 1173 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 37.813,
+      "line": "DATA 1173 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 37.813,
+      "line": "DATA 1173 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 37.828,
+      "line": "DONE 1173 TELEMETRY"
+    },
+    {
+      "seconds": 38.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 38.047,
+      "line": "AK 1174*97"
+    },
+    {
+      "seconds": 38.047,
+      "line": "DATA 1174 HW STATE 14524 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 38.063,
+      "line": "DATA 1174 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.063,
+      "line": "DATA 1174 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.063,
+      "line": "DATA 1174 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 38.078,
+      "line": "DATA 1174 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 38.078,
+      "line": "DATA 1174 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 38.078,
+      "line": "DATA 1174 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 38.094,
+      "line": "DATA 1174 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 38.094,
+      "line": "DATA 1174 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 38.094,
+      "line": "DATA 1174 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 38.11,
+      "line": "DATA 1174 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 38.11,
+      "line": "DATA 1174 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 38.125,
+      "line": "DATA 1174 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 38.125,
+      "line": "DONE 1174 TELEMETRY"
+    },
+    {
+      "seconds": 38.344,
+      "line": "AK 1175*90"
+    },
+    {
+      "seconds": 38.36,
+      "line": "DATA 1175 HW STATE 14827 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 38.36,
+      "line": "DATA 1175 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.36,
+      "line": "DATA 1175 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.375,
+      "line": "DATA 1175 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 38.375,
+      "line": "DATA 1175 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 38.375,
+      "line": "DATA 1175 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 38.391,
+      "line": "DATA 1175 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 38.391,
+      "line": "DATA 1175 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 38.391,
+      "line": "DATA 1175 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 38.406,
+      "line": "DATA 1175 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 38.406,
+      "line": "DATA 1175 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 38.406,
+      "line": "DATA 1175 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 38.422,
+      "line": "DATA 1175 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 38.422,
+      "line": "DONE 1175 TELEMETRY"
+    },
+    {
+      "seconds": 38.531,
+      "line": "EVENT DIAG H 3a99 1b4e 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 38.641,
+      "line": "AK 1176*99"
+    },
+    {
+      "seconds": 38.656,
+      "line": "DATA 1176 HW STATE 15126 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 38.656,
+      "line": "DATA 1176 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.672,
+      "line": "DATA 1176 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.672,
+      "line": "DATA 1176 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 38.672,
+      "line": "DATA 1176 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 38.688,
+      "line": "DATA 1176 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 38.688,
+      "line": "DATA 1176 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 38.688,
+      "line": "DATA 1176 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 38.703,
+      "line": "DATA 1176 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 38.703,
+      "line": "DATA 1176 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 38.703,
+      "line": "DATA 1176 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 38.719,
+      "line": "DATA 1176 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 38.719,
+      "line": "DATA 1176 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 38.719,
+      "line": "DONE 1176 TELEMETRY"
+    },
+    {
+      "seconds": 38.953,
+      "line": "AK 1177*9E"
+    },
+    {
+      "seconds": 38.953,
+      "line": "DATA 1177 HW STATE 15428 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 38.969,
+      "line": "DATA 1177 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.969,
+      "line": "DATA 1177 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 38.969,
+      "line": "DATA 1177 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 38.985,
+      "line": "DATA 1177 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 38.985,
+      "line": "DATA 1177 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 38.985,
+      "line": "DATA 1177 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 39.0,
+      "line": "DATA 1177 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 39.0,
+      "line": "DATA 1177 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 39.0,
+      "line": "DATA 1177 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 39.016,
+      "line": "DATA 1177 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 39.016,
+      "line": "DATA 1177 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 39.016,
+      "line": "DATA 1177 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 39.016,
+      "line": "DONE 1177 TELEMETRY"
+    },
+    {
+      "seconds": 39.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 39.25,
+      "line": "AK 1178*B3"
+    },
+    {
+      "seconds": 39.25,
+      "line": "DATA 1178 HW STATE 15726 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 39.266,
+      "line": "DATA 1178 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 39.266,
+      "line": "DATA 1178 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 39.266,
+      "line": "DATA 1178 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 39.281,
+      "line": "DATA 1178 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 39.281,
+      "line": "DATA 1178 HW SL 1 1 0 29.1 29.1 P"
+    },
+    {
+      "seconds": 39.281,
+      "line": "DATA 1178 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 39.297,
+      "line": "DATA 1178 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 39.297,
+      "line": "DATA 1178 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 39.297,
+      "line": "DATA 1178 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 39.313,
+      "line": "DATA 1178 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 39.313,
+      "line": "DATA 1178 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 39.328,
+      "line": "DATA 1178 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 39.328,
+      "line": "DONE 1178 TELEMETRY"
+    },
+    {
+      "seconds": 39.531,
+      "line": "EVENT DIAG H 3e81 1b45 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 39.547,
+      "line": "AK 1179*B4"
+    },
+    {
+      "seconds": 39.563,
+      "line": "DATA 1179 HW STATE 16028 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 39.563,
+      "line": "DATA 1179 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 39.563,
+      "line": "DATA 1179 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 39.578,
+      "line": "DATA 1179 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 39.578,
+      "line": "DATA 1179 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 39.578,
+      "line": "DATA 1179 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 39.594,
+      "line": "DATA 1179 HW SR 1 1 0 55.1 55.1 P"
+    },
+    {
+      "seconds": 39.594,
+      "line": "DATA 1179 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 39.594,
+      "line": "DATA 1179 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 39.61,
+      "line": "DATA 1179 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 39.61,
+      "line": "DATA 1179 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 39.61,
+      "line": "DATA 1179 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 39.625,
+      "line": "DATA 1179 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 39.625,
+      "line": "DONE 1179 TELEMETRY"
+    },
+    {
+      "seconds": 39.844,
+      "line": "AK 1180*48"
+    },
+    {
+      "seconds": 39.86,
+      "line": "DATA 1180 HW STATE 16327 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 39.86,
+      "line": "DATA 1180 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 39.86,
+      "line": "DATA 1180 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 39.875,
+      "line": "DATA 1180 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 39.875,
+      "line": "DATA 1180 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 39.875,
+      "line": "DATA 1180 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 39.891,
+      "line": "DATA 1180 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 39.891,
+      "line": "DATA 1180 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 39.906,
+      "line": "DATA 1180 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 39.906,
+      "line": "DATA 1180 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 39.906,
+      "line": "DATA 1180 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 39.922,
+      "line": "DATA 1180 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 39.922,
+      "line": "DATA 1180 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 39.922,
+      "line": "DONE 1180 TELEMETRY"
+    },
+    {
+      "seconds": 40.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 40.156,
+      "line": "AK 1181*4F"
+    },
+    {
+      "seconds": 40.156,
+      "line": "DATA 1181 HW STATE 16630 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 40.172,
+      "line": "DATA 1181 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 40.172,
+      "line": "DATA 1181 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 40.172,
+      "line": "DATA 1181 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 40.188,
+      "line": "DATA 1181 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 40.188,
+      "line": "DATA 1181 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 40.188,
+      "line": "DATA 1181 HW SR 1 1 0 55.1 55.1 P"
+    },
+    {
+      "seconds": 40.203,
+      "line": "DATA 1181 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 40.203,
+      "line": "DATA 1181 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 40.203,
+      "line": "DATA 1181 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 40.219,
+      "line": "DATA 1181 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 40.219,
+      "line": "DATA 1181 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 40.219,
+      "line": "DATA 1181 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 40.219,
+      "line": "DONE 1181 TELEMETRY"
+    },
+    {
+      "seconds": 40.453,
+      "line": "AK 1182*46"
+    },
+    {
+      "seconds": 40.453,
+      "line": "DATA 1182 HW STATE 16929 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 40.469,
+      "line": "DATA 1182 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 40.469,
+      "line": "DATA 1182 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 40.469,
+      "line": "DATA 1182 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 40.485,
+      "line": "DATA 1182 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 40.485,
+      "line": "DATA 1182 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 40.485,
+      "line": "DATA 1182 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 40.5,
+      "line": "DATA 1182 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 40.5,
+      "line": "DATA 1182 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 40.5,
+      "line": "DATA 1182 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 40.516,
+      "line": "DATA 1182 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 40.516,
+      "line": "DATA 1182 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 40.516,
+      "line": "DATA 1182 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 40.531,
+      "line": "DONE 1182 TELEMETRY"
+    },
+    {
+      "seconds": 40.531,
+      "line": "EVENT DIAG H 4269 1ac1 4 0 d 2 0 0"
+    },
+    {
+      "seconds": 40.75,
+      "line": "AK 1183*41"
+    },
+    {
+      "seconds": 40.766,
+      "line": "DATA 1183 HW STATE 17231 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 40.766,
+      "line": "DATA 1183 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 40.766,
+      "line": "DATA 1183 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 40.781,
+      "line": "DATA 1183 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 40.781,
+      "line": "DATA 1183 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 40.781,
+      "line": "DATA 1183 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 40.797,
+      "line": "DATA 1183 HW SR 1 1 0 55.1 55.1 P"
+    },
+    {
+      "seconds": 40.797,
+      "line": "DATA 1183 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 40.797,
+      "line": "DATA 1183 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 40.813,
+      "line": "DATA 1183 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 40.813,
+      "line": "DATA 1183 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 40.813,
+      "line": "DATA 1183 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 40.828,
+      "line": "DATA 1183 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 40.828,
+      "line": "DONE 1183 TELEMETRY"
+    },
+    {
+      "seconds": 41.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 41.047,
+      "line": "AK 1184*54"
+    },
+    {
+      "seconds": 41.063,
+      "line": "DATA 1184 HW STATE 17529 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 41.063,
+      "line": "DATA 1184 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.063,
+      "line": "DATA 1184 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.078,
+      "line": "DATA 1184 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 41.078,
+      "line": "DATA 1184 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 41.078,
+      "line": "DATA 1184 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 41.094,
+      "line": "DATA 1184 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 41.094,
+      "line": "DATA 1184 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 41.094,
+      "line": "DATA 1184 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 41.11,
+      "line": "DATA 1184 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 41.11,
+      "line": "DATA 1184 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 41.125,
+      "line": "DATA 1184 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 41.125,
+      "line": "DATA 1184 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 41.125,
+      "line": "DONE 1184 TELEMETRY"
+    },
+    {
+      "seconds": 41.36,
+      "line": "AK 1185*53"
+    },
+    {
+      "seconds": 41.36,
+      "line": "DATA 1185 HW STATE 17833 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 41.375,
+      "line": "DATA 1185 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.375,
+      "line": "DATA 1185 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.375,
+      "line": "DATA 1185 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 41.391,
+      "line": "DATA 1185 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 41.391,
+      "line": "DATA 1185 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 41.391,
+      "line": "DATA 1185 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 41.406,
+      "line": "DATA 1185 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 41.406,
+      "line": "DATA 1185 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 41.406,
+      "line": "DATA 1185 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 41.422,
+      "line": "DATA 1185 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 41.422,
+      "line": "DATA 1185 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 41.422,
+      "line": "DATA 1185 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 41.422,
+      "line": "DONE 1185 TELEMETRY"
+    },
+    {
+      "seconds": 41.531,
+      "line": "EVENT DIAG H 4651 1b4d 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 41.656,
+      "line": "AK 1186*5A"
+    },
+    {
+      "seconds": 41.656,
+      "line": "DATA 1186 HW STATE 18130 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 41.672,
+      "line": "DATA 1186 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.672,
+      "line": "DATA 1186 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.672,
+      "line": "DATA 1186 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 41.688,
+      "line": "DATA 1186 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 41.688,
+      "line": "DATA 1186 HW SL 1 1 0 28.9 28.9 P"
+    },
+    {
+      "seconds": 41.688,
+      "line": "DATA 1186 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 41.703,
+      "line": "DATA 1186 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 41.703,
+      "line": "DATA 1186 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 41.703,
+      "line": "DATA 1186 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 41.719,
+      "line": "DATA 1186 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 41.719,
+      "line": "DATA 1186 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 41.719,
+      "line": "DATA 1186 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 41.735,
+      "line": "DONE 1186 TELEMETRY"
+    },
+    {
+      "seconds": 41.953,
+      "line": "AK 1187*5D"
+    },
+    {
+      "seconds": 41.969,
+      "line": "DATA 1187 HW STATE 18433 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 41.969,
+      "line": "DATA 1187 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.969,
+      "line": "DATA 1187 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 41.985,
+      "line": "DATA 1187 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 41.985,
+      "line": "DATA 1187 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 41.985,
+      "line": "DATA 1187 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 42.0,
+      "line": "DATA 1187 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 42.0,
+      "line": "DATA 1187 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 42.0,
+      "line": "DATA 1187 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 42.016,
+      "line": "DATA 1187 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 42.016,
+      "line": "DATA 1187 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 42.016,
+      "line": "DATA 1187 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 42.031,
+      "line": "DATA 1187 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 42.031,
+      "line": "DONE 1187 TELEMETRY"
+    },
+    {
+      "seconds": 42.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 42.25,
+      "line": "AK 1188*70"
+    },
+    {
+      "seconds": 42.266,
+      "line": "DATA 1188 HW STATE 18731 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 42.266,
+      "line": "DATA 1188 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 42.266,
+      "line": "DATA 1188 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 42.281,
+      "line": "DATA 1188 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 42.281,
+      "line": "DATA 1188 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 42.281,
+      "line": "DATA 1188 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 42.297,
+      "line": "DATA 1188 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 42.297,
+      "line": "DATA 1188 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 42.297,
+      "line": "DATA 1188 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 42.313,
+      "line": "DATA 1188 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 42.313,
+      "line": "DATA 1188 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 42.313,
+      "line": "DATA 1188 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 42.328,
+      "line": "DATA 1188 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 42.328,
+      "line": "DONE 1188 TELEMETRY"
+    },
+    {
+      "seconds": 42.531,
+      "line": "EVENT DIAG H 4a39 1b45 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 42.547,
+      "line": "AK 1189*77"
+    },
+    {
+      "seconds": 42.563,
+      "line": "DATA 1189 HW STATE 19033 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 42.563,
+      "line": "DATA 1189 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 42.578,
+      "line": "DATA 1189 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 42.578,
+      "line": "DATA 1189 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 42.578,
+      "line": "DATA 1189 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 42.594,
+      "line": "DATA 1189 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 42.594,
+      "line": "DATA 1189 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 42.594,
+      "line": "DATA 1189 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 42.61,
+      "line": "DATA 1189 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 42.61,
+      "line": "DATA 1189 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 42.61,
+      "line": "DATA 1189 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 42.625,
+      "line": "DATA 1189 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 42.625,
+      "line": "DATA 1189 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 42.625,
+      "line": "DONE 1189 TELEMETRY"
+    },
+    {
+      "seconds": 42.86,
+      "line": "AK 1190*5D"
+    },
+    {
+      "seconds": 42.86,
+      "line": "DATA 1190 HW STATE 19331 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 42.86,
+      "line": "DATA 1190 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 42.875,
+      "line": "DATA 1190 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 42.875,
+      "line": "DATA 1190 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 42.891,
+      "line": "DATA 1190 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 42.891,
+      "line": "DATA 1190 HW SL 1 1 0 28.9 28.9 P"
+    },
+    {
+      "seconds": 42.891,
+      "line": "DATA 1190 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 42.891,
+      "line": "DATA 1190 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 42.906,
+      "line": "DATA 1190 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 42.906,
+      "line": "DATA 1190 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 42.906,
+      "line": "DATA 1190 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 42.922,
+      "line": "DATA 1190 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 42.922,
+      "line": "DATA 1190 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 42.922,
+      "line": "DONE 1190 TELEMETRY"
+    },
+    {
+      "seconds": 43.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 43.156,
+      "line": "AK 1191*5A"
+    },
+    {
+      "seconds": 43.156,
+      "line": "DATA 1191 HW STATE 19634 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 43.172,
+      "line": "DATA 1191 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 43.172,
+      "line": "DATA 1191 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 43.172,
+      "line": "DATA 1191 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 43.188,
+      "line": "DATA 1191 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 43.188,
+      "line": "DATA 1191 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 43.203,
+      "line": "DATA 1191 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 43.203,
+      "line": "DATA 1191 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 43.203,
+      "line": "DATA 1191 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 43.203,
+      "line": "DATA 1191 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 43.219,
+      "line": "DATA 1191 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 43.219,
+      "line": "DATA 1191 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 43.219,
+      "line": "DATA 1191 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 43.235,
+      "line": "DONE 1191 TELEMETRY"
+    },
+    {
+      "seconds": 43.453,
+      "line": "AK 1192*53"
+    },
+    {
+      "seconds": 43.469,
+      "line": "DATA 1192 HW STATE 19932 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 43.469,
+      "line": "DATA 1192 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 43.469,
+      "line": "DATA 1192 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 43.469,
+      "line": "DATA 1192 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 43.485,
+      "line": "DATA 1192 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 43.485,
+      "line": "DATA 1192 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 43.5,
+      "line": "DATA 1192 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 43.5,
+      "line": "DATA 1192 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 43.5,
+      "line": "DATA 1192 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 43.516,
+      "line": "DATA 1192 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 43.516,
+      "line": "DATA 1192 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 43.516,
+      "line": "DATA 1192 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 43.531,
+      "line": "DATA 1192 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 43.531,
+      "line": "EVENT DIAG H 4e21 1ac6 4 4a8 d 2 0 0"
+    },
+    {
+      "seconds": 43.531,
+      "line": "DONE 1192 TELEMETRY"
+    },
+    {
+      "seconds": 43.75,
+      "line": "AK 1193*54"
+    },
+    {
+      "seconds": 43.766,
+      "line": "DATA 1193 HW STATE 20234 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 43.766,
+      "line": "DATA 1193 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 43.781,
+      "line": "DATA 1193 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 43.781,
+      "line": "DATA 1193 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 43.781,
+      "line": "DATA 1193 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 43.797,
+      "line": "DATA 1193 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 43.797,
+      "line": "DATA 1193 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 43.797,
+      "line": "DATA 1193 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 43.813,
+      "line": "DATA 1193 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 43.813,
+      "line": "DATA 1193 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 43.813,
+      "line": "DATA 1193 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 43.813,
+      "line": "DATA 1193 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 43.828,
+      "line": "DATA 1193 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 43.828,
+      "line": "DONE 1193 TELEMETRY"
+    },
+    {
+      "seconds": 44.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 44.047,
+      "line": "AK 1194*41"
+    },
+    {
+      "seconds": 44.063,
+      "line": "DATA 1194 HW STATE 20532 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 44.063,
+      "line": "DATA 1194 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 44.078,
+      "line": "DATA 1194 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 44.078,
+      "line": "DATA 1194 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 44.078,
+      "line": "DATA 1194 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 44.094,
+      "line": "DATA 1194 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 44.094,
+      "line": "DATA 1194 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 44.094,
+      "line": "DATA 1194 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 44.11,
+      "line": "DATA 1194 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 44.11,
+      "line": "DATA 1194 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 44.11,
+      "line": "DATA 1194 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 44.125,
+      "line": "DATA 1194 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 44.125,
+      "line": "DATA 1194 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 44.125,
+      "line": "DONE 1194 TELEMETRY"
+    },
+    {
+      "seconds": 44.36,
+      "line": "AK 1195*46"
+    },
+    {
+      "seconds": 44.36,
+      "line": "DATA 1195 HW STATE 20834 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 44.375,
+      "line": "DATA 1195 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 44.375,
+      "line": "DATA 1195 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 44.375,
+      "line": "DATA 1195 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 44.391,
+      "line": "DATA 1195 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 44.391,
+      "line": "DATA 1195 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 44.391,
+      "line": "DATA 1195 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 44.406,
+      "line": "DATA 1195 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 44.406,
+      "line": "DATA 1195 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 44.406,
+      "line": "DATA 1195 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 44.422,
+      "line": "DATA 1195 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 44.422,
+      "line": "DATA 1195 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 44.422,
+      "line": "DATA 1195 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 44.422,
+      "line": "DONE 1195 TELEMETRY"
+    },
+    {
+      "seconds": 44.531,
+      "line": "EVENT DIAG H 5209 1b3f 3 0 d 0 0 0"
+    },
+    {
+      "seconds": 44.688,
+      "line": "AK 1196*4F"
+    },
+    {
+      "seconds": 44.703,
+      "line": "DATA 1196 HW STATE 21166 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 44.703,
+      "line": "DATA 1196 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 44.703,
+      "line": "DATA 1196 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 44.719,
+      "line": "DATA 1196 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 44.719,
+      "line": "DATA 1196 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 44.719,
+      "line": "DATA 1196 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 44.735,
+      "line": "DATA 1196 HW SR 1 1 0 55.9 55.9 P"
+    },
+    {
+      "seconds": 44.735,
+      "line": "DATA 1196 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 44.735,
+      "line": "DATA 1196 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 44.75,
+      "line": "DATA 1196 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 44.75,
+      "line": "DATA 1196 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 44.75,
+      "line": "DATA 1196 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 44.766,
+      "line": "DATA 1196 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 44.766,
+      "line": "DONE 1196 TELEMETRY"
+    },
+    {
+      "seconds": 44.985,
+      "line": "AK 1197*48"
+    },
+    {
+      "seconds": 45.0,
+      "line": "DATA 1197 HW STATE 21467 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 45.0,
+      "line": "DATA 1197 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.0,
+      "line": "DATA 1197 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.016,
+      "line": "DATA 1197 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 45.016,
+      "line": "DATA 1197 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 45.016,
+      "line": "DATA 1197 HW SL 1 1 0 27.9 27.9 P"
+    },
+    {
+      "seconds": 45.031,
+      "line": "DATA 1197 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 45.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 45.031,
+      "line": "DATA 1197 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 45.047,
+      "line": "DATA 1197 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 45.047,
+      "line": "DATA 1197 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 45.047,
+      "line": "DATA 1197 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 45.063,
+      "line": "DATA 1197 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 45.063,
+      "line": "DATA 1197 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 45.063,
+      "line": "DONE 1197 TELEMETRY"
+    },
+    {
+      "seconds": 45.297,
+      "line": "AK 1198*65"
+    },
+    {
+      "seconds": 45.297,
+      "line": "DATA 1198 HW STATE 21767 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 45.297,
+      "line": "DATA 1198 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.313,
+      "line": "DATA 1198 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.313,
+      "line": "DATA 1198 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 45.313,
+      "line": "DATA 1198 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 45.328,
+      "line": "DATA 1198 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 45.328,
+      "line": "DATA 1198 HW SR 1 1 0 54.1 54.1 P"
+    },
+    {
+      "seconds": 45.328,
+      "line": "DATA 1198 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 45.344,
+      "line": "DATA 1198 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 45.344,
+      "line": "DATA 1198 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 45.344,
+      "line": "DATA 1198 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 45.36,
+      "line": "DATA 1198 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 45.36,
+      "line": "DATA 1198 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 45.36,
+      "line": "DONE 1198 TELEMETRY"
+    },
+    {
+      "seconds": 45.531,
+      "line": "EVENT DIAG H 55f1 1b4c 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 45.594,
+      "line": "AK 1199*62"
+    },
+    {
+      "seconds": 45.594,
+      "line": "DATA 1199 HW STATE 22068 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 45.61,
+      "line": "DATA 1199 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.61,
+      "line": "DATA 1199 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.61,
+      "line": "DATA 1199 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 45.625,
+      "line": "DATA 1199 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 45.625,
+      "line": "DATA 1199 HW SL 1 1 0 27.7 27.7 P"
+    },
+    {
+      "seconds": 45.625,
+      "line": "DATA 1199 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 45.641,
+      "line": "DATA 1199 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 45.641,
+      "line": "DATA 1199 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 45.641,
+      "line": "DATA 1199 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 45.656,
+      "line": "DATA 1199 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 45.656,
+      "line": "DATA 1199 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 45.656,
+      "line": "DATA 1199 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 45.656,
+      "line": "DONE 1199 TELEMETRY"
+    },
+    {
+      "seconds": 45.891,
+      "line": "AK 1200*5D"
+    },
+    {
+      "seconds": 45.891,
+      "line": "DATA 1200 HW STATE 22368 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 45.906,
+      "line": "DATA 1200 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.906,
+      "line": "DATA 1200 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 45.906,
+      "line": "DATA 1200 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 45.922,
+      "line": "DATA 1200 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 45.922,
+      "line": "DATA 1200 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 45.938,
+      "line": "DATA 1200 HW SR 1 1 0 54.6 54.6 P"
+    },
+    {
+      "seconds": 45.938,
+      "line": "DATA 1200 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 45.938,
+      "line": "DATA 1200 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 45.953,
+      "line": "DATA 1200 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 45.953,
+      "line": "DATA 1200 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 45.953,
+      "line": "DATA 1200 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 45.953,
+      "line": "DATA 1200 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 45.969,
+      "line": "DONE 1200 TELEMETRY"
+    },
+    {
+      "seconds": 46.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 46.188,
+      "line": "AK 1201*5A"
+    },
+    {
+      "seconds": 46.203,
+      "line": "DATA 1201 HW STATE 22669 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 46.203,
+      "line": "DATA 1201 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 46.203,
+      "line": "DATA 1201 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 46.219,
+      "line": "DATA 1201 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 46.219,
+      "line": "DATA 1201 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 46.219,
+      "line": "DATA 1201 HW SL 1 1 0 27.7 27.7 P"
+    },
+    {
+      "seconds": 46.235,
+      "line": "DATA 1201 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 46.235,
+      "line": "DATA 1201 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 46.235,
+      "line": "DATA 1201 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 46.25,
+      "line": "DATA 1201 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 46.25,
+      "line": "DATA 1201 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 46.25,
+      "line": "DATA 1201 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 46.266,
+      "line": "DATA 1201 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 46.266,
+      "line": "DONE 1201 TELEMETRY"
+    },
+    {
+      "seconds": 46.485,
+      "line": "AK 1202*53"
+    },
+    {
+      "seconds": 46.5,
+      "line": "DATA 1202 HW STATE 22969 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 46.5,
+      "line": "DATA 1202 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 46.516,
+      "line": "DATA 1202 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 46.516,
+      "line": "DATA 1202 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 46.516,
+      "line": "DATA 1202 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 46.531,
+      "line": "DATA 1202 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 46.531,
+      "line": "EVENT DIAG H 59d9 1aed 4 4b2 6 2 0 0"
+    },
+    {
+      "seconds": 46.531,
+      "line": "DATA 1202 HW SR 1 1 0 54.6 54.6 P"
+    },
+    {
+      "seconds": 46.547,
+      "line": "DATA 1202 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 46.547,
+      "line": "DATA 1202 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 46.547,
+      "line": "DATA 1202 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 46.563,
+      "line": "DATA 1202 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 46.563,
+      "line": "DATA 1202 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 46.563,
+      "line": "DATA 1202 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 46.578,
+      "line": "DONE 1202 TELEMETRY"
+    },
+    {
+      "seconds": 46.797,
+      "line": "AK 1203*54"
+    },
+    {
+      "seconds": 46.797,
+      "line": "DATA 1203 HW STATE 23269 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 46.797,
+      "line": "DATA 1203 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 46.813,
+      "line": "DATA 1203 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 46.813,
+      "line": "DATA 1203 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 46.813,
+      "line": "DATA 1203 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 46.828,
+      "line": "DATA 1203 HW SL 1 1 0 27.7 27.7 P"
+    },
+    {
+      "seconds": 46.828,
+      "line": "DATA 1203 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 46.828,
+      "line": "DATA 1203 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 46.844,
+      "line": "DATA 1203 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 46.844,
+      "line": "DATA 1203 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 46.844,
+      "line": "DATA 1203 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 46.86,
+      "line": "DATA 1203 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 46.86,
+      "line": "DATA 1203 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 46.86,
+      "line": "DONE 1203 TELEMETRY"
+    },
+    {
+      "seconds": 47.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 47.094,
+      "line": "AK 1204*41"
+    },
+    {
+      "seconds": 47.094,
+      "line": "DATA 1204 HW STATE 23570 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 47.11,
+      "line": "DATA 1204 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 47.11,
+      "line": "DATA 1204 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 47.11,
+      "line": "DATA 1204 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 47.125,
+      "line": "DATA 1204 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 47.125,
+      "line": "DATA 1204 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 47.141,
+      "line": "DATA 1204 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 47.141,
+      "line": "DATA 1204 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 47.141,
+      "line": "DATA 1204 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 47.156,
+      "line": "DATA 1204 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 47.156,
+      "line": "DATA 1204 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 47.156,
+      "line": "DATA 1204 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 47.172,
+      "line": "DATA 1204 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 47.172,
+      "line": "DONE 1204 TELEMETRY"
+    },
+    {
+      "seconds": 47.391,
+      "line": "AK 1205*46"
+    },
+    {
+      "seconds": 47.406,
+      "line": "DATA 1205 HW STATE 23870 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 47.406,
+      "line": "DATA 1205 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 47.406,
+      "line": "DATA 1205 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 47.422,
+      "line": "DATA 1205 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 47.422,
+      "line": "DATA 1205 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 47.422,
+      "line": "DATA 1205 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 47.438,
+      "line": "DATA 1205 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 47.438,
+      "line": "DATA 1205 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 47.438,
+      "line": "DATA 1205 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 47.453,
+      "line": "DATA 1205 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 47.453,
+      "line": "DATA 1205 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 47.453,
+      "line": "DATA 1205 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 47.469,
+      "line": "DATA 1205 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 47.469,
+      "line": "DONE 1205 TELEMETRY"
+    },
+    {
+      "seconds": 47.531,
+      "line": "EVENT DIAG H 5dc1 1b17 3 0 d 0 0 0"
+    },
+    {
+      "seconds": 47.719,
+      "line": "AK 1206*4F"
+    },
+    {
+      "seconds": 47.719,
+      "line": "DATA 1206 HW STATE 24187 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 47.719,
+      "line": "DATA 1206 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 47.735,
+      "line": "DATA 1206 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 47.735,
+      "line": "DATA 1206 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 47.735,
+      "line": "DATA 1206 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 47.75,
+      "line": "DATA 1206 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 47.75,
+      "line": "DATA 1206 HW SR 1 1 0 54.4 54.4 P"
+    },
+    {
+      "seconds": 47.75,
+      "line": "DATA 1206 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 47.766,
+      "line": "DATA 1206 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 47.766,
+      "line": "DATA 1206 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 47.766,
+      "line": "DATA 1206 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 47.781,
+      "line": "DATA 1206 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 47.781,
+      "line": "DATA 1206 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 47.781,
+      "line": "DONE 1206 TELEMETRY"
+    },
+    {
+      "seconds": 48.016,
+      "line": "AK 1207*48"
+    },
+    {
+      "seconds": 48.016,
+      "line": "DATA 1207 HW STATE 24488 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 48.031,
+      "line": "DATA 1207 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.031,
+      "line": "DATA 1207 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 48.047,
+      "line": "DATA 1207 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 48.047,
+      "line": "DATA 1207 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 48.047,
+      "line": "DATA 1207 HW SL 1 1 0 27.9 27.9 P"
+    },
+    {
+      "seconds": 48.063,
+      "line": "DATA 1207 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 48.063,
+      "line": "DATA 1207 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 48.063,
+      "line": "DATA 1207 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 48.078,
+      "line": "DATA 1207 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 48.078,
+      "line": "DATA 1207 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 48.078,
+      "line": "DATA 1207 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 48.094,
+      "line": "DATA 1207 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 48.094,
+      "line": "DONE 1207 TELEMETRY"
+    },
+    {
+      "seconds": 48.313,
+      "line": "AK 1208*65"
+    },
+    {
+      "seconds": 48.313,
+      "line": "DATA 1208 HW STATE 24788 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 48.328,
+      "line": "DATA 1208 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.328,
+      "line": "DATA 1208 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.328,
+      "line": "DATA 1208 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 48.344,
+      "line": "DATA 1208 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 48.344,
+      "line": "DATA 1208 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 48.36,
+      "line": "DATA 1208 HW SR 1 1 0 54.9 54.9 P"
+    },
+    {
+      "seconds": 48.36,
+      "line": "DATA 1208 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 48.36,
+      "line": "DATA 1208 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 48.36,
+      "line": "DATA 1208 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 48.375,
+      "line": "DATA 1208 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 48.375,
+      "line": "DATA 1208 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 48.391,
+      "line": "DATA 1208 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 48.391,
+      "line": "DONE 1208 TELEMETRY"
+    },
+    {
+      "seconds": 48.531,
+      "line": "EVENT DIAG H 61a9 1b4d 3 0 d 0 0 0"
+    },
+    {
+      "seconds": 48.61,
+      "line": "AK 1209*62"
+    },
+    {
+      "seconds": 48.625,
+      "line": "DATA 1209 HW STATE 25090 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 48.625,
+      "line": "DATA 1209 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.625,
+      "line": "DATA 1209 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.641,
+      "line": "DATA 1209 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 48.641,
+      "line": "DATA 1209 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 48.641,
+      "line": "DATA 1209 HW SL 1 1 0 27.9 27.9 P"
+    },
+    {
+      "seconds": 48.656,
+      "line": "DATA 1209 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 48.656,
+      "line": "DATA 1209 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 48.656,
+      "line": "DATA 1209 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 48.672,
+      "line": "DATA 1209 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 48.672,
+      "line": "DATA 1209 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 48.672,
+      "line": "DATA 1209 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 48.688,
+      "line": "DATA 1209 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 48.688,
+      "line": "DONE 1209 TELEMETRY"
+    },
+    {
+      "seconds": 48.906,
+      "line": "AK 1210*48"
+    },
+    {
+      "seconds": 48.922,
+      "line": "DATA 1210 HW STATE 25391 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 48.922,
+      "line": "DATA 1210 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.938,
+      "line": "DATA 1210 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 48.938,
+      "line": "DATA 1210 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 48.938,
+      "line": "DATA 1210 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 48.953,
+      "line": "DATA 1210 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 48.953,
+      "line": "DATA 1210 HW SR 1 1 0 55.3 55.3 P"
+    },
+    {
+      "seconds": 48.953,
+      "line": "DATA 1210 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 48.969,
+      "line": "DATA 1210 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 48.969,
+      "line": "DATA 1210 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 48.969,
+      "line": "DATA 1210 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 48.985,
+      "line": "DATA 1210 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 48.985,
+      "line": "DATA 1210 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 48.985,
+      "line": "DONE 1210 TELEMETRY"
+    },
+    {
+      "seconds": 49.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 49.219,
+      "line": "AK 1211*4F"
+    },
+    {
+      "seconds": 49.219,
+      "line": "DATA 1211 HW STATE 25695 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 49.235,
+      "line": "DATA 1211 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 49.235,
+      "line": "DATA 1211 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 49.235,
+      "line": "DATA 1211 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 49.25,
+      "line": "DATA 1211 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 49.25,
+      "line": "DATA 1211 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 49.25,
+      "line": "DATA 1211 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 49.266,
+      "line": "DATA 1211 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 49.266,
+      "line": "DATA 1211 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 49.266,
+      "line": "DATA 1211 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 49.281,
+      "line": "DATA 1211 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 49.281,
+      "line": "DATA 1211 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 49.297,
+      "line": "DATA 1211 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 49.297,
+      "line": "DONE 1211 TELEMETRY"
+    },
+    {
+      "seconds": 49.516,
+      "line": "AK 1212*46"
+    },
+    {
+      "seconds": 49.531,
+      "line": "DATA 1212 HW STATE 25997 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 49.531,
+      "line": "EVENT DIAG H 6591 1b15 4 4bc 1 2 0 0"
+    },
+    {
+      "seconds": 49.531,
+      "line": "DATA 1212 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 49.547,
+      "line": "DATA 1212 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 49.547,
+      "line": "DATA 1212 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 49.547,
+      "line": "DATA 1212 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 49.563,
+      "line": "DATA 1212 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 49.563,
+      "line": "DATA 1212 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 49.563,
+      "line": "DATA 1212 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 49.578,
+      "line": "DATA 1212 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 49.578,
+      "line": "DATA 1212 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 49.578,
+      "line": "DATA 1212 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 49.594,
+      "line": "DATA 1212 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 49.594,
+      "line": "DATA 1212 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 49.594,
+      "line": "DONE 1212 TELEMETRY"
+    },
+    {
+      "seconds": 49.813,
+      "line": "AK 1213*41"
+    },
+    {
+      "seconds": 49.828,
+      "line": "DATA 1213 HW STATE 26295 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 49.828,
+      "line": "DATA 1213 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 49.828,
+      "line": "DATA 1213 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 49.844,
+      "line": "DATA 1213 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 49.844,
+      "line": "DATA 1213 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 49.86,
+      "line": "DATA 1213 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 49.86,
+      "line": "DATA 1213 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 49.86,
+      "line": "DATA 1213 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 49.86,
+      "line": "DATA 1213 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 49.875,
+      "line": "DATA 1213 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 49.875,
+      "line": "DATA 1213 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 49.891,
+      "line": "DATA 1213 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 49.891,
+      "line": "DATA 1213 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 49.891,
+      "line": "DONE 1213 TELEMETRY"
+    },
+    {
+      "seconds": 50.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 50.11,
+      "line": "AK 1214*54"
+    },
+    {
+      "seconds": 50.125,
+      "line": "DATA 1214 HW STATE 26598 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 50.125,
+      "line": "DATA 1214 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 50.141,
+      "line": "DATA 1214 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 50.141,
+      "line": "DATA 1214 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 50.141,
+      "line": "DATA 1214 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 50.156,
+      "line": "DATA 1214 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 50.156,
+      "line": "DATA 1214 HW SR 1 1 0 55.1 55.1 P"
+    },
+    {
+      "seconds": 50.172,
+      "line": "DATA 1214 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 50.172,
+      "line": "DATA 1214 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 50.172,
+      "line": "DATA 1214 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 50.172,
+      "line": "DATA 1214 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 50.188,
+      "line": "DATA 1214 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 50.188,
+      "line": "DATA 1214 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 50.188,
+      "line": "DONE 1214 TELEMETRY"
+    },
+    {
+      "seconds": 50.422,
+      "line": "AK 1215*53"
+    },
+    {
+      "seconds": 50.422,
+      "line": "DATA 1215 HW STATE 26897 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 50.438,
+      "line": "DATA 1215 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 50.438,
+      "line": "DATA 1215 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 50.438,
+      "line": "DATA 1215 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 50.453,
+      "line": "DATA 1215 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 50.453,
+      "line": "DATA 1215 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 50.453,
+      "line": "DATA 1215 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 50.469,
+      "line": "DATA 1215 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 50.469,
+      "line": "DATA 1215 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 50.469,
+      "line": "DATA 1215 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 50.485,
+      "line": "DATA 1215 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 50.485,
+      "line": "DATA 1215 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 50.5,
+      "line": "DATA 1215 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 50.5,
+      "line": "DONE 1215 TELEMETRY"
+    },
+    {
+      "seconds": 50.531,
+      "line": "EVENT DIAG H 6979 1af0 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 50.719,
+      "line": "AK 1216*5A"
+    },
+    {
+      "seconds": 50.735,
+      "line": "DATA 1216 HW STATE 27199 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 50.735,
+      "line": "DATA 1216 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 50.735,
+      "line": "DATA 1216 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 50.75,
+      "line": "DATA 1216 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 50.75,
+      "line": "DATA 1216 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 50.75,
+      "line": "DATA 1216 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 50.766,
+      "line": "DATA 1216 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 50.766,
+      "line": "DATA 1216 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 50.766,
+      "line": "DATA 1216 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 50.781,
+      "line": "DATA 1216 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 50.781,
+      "line": "DATA 1216 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 50.781,
+      "line": "DATA 1216 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 50.797,
+      "line": "DATA 1216 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 50.797,
+      "line": "DONE 1216 TELEMETRY"
+    },
+    {
+      "seconds": 51.016,
+      "line": "AK 1217*5D"
+    },
+    {
+      "seconds": 51.031,
+      "line": "DATA 1217 HW STATE 27498 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 51.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 51.031,
+      "line": "DATA 1217 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.047,
+      "line": "DATA 1217 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.047,
+      "line": "DATA 1217 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 51.047,
+      "line": "DATA 1217 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 51.063,
+      "line": "DATA 1217 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 51.063,
+      "line": "DATA 1217 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 51.063,
+      "line": "DATA 1217 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 51.078,
+      "line": "DATA 1217 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 51.078,
+      "line": "DATA 1217 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 51.094,
+      "line": "DATA 1217 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 51.094,
+      "line": "DATA 1217 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 51.094,
+      "line": "DATA 1217 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 51.11,
+      "line": "DONE 1217 TELEMETRY"
+    },
+    {
+      "seconds": 51.313,
+      "line": "AK 1218*70"
+    },
+    {
+      "seconds": 51.328,
+      "line": "DATA 1218 HW STATE 27800 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 51.328,
+      "line": "DATA 1218 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.344,
+      "line": "DATA 1218 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.344,
+      "line": "DATA 1218 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 51.344,
+      "line": "DATA 1218 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 51.36,
+      "line": "DATA 1218 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 51.36,
+      "line": "DATA 1218 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 51.36,
+      "line": "DATA 1218 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 51.375,
+      "line": "DATA 1218 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 51.375,
+      "line": "DATA 1218 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 51.375,
+      "line": "DATA 1218 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 51.391,
+      "line": "DATA 1218 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 51.391,
+      "line": "DATA 1218 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 51.391,
+      "line": "DONE 1218 TELEMETRY"
+    },
+    {
+      "seconds": 51.531,
+      "line": "EVENT DIAG H 6d61 1b44 3 0 d 0 0 0"
+    },
+    {
+      "seconds": 51.625,
+      "line": "AK 1219*77"
+    },
+    {
+      "seconds": 51.625,
+      "line": "DATA 1219 HW STATE 28098 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 51.625,
+      "line": "DATA 1219 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.641,
+      "line": "DATA 1219 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.641,
+      "line": "DATA 1219 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 51.641,
+      "line": "DATA 1219 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 51.656,
+      "line": "DATA 1219 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 51.656,
+      "line": "DATA 1219 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 51.672,
+      "line": "DATA 1219 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 51.672,
+      "line": "DATA 1219 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 51.672,
+      "line": "DATA 1219 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 51.672,
+      "line": "DATA 1219 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 51.688,
+      "line": "DATA 1219 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 51.688,
+      "line": "DATA 1219 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 51.703,
+      "line": "DONE 1219 TELEMETRY"
+    },
+    {
+      "seconds": 51.922,
+      "line": "AK 1220*77"
+    },
+    {
+      "seconds": 51.938,
+      "line": "DATA 1220 HW STATE 28401 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 51.938,
+      "line": "DATA 1220 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.938,
+      "line": "DATA 1220 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 51.953,
+      "line": "DATA 1220 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 51.953,
+      "line": "DATA 1220 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 51.953,
+      "line": "DATA 1220 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 51.969,
+      "line": "DATA 1220 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 51.969,
+      "line": "DATA 1220 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 51.969,
+      "line": "DATA 1220 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 51.985,
+      "line": "DATA 1220 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 51.985,
+      "line": "DATA 1220 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 51.985,
+      "line": "DATA 1220 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 52.0,
+      "line": "DATA 1220 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 52.0,
+      "line": "DONE 1220 TELEMETRY"
+    },
+    {
+      "seconds": 52.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 52.219,
+      "line": "AK 1221*70"
+    },
+    {
+      "seconds": 52.235,
+      "line": "DATA 1221 HW STATE 28699 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 52.235,
+      "line": "DATA 1221 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 52.235,
+      "line": "DATA 1221 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 52.25,
+      "line": "DATA 1221 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 52.25,
+      "line": "DATA 1221 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 52.25,
+      "line": "DATA 1221 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 52.266,
+      "line": "DATA 1221 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 52.266,
+      "line": "DATA 1221 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 52.266,
+      "line": "DATA 1221 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 52.281,
+      "line": "DATA 1221 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 52.281,
+      "line": "DATA 1221 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 52.297,
+      "line": "DATA 1221 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 52.297,
+      "line": "DATA 1221 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 52.297,
+      "line": "DONE 1221 TELEMETRY"
+    },
+    {
+      "seconds": 52.516,
+      "line": "AK 1222*79"
+    },
+    {
+      "seconds": 52.531,
+      "line": "EVENT DIAG H 7149 1b27 4 4c6 0 1 0 0"
+    },
+    {
+      "seconds": 52.531,
+      "line": "DATA 1222 HW STATE 29007 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 52.547,
+      "line": "DATA 1222 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 52.547,
+      "line": "DATA 1222 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 52.547,
+      "line": "DATA 1222 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 52.563,
+      "line": "DATA 1222 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 52.563,
+      "line": "DATA 1222 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 52.563,
+      "line": "DATA 1222 HW SR 1 1 0 55.3 55.3 P"
+    },
+    {
+      "seconds": 52.578,
+      "line": "DATA 1222 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 52.578,
+      "line": "DATA 1222 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 52.578,
+      "line": "DATA 1222 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 52.594,
+      "line": "DATA 1222 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 52.594,
+      "line": "DATA 1222 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 52.594,
+      "line": "DATA 1222 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 52.61,
+      "line": "DONE 1222 TELEMETRY"
+    },
+    {
+      "seconds": 52.828,
+      "line": "AK 1223*7E"
+    },
+    {
+      "seconds": 52.828,
+      "line": "DATA 1223 HW STATE 29301 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 52.828,
+      "line": "DATA 1223 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 52.844,
+      "line": "DATA 1223 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 52.844,
+      "line": "DATA 1223 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 52.844,
+      "line": "DATA 1223 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 52.86,
+      "line": "DATA 1223 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 52.875,
+      "line": "DATA 1223 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 52.875,
+      "line": "DATA 1223 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 52.875,
+      "line": "DATA 1223 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 52.875,
+      "line": "DATA 1223 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 52.891,
+      "line": "DATA 1223 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 52.891,
+      "line": "DATA 1223 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 52.891,
+      "line": "DATA 1223 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 52.906,
+      "line": "DONE 1223 TELEMETRY"
+    },
+    {
+      "seconds": 53.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 53.125,
+      "line": "AK 1224*6B"
+    },
+    {
+      "seconds": 53.141,
+      "line": "DATA 1224 HW STATE 29603 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 53.141,
+      "line": "DATA 1224 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 53.141,
+      "line": "DATA 1224 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 53.141,
+      "line": "DATA 1224 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 53.156,
+      "line": "DATA 1224 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 53.156,
+      "line": "DATA 1224 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 53.172,
+      "line": "DATA 1224 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 53.172,
+      "line": "DATA 1224 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 53.172,
+      "line": "DATA 1224 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 53.172,
+      "line": "DATA 1224 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 53.188,
+      "line": "DATA 1224 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 53.188,
+      "line": "DATA 1224 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 53.188,
+      "line": "DATA 1224 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 53.203,
+      "line": "DONE 1224 TELEMETRY"
+    },
+    {
+      "seconds": 53.422,
+      "line": "AK 1225*6C"
+    },
+    {
+      "seconds": 53.438,
+      "line": "DATA 1225 HW STATE 29901 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 53.438,
+      "line": "DATA 1225 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 53.438,
+      "line": "DATA 1225 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 53.453,
+      "line": "DATA 1225 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 53.453,
+      "line": "DATA 1225 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 53.453,
+      "line": "DATA 1225 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 53.469,
+      "line": "DATA 1225 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 53.469,
+      "line": "DATA 1225 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 53.469,
+      "line": "DATA 1225 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 53.485,
+      "line": "DATA 1225 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 53.485,
+      "line": "DATA 1225 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 53.485,
+      "line": "DATA 1225 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 53.5,
+      "line": "DATA 1225 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 53.5,
+      "line": "DONE 1225 TELEMETRY"
+    },
+    {
+      "seconds": 53.531,
+      "line": "EVENT DIAG H 7531 1adf 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 53.719,
+      "line": "AK 1226*65"
+    },
+    {
+      "seconds": 53.735,
+      "line": "DATA 1226 HW STATE 30203 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 53.735,
+      "line": "DATA 1226 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 53.75,
+      "line": "DATA 1226 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 53.75,
+      "line": "DATA 1226 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 53.75,
+      "line": "DATA 1226 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 53.766,
+      "line": "DATA 1226 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 53.766,
+      "line": "DATA 1226 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 53.766,
+      "line": "DATA 1226 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 53.781,
+      "line": "DATA 1226 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 53.781,
+      "line": "DATA 1226 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 53.781,
+      "line": "DATA 1226 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 53.797,
+      "line": "DATA 1226 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 53.797,
+      "line": "DATA 1226 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 53.797,
+      "line": "DONE 1226 TELEMETRY"
+    },
+    {
+      "seconds": 54.016,
+      "line": "AK 1227*62"
+    },
+    {
+      "seconds": 54.031,
+      "line": "DATA 1227 HW STATE 30498 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 54.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 54.031,
+      "line": "DATA 1227 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.047,
+      "line": "DATA 1227 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.047,
+      "line": "DATA 1227 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 54.047,
+      "line": "DATA 1227 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 54.063,
+      "line": "DATA 1227 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 54.063,
+      "line": "DATA 1227 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 54.078,
+      "line": "DATA 1227 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 54.078,
+      "line": "DATA 1227 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 54.078,
+      "line": "DATA 1227 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 54.078,
+      "line": "DATA 1227 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 54.094,
+      "line": "DATA 1227 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 54.094,
+      "line": "DATA 1227 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 54.094,
+      "line": "DONE 1227 TELEMETRY"
+    },
+    {
+      "seconds": 54.328,
+      "line": "AK 1228*4F"
+    },
+    {
+      "seconds": 54.328,
+      "line": "DATA 1228 HW STATE 30799 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 54.328,
+      "line": "DATA 1228 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.344,
+      "line": "DATA 1228 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.344,
+      "line": "DATA 1228 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 54.344,
+      "line": "DATA 1228 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 54.36,
+      "line": "DATA 1228 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 54.36,
+      "line": "DATA 1228 HW SR 1 1 0 55.3 55.3 P"
+    },
+    {
+      "seconds": 54.36,
+      "line": "DATA 1228 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 54.375,
+      "line": "DATA 1228 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 54.375,
+      "line": "DATA 1228 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 54.375,
+      "line": "DATA 1228 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 54.391,
+      "line": "DATA 1228 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 54.391,
+      "line": "DATA 1228 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 54.391,
+      "line": "DONE 1228 TELEMETRY"
+    },
+    {
+      "seconds": 54.531,
+      "line": "EVENT DIAG H 7919 1b4d 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 54.625,
+      "line": "AK 1229*48"
+    },
+    {
+      "seconds": 54.625,
+      "line": "DATA 1229 HW STATE 31104 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 54.641,
+      "line": "DATA 1229 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.641,
+      "line": "DATA 1229 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.641,
+      "line": "DATA 1229 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 54.656,
+      "line": "DATA 1229 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 54.656,
+      "line": "DATA 1229 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 54.672,
+      "line": "DATA 1229 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 54.672,
+      "line": "DATA 1229 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 54.672,
+      "line": "DATA 1229 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 54.672,
+      "line": "DATA 1229 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 54.688,
+      "line": "DATA 1229 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 54.688,
+      "line": "DATA 1229 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 54.703,
+      "line": "DATA 1229 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 54.703,
+      "line": "DONE 1229 TELEMETRY"
+    },
+    {
+      "seconds": 54.922,
+      "line": "AK 1230*62"
+    },
+    {
+      "seconds": 54.938,
+      "line": "DATA 1230 HW STATE 31406 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 54.938,
+      "line": "DATA 1230 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.938,
+      "line": "DATA 1230 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 54.953,
+      "line": "DATA 1230 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 54.953,
+      "line": "DATA 1230 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 54.953,
+      "line": "DATA 1230 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 54.969,
+      "line": "DATA 1230 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 54.969,
+      "line": "DATA 1230 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 54.969,
+      "line": "DATA 1230 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 54.985,
+      "line": "DATA 1230 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 54.985,
+      "line": "DATA 1230 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 54.985,
+      "line": "DATA 1230 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 55.0,
+      "line": "DATA 1230 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 55.0,
+      "line": "DONE 1230 TELEMETRY"
+    },
+    {
+      "seconds": 55.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 55.219,
+      "line": "AK 1231*65"
+    },
+    {
+      "seconds": 55.235,
+      "line": "DATA 1231 HW STATE 31704 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 55.235,
+      "line": "DATA 1231 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 55.25,
+      "line": "DATA 1231 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 55.25,
+      "line": "DATA 1231 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 55.25,
+      "line": "DATA 1231 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 55.266,
+      "line": "DATA 1231 HW SL 1 1 0 29.1 29.1 P"
+    },
+    {
+      "seconds": 55.266,
+      "line": "DATA 1231 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 55.266,
+      "line": "DATA 1231 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 55.281,
+      "line": "DATA 1231 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 55.281,
+      "line": "DATA 1231 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 55.281,
+      "line": "DATA 1231 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 55.297,
+      "line": "DATA 1231 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 55.297,
+      "line": "DATA 1231 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 55.297,
+      "line": "DONE 1231 TELEMETRY"
+    },
+    {
+      "seconds": 55.531,
+      "line": "AK 1232*6C"
+    },
+    {
+      "seconds": 55.531,
+      "line": "EVENT DIAG H 7d01 1b27 4 4d0 0 3 0 0"
+    },
+    {
+      "seconds": 55.531,
+      "line": "DATA 1232 HW STATE 32009 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 55.547,
+      "line": "DATA 1232 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 55.547,
+      "line": "DATA 1232 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 55.547,
+      "line": "DATA 1232 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 55.563,
+      "line": "DATA 1232 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 55.563,
+      "line": "DATA 1232 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 55.563,
+      "line": "DATA 1232 HW SR 1 1 0 55.4 55.4 P"
+    },
+    {
+      "seconds": 55.578,
+      "line": "DATA 1232 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 55.578,
+      "line": "DATA 1232 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 55.578,
+      "line": "DATA 1232 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 55.594,
+      "line": "DATA 1232 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 55.594,
+      "line": "DATA 1232 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 55.61,
+      "line": "DATA 1232 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 55.61,
+      "line": "DONE 1232 TELEMETRY"
+    },
+    {
+      "seconds": 55.828,
+      "line": "AK 1233*6B"
+    },
+    {
+      "seconds": 55.828,
+      "line": "DATA 1233 HW STATE 32305 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 55.844,
+      "line": "DATA 1233 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 55.844,
+      "line": "DATA 1233 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 55.86,
+      "line": "DATA 1233 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 55.86,
+      "line": "DATA 1233 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 55.86,
+      "line": "DATA 1233 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 55.86,
+      "line": "DATA 1233 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 55.875,
+      "line": "DATA 1233 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 55.875,
+      "line": "DATA 1233 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 55.875,
+      "line": "DATA 1233 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 55.891,
+      "line": "DATA 1233 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 55.891,
+      "line": "DATA 1233 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 55.906,
+      "line": "DATA 1233 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 55.906,
+      "line": "DONE 1233 TELEMETRY"
+    },
+    {
+      "seconds": 56.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 56.125,
+      "line": "AK 1234*7E"
+    },
+    {
+      "seconds": 56.141,
+      "line": "DATA 1234 HW STATE 32608 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 56.141,
+      "line": "DATA 1234 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 56.141,
+      "line": "DATA 1234 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 56.156,
+      "line": "DATA 1234 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 56.156,
+      "line": "DATA 1234 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 56.156,
+      "line": "DATA 1234 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 56.172,
+      "line": "DATA 1234 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 56.172,
+      "line": "DATA 1234 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 56.172,
+      "line": "DATA 1234 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 56.188,
+      "line": "DATA 1234 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 56.188,
+      "line": "DATA 1234 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 56.188,
+      "line": "DATA 1234 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 56.203,
+      "line": "DATA 1234 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 56.203,
+      "line": "DONE 1234 TELEMETRY"
+    },
+    {
+      "seconds": 56.422,
+      "line": "AK 1235*79"
+    },
+    {
+      "seconds": 56.438,
+      "line": "DATA 1235 HW STATE 32905 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 56.438,
+      "line": "DATA 1235 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 56.438,
+      "line": "DATA 1235 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 56.453,
+      "line": "DATA 1235 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 56.453,
+      "line": "DATA 1235 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 56.453,
+      "line": "DATA 1235 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 56.469,
+      "line": "DATA 1235 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 56.469,
+      "line": "DATA 1235 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 56.469,
+      "line": "DATA 1235 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 56.485,
+      "line": "DATA 1235 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 56.485,
+      "line": "DATA 1235 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 56.5,
+      "line": "DATA 1235 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 56.5,
+      "line": "DATA 1235 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 56.5,
+      "line": "DONE 1235 TELEMETRY"
+    },
+    {
+      "seconds": 56.531,
+      "line": "EVENT DIAG H 80e9 1adf 3 0 d 0 0 0"
+    },
+    {
+      "seconds": 56.781,
+      "line": "AK 1236*70"
+    },
+    {
+      "seconds": 56.781,
+      "line": "DATA 1236 HW STATE 33257 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 56.797,
+      "line": "DATA 1236 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 56.797,
+      "line": "DATA 1236 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 56.797,
+      "line": "DATA 1236 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 56.813,
+      "line": "DATA 1236 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 56.813,
+      "line": "DATA 1236 HW SL 1 1 0 30.1 30.1 P"
+    },
+    {
+      "seconds": 56.828,
+      "line": "DATA 1236 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 56.828,
+      "line": "DATA 1236 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 56.828,
+      "line": "DATA 1236 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 56.828,
+      "line": "DATA 1236 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 56.844,
+      "line": "DATA 1236 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 56.844,
+      "line": "DATA 1236 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 56.844,
+      "line": "DATA 1236 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 56.86,
+      "line": "DONE 1236 TELEMETRY"
+    },
+    {
+      "seconds": 57.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 57.078,
+      "line": "AK 1237*77"
+    },
+    {
+      "seconds": 57.094,
+      "line": "DATA 1237 HW STATE 33557 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 57.094,
+      "line": "DATA 1237 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 57.094,
+      "line": "DATA 1237 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 57.11,
+      "line": "DATA 1237 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 57.11,
+      "line": "DATA 1237 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 57.11,
+      "line": "DATA 1237 HW SL 1 1 0 30.3 30.3 P"
+    },
+    {
+      "seconds": 57.125,
+      "line": "DATA 1237 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 57.125,
+      "line": "DATA 1237 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 57.125,
+      "line": "DATA 1237 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 57.141,
+      "line": "DATA 1237 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 57.141,
+      "line": "DATA 1237 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 57.141,
+      "line": "DATA 1237 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 57.156,
+      "line": "DATA 1237 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 57.156,
+      "line": "DONE 1237 TELEMETRY"
+    },
+    {
+      "seconds": 57.375,
+      "line": "AK 1238*5A"
+    },
+    {
+      "seconds": 57.391,
+      "line": "DATA 1238 HW STATE 33858 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 57.391,
+      "line": "DATA 1238 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 57.406,
+      "line": "DATA 1238 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 57.406,
+      "line": "DATA 1238 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 57.406,
+      "line": "DATA 1238 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 57.422,
+      "line": "DATA 1238 HW SL 1 1 0 29.9 29.9 P"
+    },
+    {
+      "seconds": 57.422,
+      "line": "DATA 1238 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 57.422,
+      "line": "DATA 1238 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 57.438,
+      "line": "DATA 1238 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 57.438,
+      "line": "DATA 1238 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 57.438,
+      "line": "DATA 1238 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 57.453,
+      "line": "DATA 1238 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 57.453,
+      "line": "DATA 1238 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 57.453,
+      "line": "DONE 1238 TELEMETRY"
+    },
+    {
+      "seconds": 57.531,
+      "line": "EVENT DIAG H 84d1 1b4d 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 57.688,
+      "line": "AK 1239*5D"
+    },
+    {
+      "seconds": 57.688,
+      "line": "DATA 1239 HW STATE 34158 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 57.703,
+      "line": "DATA 1239 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 57.703,
+      "line": "DATA 1239 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 57.703,
+      "line": "DATA 1239 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 57.719,
+      "line": "DATA 1239 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 57.719,
+      "line": "DATA 1239 HW SL 1 1 0 31.4 31.4 P"
+    },
+    {
+      "seconds": 57.719,
+      "line": "DATA 1239 HW SR 1 1 0 55.4 55.4 P"
+    },
+    {
+      "seconds": 57.735,
+      "line": "DATA 1239 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 57.735,
+      "line": "DATA 1239 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 57.735,
+      "line": "DATA 1239 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 57.735,
+      "line": "DATA 1239 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 57.75,
+      "line": "DATA 1239 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 57.75,
+      "line": "DATA 1239 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 57.75,
+      "line": "DONE 1239 TELEMETRY"
+    },
+    {
+      "seconds": 57.985,
+      "line": "AK 1240*09"
+    },
+    {
+      "seconds": 57.985,
+      "line": "DATA 1240 HW STATE 34458 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 58.0,
+      "line": "DATA 1240 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.0,
+      "line": "DATA 1240 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.0,
+      "line": "DATA 1240 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 58.016,
+      "line": "DATA 1240 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 58.016,
+      "line": "DATA 1240 HW SL 1 1 0 29.9 29.9 P"
+    },
+    {
+      "seconds": 58.016,
+      "line": "DATA 1240 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 58.031,
+      "line": "DATA 1240 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 58.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 58.031,
+      "line": "DATA 1240 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 58.047,
+      "line": "DATA 1240 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 58.047,
+      "line": "DATA 1240 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 58.063,
+      "line": "DATA 1240 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 58.063,
+      "line": "DATA 1240 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 58.063,
+      "line": "DONE 1240 TELEMETRY"
+    },
+    {
+      "seconds": 58.281,
+      "line": "AK 1241*0E"
+    },
+    {
+      "seconds": 58.281,
+      "line": "DATA 1241 HW STATE 34759 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 58.297,
+      "line": "DATA 1241 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.297,
+      "line": "DATA 1241 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.313,
+      "line": "DATA 1241 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 58.313,
+      "line": "DATA 1241 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 58.313,
+      "line": "DATA 1241 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 58.328,
+      "line": "DATA 1241 HW SR 1 1 0 53.9 53.9 P"
+    },
+    {
+      "seconds": 58.328,
+      "line": "DATA 1241 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 58.328,
+      "line": "DATA 1241 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 58.344,
+      "line": "DATA 1241 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 58.344,
+      "line": "DATA 1241 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 58.344,
+      "line": "DATA 1241 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 58.36,
+      "line": "DATA 1241 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 58.36,
+      "line": "DONE 1241 TELEMETRY"
+    },
+    {
+      "seconds": 58.531,
+      "line": "EVENT DIAG H 88b9 1b47 4 0 d 0 0 0"
+    },
+    {
+      "seconds": 58.578,
+      "line": "AK 1242*07"
+    },
+    {
+      "seconds": 58.594,
+      "line": "DATA 1242 HW STATE 35059 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 58.594,
+      "line": "DATA 1242 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.594,
+      "line": "DATA 1242 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.61,
+      "line": "DATA 1242 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 58.61,
+      "line": "DATA 1242 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 58.61,
+      "line": "DATA 1242 HW SL 1 1 0 27.9 27.9 P"
+    },
+    {
+      "seconds": 58.625,
+      "line": "DATA 1242 HW SR 1 1 0 55.8 55.8 P"
+    },
+    {
+      "seconds": 58.625,
+      "line": "DATA 1242 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 58.625,
+      "line": "DATA 1242 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 58.641,
+      "line": "DATA 1242 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 58.641,
+      "line": "DATA 1242 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 58.641,
+      "line": "DATA 1242 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 58.656,
+      "line": "DATA 1242 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 58.656,
+      "line": "DONE 1242 TELEMETRY"
+    },
+    {
+      "seconds": 58.891,
+      "line": "AK 1243*00"
+    },
+    {
+      "seconds": 58.891,
+      "line": "DATA 1243 HW STATE 35361 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 58.891,
+      "line": "DATA 1243 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.906,
+      "line": "DATA 1243 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 58.906,
+      "line": "DATA 1243 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 58.906,
+      "line": "DATA 1243 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 58.922,
+      "line": "DATA 1243 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 58.922,
+      "line": "DATA 1243 HW SR 1 1 0 54.6 54.6 P"
+    },
+    {
+      "seconds": 58.922,
+      "line": "DATA 1243 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 58.938,
+      "line": "DATA 1243 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 58.938,
+      "line": "DATA 1243 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 58.938,
+      "line": "DATA 1243 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 58.953,
+      "line": "DATA 1243 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 58.953,
+      "line": "DATA 1243 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 58.953,
+      "line": "DONE 1243 TELEMETRY"
+    },
+    {
+      "seconds": 59.031,
+      "line": "EVENT DIAG M 698 698 0 0 0 0*7B"
+    },
+    {
+      "seconds": 59.188,
+      "line": "AK 1244*15"
+    },
+    {
+      "seconds": 59.188,
+      "line": "DATA 1244 HW STATE 35660 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 59.203,
+      "line": "DATA 1244 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 59.203,
+      "line": "DATA 1244 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 59.203,
+      "line": "DATA 1244 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 59.219,
+      "line": "DATA 1244 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 59.219,
+      "line": "DATA 1244 HW SL 1 1 0 30.6 30.6 P"
+    },
+    {
+      "seconds": 59.219,
+      "line": "DATA 1244 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 59.235,
+      "line": "DATA 1244 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 59.235,
+      "line": "DATA 1244 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 59.235,
+      "line": "DATA 1244 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 59.235,
+      "line": "DATA 1244 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 59.25,
+      "line": "DATA 1244 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 59.25,
+      "line": "DATA 1244 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 59.266,
+      "line": "DONE 1244 TELEMETRY"
+    },
+    {
+      "seconds": 59.485,
+      "line": "AK 1245*12"
+    },
+    {
+      "seconds": 59.485,
+      "line": "DATA 1245 HW STATE 35961 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 59.5,
+      "line": "DATA 1245 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 59.5,
+      "line": "DATA 1245 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 59.5,
+      "line": "DATA 1245 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 59.516,
+      "line": "DATA 1245 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 59.516,
+      "line": "DATA 1245 HW SL 1 1 0 29.0 29.0 P"
+    },
+    {
+      "seconds": 59.531,
+      "line": "DATA 1245 HW SR 1 1 0 55.2 55.2 P"
+    },
+    {
+      "seconds": 59.531,
+      "line": "DATA 1245 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 59.531,
+      "line": "EVENT DIAG H 8ca1 1ae9 4 4dd 8 2 0 0"
+    },
+    {
+      "seconds": 59.547,
+      "line": "DATA 1245 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 59.547,
+      "line": "DATA 1245 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 59.547,
+      "line": "DATA 1245 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 59.563,
+      "line": "DATA 1245 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 59.563,
+      "line": "DATA 1245 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 59.563,
+      "line": "DONE 1245 TELEMETRY"
+    },
+    {
+      "seconds": 59.781,
+      "line": "AK 1246*1B"
+    },
+    {
+      "seconds": 59.797,
+      "line": "DATA 1246 HW STATE 36262 IDLE 0 0 16383"
+    },
+    {
+      "seconds": 59.797,
+      "line": "DATA 1246 HW ML 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 59.797,
+      "line": "DATA 1246 HW MR 0 0 0 1 0 0"
+    },
+    {
+      "seconds": 59.813,
+      "line": "DATA 1246 HW EL 1 0 0 0.0 P"
+    },
+    {
+      "seconds": 59.813,
+      "line": "DATA 1246 HW ER 1 0 3 0.0 P"
+    },
+    {
+      "seconds": 59.813,
+      "line": "DATA 1246 HW SL 1 1 0 28.0 28.0 P"
+    },
+    {
+      "seconds": 59.828,
+      "line": "DATA 1246 HW SR 1 1 0 57.4 57.4 P"
+    },
+    {
+      "seconds": 59.828,
+      "line": "DATA 1246 HW T TOP 1 1 0 P"
+    },
+    {
+      "seconds": 59.828,
+      "line": "DATA 1246 HW T LEFT 1 1 0 P"
+    },
+    {
+      "seconds": 59.844,
+      "line": "DATA 1246 HW T RIGHT 1 1 0 P"
+    },
+    {
+      "seconds": 59.844,
+      "line": "DATA 1246 HW T REAR 1 1 0 P"
+    },
+    {
+      "seconds": 59.844,
+      "line": "DATA 1246 HW OUT 1 0 -1 1 0 0"
+    },
+    {
+      "seconds": 59.86,
+      "line": "DATA 1246 HW FRONT -1.0 HOST"
+    },
+    {
+      "seconds": 59.86,
+      "line": "DONE 1246 TELEMETRY"
+    }
+  ]
+}

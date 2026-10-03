@@ -1,0 +1,10 @@
+{
+  "port": "COM10",
+  "baud": 57600,
+  "usbWrites": 0,
+  "durationSeconds": 8.188,
+  "receivedBytes": 0,
+  "failure": null,
+  "partial": "",
+  "lines": []
+}
