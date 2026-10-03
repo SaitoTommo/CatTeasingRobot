@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <math.h>
+#include "policy_ids.h"
 extern String phase, mode;
 extern JsonDocument config, observation;
 extern uint32_t lastUnoAt;
@@ -58,16 +59,16 @@ void policyControl(const String &control){if(control=="stop"){fail("operator_sto
 }if(control=="alert"&&phase=="PATROL"){stopMotor();phase="INTERACTION";initiator="ROBOT_SEARCH";sessionAt=now();rounds=0;branch=-1;chooseRobot();}}
 void policyInput(const String &line){unsigned id=0;unsigned long l=0,r=0;
   if(line.startsWith("READY")){if(phase!="IDLE"&&phase!="STOPPED")fail("Uno reboot");geometryConfirmed=false;memset(touch,0,sizeof(touch));return;}
-  if(sscanf(line.c_str(),"MS %u %lu %lu",&id,&l,&r)==3&&id==motorId){motorConfirmed=true;feedbackAt=now();return;}
-  if(sscanf(line.c_str(),"MP %u %lu %lu",&id,&l,&r)==3&&id==motorId){pulsesL=l;pulsesR=r;motorConfirmed=true;feedbackAt=now();return;}
-  if(line.startsWith("AK ")||line.startsWith("ACK ")){sscanf(line.c_str(),line.startsWith("AK ")?"AK %u":"ACK %u",&id);if(id==motorId)motorConfirmed=true;return;}
-  if(line.startsWith("MA ")){char reason[100];if(sscanf(line.c_str(),"MA %u %99s %lu %lu",&id,reason,&l,&r)==4&&id==motorId)motionFailure(reason);return;}
-  if(line.startsWith("ERROR ")){char reason[100];if(sscanf(line.c_str(),"ERROR %u %99s",&id,reason)==2){if(id==motorId)motionFailure(reason);else if(id==sessionId||id==geometryId)fail(String("required command: ")+reason);}return;}
+  if(sscanf(line.c_str(),"MS %u %lu %lu",&id,&l,&r)==3&&matchesPending(id,motorId)){motorConfirmed=true;feedbackAt=now();return;}
+  if(sscanf(line.c_str(),"MP %u %lu %lu",&id,&l,&r)==3&&matchesPending(id,motorId)){pulsesL=l;pulsesR=r;motorConfirmed=true;feedbackAt=now();return;}
+  if(line.startsWith("AK ")||line.startsWith("ACK ")){sscanf(line.c_str(),line.startsWith("AK ")?"AK %u":"ACK %u",&id);if(matchesPending(id,motorId))motorConfirmed=true;return;}
+  if(line.startsWith("MA ")){char reason[100];if(sscanf(line.c_str(),"MA %u %99s %lu %lu",&id,reason,&l,&r)==4&&matchesPending(id,motorId))motionFailure(reason);return;}
+  if(line.startsWith("ERROR ")){char reason[100];if(sscanf(line.c_str(),"ERROR %u %99s",&id,reason)==2){if(!id)logLine("UNO_PROTOCOL_ERROR",String("unidentified command: ")+reason);else if(matchesPending(id,motorId))motionFailure(reason);else if(matchesPending(id,sessionId)||matchesPending(id,geometryId))fail(String("required command: ")+reason);}return;}
   if(line.startsWith("DATA ")&&line.indexOf(" CONFIG ")>=0){int wi=line.indexOf("WHEEL_MM="),ti=line.indexOf("TRACK_MM=");float w=wi>=0?line.substring(wi+9).toFloat():0,t=ti>=0?line.substring(ti+9).toFloat():0;if(w>=20&&w<=150&&t>=50&&t<=300){wheel=w;track=t;geometryConfirmed=true;}}
   if(line.startsWith("EVENT")&&line.indexOf(" TOUCH ")>=0){int p=line.indexOf(" TOUCH ")+7;String rest=line.substring(p);int area=rest.startsWith("LEFT ")?0:rest.startsWith("RIGHT ")?1:rest.startsWith("REAR ")?2:rest.startsWith("TOP ")?3:-1;if(area>=0){if(rest.indexOf(" PRESS")>=0)onTouch(area);else if(rest.indexOf(" RELEASE")>=0)touch[area]=false;}return;}
   if(line.startsWith("DATA ")&&line.indexOf(" HW T ")>=0){int p=line.indexOf(" HW T ")+6;char area[8],src[12];int enabled,raw,pressed;if(sscanf(line.substring(p).c_str(),"%7s %d %d %d %11s",area,&enabled,&raw,&pressed,src)==5){int a=!strcmp(area,"LEFT")?0:!strcmp(area,"RIGHT")?1:!strcmp(area,"REAR")?2:3;if(pressed&&!touch[a])onTouch(a);else if(!pressed)touch[a]=false;}}
-  if(line.startsWith("EVENT MOTION_ABORTED ")){char reason[80];if(sscanf(line.c_str(),"EVENT MOTION_ABORTED %u %79s",&id,reason)==2&&id==motorId)motionFailure(reason);return;}
-  if(line.startsWith("DONE ")){sscanf(line.c_str(),"DONE %u",&id);if(id==frontId)frontConfirmed=true;if(id==sessionId){if(action=="WAIT_SESSION_STOP"){rounds=0;branch=-1;followPending=false;beginSession();}else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed){fail("geometry not confirmed; set real wheel/track then GET_CONFIG");return;}phase="PATROL";swept=0;state("SCAN_TAG");}}}
+  if(line.startsWith("EVENT MOTION_ABORTED ")){char reason[80];if(sscanf(line.c_str(),"EVENT MOTION_ABORTED %u %79s",&id,reason)==2&&matchesPending(id,motorId))motionFailure(reason);return;}
+  if(line.startsWith("DONE ")){sscanf(line.c_str(),"DONE %u",&id);if(matchesPending(id,frontId))frontConfirmed=true;if(matchesPending(id,sessionId)){if(action=="WAIT_SESSION_STOP"){rounds=0;branch=-1;followPending=false;beginSession();}else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed){fail("geometry not confirmed; set real wheel/track then GET_CONFIG");return;}phase="PATROL";swept=0;state("SCAN_TAG");}}}
 }
 void policyTick(){
   observation["policy"]["action"]=action;observation["policy"]["targetIndex"]=routeIndex;observation["policy"]["rounds"]=rounds;

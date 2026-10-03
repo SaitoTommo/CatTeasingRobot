@@ -173,7 +173,13 @@ Motion motion = { MOTION_NONE, 0, 0, 0, 0, 0, { 0, 0 }, { 0, 0 }, { 0, 0 }, 0, f
 // Applies only to one bounded TEST_MOTOR transaction, never patrol commands.
 bool motionBypassAvoidance = false;
 
-char inputLine[2][128];
+struct GuardedCommandBuffer {
+  uint16_t before = 0xA55A;
+  char data[128] = {};
+  uint16_t after = 0x5AA5;
+  bool valid() const { return before == 0xA55A && after == 0x5AA5; }
+};
+GuardedCommandBuffer inputBuffers[2], pendingBuffer, executingBuffer;
 uint8_t inputLength[2] = { 0, 0 };
 bool inputOverflow[2] = { false, false };
 
@@ -515,19 +521,24 @@ void tickRpm(uint32_t now) {
 }
 
 void tickOutputs(uint32_t now) {
+  diagStage(70);
   if (ledFlash && deadlineReached(now, ledFlashUntilMs)) {
     ledFlash = false;
     ledOn = false;
   }
   const uint8_t requestedMode = !physicalIo[LED_OUT] ? 0 : ledFlash ? 2 : ledOn ? 1 : 0;
   if (requestedMode != remoteLedMode || (requestedMode == 2 && (remoteLedDeadline != ledFlashUntilMs || remoteLedInterval != ledFlashIntervalMs))) {
+    diagStage(71);
     remoteLedMode = requestedMode; remoteLedDeadline = ledFlashUntilMs; remoteLedInterval = ledFlashIntervalMs;
     char eventLine[64];
     if (requestedMode == 2) snprintf_P(eventLine, sizeof(eventLine), PSTR("EVENT HOST_LED FLASH %lu %lu"), (unsigned long)ledFlashIntervalMs, (unsigned long)(ledFlashUntilMs-now));
     else snprintf_P(eventLine, sizeof(eventLine), PSTR("EVENT HOST_LED %s"), requestedMode == 1 ? "ON" : "OFF");
     printProtectedLine(eventLine);
+    diagStage(72);
   }
+  diagStage(73);
   digitalWrite(PIN_BUZZER, physicalIo[BUZZER_OUT] && buzzerUntilMs != 0 && !deadlineReached(now, buzzerUntilMs));
+  diagStage(74);
 }
 
 bool parseLong(const char *text, long minValue, long maxValue, long &value) {
@@ -726,17 +737,34 @@ void tickHardwareTelemetry(uint32_t now) {
   ++telemetryStage;
 }
 
+void diagBadChecksum(const char *line, uint8_t calculated, uint8_t received) {
+  if (!diagMode) return;
+  char detail[64];
+  uint8_t length = snprintf_P(detail, sizeof(detail), PSTR("EVENT DIAG RX %u %02X %02X "),
+                              strlen(line), calculated, received);
+  static const char digits[] PROGMEM = "0123456789ABCDEF";
+  // At most 12 raw bytes; inspect before strtok modifies the command.
+  for (uint8_t i = 0; line[i] && i < 12; ++i) {
+    const uint8_t b = static_cast<uint8_t>(line[i]);
+    detail[length++] = pgm_read_byte(&digits[b >> 4]); detail[length++] = pgm_read_byte(&digits[b & 15]);
+  }
+  detail[length] = '\0';
+  diagWrite(detail); // May be skipped when TX is busy; ERROR is still emitted.
+}
+
 void processCommand(char *line) {
   // Web commands carry CRC-8. Unprotected manual commands remain available.
   char *star = strchr(line, '*');
-  if (!strncmp_P(line, PSTR("C "), 2) && !star) { error(0, F("BAD_CHECKSUM")); return; }
+  if (!strncmp_P(line, PSTR("C "), 2) && !star) { diagBadChecksum(line, serialCrc8(line), 0); error(0, F("BAD_CHECKSUM")); return; }
   if (star) {
     if (strlen(star + 1) != 2 || !isxdigit(star[1]) || !isxdigit(star[2])) {
+      diagBadChecksum(line, 0, 0);
       error(0, F("BAD_CHECKSUM")); return;
     }
     const uint8_t received = static_cast<uint8_t>(strtoul(star + 1, nullptr, 16));
     *star = '\0';
-    if (serialCrc8(line) != received) { error(0, F("BAD_CHECKSUM")); return; }
+    const uint8_t calculated = serialCrc8(line);
+    if (calculated != received) { *star = '*'; diagBadChecksum(line, calculated, received); error(0, F("BAD_CHECKSUM")); return; }
   }
   char *words[8];
   uint8_t count = 0;
@@ -1156,7 +1184,7 @@ void processCommand(char *line) {
 // arrives while another command is being dispatched is held in pumpedLine (depth 1; a
 // second concurrent line is dropped and the host retries on its ACK timeout) and run by
 // loop() right after the current command returns.
-char pumpedLine[128];
+#define pumpedLine pendingBuffer.data
 bool pumpedReady = false;
 bool dispatchingCommand = false;
 
@@ -1178,25 +1206,29 @@ int8_t assembleInputChar(const char ch, char *buf, uint8_t &len, bool &overflow)
 
 void dispatchCommandLine(char *line) {
   dispatchingCommand = true;
+  // ACK/DONE may pump a new line. Its tokens must never alias active arguments.
+  strncpy(executingBuffer.data, line, sizeof(executingBuffer.data) - 1);
+  executingBuffer.data[sizeof(executingBuffer.data) - 1] = '\0';
   diagStage(20);
-  processCommand(line);
+  processCommand(executingBuffer.data);
   diagTrace(24);
   dispatchingCommand = false;
 }
 
 void processInputByte(const char ch, const uint8_t source) {
-  const int8_t result = assembleInputChar(ch, inputLine[source], inputLength[source], inputOverflow[source]);
+  const int8_t result = assembleInputChar(ch, inputBuffers[source].data, inputLength[source], inputOverflow[source]);
   if (result == -1) {
+    ++diagRxOverflow;
     if (!dispatchingCommand) error(0, F("LINE_TOO_LONG"));
     return;
   }
   if (result != 1) return;
   if (!dispatchingCommand) {
-    dispatchCommandLine(inputLine[source]);
+    dispatchCommandLine(inputBuffers[source].data);
     return;
   }
   if (pumpedReady) { ++diagDropped; return; }
-  strncpy(pumpedLine, inputLine[source], sizeof(pumpedLine) - 1);
+  strncpy(pumpedLine, inputBuffers[source].data, sizeof(pumpedLine) - 1);
   pumpedLine[sizeof(pumpedLine) - 1] = '\0';
   pumpedReady = true;
 }
@@ -1227,6 +1259,52 @@ void readSerial() {
     dispatchCommandLine(pumpedLine);
     pumpSerialIn();
   }
+}
+
+extern char __heap_start;
+extern void *__brkval;
+uint16_t diagMinFree = UINT16_MAX;
+uint8_t diagMemoryFlags = 0;
+bool diagMemoryLatched = false;
+int16_t diagBadLeft = 0, diagBadRight = 0;
+uint32_t diagMemoryAt = 500;
+
+void checkMemoryState() {
+  char stack;
+  const int freeBytes = &stack - (__brkval ? static_cast<char *>(__brkval) : &__heap_start);
+  diagMinFree = min(diagMinFree, static_cast<uint16_t>(max(0, freeBytes)));
+  uint8_t flags = 0;
+  if (!inputBuffers[0].valid() || !inputBuffers[1].valid() ||
+      !pendingBuffer.valid() || !executingBuffer.valid()) flags |= 1;
+  if (appliedMotor[0] < -255 || appliedMotor[0] > 255 ||
+      appliedMotor[1] < -255 || appliedMotor[1] > 255) flags |= 2;
+  if (freeBytes < 128) flags |= 4;
+  diagMemoryFlags |= flags;
+  if ((diagMemoryFlags & 3) && !diagMemoryLatched) {
+    diagBadLeft = appliedMotor[0]; diagBadRight = appliedMotor[1];
+    diagMemoryLatched = true;
+    motion.kind = MOTION_NONE;
+    stopOutputs();
+  }
+}
+
+void tickMemoryDiagnostics(uint32_t now) {
+  // This is sampled stack/heap headroom, not a historical stack high-water mark.
+  if ((!diagMode && !diagMemoryLatched) || static_cast<int32_t>(now - diagMemoryAt) < 1000) return;
+  char stack, line[64];
+  const int freeBytes = &stack - (__brkval ? static_cast<char *>(__brkval) : &__heap_start);
+  diagMinFree = min(diagMinFree, static_cast<uint16_t>(max(0, freeBytes)));
+  snprintf_P(line, sizeof(line), PSTR("EVENT DIAG M %d %u %u %d %d %u"), freeBytes,
+             diagMinFree, diagMemoryFlags, diagMemoryLatched ? diagBadLeft : appliedMotor[0],
+             diagMemoryLatched ? diagBadRight : appliedMotor[1], diagMemoryLatched);
+  const size_t length = strlen(line);
+  if (length + 5 > static_cast<size_t>(Serial.availableForWrite())) return;
+  // Protected diagnostic snapshots distinguish invalid stored state from a damaged frame.
+  const uint8_t crc = serialCrc8(line);
+  Serial.print(line); Serial.print('*');
+  if (crc < 16) Serial.print('0');
+  Serial.println(crc, HEX);
+  diagMemoryAt = now;
 }
 
 void tickDiagnostics(uint32_t now) {
@@ -1270,7 +1348,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V5.9"));
+  Serial.println(F("READY UNO_CAT_V6.1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
       static_cast<uint16_t>(~diagBreadcrumb.command) == diagBreadcrumb.commandInverse) {
@@ -1286,6 +1364,12 @@ void setup() {
 
 void loop() {
   const uint32_t loopStart = micros();
+  checkMemoryState();
+  if (diagMemoryLatched) {
+    stopOutputs(); // Keep motor outputs disabled until reset; do not parse corrupt buffers.
+    tickMemoryDiagnostics(millis());
+    return;
+  }
   diagStage(1);
   readSerial();
   const uint32_t now = millis();
@@ -1302,10 +1386,13 @@ void loop() {
   diagStage(7);
   tickOutputs(now);
   diagStage(8);
+  checkMemoryState();
+  if (diagMemoryLatched) { tickMemoryDiagnostics(now); return; }
   tickHardwareTelemetry(now);
   if (diagLoops != UINT16_MAX) ++diagLoops;
   const uint32_t elapsedMs = (micros() - loopStart) / 1000;
   if (elapsedMs > diagMaxLoopMs) diagMaxLoopMs = min(elapsedMs, static_cast<uint32_t>(UINT16_MAX));
   diagStage(9);
+  tickMemoryDiagnostics(millis());
   tickDiagnostics(millis());
 }

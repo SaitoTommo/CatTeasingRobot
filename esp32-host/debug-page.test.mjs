@@ -23,6 +23,10 @@ test('diagnostic log decodes hexadecimal heartbeat and reset breadcrumbs',()=>{
   assert.match(describe('EVENT DIAG S 36 99'),/遥测右超声波，命令 99/);
   assert.match(describe('EVENT DIAG_BOOT PREV_STAGE=21 CMD=99'),/校验帧发送/);
   assert.equal(describe('EVENT DIAG H malformed'),'');
+  assert.match(describe('EVENT DIAG M 640 620 0 0 0 0'),/SRAM 当前余量 640 B，采样最低 620 B/);
+  assert.match(describe('EVENT DIAG M 610 590 2 0 -2048 1'),/电机 0\/-2048；异常锁定，需复位/);
+  assert.match(describe('EVENT DIAG_BOOT PREV_STAGE=73 CMD=3154'),/蜂鸣器引脚写入/);
+  assert.equal(describe('EVENT DIAG M malformed'),'');
 });
 
 test('page reports ESP active-low LED control separately from Uno buzzer',()=>{

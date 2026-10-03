@@ -1,6 +1,17 @@
 # Arduino Uno 固件：UnoCatController
 
-## V5.9 失联诊断（2026-10-03）
+## V6.1 内存与失联诊断（2026-10-03）
+
+V6.0 分离当前执行命令、待执行命令和两路接收缓冲，避免 ACK/DONE 接收新命令时覆盖正在使用的参数。四个 128 字节缓冲都有前后边界哨兵。
+
+新增带 CRC 的 EVENT DIAG M <free> <sampleMin> <flags> <left> <right> <latched>*HH，字段均为十进制。free 是诊断调用时栈与堆间余量；sampleMin 是检查位置采样最低值，不是所有函数最深调用的历史栈高水位。flags 累计位：1 缓冲边界被改写，2 已记录电机值超出 -255..255，4 检查时余量低于 128 字节。位 1/2 关闭电机并锁定，停止解析命令，latched=1，left/right 保留首次异常值，复位恢复。位 4 单独出现时只告警。flags=0 只表示这些检查未发现异常；瞬时损坏、未覆盖位置的越界、断电和完全停机仍可能无法检测或回报。
+
+声光函数新增 SRAM 步骤：70 状态计算、71 LED 事件准备、72 LED 事件发送返回、73 蜂鸣器引脚写入、74 函数返回；LED 校验发送中仍记录 21。重复 PREV_STAGE=7 是定位线索，不能据此证明根因。
+
+ESP32 0.7 用非零请求号匹配回报。ERROR 0 BAD_CHECKSUM/BAD_ENVELOPE 记录为 UNO_PROTOCOL_ERROR，不再误匹配空闲 motorId=0；CRC、运动反馈和会话超时保护继续生效。
+
+V6.1 增加 EVENT DIAG RX <lineLength> <calculatedHex> <receivedHex> <first12BytesHex>，在校验失败、分词之前记录接收帧长度和前 12 字节；实际 CRC 不匹配时 calculated/received 是两边 CRC。缺少星号或 CRC 字段格式无效时部分 CRC 字段为 00 占位，不能当作实收校验值。该摘要没有自身 CRC，需结合 ESP 发送帧和随后 ERROR 判断，TX 忙时可能省略。累计缓冲/电机异常位也会触发锁定，避免已记录异常与锁定状态不一致。
+
 
 Uno D12 软件接收、D1 硬件回传、Uno USB 与 ESP GPIO43/44 UART 统一为 **57600/8N1**；必须更新两端固件。ESP USB 日志口仍为 115200。现有接线保持不变。当前源码以本节和 SOFT_UART_WIRING 为准，下方 V5.6 描述是历史记录。
 
@@ -14,7 +25,7 @@ Uno D12 软件接收、D1 硬件回传、Uno USB 与 ESP GPIO43/44 UART 统一�
 
 排查方法：先看心跳、STATE 是否同时停止；若心跳继续但传感器过期，核对遥测编号／分段是否长期不推进和等待位；若所有回报均消失，保存 ESP 日志后按 Uno RESET（保持供电），查看 DIAG_BOOT 与此前 UNO_TX 编号对应关系。完全断电、UART 链路失效、中断风暴或整机停顿可能无法留下可读输出，仍需结合供电和线路测量。软件接收在 57600 下与编码器／超声波共同运行的稳定性尚未实测。
 
-当前版本已更新到V5.9：ESP发送端使用Uno D12软件接收，回传使用D1，UART及Uno USB均为57600；D13用于蜂鸣器，机器人LED转移到ESP板载灯。当前接线以[SOFT_UART_WIRING](../SOFT_UART_WIRING.md)为准，下方V5.6接线/波特率描述属于历史版本。电脑测试页的握手与USB波特率也已更新为V5.9/57600。
+当前版本已更新到V6.1：ESP发送端使用Uno D12软件接收，回传使用D1，UART及Uno USB均为57600；D13用于蜂鸣器，机器人LED转移到ESP板载灯。当前接线以[SOFT_UART_WIRING](../SOFT_UART_WIRING.md)为准，下方V5.6接线/波特率描述属于历史版本。电脑测试页的握手与USB波特率也已更新为V5.9/57600。
 
 新增 `TEST_MOTOR <leftPWM> <rightPWM> <durationMs> SAFE|BYPASS`，左右PWM为-255..255且至少一侧非零，时长50..2000ms。仅BYPASS测试忽略前向输入、侧向超声波和触碰；每次结束清除绕过状态，普通运动及巡游遵守原避障。会话锁、CRC、停止命令、限时截止和编码器失速检查保留。DRY_RUN验证见`esp32-host/bench-uno-validation.json`，不是实际电机运动证明。
 
