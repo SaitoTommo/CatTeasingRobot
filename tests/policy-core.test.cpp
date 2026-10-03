@@ -48,6 +48,16 @@ void frame(bool detected=true,bool valid=true,unsigned n=2){
 void settled(){policyTick();CHECK(action=="SETTLE");tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="SETTLE");tick+=150;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="CAT_CHECK");}
 void scanRequest(){policyInput("VQ "+String(scanId)+" 1 "+String(generation)+" 2");CHECK(requests.back().mode=="CAT");CHECK(!motorRunning);}
 int main(){
+ // No PING/READY/capability event is needed to start the current firmware.
+ for(const char *control:{"start","resume"}){
+   fixture();mode="UART";phase="STOPPED";scanCapable=false;lastUnoAt=tick;
+   policyControl(control);CHECK(phase=="STARTING");CHECK(action=="WAIT_PATROL_STOP");CHECK(!scanCapable);
+   policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");CHECK(action=="WAIT_PATROL_CONFIG");
+   policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
+   policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(action=="WAIT_SESSION_START");
+   policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="PATROL");
+   policyTick();CHECK(action=="WAIT_SCAN_CONFIG");configDone();CHECK(commands.back().text.startsWith("SR "));CHECK(!scanCapable);
+ }
  // Start retries retain id/generation/frozen PWM and only time actual dispatch.
  fixture();beginScan("TAG","APPROACH_TAG");configDone();auto startId=scanId;auto startText=commands.back().text;
  CHECK(policyPreparing());auto beforeStart=commands.size();tick+=1000;policyTick();CHECK(commands.size()==beforeStart); // not dispatched

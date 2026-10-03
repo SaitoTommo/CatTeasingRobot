@@ -143,7 +143,6 @@ void policyControl(const String &control){
   if(control=="start"||control=="resume"){
     if(!stopReady()){logLine("INPUT_ERROR","wait for confirmed STOP before starting");return;}
     if(!config["route"].size()){logLine("INPUT_ERROR","save your tag route before starting patrol");return;}
-    if(!scanCapable){logLine("INPUT_ERROR","Uno V6.6 SCAN_V1 capability required; read PING/READY before start");return;}
     invalidate();clearTx();resetMotor();routeIndex=0;rounds=0;branch=-1;initiator="";followPending=needRearm=false;lastDecisionFrame=arrivalFrame=0;lastFault=lastMotionFailure="";geometryConfirmed=false;phase="STARTING";waitCommand("WAIT_PATROL_STOP","STOP");return;
   }
   if(control=="alert"&&phase=="PATROL"){phase="INTERACTION";initiator="ROBOT_SEARCH";sessionAt=now();rounds=0;branch=-1;search("CHOOSE_ROBOT");}
