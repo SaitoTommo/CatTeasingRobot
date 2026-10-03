@@ -4,7 +4,7 @@
 
 所有 DONE 须 CRC。GET_STATUS/GET_DISTANCE/GET_ENCODER 现在返回完整紧凑 TB 批次及 DONE TELEMETRY，GET_CONFIG/GET_IO 保留文本格式。链路保持57600，无 KEEP。源码同步到仓库外的 `../uno-firmware/UnoCatController`，以本仓库提交为版本依据。
 
-**必须使用 `./build-uno.ps1` 的优化参数编译**：最终 Flash 32084/32256 bytes，静态 SRAM 1379/2048 bytes；Flash 剩172 bytes，后续变更需重新核对容量。静态剩余669 bytes不等于运行栈最低余量。本脚本仅编译，不上传或复位。用户操作 RESET、界面及运动验收；[当前验收表](../统一验收记录.md) 与 [离线结果](../离线验证结果.md) 记录边界。
+**需要带容量优化参数编译**，可以使用 `./build-uno.ps1`，或按 [Arduino IDE编译与手动上传](./Arduino-IDE编译与手动上传.md) 安装本仓库的platform.local.txt再使用IDE验证/上传：最终 Flash 32084/32256 bytes，静态 SRAM 1379/2048 bytes；Flash 剩172 bytes，后续变更需重新核对容量。静态剩余669 bytes不等于运行栈最低余量。本脚本仅编译，不上传或复位。用户操作 RESET、界面及运动验收；[当前验收表](../统一验收记录.md) 与 [离线结果](../离线验证结果.md) 记录边界。
 
 以下为早期版本历史，当前规则以上文及扫描协议为准。
 

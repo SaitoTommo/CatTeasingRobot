@@ -1,3 +1,6 @@
+// Firmware version: ESP32_CAT_HOST_0.13. Reported by /api/state.
+// Uno pairing: UNO_CAT_V6.6 with SCAN_V1; minimumDrivePwm is web-configurable.
+// Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
 #include <WiFi.h>
 #include <Preferences.h>

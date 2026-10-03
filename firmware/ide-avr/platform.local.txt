@@ -1,0 +1,7 @@
+# UnoCatController V6.6 build-size profile, Arduino AVR Boards 1.8.8.
+# Copy beside platform.txt in the selected AVR core, then restart the IDE.
+# Applies to that AVR core's boards; does not affect ESP32 cores.
+# No board size, bootloader, upload/reset, fuse or hardware settings are changed.
+compiler.c.extra_flags=-mcall-prologues -mrelax -fno-split-wide-types -finline-limit=3
+compiler.cpp.extra_flags=-mcall-prologues -mrelax -fno-split-wide-types -finline-limit=3
+compiler.c.elf.extra_flags=-mcall-prologues -mrelax -fno-split-wide-types -finline-limit=3 -Wl,--relax

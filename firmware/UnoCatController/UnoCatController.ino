@@ -1,3 +1,6 @@
+// Firmware version: UNO_CAT_V6.6. Boot log: READY UNO_CAT_V6.6.
+// Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
+// ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
 #include <math.h>
 #include <stdlib.h>
