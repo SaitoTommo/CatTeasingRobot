@@ -7,6 +7,7 @@ extern String phase,mode;
 extern JsonDocument config,observation;
 extern uint32_t lastUnoAt;
 extern uint32_t sendUno(const String &);
+extern void resendScanStart(uint32_t,const String &);
 extern void clearTx();
 extern void logLine(const char *,const String &);
 extern void requestVision(uint32_t,uint16_t,uint32_t,const char *);
@@ -21,6 +22,8 @@ uint32_t motorId=0,sessionId=0,stopId=0,sessionCommandAt=0,lastRobotProbe=0,last
 bool scanConfigRetryPending=false;
 uint32_t scanConfigRetryAt=0;
 String scanConfigRetryReason;
+String scanStartCommand;
+uint8_t scanStartRetries=0;
 uint32_t generation=1,scanId=0,scanAt=0,scanStep=0,scanFrame=0,lastVqUsed=0,checkStep=0,checkAt=0;
 uint32_t lastDecisionFrame=0,arrivalFrame=0,catFailureAt=0;
 uint32_t encoder[2]={},encoderAt[2]={},quietEncoder[2]={},quietAt=0;
@@ -58,6 +61,13 @@ void retryScanConfig(const String &reason){
   if(sessionRetries>=3){fail("scan configuration failed after 3 retries: "+reason);return;}
   scanConfigRetryPending=true;scanConfigRetryAt=now();scanConfigRetryReason=reason;
   logLine("SCAN_CONFIG_RETRY_WAIT",String(sessionRetries+1)+"/3 in 100ms: "+reason);
+}
+void retryScanStart(const String &reason){
+  if(!scanId||motorConfirmed||!motorDispatched)return;
+  if(scanStartRetries>=3){fail("scan start failed after 3 retries: "+reason);return;}
+  ++scanStartRetries;motorDispatched=false;
+  resendScanStart(scanId,scanStartCommand);
+  logLine("SCAN_START_RETRY",String(scanStartRetries)+"/3 command="+String(scanId)+" reason="+reason);
 }
 void waitCommand(const String &next,const String &command){scanConfigRetryPending=false;pendingCommand=command;sessionId=sendUno(command);sessionCommandAt=now();sessionRetries=0;state(next);}
 void awaitStop(const String &next){invalidate();clearTx();sessionId=0;resetMotor();afterStop=next;stopId=sendUno("STOP");quietOutputs();state("WAIT_STOP");}
@@ -117,7 +127,7 @@ void motionFailure(const String &reason){if(reason.startsWith("SIDE_")&&scanId&&
 }
 void policyCommandSent(uint32_t id){if(matchesPending(id,motorId)){motorDispatched=true;feedbackAt=now();}}
 void policyStopUnconfirmed(){lastFault="STOP_UNCONFIRMED: motor stop has not been confirmed";invalidate();clearTx();resetMotor();stopId=sessionId=0;phase="STOPPED";state("FAULT");}
-bool policyPreparing(){return phase=="STARTING"||phase=="ENDING"||action=="WAIT_SCAN_CONFIG";}
+bool policyPreparing(){return phase=="STARTING"||phase=="ENDING"||action=="WAIT_SCAN_CONFIG"||(scanId&&!motorConfirmed);}
 int policyTargetId(){return phase=="PATROL"&&config["route"].size()?config["route"][routeIndex].as<int>():-1;}
 String policyVisionMode(){
   if((action=="CAT_DRIVE"||action=="PROBE_MOVE"||action=="ESCAPE_MOVE")&&frontEnabled())return "FLOOR";
@@ -176,6 +186,7 @@ void policyInput(const String &line){
   if(line.startsWith("AK ")||line.startsWith("ACK ")){sscanf(line.c_str(),line.startsWith("AK ")?"AK %u":"ACK %u",&id);if(matchesPending(id,motorId))motorConfirmed=true;return;}
   if(line.startsWith("MA ")){char reason[100];if(sscanf(line.c_str(),"MA %u %99s %lu %lu",&id,reason,&l,&r)==4&&matchesPending(id,motorId)){pulsesL=l;pulsesR=r;motionFailure(reason);}return;}
   if(line.startsWith("ERROR ")){char reason[100];if(sscanf(line.c_str(),"ERROR %u %99s",&id,reason)==2){
+    if(scanId&&!motorConfirmed&&(!id||matchesPending(id,scanId))&&(!strcmp(reason,"BAD_CHECKSUM")||!strcmp(reason,"BAD_ENVELOPE"))){retryScanStart(reason);return;}
     if(action=="WAIT_SCAN_CONFIG"&&sessionId&&(!id||matchesPending(id,sessionId))&&(!strcmp(reason,"BAD_CHECKSUM")||!strcmp(reason,"BAD_ENVELOPE"))){retryScanConfig(reason);return;}
     if(!id)logLine("UNO_PROTOCOL_ERROR",reason);else if(matchesPending(id,motorId))motionFailure(reason);else if(matchesPending(id,sessionId)||matchesPending(id,stopId))fail(String("required command: ")+reason);}return;}
   if(action=="WAIT_PATROL_CONFIG"&&line.indexOf(" CONFIG ")>=0&&sscanf(line.c_str(),"DATA %u",&id)==1&&matchesPending(id,sessionId)){int wi=line.indexOf("WHEEL_MM="),ti=line.indexOf("TRACK_MM="),sl=line.indexOf("SAFE_LEFT_CM="),sr=line.indexOf("SAFE_RIGHT_CM=");float w=wi>=0?line.substring(wi+9).toFloat():0,t=ti>=0?line.substring(ti+9).toFloat():0;if(w>=20&&w<=150&&t>=50&&t<=300){wheel=w;track=t;geometryConfirmed=true;if(sl>=0)safe[0]=line.substring(sl+13).toFloat();if(sr>=0)safe[1]=line.substring(sr+14).toFloat();}}
@@ -197,7 +208,8 @@ void policyInput(const String &line){
     else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed)fail("geometry not confirmed");else{phase="PATROL";state(needRearm?"TAG_REARM":"SCAN_TAG");}}
     else if(action=="WAIT_SCAN_CONFIG"){
       int pwm=scanKind=="TAG"?(int)setting("patrolSearchPwm"):(int)setting("searchPwm");
-      scanWaiting=false;scanId=motorId=sendUno("SR "+String(generation)+" "+String(scanDirection*(int)setting("scanStepPulses"))+" "+String(pwm)+" "+String(scanBudget-scanUsed)+" "+String(scanFlags));motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(scanKind=="TAG"?"SCAN_TAG_ACTIVE":"SEARCH_CAT_ACTIVE");
+      scanStartCommand="SR "+String(generation)+" "+String(scanDirection*(int)setting("scanStepPulses"))+" "+String(drivePwmFloor(pwm,(int)setting("minimumDrivePwm")))+" "+String(scanBudget-scanUsed)+" "+String(scanFlags);
+      scanStartRetries=0;scanWaiting=false;scanId=motorId=sendUno(scanStartCommand);motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(scanKind=="TAG"?"SCAN_TAG_ACTIVE":"SEARCH_CAT_ACTIVE");
     }
   }
 }
@@ -213,6 +225,7 @@ void policyTick(){
     if(elapsed(sessionCommandAt,2500)){if(scanId){fail("scan configuration timeout");return;}if(sessionRetries++<2){sessionId=sendUno(pendingCommand);sessionCommandAt=now();if(action=="WAIT_PATROL_CONFIG")geometryConfirmed=false;}else fail("confirmation timeout: "+action);}return;
   }
   if(motorId&&motorDispatched&&motorRunning&&elapsed(feedbackAt,750)){fail("no checked encoder feedback for 750ms");return;}
+  if(scanId&&!motorConfirmed){if(motorDispatched&&elapsed(feedbackAt,100))retryScanStart("no start confirmation for 100ms");return;}
   if(motorId&&motorDispatched&&!motorConfirmed&&elapsed(feedbackAt,2500)){fail("motion start not confirmed");return;}
   if(scanId){if(elapsed(scanAt,600000))fail("scan transaction timeout");return;}
   if(phase=="INTERACTION"&&action!="PREY_WAIT"&&elapsed(sessionAt,setting("sessionLimitSeconds")*1000)){finish();return;}

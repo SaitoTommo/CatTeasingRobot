@@ -5,6 +5,12 @@
 static unsigned checks=0;
 #define CHECK(x) do { ++checks; if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::exit(1);} } while(0)
 int main(){
+  ScanMachine duplicate;CHECK(duplicate.begin(95,95,2,45,71,0,0));duplicate.tick(0,0,0);duplicate.motionStarted(0,0);
+  CHECK(duplicate.begin(95,95,2,45,71,0,100));CHECK(duplicate.phase==ScanMachine::TURN);CHECK(duplicate.step==1);CHECK(duplicate.began==0);
+  duplicate.motionStopped(200,2,2);CHECK(duplicate.begin(95,95,2,45,71,0,201));CHECK(duplicate.phase==ScanMachine::SETTLE);CHECK(duplicate.stopped==200);
+  duplicate.tick(400,2,2);CHECK(duplicate.begin(95,95,2,45,71,0,401));CHECK(duplicate.phase==ScanMachine::WAIT_VISION);CHECK(duplicate.used==2);CHECK(duplicate.requested==400);
+  duplicate.reply(95,1,95,0,1,402);CHECK(duplicate.begin(95,95,2,45,71,0,403));CHECK(duplicate.phase==ScanMachine::NEXT);CHECK(duplicate.used==2);CHECK(duplicate.step==1);
+  duplicate.end(ScanMachine::ABORTED);CHECK(duplicate.begin(95,95,2,45,71,0,404));CHECK(duplicate.phase==ScanMachine::TERMINAL);CHECK(duplicate.result==ScanMachine::ABORTED);CHECK(duplicate.used==2);
   ScanMachine stale;CHECK(stale.begin(99,99,2,45,71,0,900));
   CHECK(stale.tick(900,0,0)==ScanMachine::START_STEP);
   stale.motionStarted(0,0);stale.motionStopped(1001,2,2);

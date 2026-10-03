@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.7. Boot log: READY UNO_CAT_V6.7.
+// Firmware version: UNO_CAT_V6.8. Boot log: READY UNO_CAT_V6.8.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -798,6 +798,8 @@ void processCommand(char *line) {
   if((!strcmp_P(verb,PSTR("SR"))||!strcmp_P(verb,PSTR("SCAN_ROTATE")))&&n==5){
     long v[5];if(!star||!parseScanFields(words,v,1)){error(id,F("INVALID_SCAN_FRAME"));return;}
     if(sessionStopped||anyTouchPressed()){error(id,F("SESSION_OR_TOUCH_LOCK"));return;}
+    // Same scan retry only repeats the acknowledgement, never its movement.
+    if(scan.id==id&&scan.generation==uint32_t(v[0])){ack(id);if(scan.phase==ScanMachine::TERMINAL)scan.terminalSent=false;return;}
     if(motion.kind!=MOTION_NONE&&!(scan.id==id&&scan.generation==uint32_t(v[0]))){error(id,F("BUSY"));return;}
     if(v[4]){float dl,dr;if(!currentSideDistance(0,dl,millis())||!currentSideDistance(1,dr,millis())||dl>=safeDistanceCm[0]||dr>=safeDistanceCm[1]){error(id,F("BOTH_SIDES_REQUIRED"));return;}}
     if(!scan.begin(id,v[0],v[1],v[2],v[3],v[4],millis())){error(id,F("INVALID_SCAN"));return;}
@@ -1293,7 +1295,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.7"));
+  Serial.println(F("READY UNO_CAT_V6.8"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&

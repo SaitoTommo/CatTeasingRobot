@@ -1,5 +1,5 @@
-// Firmware version: ESP32_CAT_HOST_0.15. Reported by /api/state.
-// Uno pairing: UNO_CAT_V6.7 with SCAN_V1; minimumDrivePwm is web-configurable.
+// Firmware version: ESP32_CAT_HOST_0.16. Reported by /api/state.
+// Uno pairing: UNO_CAT_V6.8 with SCAN_V1; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -71,6 +71,10 @@ bool stopReady(){return !stopPendingId&&!stopUnconfirmed;}
 void policyCommandSent(uint32_t id);
 void policyStopUnconfirmed();
 void clearTx(){outgoing.clear();telemetryId=0;lastPoll=millis();}
+void resendScanStart(uint32_t id,const String &command){
+  String payload="C "+String(id)+" "+command;char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));
+  outgoing.push_back({payload+suffix,mode=="UART"});
+}
 uint32_t sendUno(const String &command) {
   if(command=="STOP"||command=="SESSION_STOP"||command=="DEBUG_OUTPUTS OFF"||command=="DEBUG_IO LED OFF"||command=="DEBUG_MOTOR_MODE DRY_RUN")hostLedStop();
   String applied=applyDrivePwmFloor(command,config["minimumDrivePwm"]|140);
@@ -173,7 +177,7 @@ void defaults() {
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.15";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.16";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();

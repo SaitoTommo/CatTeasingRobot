@@ -17,6 +17,7 @@ std::vector<Command> commands;
 struct Request{uint32_t id,step,gen;String mode;};
 std::vector<Request> requests;
 uint32_t sendUno(const String &s){seq=seq%65535+1;commands.push_back({seq,applyDrivePwmFloor(s,config["minimumDrivePwm"]|140)});return seq;}
+void resendScanStart(uint32_t id,const String &s){commands.push_back({id,s});}
 void clearTx(){commands.clear();}
 void logLine(const char *,const String &){}
 bool stopGate=true;bool stopReady(){return stopGate;}
@@ -47,6 +48,22 @@ void frame(bool detected=true,bool valid=true,unsigned n=2){
 void settled(){policyTick();CHECK(action=="SETTLE");tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="SETTLE");tick+=150;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="CAT_CHECK");}
 void scanRequest(){policyInput("VQ "+String(scanId)+" 1 "+String(generation)+" 2");CHECK(requests.back().mode=="CAT");CHECK(!motorRunning);}
 int main(){
+ // Start retries retain id/generation/frozen PWM and only time actual dispatch.
+ fixture();beginScan("TAG","APPROACH_TAG");configDone();auto startId=scanId;auto startText=commands.back().text;
+ CHECK(policyPreparing());auto beforeStart=commands.size();tick+=1000;policyTick();CHECK(commands.size()==beforeStart); // not dispatched
+ policyCommandSent(startId);tick+=99;policyTick();CHECK(commands.size()==beforeStart);
+ tick++;policyTick();CHECK(scanStartRetries==1);CHECK(commands.back().id==startId);CHECK(commands.back().text==startText);CHECK(!motorDispatched);
+ beforeStart=commands.size();policyInput("ERROR 0 BAD_ENVELOPE");CHECK(commands.size()==beforeStart); // already queued
+ config["minimumDrivePwm"]=255;policyCommandSent(startId);policyInput("ERROR 0 BAD_CHECKSUM");CHECK(scanStartRetries==2);CHECK(commands.back().text==startText);CHECK(commands.back().id==startId);
+ policyCommandSent(startId);policyInput("ERROR "+String(startId)+" BAD_ENVELOPE");CHECK(scanStartRetries==3);
+ policyCommandSent(startId);tick+=100;policyTick();CHECK(phase=="STOPPED");CHECK(lastFault.indexOf("scan start failed after 3 retries")>=0);CHECK(commands.front().text=="STOP");
+ fixture();beginScan("TAG","APPROACH_TAG");configDone();startId=scanId;policyCommandSent(startId);policyInput("AK "+String(startId));CHECK(motorConfirmed);CHECK(!policyPreparing());beforeStart=commands.size();tick+=101;policyTick();CHECK(commands.size()==beforeStart);
+ fixture();beginScan("TAG","APPROACH_TAG");configDone();startId=scanId;policyCommandSent(startId);policyInput("MS "+String(startId)+" 0 0");CHECK(motorConfirmed);beforeStart=commands.size();tick+=100;policyTick();CHECK(commands.size()==beforeStart);
+ fixture();beginScan("TAG","APPROACH_TAG");configDone();policyCommandSent(scanId);policyInput("ERROR 0 BAD_CHECKSUM");policyControl("stop");beforeStart=commands.size();tick+=101;policyTick();CHECK(commands.size()==beforeStart);CHECK(!scanId);
+ fixture();beginScan("TAG","APPROACH_TAG");configDone();policyCommandSent(scanId);policyInput("ERROR "+String(scanId)+" SESSION_OR_TOUCH_LOCK");CHECK(phase=="STOPPED");CHECK(scanStartRetries==0);
+ fixture();beginScan("TAG","APPROACH_TAG");configDone();policyCommandSent(scanId);beforeStart=commands.size();policyInput("ERROR "+String(scanId+1)+" BAD_CHECKSUM");CHECK(commands.size()==beforeStart);
+ fixture();beginScan("TAG","APPROACH_TAG");configDone();policyCommandSent(scanId);policyInput("ERROR 0 BAD_CHECKSUM"); // next scan resets the retry counter
+ beginScan("TAG","APPROACH_TAG");configDone();CHECK(scanStartRetries==0);
  // Reproduce a corrupted SC after route wrap: only SC is retried, never motion.
  fixture();routeIndex=1;state("TAG_ARRIVAL");policyTick();CHECK(routeIndex==0);policyTick();
  CHECK(action=="WAIT_SCAN_CONFIG");CHECK(policyPreparing());auto originalConfig=sessionId;auto originalCommand=pendingCommand;
@@ -56,7 +73,8 @@ int main(){
  policyInput("DONE "+String(originalConfig)+" SCAN_CONFIGURED");CHECK(!scanId);
  policyInput("DONE "+String(sessionId)+" ACCEPTED");CHECK(!scanId);CHECK(sessionId!=0);
  policyInput("ERROR "+String(originalConfig)+" BAD_CHECKSUM");CHECK(!scanConfigRetryPending);
- configDone();CHECK(action=="SCAN_TAG_ACTIVE");CHECK(!policyPreparing());CHECK(!scanConfigRetryPending);
+ configDone();CHECK(action=="SCAN_TAG_ACTIVE");CHECK(policyPreparing());CHECK(!scanConfigRetryPending);
+ policyInput("AK "+String(scanId));CHECK(!policyPreparing());
  // Three retransmissions in addition to the initial send; failure sends STOP.
  fixture();beginScan("TAG","APPROACH_TAG");
  for(int attempt=1;attempt<=3;attempt++){auto previous=sessionId;policyInput("ERROR 0 BAD_ENVELOPE");tick+=100;policyTick();CHECK(sessionRetries==attempt);CHECK(sessionId!=previous);CHECK(!motorId);CHECK(commands.back().text.startsWith("SC "));}
