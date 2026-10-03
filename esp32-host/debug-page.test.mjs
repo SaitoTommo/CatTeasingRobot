@@ -14,6 +14,24 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('cat settings preserve drafts, validate relative widths and round trip every timeout',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  const config={catFarWidth:.12,catNearWidth:.35,postEscapeWaitSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+  const render=patch=>{const d={...base,config,...patch};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
+  render({});assert.equal(element('catCfg_catNearWidth').value,'35.0');
+  element('catCfg_explorePreyMinimumSeconds').value='45';element('catCfg_captureWaitMaxSeconds').value='25';render({ms:1100});
+  assert.equal(element('catCfg_explorePreyMinimumSeconds').value,'45');
+  vm.runInContext('saveCatSettings()',context);assert.equal(requests.at(-1).config.explorePreyMinimumSeconds,45);assert.equal(requests.at(-1).config.captureWaitMaxSeconds,25);assert.equal(requests.at(-1).config.catNearWidth,.35);
+  const n=requests.length;element('catCfg_catFarWidth').value='40';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,n);
+  render({config:{...config,explorePreyMinimumSeconds:45,captureWaitMaxSeconds:25}});assert.match(element('catConfigStatus').textContent,/45/);
+  for(const patch of [{phase:'INTERACTION'},{stopUnconfirmed:true},{stopPendingId:1},{debugBusy:true}]){render(patch);vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,n);}
+});
+
+test('cat progress names chase and displays separate rounds and time',()=>{
+ vm.runInContext(`syncCatProgress(${JSON.stringify({...base,config:{escapePreyAfterRounds:5},patrolStatus:{action:'WAIT_CHASE',interactionId:2,escapeRounds:3,exploreRounds:4,exploreElapsedMs:31000,exploreRemainingMs:0,remainingWaitMs:2000}})})`,context);
+ assert.match(element('catProgress').textContent,/等待猫追击/);assert.match(element('catProgress').textContent,/3\/5/);assert.match(element('catProgress').textContent,/31.0 秒/);
+});
+
 test('scan wait preserves drafts, saves safely and extends timeout only when needed',()=>{
   const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
   const render=patch=>{const d={...base,config:{scanMinimumMs:200,scanQuietMs:100,scanSettleTimeoutMs:3000},...patch};sync(d);vm.runInContext(`syncScanWait(${JSON.stringify(d)})`,context);};
