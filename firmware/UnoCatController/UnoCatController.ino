@@ -611,7 +611,7 @@ void tickScan(uint32_t now) {
     startMotion(scan.id,MOTION_PULSES,p,-p,10000,count,true,F("SCAN_ROTATE"));
     if(motion.kind==MOTION_NONE)scan.end(ScanMachine::INVALID);
   }else if(event==ScanMachine::REQUEST){
-    char line[46];snprintf_P(line,sizeof(line),PSTR("VQ %u %u %lu"),scan.id,scan.step,(unsigned long)scan.generation);printProtectedLine(line);
+    char line[46];snprintf_P(line,sizeof(line),PSTR("VQ %u %u %lu %u"),scan.id,scan.step,(unsigned long)scan.generation,scan.used);printProtectedLine(line);
   }else if(event==ScanMachine::COMPLETE){
     if(motion.kind!=MOTION_NONE)abortMotion(F("SCAN_ENDED"));
     stopOutputs();scan.flags=0;
@@ -814,6 +814,7 @@ void processCommand(char *line) {
   if (!strcmp_P(verb, PSTR("PING")) && n == 0) {
     ack(id);
     done(id, F("PONG"));
+    Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
     return;
   }
   if ((!strcmp_P(verb, PSTR("GET_TELEMETRY")) || !strcmp_P(verb, PSTR("GET_DISTANCE")) || !strcmp_P(verb, PSTR("GET_ENCODER")) || !strcmp_P(verb, PSTR("GET_STATUS"))) && n == 0) {
@@ -972,7 +973,7 @@ void processCommand(char *line) {
     return;
   }
   if (!strcmp_P(verb, PSTR("BEEP")) && n == 1 && parseLong(a, 0, 5000, x)) {
-    if (sessionStopped) {
+    if (sessionStopped && x) {
       error(id, F("SESSION_STOPPED"));
       return;
     }

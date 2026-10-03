@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <esp_camera.h>
+#include "vision_gate.h"
 #include "dl_detect_base.hpp"
 #include "dl_detect_espdet_postprocessor.hpp"
 #include "dl_image_jpeg.hpp"
@@ -12,6 +13,7 @@ extern "C" {
 extern SemaphoreHandle_t stateLock;
 extern JsonDocument config;
 extern String visionMode;
+extern int policyTargetId();
 extern void enqueueCamera(const String &);
 class CatModel : public dl::detect::DetectImpl {
 public:
@@ -23,10 +25,9 @@ public:
     m_postprocessor=new dl::detect::ESPDetPostProcessor(m_model,m_image_preprocessor,.6,.7,10,{{8,8,4,4},{16,16,8,8},{32,32,16,16}});
   }
 };
-void processVision(camera_fb_t *fb) {
-  static CatModel *cats=nullptr;static apriltag_detector_t *tags=nullptr;static uint8_t *gray=nullptr;static uint32_t last=0;
-  if(millis()-last<350)return;last=millis();uint32_t start=millis();
-  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String selected=visionMode;xSemaphoreGiveRecursive(stateLock);
+void processVision(camera_fb_t *fb,const VisionTicket &ticket,uint32_t seq,uint64_t capture,uint32_t epoch) {
+  static CatModel *cats=nullptr;static apriltag_detector_t *tags=nullptr;static uint8_t *gray=nullptr;
+  uint32_t start=millis();String selected=ticket.mode;
   if(selected=="OFF")return;
   bool runCats=selected=="CAT"||selected=="BOTH",runTags=selected=="TAGS"||selected=="BOTH";
   if(runCats&&!cats)cats=new CatModel();
@@ -34,13 +35,16 @@ void processVision(camera_fb_t *fb) {
   if(!gray)gray=(uint8_t*)ps_malloc(320*240);
   dl::image::jpeg_img_t jpg={.data=fb->buf,.data_len=fb->len};auto img=dl::image::sw_decode_jpeg(jpg,dl::image::DL_IMAGE_PIX_TYPE_RGB888);
   if(!img.data||!gray){if(img.data)heap_caps_free(img.data);return;}
-  JsonDocument d;d["op"]="camera";auto v=d["vision"].to<JsonObject>();v["source"]="OV_CAMERA";v["at"]=start;v["frameWidth"]=fb->width;v["frameHeight"]=fb->height;
+  JsonDocument d;d["op"]="camera";auto v=d["vision"].to<JsonObject>();v["source"]="OV_CAMERA";v["at"]=uint32_t(capture/1000);v["captureUs"]=capture;v["frameSeq"]=seq;v["ticket"]=ticket.token;v["epoch"]=epoch;v["scanId"]=ticket.scan;v["stepId"]=ticket.step;v["generation"]=ticket.generation;v["frameWidth"]=fb->width;v["frameHeight"]=fb->height;
   auto cat=v["cat"].to<JsonObject>();cat["detected"]=false;cat["valid"]=runCats;v["mode"]=selected;
   if(runCats){auto &results=cats->run(img);float best=0;for(auto &r:results)if(r.score>best){best=r.score;cat["detected"]=true;cat["score"]=r.score;cat["centerX"]=(r.box[0]+r.box[2])/(2.0f*fb->width);cat["width"]=(r.box[2]-r.box[0])/(float)fb->width;cat["bottom"]=r.box[3]/(float)fb->height;for(int i=0;i<4;i++)cat["box"][i]=r.box[i];}}
   auto pixels=(uint8_t*)img.data;for(size_t i=0;i<fb->width*fb->height;i++)gray[i]=(pixels[3*i]*77+pixels[3*i+1]*150+pixels[3*i+2]*29)>>8;
   image_u8_t im={.width=(int)fb->width,.height=(int)fb->height,.stride=(int)fb->width,.buf=gray};
   zarray_t *found=runTags?apriltag_detector_detect(tags,&im):nullptr;auto arr=v["tags"].to<JsonArray>();v["tagsValid"]=runTags;
-  for(int i=0;found&&i<zarray_size(found)&&i<24;i++){apriltag_detection_t *tag;zarray_get(found,i,&tag);auto o=arr.add<JsonObject>();o["id"]=tag->id;o["centerX"]=tag->c[0]/fb->width;float width=0;for(int k=0;k<4;k++)width+=hypotf(tag->p[k][0]-tag->p[(k+1)%4][0],tag->p[k][1]-tag->p[(k+1)%4][1]);o["width"]=width/(4.0f*fb->width);o["margin"]=tag->decision_margin;for(int k=0;k<4;k++){o["corners"][k][0]=tag->p[k][0];o["corners"][k][1]=tag->p[k][1];}}
+  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);int target=policyTargetId();xSemaphoreGiveRecursive(stateLock);
+  int priority=-1;for(int i=0;found&&i<zarray_size(found);i++){apriltag_detection_t *t;zarray_get(found,i,&t);if(t->id==target){priority=i;break;}}
+  int count=found?zarray_size(found):0;v["tagsLimited"]=count>24;
+  for(int entry=0;entry<count&&entry<24;entry++){int i=priority<0?entry:entry==0?priority:entry<=priority?entry-1:entry;apriltag_detection_t *tag;zarray_get(found,i,&tag);auto o=arr.add<JsonObject>();o["id"]=tag->id;o["centerX"]=tag->c[0]/fb->width;float width=0;for(int k=0;k<4;k++)width+=hypotf(tag->p[k][0]-tag->p[(k+1)%4][0],tag->p[k][1]-tag->p[(k+1)%4][1]);o["width"]=width/(4.0f*fb->width);o["margin"]=tag->decision_margin;for(int k=0;k<4;k++){o["corners"][k][0]=tag->p[k][0];o["corners"][k][1]=tag->p[k][1];}}
   if(found)apriltag_detections_destroy(found);heap_caps_free(img.data);
   // Research background: Lee, Yi & Cho (2016), doi:10.3390/s16030311.
   // This simplified appearance guard does NOT implement their IPM/MRF method.
@@ -61,5 +65,7 @@ void processVision(camera_fb_t *fb) {
   }
   v["floorDifference"]=difference;v["frontCalibrated"]=calibrated;
   v["front"]=cat["detected"].as<bool>()&&cat["bottom"].as<float>()>bottom?"BLOCKED":!calibrated?"INVALID":difference>threshold?"BLOCKED":"CLEAR";
-  v["latencyMs"]=millis()-start;String out;serializeJson(d,out);enqueueCamera(out);
+  v["latencyMs"]=millis()-start;
+  if(measureJson(d)>12287){for(JsonVariant tag:arr)tag.as<JsonObject>().remove("corners");v["displayLimited"]=true;}
+  String out;serializeJson(d,out);enqueueCamera(out);
 }

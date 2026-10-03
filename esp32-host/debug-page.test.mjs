@@ -14,6 +14,21 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('zero current command never displays historical PWM and cat failure survives patrol',()=>{
+  vm.runInContext(`syncPatrolStatus(${JSON.stringify({...base,patrolStatus:{action:'SCAN_TAG',motorId:0,leftPwm:95,rightPwm:95,catFailure:{message:'找猫失败',reason:'two turns',at:500,angle:718.9}}})})`,context);
+  assert.match(element('patrolProgress').textContent,/#0：0\/0/);
+  assert.match(element('patrolProgress').textContent,/找猫失败.*two turns/);
+});
+test('parking width is read back, percent converted and locked until STOP confirmation',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  vm.runInContext(`syncTagStopWidth(${JSON.stringify({...base,config:{tagStopWidth:.17}})})`,context);
+  assert.match(element('tagWidthStatus').textContent,/17.0%/);
+  element('tagStopPercent').value='23.5';vm.runInContext('saveTagStopWidth()',context);
+  assert.deepEqual(requests.at(-1),{op:'config',config:{tagStopWidth:.235}});
+  vm.runInContext(`syncTagStopWidth(${JSON.stringify({...base,stopPendingId:12,config:{tagStopWidth:.17}})})`,context);
+  assert.equal(element('saveTagStopWidth').disabled,true);
+});
+
 test('Arduino panel accepts a 1 cm threshold without rounding it to the old minimum',()=>{
   const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
   element('safeLeft').value='1';element('safeRight').value='1';element('unoWheel').value='67.5';element('unoTrack').value='120';
@@ -48,7 +63,7 @@ test('front avoidance switch uses saved board state and is locked while running'
   assert.equal(element('frontAvoidance').disabled,false);
   vm.runInContext('toggleFrontAvoidance()',context);
   assert.deepEqual(requests.at(-1),{op:'config',config:{frontAvoidanceEnabled:false}});
-  render({...base,phase:'PATROL',config:{frontAvoidanceEnabled:false,route:[586,9,9,0]},vision:{policy:{targetIndex:2}}});
+  render({...base,phase:'PATROL',config:{frontAvoidanceEnabled:false,route:[586,9,9,0]},vision:{policy:{targetIndex:0}},patrolStatus:{targetIndex:2}});
   assert.equal(element('frontAvoidance').disabled,true);
   assert.match(element('frontAvoidanceStatus').textContent,/无需地面校准/);
   assert.match(element('savedRoute').textContent,/\[586,9,9,0\].*当前目标 ID：9/);

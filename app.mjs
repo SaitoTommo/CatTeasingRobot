@@ -67,6 +67,7 @@ let serialTrackConfigured = false;
 let serialGeometry = { wheelMm: 67.5, trackMm: 120 };
 const serialSafeSideCm = { LEFT: 1, RIGHT: 1 };
 let patrolWaypointIndex = 0;
+// Legacy computer scene labels, not the ESP numeric route.
 const PATROL_TAGS = ["A", "B", "C", "D"];
 const pendingSceneMotions = new Map();
 let activeSceneMotion = null;
@@ -400,10 +401,10 @@ function receiveLine(rawLine, source) {
       resetSerialOutputs();
       resetSerialSafeDistances();
       resetPhysicalIoUi();
-      serialFirmwareVerified = line === "READY UNO_CAT_V6.4";
+      serialFirmwareVerified = /^READY UNO_CAT_V6\.[456]$/.test(line);
       if (!serialFirmwareVerified) {
-        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V6.4", "SYSTEM");
-        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V6.4。");
+        addLog("error", "FIRMWARE_UPDATE_REQUIRED expected=UNO_CAT_V6.4..6.6", "SYSTEM");
+        showToast("Uno 固件需要更新；请烧录当前 UnoCatController.ino，重连后确认 READY UNO_CAT_V6.6。");
 
       }
       unoTouches.clear();
@@ -782,7 +783,7 @@ function sceneTurnBlockReason(direction) {
 }
 
 async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeoutMs = Infinity,
-  maxSweepDeg = 360, active = () => true, allowReverse = true } = {}) {
+  maxSweepDeg = 720, active = () => true, allowReverse = true } = {}) {
   if (mode === "serial") await sendAndWaitDone("GET_ENCODER", "");
   if (token !== behaviorToken) return { found: false, reason: "CANCELLED", sweptDeg: 0 };
   const scan = { commandIds: new Set(), abortReason: null };
@@ -796,7 +797,7 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
   let turnDirection = direction;
   let reversed = false;
   let blockedReason = null;
-  let deadline = performance.now() + timeoutMs;
+  let deadline = performance.now() + Math.max(120000, timeoutMs);
   try {
     while (token === behaviorToken && active()) {
       const now = performance.now();
@@ -883,10 +884,10 @@ async function scanUntilVisible(token, observe, { direction = 1, pwm = 75, timeo
   }
 }
 
-async function searchCat(token, timeoutMs = decisionSystem.responsePolicy.searchTimeoutMs, maxSweepDeg = 360, direction = null) {
+async function searchCat(token, timeoutMs = 120000, maxSweepDeg = 720, direction = null) {
   const search = { token, stopReason: "CANCELLED" };
   activeSearch = search;
-  const sweepLimitDeg = Number.isFinite(maxSweepDeg) ? clamp(maxSweepDeg, 0, 360) : 360;
+  const sweepLimitDeg = Number.isFinite(maxSweepDeg) ? clamp(maxSweepDeg, 0, 720) : 720;
   const scanDirection = direction ?? (lastTouchSide === "LEFT" ? -1 : 1);
   addLog("event", `SEARCH_CAT_START camera=SIM_CAMERA sweep_limit_deg=${sweepLimitDeg} direction=${scanDirection < 0 ? "LEFT" : "RIGHT"}`, "ESP32·SIM");
   try {
@@ -1079,10 +1080,10 @@ async function alignToTag(name, token) {
 }
 
 async function scanForRouteTag(name, token) {
-  addLog("event", `PATROL_SCAN_START tag=${name} sweep_limit_deg=360`, "ESP32·SIM");
-  $("routeStatus").textContent = `原地旋转，寻找路线标签 ${name}（最多 360°）`;
+  addLog("event", `PATROL_SCAN_START tag=${name} sweep_limit_deg=720`, "ESP32·SIM");
+  $("routeStatus").textContent = `原地旋转，寻找路线标签 ${name}（最多 720°）`;
   const result = await scanUntilVisible(token, () => tagObservation(name), {
-    timeoutMs: 15000, maxSweepDeg: 360,
+    timeoutMs: 120000, maxSweepDeg: 720,
     active: () => interactionPhase === "PATROL",
   });
   if (token !== behaviorToken || interactionPhase !== "PATROL") return false;
@@ -1157,7 +1158,7 @@ async function followFixedPatrol(token) {
   }
 }
 
-async function finishFacingCat(token, action, { forceSearch = false, searchLimitDeg = 360, searchDirection = null } = {}) {
+async function finishFacingCat(token, action, { forceSearch = false, searchLimitDeg = 720, searchDirection = null } = {}) {
   if (token !== behaviorToken) return false;
   const phase = action === "ATTACK_RESPONSE" ? "触碰回应" : "收尾";
   $("faceCatStatus").textContent = `${phase}：等待触碰松开`;
@@ -1369,7 +1370,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       send("LED OFF");
       logCamera();
     } else if (name === "STAY_SIGNAL") {
-      if (!await finishFacingCat(token, name, { forceSearch: true, searchLimitDeg: 360 })) {
+      if (!await finishFacingCat(token, name, { forceSearch: true, searchLimitDeg: 720 })) {
         skipFinalFacing = true;
         return;
       }
@@ -1460,7 +1461,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
     } else if (name === "FAST_FORWARD") {
       await sendMotion("DRIVE 23 205");
     } else if (name === "SLOW_STRAIGHT_ESCAPE" || name === "FAST_STRAIGHT_ESCAPE") {
-      if (!await finishFacingCat(token, name, { forceSearch: true, searchLimitDeg: 360 })) {
+      if (!await finishFacingCat(token, name, { forceSearch: true, searchLimitDeg: 720 })) {
         skipFinalFacing = true;
         return;
       }
@@ -1490,7 +1491,7 @@ async function runBehavior(name, source = "MANUAL", reason = "manual_button", de
       $("decisionReason").textContent += `；执行失败：${error.message}`;
       if (name === "PATROL") {
         if (error.message === "ROUTE_TAG_NOT_FOUND") {
-          $("routeStatus").textContent = "巡游停止：旋转 360° 仍未找到路线标签";
+          $("routeStatus").textContent = "巡游停止：旋转 720° 仍未找到路线标签";
           autoControlEnabled = false;
           interactionPhase = "IDLE";
           autoDecisionVersion += 1;
@@ -2314,8 +2315,8 @@ $("resetScene").addEventListener("click", () => {
   addLog("event", "SCENE_RESET", "SYSTEM");
 });
 $("startPatrol").addEventListener("click", () => {
-  if (mode === "serial" && !serialDryRunConfirmed) {
-    showToast("当前自主控制需要模拟传感器或空板模拟；尚未接入实体视觉观测。");
+  if (mode === "serial") {
+    showToast("USB 入口保留手动测试；请用 ESP 开发板网页执行并验收 V6.6 新扫描与巡游流程。");
     return;
   }
   if (mode === "serial" && !serialTrackConfigured) {

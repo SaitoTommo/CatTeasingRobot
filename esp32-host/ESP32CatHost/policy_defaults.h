@@ -55,6 +55,13 @@ d["touchFeedbackBeepMs"]=180;
 d["escapeDistanceCm"]=26;
 d["slowEscapePwm"]=95;
 d["fastEscapePwm"]=210;
+d["scanStepPulses"]=2;
+d["scanMinimumMs"]=200;
+d["scanQuietMs"]=100;
+d["scanVisionTimeoutMs"]=3000;
+d["scanSettleTimeoutMs"]=3000;
+d["catSettleTimeoutMs"]=6000;
+d["catApproachStepCm"]=1;
 }
 inline bool validateSettings(JsonDocument &d,String &error){
 if(!d["explorationBranchPercent"].is<float>()||!isfinite(d["explorationBranchPercent"].as<float>())||d["explorationBranchPercent"].as<float>()<0||d["explorationBranchPercent"].as<float>()>100){error="invalid explorationBranchPercent";return false;}
@@ -110,6 +117,13 @@ if(!d["touchFeedbackBeepMs"].is<float>()||!isfinite(d["touchFeedbackBeepMs"].as<
 if(!d["escapeDistanceCm"].is<float>()||!isfinite(d["escapeDistanceCm"].as<float>())||d["escapeDistanceCm"].as<float>()<1||d["escapeDistanceCm"].as<float>()>60){error="invalid escapeDistanceCm";return false;}
 if(!d["slowEscapePwm"].is<float>()||!isfinite(d["slowEscapePwm"].as<float>())||d["slowEscapePwm"].as<float>()<50||d["slowEscapePwm"].as<float>()>255){error="invalid slowEscapePwm";return false;}
 if(!d["fastEscapePwm"].is<float>()||!isfinite(d["fastEscapePwm"].as<float>())||d["fastEscapePwm"].as<float>()<50||d["fastEscapePwm"].as<float>()>255){error="invalid fastEscapePwm";return false;}
+if(!d["scanStepPulses"].is<float>()||!isfinite(d["scanStepPulses"].as<float>())||d["scanStepPulses"].as<float>()<1||d["scanStepPulses"].as<float>()>64){error="invalid scanStepPulses";return false;}
+if(!d["scanMinimumMs"].is<float>()||!isfinite(d["scanMinimumMs"].as<float>())||d["scanMinimumMs"].as<float>()<50||d["scanMinimumMs"].as<float>()>3000){error="invalid scanMinimumMs";return false;}
+if(!d["scanQuietMs"].is<float>()||!isfinite(d["scanQuietMs"].as<float>())||d["scanQuietMs"].as<float>()<50||d["scanQuietMs"].as<float>()>3000){error="invalid scanQuietMs";return false;}
+if(!d["scanVisionTimeoutMs"].is<float>()||!isfinite(d["scanVisionTimeoutMs"].as<float>())||d["scanVisionTimeoutMs"].as<float>()<500||d["scanVisionTimeoutMs"].as<float>()>10000){error="invalid scanVisionTimeoutMs";return false;}
+if(!d["scanSettleTimeoutMs"].is<float>()||!isfinite(d["scanSettleTimeoutMs"].as<float>())||d["scanSettleTimeoutMs"].as<float>()<100||d["scanSettleTimeoutMs"].as<float>()>10000){error="invalid scanSettleTimeoutMs";return false;}
+if(!d["catSettleTimeoutMs"].is<float>()||!isfinite(d["catSettleTimeoutMs"].as<float>())||d["catSettleTimeoutMs"].as<float>()<1000||d["catSettleTimeoutMs"].as<float>()>10000){error="invalid catSettleTimeoutMs";return false;}
+if(!d["catApproachStepCm"].is<float>()||!isfinite(d["catApproachStepCm"].as<float>())||d["catApproachStepCm"].as<float>()<0.5||d["catApproachStepCm"].as<float>()>3){error="invalid catApproachStepCm";return false;}
 if(!d["patrolSearchPwm"].is<float>()||!isfinite(d["patrolSearchPwm"].as<float>())||d["patrolSearchPwm"].as<float>()<30||d["patrolSearchPwm"].as<float>()>150){error="invalid patrolSearchPwm";return false;}
 if(!d["patrolAlignPwm"].is<float>()||!isfinite(d["patrolAlignPwm"].as<float>())||d["patrolAlignPwm"].as<float>()<30||d["patrolAlignPwm"].as<float>()>150){error="invalid patrolAlignPwm";return false;}
 if(!d["wheelMm"].is<float>()||!isfinite(d["wheelMm"].as<float>())||d["wheelMm"].as<float>()<20||d["wheelMm"].as<float>()>150){error="invalid wheelMm";return false;}
@@ -134,5 +148,7 @@ if(!d["frontAvoidanceEnabled"].is<bool>()){error="invalid front avoidance flag";
 if(!d["frontCalibrated"].is<bool>()){error="invalid calibration flag";return false;}
 if(d["floorReference"].size()!=0&&d["floorReference"].size()!=72){error="invalid floor reference";return false;}
 for(JsonVariant v:d["floorReference"].as<JsonArray>())if(!v.is<float>()||v.as<float>()<0||v.as<float>()>255){error="invalid floor reference";return false;}
+if(d["scanSettleTimeoutMs"].as<float>()<=d["scanMinimumMs"].as<float>()||d["scanSettleTimeoutMs"].as<float>()<=d["scanQuietMs"].as<float>()){error="settle timeout must exceed both windows";return false;}
+if(!d["scanStepPulses"].is<int>()){error="scan step pulses must be integer";return false;}
 return true;
 }

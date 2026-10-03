@@ -53,7 +53,7 @@ void debugTick(){
 void debugInput(JsonDocument &d){
   String op=d["op"]|"",action=d["action"]|"";
   if(op=="manual_test"&&action=="stop"){debugCancel();policyControl("stop");debugResult="已发送停止命令";return;}
-  if(phase!="IDLE"&&phase!="STOPPED"){debugResult="请先停止巡游";logLine("DEBUG_ERROR",debugResult);return;}
+  if(phase!="IDLE"&&phase!="STOPPED"||!stopReady()){debugResult="请先停止巡游";logLine("DEBUG_ERROR",debugResult);return;}
   if(debugId||manualUntil||configStep>=0){debugResult="请等待当前操作完成，或点击停止";logLine("DEBUG_ERROR",debugResult);return;}
   if(op=="bench_safety"){
     if(!d["bypass"].is<bool>()){debugResult="避障开关必须是布尔值";return;}

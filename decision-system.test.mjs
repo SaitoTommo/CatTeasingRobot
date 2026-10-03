@@ -5,11 +5,11 @@ import {
   Esp32DecisionSystem, EXPLORATION_SOUND_LIGHT_PATTERNS, touchResponsePlan, validateResponsePolicy,
 } from "./decision-system.mjs";
 
-test("search stops at one full turn", () => {
-  assert.equal(decideScanProgress({ detected: false, sweptDeg: 359.9,
-    limitDeg: 360, timedOut: false }), "CONTINUE");
+test("search allows the second turn and stops at two full turns", () => {
   assert.equal(decideScanProgress({ detected: false, sweptDeg: 360,
-    limitDeg: 360, timedOut: false }), "FULL_SWEEP");
+    limitDeg: 720, timedOut: false }), "CONTINUE");
+  assert.equal(decideScanProgress({ detected: false, sweptDeg: 720,
+    limitDeg: 720, timedOut: false }), "FULL_SWEEP");
 });
 
 test("hunting branch draws only prey, slow escape, or fast escape", () => {
@@ -17,7 +17,7 @@ test("hunting branch draws only prey, slow escape, or fast escape", () => {
   assert.equal(touchResponsePlan("LEFT", () => .5).response, "SLOW_STRAIGHT_ESCAPE");
   assert.equal(touchResponsePlan("RIGHT", () => .9).response, "FAST_STRAIGHT_ESCAPE");
   assert.equal(touchResponsePlan("LEFT", () => .5).direction, -1);
-  assert.equal(touchResponsePlan("LEFT", () => .3).sweepLimitDeg, 360);
+  assert.equal(touchResponsePlan("LEFT", () => .3).sweepLimitDeg, 720);
   assert.equal(touchResponsePlan("TOP", () => .1).escapeDraw, null);
   let draws = [.9, .1];
   const preyWithoutFeedback = touchResponsePlan("TOP", () => draws.shift());

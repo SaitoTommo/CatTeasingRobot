@@ -133,7 +133,7 @@ export function touchResponsePlan(area, random = Math.random, policy = DEFAULT_R
   return {
     area,
     direction: area === "LEFT" ? -1 : 1,
-    sweepLimitDeg: 360,
+    sweepLimitDeg: 720,
     response,
     contactFeedbackDuringTouch: contactFeedbackDraw < touchFlashPercent / 100,
     contactFeedbackDraw,

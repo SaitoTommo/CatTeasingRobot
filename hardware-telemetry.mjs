@@ -103,7 +103,7 @@ export function decodeSerialFrame(raw) {
     const payload = line.slice(0, star);
     if (!/^[0-9A-F]{2}$/.test(line.slice(star + 1)) || serialCrc8(payload) !== line.slice(star + 1)) return null;
     line = payload;
-  } else if (/^(?:TB|MS|MD|MA|MP|AK)\b/.test(line)) return null;
+  } else if (/^(?:TB|MS|MD|MA|MP|AK|VQ|SD)\b/.test(line)) return null;
   let match;
   if ((match = /^MS (\d+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_STARTED ${match[1]} LEFT_BASE=${match[2]} RIGHT_BASE=${match[3]}`;
   if ((match = /^MD (\d+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_DONE ${match[1]} LEFT_PULSES=${match[2]} RIGHT_PULSES=${match[3]}`;
