@@ -1,3 +1,13 @@
+# 当前 Uno V6.6（2026-10-03，未上传）
+
+增加 SC/SR/VR（SCAN_CONFIG/SCAN_ROTATE/VISION_RESULT）及受保护的 VQ/SD 回报。Uno 执行分步旋转、停稳、新帧请求和有限等待；每次搜索最多两圈。双侧近距时只允许专用扫描 flags=1 忽略侧向停车，触碰、失速、STOP、会话及内存保护继续生效。纯 ROTATE 仍为 ±360°，手动持续 MOTOR 不改为扫描。
+
+所有 DONE 须 CRC。GET_STATUS/GET_DISTANCE/GET_ENCODER 现在返回完整紧凑 TB 批次及 DONE TELEMETRY，GET_CONFIG/GET_IO 保留文本格式。链路保持57600，无 KEEP。源码同步到仓库外的 `../uno-firmware/UnoCatController`，以本仓库提交为版本依据。
+
+**必须使用 `./build-uno.ps1` 的优化参数编译**：最终 Flash 32084/32256 bytes，静态 SRAM 1379/2048 bytes；Flash 剩172 bytes，后续变更需重新核对容量。静态剩余669 bytes不等于运行栈最低余量。本脚本仅编译，不上传或复位。用户操作 RESET、界面及运动验收；[当前验收表](../统一验收记录.md) 与 [离线结果](../离线验证结果.md) 记录边界。
+
+以下为早期版本历史，当前规则以上文及扫描协议为准。
+
 # Arduino Uno 固件：UnoCatController
 
 当前 V6.4：左右超声波安全距离默认 1 cm，可设置范围 1–100 cm。Uno 仅在对应方向收到有效且新鲜的测距、距离严格小于阈值时停车或拒绝动作；无回波、无效和过期读数不停车，遥测仍如实显示无效，不伪造远距离。停车原因改为 SIDE_LEFT_OBSTACLE / SIDE_RIGHT_OBSTACLE。阈值保存在 RAM，复位恢复默认 1 cm。ESP 判断前向并发 STOP；触碰、编码器失速检查、会话关闭和限时动作仍有效。MOTOR 无 KEEP 和续租截止时间。下文旧版本的 5 cm 最小值及无效输入停车描述属于历史记录。

@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-03",
+  "sourceCommit": "87a2de6bd32de26bb257b472ee529fb3c2385809",
+  "versions": {
+    "uno": "UNO_CAT_V6.6",
+    "esp": "ESP32_CAT_HOST_0.12"
+  },
+  "scope": "offline only; no serial device access, upload, reset, browser UI or physical motion",
+  "tests": {
+    "espActualPolicyAssertions": 429,
+    "nodeTests": 85,
+    "visionGate": "passed actual shared header",
+    "wireIntegrity": "passed actual shared header",
+    "failures": 0,
+    "unoScanAssertions": 199
+  },
+  "builds": {
+    "uno": {
+      "fqbn": "arduino:avr:uno",
+      "flashBytes": 32084,
+      "staticRamBytes": 1379,
+      "core": "1.8.8",
+      "flashLimit": 32256,
+      "ramLimit": 2048,
+      "flags": "-mcall-prologues -mrelax -fno-split-wide-types -finline-limit=3 / link -Wl,--relax",
+      "flashRemaining": 172
+    },
+    "esp": {
+      "staticRamBytes": 78792,
+      "core": "3.3.12",
+      "flashBytes": 3714906,
+      "flashLimit": 8257536,
+      "ramLimit": 327680,
+      "fqbn": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB"
+    }
+  },
+  "sourceHashes": [
+    {
+      "path": "firmware/UnoCatController/UnoCatController.ino",
+      "sha256": "0376e3806ba7942c37aa0535ad7488ada0c456ff2099596fff242dbbf738b1ce"
+    },
+    {
+      "path": "firmware/UnoCatController/scan_machine.h",
+      "sha256": "180d3bd2505ef3a22803378e1c5b0958029c2d798516b97cff53b78f0f29bb94"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/ESP32CatHost.ino",
+      "sha256": "b9f440881aa0f38d5c341264672a4ace1842f70a992c13ff36ef468ddc706e0a"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/policy.cpp",
+      "sha256": "21361592090414ff61e846dccc4ac437f2f7915c1cb4e13625db1c18159eb896"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/vision.cpp",
+      "sha256": "cd0c8ac290eace32a1c338b5d6bf643b0191abef3586e2766822fafc4035307b"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/vision_gate.h",
+      "sha256": "e034cc16a82c5474a8a2e247321111ca111eeeb6aa6727a9fae5a8e77eb7b998"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/wire_integrity.h",
+      "sha256": "90df0e8f8dea961dbba97c842c687036509f35308845f17252d77312fad2030c"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/policy_defaults.h",
+      "sha256": "156892348829a5dcbb3fc687dfb24492ac5406f40b2867e45a99655165ac2255"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/debug_page.h",
+      "sha256": "a8fcf5222e17ead2852855c2d31b75cc7ad350716f4eb8f4489123cf82942db3"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "C:\\Users\\guoto\\AppData\\Local\\Temp\\codex-uno-scan-build\\UnoCatController.ino.hex",
+      "role": "Uno application HEX; not with_bootloader",
+      "sizeBytes": 90259,
+      "sha256": "d6edfcb73ece4ded7fcb65ed3946436264683339e9b0f1a484b55ac5e8e6ec17"
+    },
+    {
+      "path": "C:\\Users\\guoto\\AppData\\Local\\Temp\\codex-esp32-cat-build\\ESP32CatHost.ino.bin",
+      "role": "ESP application offset 0x10000",
+      "sizeBytes": 3715056,
+      "sha256": "c52a9498b71ea54c7901d85940a96f04435bd11adc3025c77004d62a5e62a3c2"
+    }
+  ],
+  "hardwareAcceptance": "pending user",
+  "legacySIM_UNO": "does not support SCAN_V1; not used as paired-firmware acceptance",
+  "siblingUno": "ino and scan_machine.h SHA256 match repository copies",
+  "limitations": [
+    "compiled sizes are not measured runtime stack margin",
+    "native fake clock/random/IO do not measure latency or vision accuracy",
+    "physical search angle and coasting unverified",
+    "historical reset/UART/power instability remains unresolved",
+    "TEMP artifacts may be regenerated; compare hashes before upload"
+  ]
+}

@@ -1,3 +1,11 @@
+# 当前 ESP 0.12 / Uno V6.6（2026-10-03，未上传）
+
+配对固件已离线实施。路线使用用户保存的1–128个数字标签ID；找到只要求当前ID在有效新帧出现，到达使用单独保存的宽度比例，未配置时用0.25。所有找猫/找标签和丢失后重找最多两圈，按 Uno 分步转、停稳、请求后新帧的协议执行。慢接近猫采用短 DRIVE→确认STOP→停稳→识别，移动期间不运行猫模型；猫消失重找，找到续剩余距离，失败回原路线并持续报告。
+
+首次触碰位置优先；顶部/画面冲突/多触碰按首次位置找猫两圈，双侧近距直接原地扫描。实际策略、视觉帧门槛、CRC及页面状态有自动化检查；猫状态 CAT-01～CAT-18 同时纳入现场验收。旧网页 SIM_UNO 无 SCAN_V1，不能验收新配对固件。
+
+离线构建：`./build.ps1`，板型 `esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB`。最终 Flash 3714906/8257536 bytes，静态 SRAM78792/327680 bytes。`-Upload` 已阻止默认自动复位；用户允许上传，但 RESET、进入烧录模式、界面和运动由用户操作，需另行配合。不要沿用下方历史自动上传命令。完整证据见[离线结果](../离线验证结果.md)，现场步骤见[统一验收记录](../统一验收记录.md)。下方旧版实测保留原日期，不表示本版本通过实机验收。
+
 # XIAO ESP32-S3 Sense 上位机
 
 分支 `esp32-sense-host`，基线 `9217cc9`。关键阶段分别提交，保留现有 Uno 测试台。
@@ -18,7 +26,7 @@
 
 ## 编译和烧录
 
-在本目录运行 `./build.ps1 -Upload -Port COM11`，使用 XIAO ESP32-S3、OPI PSRAM 和 `max_app_8MB` 分区。脚本保留完整猫检测模型，并将 `ESP32CatHost/debug_page.html` 无损 gzip 压缩为内置网页头文件；网页由浏览器自动解压。编辑网页后运行 `node ./generate-debug-page.mjs`，Arduino IDE 直接编译前也需生成头文件。编译失败时不自动烧录。
+旧版曾使用 `./build.ps1 -Upload -Port COM11`；当前请在本目录运行 `./build.ps1` 仅编译，使用 XIAO ESP32-S3、OPI PSRAM 和 `max_app_8MB` 分区。脚本保留完整猫检测模型，并将 `ESP32CatHost/debug_page.html` 无损 gzip 压缩为内置网页头文件；网页由浏览器自动解压。编辑网页后运行 `node ./generate-debug-page.mjs`，Arduino IDE 直接编译前也需生成头文件。编译失败时不自动烧录。
 
 Arduino IDE 中对应选项：Board 为 XIAO_ESP32S3，PSRAM 为 OPI PSRAM，Partition Scheme 为 Maximum APP (7.9MB APP No OTA/No FS)。默认 8MB 分区的应用槽只有 3,342,336 bytes，不能把这个应用槽限制当成开发板的总 Flash 容量。当前应用不使用 OTA 和文件系统；NVS 配置区保留。不要使用整片擦除或合并镜像覆盖配置区。
 
