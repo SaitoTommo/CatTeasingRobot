@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.6. Boot log: READY UNO_CAT_V6.6.
+// Firmware version: UNO_CAT_V6.7. Boot log: READY UNO_CAT_V6.7.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -1293,7 +1293,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.6"));
+  Serial.println(F("READY UNO_CAT_V6.7"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
@@ -1327,7 +1327,7 @@ void loop() {
   tickDryRun(now);
   diagStage(5);
   tickMotion(now);
-  tickScan(now);
+  tickScan(millis()); // finishMotion() may have recorded a newer stop time.
   diagStage(6);
   tickRpm(now);
   diagStage(7);

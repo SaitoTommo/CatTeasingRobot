@@ -50,6 +50,9 @@ struct ScanMachine {
       ++step;phase=TURN;return START_STEP;
     }
     if (phase==SETTLE) {
+      // A caller may hold a loop timestamp older than motionStopped().
+      // Do not interpret that small backwards interval as uint32_t wrap.
+      if (int32_t(now-stopped)<0) return NONE;
       if (l!=quietL || r!=quietR) { quietL=l;quietR=r;quietAt=now; }
       if (uint32_t(now-stopped)>=cfg.settle) { end(SETTLE_TIMEOUT);return tick(now,l,r); }
       if (uint32_t(now-stopped)>=cfg.minimum && uint32_t(now-quietAt)>=cfg.quiet) {

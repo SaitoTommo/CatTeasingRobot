@@ -42,3 +42,5 @@ Arduino支持使用platform.local.txt覆盖同目录platform.txt的属性，见[
 ```
 
 该脚本使用AVRDUDE8的noautoreset、一次连接尝试，不写bootloader/fuses。若错过窗口或上传失败，保持停止，用户处理恢复。不要把with_bootloader HEX当本次应用HEX使用。
+
+2026-10-03 更新：Uno V6.7 修复扫描停稳计时旧时间戳问题；相同优化参数编译32162 bytes，静态RAM1379 bytes，Flash剩94 bytes。顶部注释与READY均为V6.7。ESP V0.14新增独立停车后识别等待时间设置。原V6.6数据仅为历史构建记录。

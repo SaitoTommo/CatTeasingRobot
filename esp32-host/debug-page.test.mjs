@@ -14,6 +14,19 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('scan wait preserves drafts, saves safely and extends timeout only when needed',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  const render=patch=>{const d={...base,config:{scanMinimumMs:200,scanQuietMs:100,scanSettleTimeoutMs:3000},...patch};sync(d);vm.runInContext(`syncScanWait(${JSON.stringify(d)})`,context);};
+  render({});assert.equal(Number(element('scanMinimumMs').value),200);
+  element('scanMinimumMs').value='1000';render({ms:1100});assert.equal(element('scanMinimumMs').value,'1000');
+  vm.runInContext('saveScanWait()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{scanMinimumMs:1000,scanSettleTimeoutMs:3000}});
+  element('scanMinimumMs').value='3000';vm.runInContext('saveScanWait()',context);assert.equal(requests.at(-1).config.scanSettleTimeoutMs,4000);
+  const count=requests.length;
+  for(const value of ['','49','3001','1000.5','abc']){element('scanMinimumMs').value=value;vm.runInContext('saveScanWait()',context);}assert.equal(requests.length,count);
+  for(const patch of [{phase:'PATROL'},{stopPendingId:2},{stopUnconfirmed:true},{debugBusy:true},{config:{}}]){render(patch);assert.equal(element('saveScanWait').disabled,true);vm.runInContext('saveScanWait()',context);}assert.equal(requests.length,count);
+  render({config:{scanMinimumMs:1000,scanQuietMs:100,scanSettleTimeoutMs:3000}});assert.equal(Number(element('scanMinimumMs').value),1000);
+});
+
 test('minimum PWM saves an integer, shows actual board readback and retains a draft while polling',()=>{
   const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
   const render=d=>{sync(d);vm.runInContext(`syncMinimumDrivePwm(${JSON.stringify(d)})`,context);};

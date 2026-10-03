@@ -5,6 +5,27 @@
 static unsigned checks=0;
 #define CHECK(x) do { ++checks; if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::exit(1);} } while(0)
 int main(){
+  ScanMachine stale;CHECK(stale.begin(99,99,2,45,71,0,900));
+  CHECK(stale.tick(900,0,0)==ScanMachine::START_STEP);
+  stale.motionStarted(0,0);stale.motionStopped(1001,2,2);
+  CHECK(stale.tick(1000,2,2)==ScanMachine::NONE);
+  CHECK(stale.phase==ScanMachine::SETTLE);
+  CHECK(stale.tick(1200,2,2)==ScanMachine::NONE);
+  CHECK(stale.tick(1201,2,2)==ScanMachine::REQUEST);
+  ScanMachine rollover;CHECK(rollover.begin(98,98,2,45,71,0,UINT32_MAX-500));
+  rollover.tick(UINT32_MAX-500,0,0);rollover.motionStarted(0,0);
+  rollover.motionStopped(UINT32_MAX-100,2,2);
+  CHECK(rollover.tick(98,2,2)==ScanMachine::NONE);
+  CHECK(rollover.tick(99,2,2)==ScanMachine::REQUEST);
+  ScanMachine waiting;CHECK(waiting.begin(97,97,2,45,71,0,0));
+  waiting.cfg.minimum=1000;waiting.tick(0,0,0);waiting.motionStarted(0,0);waiting.motionStopped(100,2,2);
+  CHECK(waiting.tick(1099,2,2)==ScanMachine::NONE);
+  CHECK(waiting.tick(1100,2,2)==ScanMachine::REQUEST);
+  ScanMachine noisy;CHECK(noisy.begin(96,96,2,45,71,0,0));
+  noisy.tick(0,0,0);noisy.motionStarted(0,0);noisy.motionStopped(100,2,2);
+  CHECK(noisy.tick(3099,3,3)==ScanMachine::NONE);
+  CHECK(noisy.tick(3100,4,4)==ScanMachine::COMPLETE);
+  CHECK(noisy.result==ScanMachine::SETTLE_TIMEOUT);
   ScanMachine s;
   CHECK(!s.begin(0,1,1,45,72,0,0));CHECK(!s.begin(1,0,1,45,72,0,0));
   CHECK(s.begin(1,7,1,45,72,0,0));CHECK(s.tick(0,0,0)==ScanMachine::START_STEP);
