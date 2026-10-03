@@ -15,6 +15,8 @@ extern void cancelVision();
 extern bool stopReady();
 namespace {
 String action="IDLE",afterFace="OBSERVE",afterStop,afterSettle,scanKind,scanNext;
+bool returnToPatrol=true,startCat=false;
+int pendingFirstTouch=-1;
 String initiator,escape="SLOW_STRAIGHT_ESCAPE",touchNext,pendingCommand,lastFault,lastMotionFailure;
 String catFailure,catFailureReason;
 uint32_t actionAt=0,sessionAt=0,lastTouch=0,due=0,farAt=0,feedbackAt=0;
@@ -143,9 +145,12 @@ void policyControl(const String &control){
   if(control=="start"||control=="resume"){
     if(!stopReady()){logLine("INPUT_ERROR","wait for confirmed STOP before starting");return;}
     if(!config["route"].size()){logLine("INPUT_ERROR","save your tag route before starting patrol");return;}
-    invalidate();clearTx();resetMotor();routeIndex=0;rounds=0;branch=-1;initiator="";followPending=needRearm=false;lastDecisionFrame=arrivalFrame=0;lastFault=lastMotionFailure="";geometryConfirmed=false;phase="STARTING";waitCommand("WAIT_PATROL_STOP","STOP");return;
+    startCat=false;returnToPatrol=true;invalidate();clearTx();resetMotor();routeIndex=0;rounds=0;branch=-1;initiator="";followPending=needRearm=false;lastDecisionFrame=arrivalFrame=0;lastFault=lastMotionFailure="";geometryConfirmed=false;phase="STARTING";waitCommand("WAIT_PATROL_STOP","STOP");return;
   }
-  if(control=="alert"&&phase=="PATROL"){phase="INTERACTION";initiator="ROBOT_SEARCH";sessionAt=now();rounds=0;branch=-1;search("CHOOSE_ROBOT");}
+  if(control=="alert"){
+    if(phase=="PATROL"){returnToPatrol=true;phase="INTERACTION";initiator="ROBOT_SEARCH";sessionAt=now();rounds=0;branch=-1;search("CHOOSE_ROBOT");}
+    else if((phase=="IDLE"||phase=="STOPPED")&&stopReady()){startCat=true;returnToPatrol=false;invalidate();clearTx();resetMotor();initiator="ROBOT_SEARCH";rounds=0;branch=-1;geometryConfirmed=false;lastFault=lastMotionFailure="";phase="STARTING";waitCommand("WAIT_PATROL_STOP","STOP");}
+  }
 }
 void policyVision(){
   uint32_t frame=observation["frameSeq"]|0u;
@@ -203,8 +208,8 @@ void policyInput(const String &line){
     if(action=="WAIT_PATROL_STOP"&&line.endsWith(" MOTOR_STOPPED")){if(mode=="SIM_UNO")waitCommand("WAIT_PATROL_GEOMETRY","SET_GEOMETRY "+String(setting("wheelMm"))+" "+String(setting("trackMm")));else requestConfig();}
     else if(action=="WAIT_PATROL_GEOMETRY")requestConfig();
     else if(action=="WAIT_PATROL_CONFIG"){if(!geometryConfirmed)fail("geometry not confirmed");else beginSession();}
-    else if(action=="WAIT_SESSION_STOP"){rounds=0;branch=-1;followPending=false;beginSession();}
-    else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed)fail("geometry not confirmed");else{phase="PATROL";state(needRearm?"TAG_REARM":"SCAN_TAG");}}
+    else if(action=="WAIT_SESSION_STOP"){rounds=0;branch=-1;followPending=false;if(returnToPatrol)beginSession();else{phase="IDLE";state("IDLE");}}
+    else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed)fail("geometry not confirmed");else if(startCat){startCat=false;phase="INTERACTION";sessionAt=now();search("CHOOSE_ROBOT");}else{phase="PATROL";state(needRearm?"TAG_REARM":"SCAN_TAG");}}
     else if(action=="WAIT_SCAN_CONFIG"){
       int pwm=scanKind=="TAG"?(int)setting("patrolSearchPwm"):(int)setting("searchPwm");
       scanStartCommand="SR "+String(generation)+" "+String(scanDirection*(int)setting("scanStepPulses"))+" "+String(drivePwmFloor(pwm,(int)setting("minimumDrivePwm")))+" "+String(scanBudget-scanUsed)+" "+String(scanFlags);

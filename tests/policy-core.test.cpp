@@ -48,6 +48,18 @@ void frame(bool detected=true,bool valid=true,unsigned n=2){
 void settled(){policyTick();CHECK(action=="SETTLE");tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="SETTLE");tick+=150;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="CAT_CHECK");}
 void scanRequest(){policyInput("VQ "+String(scanId)+" 1 "+String(generation)+" 2");CHECK(requests.back().mode=="CAT");CHECK(!motorRunning);}
 int main(){
+ // Independent search opens a session directly; a tag route is not needed.
+ for(const char *initial:{"IDLE","STOPPED"}){
+  fixture();phase=initial;config["route"].to<JsonArray>().clear();geometryConfirmed=false;
+  policyControl("alert");CHECK(phase=="STARTING");CHECK(startCat);CHECK(!returnToPatrol);
+  policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");
+  policyInput("DONE "+String(sessionId)+" GEOMETRY_SET");
+  policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0");
+  policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");
+  CHECK(phase=="INTERACTION");CHECK(initiator=="ROBOT_SEARCH");CHECK(afterFace=="CHOOSE_ROBOT");
+  finish();stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(phase=="IDLE");CHECK(action=="IDLE");
+ }
+ returnToPatrol=true;
  // No PING/READY/capability event is needed to start the current firmware.
  for(const char *control:{"start","resume"}){
    fixture();mode="UART";phase="STOPPED";scanCapable=false;lastUnoAt=tick;
