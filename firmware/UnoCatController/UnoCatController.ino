@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SoftwareSerial.h>
+#include "scan_machine.h"
 
 // D12 receives the ESP command channel at 57600; D1 remains hardware TX.
 // SoftwareSerial requires a TX pin but its write methods are never used.
@@ -52,7 +53,7 @@ constexpr uint8_t PIN_R_PWM = 5;
 constexpr uint8_t PIN_L_IN2 = 9;
 constexpr uint8_t PIN_R_IN1 = 4;
 constexpr uint8_t PIN_R_IN2 = 7;
-// Measured on this chassis: nonzero drive requires at least PWM 120/255.
+// PWM is allowed at 1..255; actual starting/holding PWM requires measurement.
 constexpr uint8_t MOTOR_MIN_DRIVE_PWM = 1;
 constexpr uint8_t SONAR_TRIG_PINS[2] = { 10, A4 };  // LEFT, RIGHT
 constexpr uint8_t SONAR_ECHO_PINS[2] = { 11, A5 };
@@ -170,6 +171,7 @@ struct Motion {
 Motion motion = { MOTION_NONE, 0, 0, 0, 0, 0, { 0, 0 }, { 0, 0 }, { 0, 0 }, 0, false };
 // Applies only to one bounded TEST_MOTOR transaction, never patrol commands.
 bool motionBypassAvoidance = false;
+ScanMachine scan;
 
 struct GuardedCommandBuffer {
   uint16_t before = 0xA55A;
@@ -265,6 +267,7 @@ void stopOutputs() {
 }
 
 void abortMotion(const __FlashStringHelper *reason) {
+  if (scan.active()) scan.end(ScanMachine::ABORTED);
   if (motion.kind == MOTION_NONE) return;
   const uint16_t id = motion.id;
   uint32_t leftPulses, rightPulses;
@@ -289,6 +292,7 @@ void finishMotion() {
   motion.kind = MOTION_NONE;
   motionBypassAvoidance = false;
   stopOutputs();
+  if (scan.active() && id==scan.id) scan.motionStopped(millis(),leftPulses+motion.basePulses[0],rightPulses+motion.basePulses[1]);
   char line[34];
   snprintf_P(line, sizeof(line), PSTR("MD %u %lu %lu"), id, leftPulses, rightPulses);
   printProtectedLine(line);
@@ -305,6 +309,8 @@ void setTouch(uint8_t index, bool pressed, const __FlashStringHelper *source) {
   if (touch.stable == pressed) return;
   const uint32_t now = millis();
   touch.stable = pressed;
+  // Stop before serial reporting, including a scan waiting for vision.
+  if (pressed && !motionBypassAvoidance) abortMotion(F("TOUCH"));
   Serial.print(F("EVENT "));
   Serial.print(source);
   Serial.print(F(" TOUCH "));
@@ -394,6 +400,7 @@ bool currentDistance(float &distance, uint32_t now) {
 
 // Camera/front decisions belong to ESP. Uno checks its local side sonars here.
 const __FlashStringHelper *motionSafetyReason(int16_t left, int16_t right, uint32_t now, bool report) {
+  if (scan.active() && (scan.flags&1) && left && left==-right) return nullptr;
   float distance;
   if (left < right) {
     if (!currentSideDistance(0, distance, now) || distance >= safeDistanceCm[0]) return nullptr;
@@ -537,9 +544,20 @@ bool parseFloat(const char *text, float minValue, float maxValue, float &value) 
   return true;
 }
 
+const int32_t scanLimits[3][10] PROGMEM = {
+  {50,3000,50,3000,500,10000,1000,600000,100,10000},
+  {1,2147483647L,-64,64,1,255,1,1000,0,1},
+  {1,65535,1,1000,1,2147483647L,0,2,0,2147483647L}
+};
+__attribute__((noinline)) bool parseScanFields(char **words,long *v,uint8_t profile){
+  for(uint8_t i=0;i<5;i++)if(!parseLong(words[i+3],pgm_read_dword(&scanLimits[profile][i*2]),pgm_read_dword(&scanLimits[profile][i*2+1]),v[i]))return false;
+  return true;
+}
+
 void startMotion(uint16_t id, MotionKind kind, int16_t left, int16_t right,
                  uint32_t durationMs, uint32_t targetPulses, bool estimated,
                  const __FlashStringHelper *name, bool gentleWiggle = false, bool bypassAvoidance = false) {
+  if (scan.active() && id!=scan.id) { error(id,F("BUSY"));return; }
   if (sessionStopped) {
     error(id, F("SESSION_STOPPED"));
     return;
@@ -583,22 +601,22 @@ void startMotion(uint16_t id, MotionKind kind, int16_t left, int16_t right,
   printProtectedLine(line);
 }
 
-void printStatus(uint16_t id) {
-  Serial.print(F("DATA "));
-  Serial.print(id);
-  Serial.print(F(" STATUS "));
-  Serial.print(sessionStopped ? F("STOPPED") : motion.kind == MOTION_NONE ? F("IDLE")
-                                                                          : F("MOVING"));
-  Serial.print(F(" LED="));
-  Serial.print(ledFlash ? F("FLASH") : ledOn ? F("ON")
-                                             : F("OFF"));
-  Serial.print(F(" BUZZER="));
-  Serial.print(buzzerUntilMs && !deadlineReached(millis(), buzzerUntilMs) ? F("ON") : F("OFF"));
-  Serial.print(F(" DEBUG="));
-  Serial.print(debugEnabled ? F("ON") : F("OFF"));
-  Serial.print(F(" INPUT_MODE=")); Serial.print(boardDryRun ? F("TEST") : F("LIVE"));
-  Serial.print(F(" MOTOR_MODE="));
-  Serial.println(!physicalIo[MOTOR_LEFT] && !physicalIo[MOTOR_RIGHT] ? F("OFF") : physicalIo[MOTOR_LEFT] && physicalIo[MOTOR_RIGHT] ? F("LIVE") : F("MIXED"));
+void tickScan(uint32_t now) {
+  uint32_t l,r;getPulses(l,r);
+  const ScanMachine::Event event=scan.tick(now,l,r);
+  if(event==ScanMachine::START_STEP){
+    const int16_t p=scan.increment>0?scan.pwm:-scan.pwm;
+    const uint16_t count=scan.stepPulses();
+    scan.motionStarted(l,r);
+    startMotion(scan.id,MOTION_PULSES,p,-p,10000,count,true,F("SCAN_ROTATE"));
+    if(motion.kind==MOTION_NONE)scan.end(ScanMachine::INVALID);
+  }else if(event==ScanMachine::REQUEST){
+    char line[46];snprintf_P(line,sizeof(line),PSTR("VQ %u %u %lu"),scan.id,scan.step,(unsigned long)scan.generation);printProtectedLine(line);
+  }else if(event==ScanMachine::COMPLETE){
+    if(motion.kind!=MOTION_NONE)abortMotion(F("SCAN_ENDED"));
+    stopOutputs();scan.flags=0;
+    char line[46];snprintf_P(line,sizeof(line),PSTR("SD %u %lu %u"),scan.id,(unsigned long)scan.generation,scan.result);printProtectedLine(line);
+  }
 }
 
 int8_t touchIndex(const char *name) {
@@ -768,6 +786,26 @@ void processCommand(char *line) {
   long x, y;
   float f, g;
 
+  if((!strcmp_P(verb,PSTR("SC"))||!strcmp_P(verb,PSTR("SCAN_CONFIG")))&&n==5){
+    long v[5];if(!star||!parseScanFields(words,v,0)){error(id,F("INVALID_SCAN_FRAME"));return;}
+    if(scan.active()||motion.kind!=MOTION_NONE){error(id,F("BUSY"));return;}
+    if(v[4]<=v[0]||v[4]<=v[1]){error(id,F("INVALID_ARGUMENT"));return;}
+    scan.cfg.minimum=v[0];scan.cfg.quiet=v[1];scan.cfg.vision=v[2];scan.cfg.total=v[3];scan.cfg.settle=v[4];ack(id);done(id,F("SCAN_CONFIGURED"));return;
+  }
+  if((!strcmp_P(verb,PSTR("SR"))||!strcmp_P(verb,PSTR("SCAN_ROTATE")))&&n==5){
+    long v[5];if(!star||!parseScanFields(words,v,1)){error(id,F("INVALID_SCAN_FRAME"));return;}
+    if(sessionStopped||anyTouchPressed()){error(id,F("SESSION_OR_TOUCH_LOCK"));return;}
+    if(motion.kind!=MOTION_NONE&&!(scan.id==id&&scan.generation==uint32_t(v[0]))){error(id,F("BUSY"));return;}
+    if(v[4]){float dl,dr;if(!currentSideDistance(0,dl,millis())||!currentSideDistance(1,dr,millis())||dl>=safeDistanceCm[0]||dr>=safeDistanceCm[1]){error(id,F("BOTH_SIDES_REQUIRED"));return;}}
+    if(!scan.begin(id,v[0],v[1],v[2],v[3],v[4],millis())){error(id,F("INVALID_SCAN"));return;}
+    ack(id);if(scan.phase==ScanMachine::TERMINAL)scan.terminalSent=false;return;
+  }
+  if((!strcmp_P(verb,PSTR("VR"))||!strcmp_P(verb,PSTR("VISION_RESULT")))&&n==5){
+    long v[5];if(!star||!parseScanFields(words,v,2)){error(id,F("INVALID_SCAN_FRAME"));return;}
+    if(!scan.reply(v[0],v[1],v[2],v[3],v[4],millis())){error(id,F("STALE_VISION"));return;}
+    ack(id);done(id,F("VISION_ACCEPTED"));return;
+  }
+
   if (!strcmp_P(verb, PSTR("DEBUG_DIAG")) && n == 1 && parseLong(a, 0, 2, x)) {
     diagMode = static_cast<uint8_t>(x);
     ack(id); done(id, F("DIAG_SET")); return;
@@ -778,67 +816,11 @@ void processCommand(char *line) {
     done(id, F("PONG"));
     return;
   }
-  if (!strcmp_P(verb, PSTR("GET_TELEMETRY")) && n == 0) {
+  if ((!strcmp_P(verb, PSTR("GET_TELEMETRY")) || !strcmp_P(verb, PSTR("GET_DISTANCE")) || !strcmp_P(verb, PSTR("GET_ENCODER")) || !strcmp_P(verb, PSTR("GET_STATUS"))) && n == 0) {
     if (telemetryId) { error(id, F("TELEMETRY_BUSY")); return; }
     telemetryId = id; telemetryStage = 0; ack(id); return;
   }
   if (!strcmp_P(verb, PSTR("GET_IO")) && n == 0) { ack(id); printIo(id); done(id); return; }
-  if (!strcmp_P(verb, PSTR("GET_STATUS")) && n == 0) {
-    ack(id);
-    printStatus(id);
-    done(id);
-    return;
-  }
-  if (!strcmp_P(verb, PSTR("GET_DISTANCE")) && n == 0) {
-    ack(id);
-    Serial.print(F("DATA "));
-    Serial.print(id);
-    Serial.print(F(" DISTANCE "));
-    if (currentDistance(f, millis())) Serial.print(f, 1);
-    else Serial.print(F("INVALID"));
-    Serial.print(F(" SOURCE="));
-    Serial.println(F("CAMERA_FRONT"));
-    Serial.print(F("DATA "));
-    Serial.print(id);
-    Serial.print(F(" SIDE_LEFT "));
-    if (currentSideDistance(0, f, millis())) Serial.print(f, 1);
-    else Serial.print(F("INVALID"));
-    Serial.print(F(" SOURCE="));
-    Serial.println(distanceOverride[0] != DISTANCE_AUTO ? F("DEBUG_INJECT")
-                   : !physicalIo[SONAR_LEFT_TRIG] || !physicalIo[SONAR_LEFT_ECHO] ? F("IO_DISABLED")
-                                                        : F("SONAR_LEFT"));
-    Serial.print(F("DATA "));
-    Serial.print(id);
-    Serial.print(F(" SIDE_RIGHT "));
-    if (currentSideDistance(1, f, millis())) Serial.print(f, 1);
-    else Serial.print(F("INVALID"));
-    Serial.print(F(" SOURCE="));
-    Serial.println(distanceOverride[1] != DISTANCE_AUTO ? F("DEBUG_INJECT")
-                   : boardDryRun                        ? F("NO_SIM_MEASUREMENT")
-                                                        : F("SONAR_RIGHT"));
-    done(id);
-    return;
-  }
-  if (!strcmp_P(verb, PSTR("GET_ENCODER")) && n == 0) {
-    uint32_t left, right;
-    getPulses(left, right);
-    ack(id);
-    Serial.print(F("DATA "));
-    Serial.print(id);
-    Serial.print(F(" ENCODER "));
-    Serial.print(left);
-    Serial.print(' ');
-    Serial.print(right);
-    Serial.print(F(" LEFT_RPM="));
-    Serial.print(rpm[0], 1);
-    Serial.print(F(" RIGHT_RPM="));
-    Serial.print(rpm[1], 1);
-    Serial.print(F(" SOURCE="));
-    Serial.print(F("MIXED LEFT_PHYSICAL=")); Serial.print(physicalIo[ENCODER_LEFT]);
-    Serial.print(F(" RIGHT_PHYSICAL=")); Serial.println(physicalIo[ENCODER_RIGHT]);
-    done(id);
-    return;
-  }
   if (!strcmp_P(verb, PSTR("GET_CONFIG")) && n == 0) {
     ack(id);
     Serial.print(F("DATA "));
@@ -989,7 +971,7 @@ void processCommand(char *line) {
     done(id, F("LED_FLASH_STARTED"));
     return;
   }
-  if (!strcmp_P(verb, PSTR("BEEP")) && n == 1 && parseLong(a, 1, 5000, x)) {
+  if (!strcmp_P(verb, PSTR("BEEP")) && n == 1 && parseLong(a, 0, 5000, x)) {
     if (sessionStopped) {
       error(id, F("SESSION_STOPPED"));
       return;
@@ -1307,7 +1289,8 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.5"));
+  Serial.println(F("READY UNO_CAT_V6.6"));
+  Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
       static_cast<uint16_t>(~diagBreadcrumb.command) == diagBreadcrumb.commandInverse) {
@@ -1340,6 +1323,7 @@ void loop() {
   tickDryRun(now);
   diagStage(5);
   tickMotion(now);
+  tickScan(now);
   diagStage(6);
   tickRpm(now);
   diagStage(7);
