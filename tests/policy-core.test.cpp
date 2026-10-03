@@ -5,6 +5,7 @@
 #include <cassert>
 #include "../firmware/UnoCatController/scan_machine.h"
 #include "../esp32-host/ESP32CatHost/vision_gate.h"
+#include "../esp32-host/ESP32CatHost/pwm_floor.h"
 String phase="IDLE",mode="SIM_UNO";
 JsonDocument config,observation;
 uint32_t lastUnoAt=0,tick=100000,seq=0;
@@ -15,7 +16,7 @@ struct Command{uint32_t id;String text;};
 std::vector<Command> commands;
 struct Request{uint32_t id,step,gen;String mode;};
 std::vector<Request> requests;
-uint32_t sendUno(const String &s){seq=seq%65535+1;commands.push_back({seq,s});return seq;}
+uint32_t sendUno(const String &s){seq=seq%65535+1;commands.push_back({seq,applyDrivePwmFloor(s,config["minimumDrivePwm"]|140)});return seq;}
 void clearTx(){commands.clear();}
 void logLine(const char *,const String &){}
 bool stopGate=true;bool stopReady(){return stopGate;}
@@ -133,5 +134,9 @@ int main(){
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";rounds=2;draws={80};onTouch(3,1234);stopped();CHECK(action=="WAIT_RELEASE");touch[3]=false;policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanNext=="PREY_SIGNAL");
  fixture();phase="INTERACTION";beginScan("CAT","OBSERVE");auto pendingConfig=sessionId;onTouch(0);CHECK(sessionId==0);stopped();policyInput("DONE "+String(pendingConfig)+" SCAN_CONFIGURED");CHECK(action=="TOUCH_PREY"||action=="WAIT_RELEASE"||action=="TOUCH_SIGNAL");CHECK(!scanId);
  fixture();phase="INTERACTION";beginScan("CAT","OBSERVE");configDone();policyInput("VQ "+String(scanId)+" 3 "+String(generation)+" 7");CHECK(scanUsed==7);policyInput("MP "+String(scanId)+" 2 2");CHECK(!motorRunning);policyInput("VQ "+String(scanId)+" 2 "+String(generation)+" 5");CHECK(scanUsed==7);
+ fixture();config["minimumDrivePwm"]=140;move(30,-30);CHECK(commands.back().text=="MOTOR 140 -140");JsonDocument pwmState;policySnapshot(pwmState);CHECK(pwmState["patrolStatus"]["leftPwm"].as<int>()==140);CHECK(pwmState["patrolStatus"]["rightPwm"].as<int>()==-140);CHECK(pwmState["patrolStatus"]["requestedLeftPwm"].as<int>()==30);CHECK(pwmState["patrolStatus"]["requestedRightPwm"].as<int>()==-30);
+ fixture();config["minimumDrivePwm"]=100;drive(1,95,"CAT_DRIVE");CHECK(commands.back().text=="DRIVE 1.00 100");policySnapshot(pwmState);CHECK(pwmState["patrolStatus"]["leftPwm"].as<int>()==100);
+ fixture();config["minimumDrivePwm"]=140;beginScan("CAT","OBSERVE");configDone();CHECK(commands.back().text=="SR "+String(generation)+" 2 140 71 0");policyInput("MS "+String(scanId)+" 0 0");policySnapshot(pwmState);CHECK(pwmState["patrolStatus"]["leftPwm"].as<int>()==140);CHECK(pwmState["patrolStatus"]["requestedLeftPwm"].as<int>()==75);
+ fixture();config["minimumDrivePwm"]=1;move(30,-30);CHECK(commands.back().text=="MOTOR 30 -30");
  printf("actual ESP policy core: %u checks passed\n",checks);
 }

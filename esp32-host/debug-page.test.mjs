@@ -14,6 +14,46 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('minimum PWM saves an integer, shows actual board readback and retains a draft while polling',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  const render=d=>{sync(d);vm.runInContext(`syncMinimumDrivePwm(${JSON.stringify(d)})`,context);};
+  render({...base,config:{minimumDrivePwm:140}});
+  assert.equal(Number(element('minimumDrivePwm').value),140);
+  assert.equal(element('saveMinimumDrivePwm').disabled,false);
+  assert.match(element('minimumDrivePwmStatus').textContent,/已保存下限：140/);
+  element('settings').value='{"minimumDrivePwm":140,"route":[9]}';
+  element('minimumDrivePwm').value='115';
+  render({...base,ms:1100,config:{minimumDrivePwm:140}});
+  assert.equal(element('minimumDrivePwm').value,'115');
+  vm.runInContext('saveMinimumDrivePwm()',context);
+  assert.deepEqual(requests.at(-1),{op:'config',config:{minimumDrivePwm:115}});
+  assert.deepEqual(JSON.parse(element('settings').value),{minimumDrivePwm:115,route:[9]});
+  assert.match(element('minimumDrivePwmStatus').textContent,/已保存下限：140/); // no optimistic fake readback
+  render({...base,ms:1200,config:{minimumDrivePwm:115}});
+  assert.match(element('minimumDrivePwmStatus').textContent,/已保存下限：115/);
+  const before=requests.length;
+  for(const value of ['','0','256','140.5','abc']){element('minimumDrivePwm').value=value;vm.runInContext('saveMinimumDrivePwm()',context);}
+  assert.equal(requests.length,before);
+  for(const value of ['1','255']){element('minimumDrivePwm').value=value;vm.runInContext('saveMinimumDrivePwm()',context);assert.equal(requests.at(-1).config.minimumDrivePwm,Number(value));}
+});
+
+test('minimum PWM is locked until confirmed stop, while debugging, and on unsupported firmware',()=>{
+  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+  for(const patch of [{phase:'PATROL'},{stopPendingId:12},{stopUnconfirmed:true},{debugBusy:true},{config:{}}]){
+    vm.runInContext(`syncMinimumDrivePwm(${JSON.stringify({...base,config:{minimumDrivePwm:140},...patch})})`,context);
+    assert.equal(element('minimumDrivePwm').disabled,true);
+    assert.equal(element('saveMinimumDrivePwm').disabled,true);
+    vm.runInContext('saveMinimumDrivePwm()',context);
+  }
+  assert.equal(requests.length,0);
+});
+
+test('policy display distinguishes requested PWM from the floored command',()=>{
+  vm.runInContext(`syncPatrolStatus(${JSON.stringify({...base,patrolStatus:{motorId:42,leftPwm:140,rightPwm:-140,requestedLeftPwm:45,requestedRightPwm:-45,minimumDrivePwm:140}})})`,context);
+  assert.match(element('patrolProgress').textContent,/#42：140\/-140/);
+  assert.match(element('patrolProgress').textContent,/策略请求 45\/-45，最低 PWM 140/);
+});
+
 test('zero current command never displays historical PWM and cat failure survives patrol',()=>{
   vm.runInContext(`syncPatrolStatus(${JSON.stringify({...base,patrolStatus:{action:'SCAN_TAG',motorId:0,leftPwm:95,rightPwm:95,catFailure:{message:'找猫失败',reason:'two turns',at:500,angle:718.9}}})})`,context);
   assert.match(element('patrolProgress').textContent,/#0：0\/0/);

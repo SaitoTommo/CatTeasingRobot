@@ -8,6 +8,7 @@
 #include <esp_timer.h>
 #include "vision_gate.h"
 #include "wire_integrity.h"
+#include "pwm_floor.h"
 #include <deque>
 #include "debug_page.h"
 #include "policy_defaults.h"
@@ -69,7 +70,9 @@ void policyStopUnconfirmed();
 void clearTx(){outgoing.clear();telemetryId=0;lastPoll=millis();}
 uint32_t sendUno(const String &command) {
   if(command=="STOP"||command=="SESSION_STOP"||command=="DEBUG_OUTPUTS OFF"||command=="DEBUG_IO LED OFF"||command=="DEBUG_MOTOR_MODE DRY_RUN")hostLedStop();
-  cmdSeq=cmdSeq%65535+1;uint32_t id=cmdSeq;String payload="C "+String(id)+" "+command;char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));
+  String applied=applyDrivePwmFloor(command,config["minimumDrivePwm"]|140);
+  if(applied!=command)logLine("PWM_FLOOR",command+" -> "+applied);
+  cmdSeq=cmdSeq%65535+1;uint32_t id=cmdSeq;String payload="C "+String(id)+" "+applied;char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));
   if(outgoing.size()>=32){outgoing.clear();payload="C "+String(id)+" STOP";snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));phase="STOPPED";logLine("TX_OVERFLOW","policy stopped");}
   outgoing.push_back({payload+suffix,mode=="UART"});
   return id;
@@ -167,7 +170,7 @@ void defaults() {
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.12";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.13";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();

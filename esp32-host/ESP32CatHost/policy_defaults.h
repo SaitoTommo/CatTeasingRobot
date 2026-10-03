@@ -55,6 +55,7 @@ d["touchFeedbackBeepMs"]=180;
 d["escapeDistanceCm"]=26;
 d["slowEscapePwm"]=95;
 d["fastEscapePwm"]=210;
+d["minimumDrivePwm"]=140;
 d["scanStepPulses"]=2;
 d["scanMinimumMs"]=200;
 d["scanQuietMs"]=100;
@@ -117,6 +118,7 @@ if(!d["touchFeedbackBeepMs"].is<float>()||!isfinite(d["touchFeedbackBeepMs"].as<
 if(!d["escapeDistanceCm"].is<float>()||!isfinite(d["escapeDistanceCm"].as<float>())||d["escapeDistanceCm"].as<float>()<1||d["escapeDistanceCm"].as<float>()>60){error="invalid escapeDistanceCm";return false;}
 if(!d["slowEscapePwm"].is<float>()||!isfinite(d["slowEscapePwm"].as<float>())||d["slowEscapePwm"].as<float>()<50||d["slowEscapePwm"].as<float>()>255){error="invalid slowEscapePwm";return false;}
 if(!d["fastEscapePwm"].is<float>()||!isfinite(d["fastEscapePwm"].as<float>())||d["fastEscapePwm"].as<float>()<50||d["fastEscapePwm"].as<float>()>255){error="invalid fastEscapePwm";return false;}
+if(!d["minimumDrivePwm"].is<float>()||!isfinite(d["minimumDrivePwm"].as<float>())||d["minimumDrivePwm"].as<float>()<1||d["minimumDrivePwm"].as<float>()>255){error="invalid minimumDrivePwm";return false;}
 if(!d["scanStepPulses"].is<float>()||!isfinite(d["scanStepPulses"].as<float>())||d["scanStepPulses"].as<float>()<1||d["scanStepPulses"].as<float>()>64){error="invalid scanStepPulses";return false;}
 if(!d["scanMinimumMs"].is<float>()||!isfinite(d["scanMinimumMs"].as<float>())||d["scanMinimumMs"].as<float>()<50||d["scanMinimumMs"].as<float>()>3000){error="invalid scanMinimumMs";return false;}
 if(!d["scanQuietMs"].is<float>()||!isfinite(d["scanQuietMs"].as<float>())||d["scanQuietMs"].as<float>()<50||d["scanQuietMs"].as<float>()>3000){error="invalid scanQuietMs";return false;}
@@ -150,5 +152,6 @@ if(d["floorReference"].size()!=0&&d["floorReference"].size()!=72){error="invalid
 for(JsonVariant v:d["floorReference"].as<JsonArray>())if(!v.is<float>()||v.as<float>()<0||v.as<float>()>255){error="invalid floor reference";return false;}
 if(d["scanSettleTimeoutMs"].as<float>()<=d["scanMinimumMs"].as<float>()||d["scanSettleTimeoutMs"].as<float>()<=d["scanQuietMs"].as<float>()){error="settle timeout must exceed both windows";return false;}
 if(!d["scanStepPulses"].is<int>()){error="scan step pulses must be integer";return false;}
+if(!d["minimumDrivePwm"].is<int>()){error="minimumDrivePwm must be integer";return false;}
 return true;
 }

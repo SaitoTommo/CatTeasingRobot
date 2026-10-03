@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-03",
+  "firmware": "ESP32_CAT_HOST_0.13",
+  "baseCommit": "ace5158c9c50fb1853d4cd0b0a4dd55031c10a50",
+  "sourceHashes": [
+    {
+      "path": "esp32-host/ESP32CatHost/ESP32CatHost.ino",
+      "sha256": "1b4caa64da169c9d3d7ec49d5f2b17194f0baac0eff919f547e1cdc2e64c936f"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/pwm_floor.h",
+      "sha256": "a3a064f50d8373d8a17898e58f231523e63e1ea678404381051bd112ba43638b"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/policy.cpp",
+      "sha256": "8c458531136f729d7c5e7a2db4112d30e917d2431f3b3e34dbf6cdef8c81f607"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/policy_defaults.h",
+      "sha256": "4a3da11628401f3f43e7243f26fba5373fe5c98d890ab934d636b707360c7764"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/debug_page.html",
+      "sha256": "a15e7877e2851f7395b5a53ccb9ccd66f0cc00eff047c64e4c857c418e1751be"
+    },
+    {
+      "path": "esp32-host/ESP32CatHost/debug_page.h",
+      "sha256": "ef455dac3243bb9756190f0cb4e0d18006f0ecf73b9210101a743adf32941923"
+    }
+  ],
+  "minimumDrivePwm": {
+    "range": "integer 1..255",
+    "storage": "existing NVS config save/load path; actual restart persistence awaits user acceptance",
+    "applied": "ESP command normalization before CRC; nonzero only; preserves sign, zero and other arguments",
+    "default": 140
+  },
+  "tests": {
+    "unoScanAssertions": 199,
+    "actualPolicyAssertions": 442,
+    "nativePwmFloorAndSettingsAssertions": 2603,
+    "wireIntegrity": "pass",
+    "scope": "Windows native core compile/run and Node script execution with simulated clock/IO/network/DOM; no real motor, browser or board persistence test",
+    "nodeTests": 88,
+    "failures": 0,
+    "visionGate": "pass"
+  },
+  "fullEspBuild": {
+    "fqbn": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+    "ramLimit": 327680,
+    "applicationBin": {
+      "path": "C:\\Users\\guoto\\AppData\\Local\\Temp\\codex-esp32-cat-build\\ESP32CatHost.ino.bin",
+      "sha256": "673638155969b846c4eb6ae9a8a49ca75e56d141120c290c3064c11b1d311067",
+      "bytes": 3717408
+    },
+    "flashLimit": 8257536,
+    "staticRamBytes": 78792,
+    "flashBytes": 3717266
+  },
+  "unoSource": "unchanged this feature",
+  "deployment": {
+    "assistant": "no device operation",
+    "physicalAcceptance": "pending",
+    "verifiedUploadCompletion": false,
+    "userReported": "board-target compile complete; upload in progress"
+  }
+}
