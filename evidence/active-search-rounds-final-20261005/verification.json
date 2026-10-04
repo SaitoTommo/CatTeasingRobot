@@ -1,0 +1,52 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3",
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "cameraOk": true,
+  "motorId": 0,
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "changedExistingConfig": [],
+  "newFields": {
+    "robotActionLimit": 5,
+    "robotFastApproachCm": 15,
+    "robotFastApproachPwm": 180,
+    "robotSlowFlashPercent": 50
+  },
+  "route": [
+    46,
+    40
+  ],
+  "oldSettings": {
+    "minimumDrivePwm": 255,
+    "catFarWidth": 0.12,
+    "catNearWidth": 0.35,
+    "initialLookSeconds": 5,
+    "signalFlashMs": 1400,
+    "signalBeepMs": 180
+  },
+  "hashVerified": true,
+  "writtenBytes": 3760560,
+  "uploadSeconds": 25.3,
+  "servedPageEqualsCompiled": true,
+  "native": {
+    "policy": 1172,
+    "catInteraction": 623,
+    "scan": 259,
+    "pwmSettings": 2649,
+    "visionGate": true,
+    "wireGuard": true
+  },
+  "pageTests": 30,
+  "stateInventoryTests": 2,
+  "isolatedStagedUITests": 2,
+  "flashBytes": 3760410,
+  "staticRamBytes": 83688,
+  "commits": [
+    "8b8017a",
+    "62f7440",
+    "8950966"
+  ],
+  "unoUploaded": false,
+  "physicalMotionTested": false
+}
