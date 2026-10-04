@@ -32,6 +32,16 @@ test('cat progress names chase and displays separate rounds and time',()=>{
  assert.match(element('catProgress').textContent,/等待猫追击/);assert.match(element('catProgress').textContent,/3\/5/);assert.match(element('catProgress').textContent,/31.0 秒/);
 });
 
+test('cat save failure is reported from board logs rather than assumed successful',()=>{
+ const config={catFarWidth:.12,catNearWidth:.35,postEscapeWaitSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+ const render=logs=>{const d={...base,config,logs};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
+ render([{seq:9,source:'CONFIG',line:'saved'}]);
+ for(const [k,v] of Object.entries(config))element('catCfg_'+k).value=String(k.includes('Width')?v*100:v);
+ element('catCfg_captureWaitMaxSeconds').value='25';vm.runInContext('saveCatSettings()',context);
+ render([{seq:10,source:'CONFIG_ERROR',line:'confirmed stop required first'}]);
+ assert.match(element('catConfigStatus').textContent,/保存失败：confirmed stop/);
+});
+
 test('scan wait preserves drafts, saves safely and extends timeout only when needed',()=>{
   const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
   const render=patch=>{const d={...base,config:{scanMinimumMs:200,scanQuietMs:100,scanSettleTimeoutMs:3000},...patch};sync(d);vm.runInContext(`syncScanWait(${JSON.stringify(d)})`,context);};

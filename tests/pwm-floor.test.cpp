@@ -35,5 +35,14 @@ int main(){
  for(int good:{1,100,140,255}){d["minimumDrivePwm"]=good;CHECK(validateSettings(d,error));}
  for(float bad:{0.f,256.f,140.5f,NAN,INFINITY}){d["minimumDrivePwm"]=bad;CHECK(!validateSettings(d,error));CHECK(error.indexOf("minimumDrivePwm")>=0);}
  d["minimumDrivePwm"]="140";CHECK(!validateSettings(d,error));d["minimumDrivePwm"]=true;CHECK(!validateSettings(d,error));
+ d["minimumDrivePwm"]=140;
+ CHECK(d["escapePreyAfterRounds"].as<int>()==5);CHECK(d["explorePreyMinimumSeconds"].as<int>()==30);
+ for(const char *key:{"escapePreyPercent","explorePreyPercent"}){
+   for(int value:{0,20,100}){d[key]=value;CHECK(validateSettings(d,error));}
+   for(float value:{-1.f,101.f,NAN}){d[key]=value;CHECK(!validateSettings(d,error));}d[key]=20;
+ }
+ for(const char *key:{"escapePreyAfterRounds","explorePreyMinimumSeconds"}){d[key]=3.5;CHECK(!validateSettings(d,error));d[key]=key[0]=='e'&&key[1]=='s'?5:30;}
+ d["catFarWidth"]=.4;d["catNearWidth"]=.35;CHECK(!validateSettings(d,error));d["catFarWidth"]=.12;
+ d["captureWaitMaxSeconds"]=60;CHECK(validateSettings(d,error));d["captureWaitMaxSeconds"]=61;CHECK(!validateSettings(d,error));
  printf("actual ESP PWM floor and settings: %u checks passed\n",checks);
 }
