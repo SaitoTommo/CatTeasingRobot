@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.28. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.29. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.10 with SCAN_V1; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -152,7 +152,7 @@ void acceptUno(String line,bool physical) {
   if(physical&&stopPendingId&&star>=0&&line=="DONE "+String(stopPendingId)+" MOTOR_STOPPED"){stopPendingId=0;stopUnconfirmed=false;stopWire="";logLine("STOP_CONFIRMED",line);if(mode!="UART")return;}
   if(line.startsWith("READY "))compactTelemetry.reset();
   if(line.startsWith("TB ")){if(!compactTelemetry.add(line,millis())){logLine("TELEMETRY_BAD_FRAME",line);return;}lastRx=line;lastUnoAt=millis();logLine(physical?"UNO_RX":"SIM_RX",line);return;}
-  if(line.startsWith("DONE ")&&line.endsWith(" TELEMETRY")&&compactTelemetry.id){if(!compactTelemetry.finish(line,millis(),[](const String &row){debugAccept(row);policyInput(row);})){logLine("TELEMETRY_INCOMPLETE",line);return;}}
+  if(line.startsWith("DONE ")&&line.endsWith(" TELEMETRY")&&compactTelemetry.id){if(!compactTelemetry.finish(line,millis(),[](const String &row){debugAccept(row);policyInput(row);})){logLine("TELEMETRY_INCOMPLETE",line);if(telemetryCompleted(line.c_str(),telemetryId)){telemetryId=0;lastPoll=millis();logLine("TELEMETRY_RETRY","incomplete snapshot ended; retry at policy polling interval");}return;}}
   lastRx=line;lastUnoAt=millis();if(physical)hostLedAccept(line);logLine(physical?"UNO_RX":"SIM_RX",line);debugAccept(line);if(line.startsWith("DONE ")||line.startsWith("ERROR ")){if(line.substring(line.indexOf(' ')+1).toInt()==telemetryId)telemetryId=0;}policyInput(line);
 }
 void defaults() {
@@ -180,7 +180,7 @@ void defaults() {
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.28";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.29";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 inline uint8_t wireCrc8(const char *text,size_t length){
@@ -10,4 +11,9 @@ inline bool protectedReply(const char *line,bool physical,bool telemetryPending)
   for(auto p:prefixes)if(!strncmp(line,p,strlen(p)))return true;
   if(strncmp(line,"DONE ",5))return false;
   return physical||(telemetryPending&&strstr(line," TELEMETRY"));
+}
+
+inline bool telemetryCompleted(const char *line,uint32_t pending){
+  unsigned id=0;char result[16]={},extra=0;
+  return pending&&sscanf(line,"DONE %u %15s %c",&id,result,&extra)==2&&id==pending&&!strcmp(result,"TELEMETRY");
 }

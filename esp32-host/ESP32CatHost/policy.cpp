@@ -101,10 +101,10 @@ void responseTick(){
 void quietOutputs(bool force=false){if(!force&&responseActive)return;cancelResponse();if(force)touchCue=false;if(!force&&touchSignalUntil&&!reached(touchSignalUntil))return;touchSignalUntil=0;sendUno("LED OFF");sendUno("BEEP 0");}
 void fail(const String &reason){linkRecovering=false;lastFault=reason;invalidate();clearTx();resetMotor();stopId=sessionId=0;sendUno("STOP");sendUno("SESSION_STOP");quietOutputs(true);phase="STOPPED";state("FAULT");logLine("FAULT",reason);}
 void retryLink(){
-  if(linkRecoveryAttempts>=3){fail("Uno link recovery failed after 3 attempts");return;}
+  if(linkRecoveryAttempts>=4){fail("Uno link recovery failed after 4 attempts");return;}
   ++linkRecoveryAttempts;cancelResponse();invalidate();clearTx();resetLinkState();resetMotor();sessionId=0;geometryConfirmed=false;
   observation.clear();touchSignalUntil=0;touchCue=false;stopId=sendUno("STOP");afterStop="LINK_RECOVERY_STOPPED";
-  phase="RECOVERING";state("LINK_RECOVERY_STOP");logLine("LINK_RECOVERY",String(linkRecoveryAttempts)+"/3: confirm stop before resynchronizing");
+  phase="RECOVERING";state("LINK_RECOVERY_STOP");logLine("LINK_RECOVERY",String(linkRecoveryAttempts)+"/4: confirm stop before resynchronizing");
 }
 void recoverLink(){
   linkResumePhase=phase;linkResumeFault=lastFault;linkResumeNext=initiator=="CAT_TOUCH"?(branch<0?"CHOOSE_TOUCH":"CHASE_ALIGN"):"CHOOSE_ROBOT";
@@ -322,7 +322,10 @@ void policyInput(const String &line){
     if(scanId&&!motorConfirmed&&(!id||matchesPending(id,scanId))&&(!strcmp(reason,"BAD_CHECKSUM")||!strcmp(reason,"BAD_ENVELOPE"))){retryScanStart(reason);return;}
     if(action=="WAIT_SCAN_CONFIG"&&sessionId&&(!id||matchesPending(id,sessionId))&&(!strcmp(reason,"BAD_CHECKSUM")||!strcmp(reason,"BAD_ENVELOPE"))){retryScanConfig(reason);return;}
     if(!id)logLine("UNO_PROTOCOL_ERROR",reason);else if(matchesPending(id,motorId))motionFailure(reason);else if(matchesPending(id,sessionId)||matchesPending(id,stopId))fail(String("required command: ")+reason);}return;}
-  if(action=="WAIT_PATROL_CONFIG"&&line.indexOf(" CONFIG ")>=0&&sscanf(line.c_str(),"DATA %u",&id)==1&&matchesPending(id,sessionId)){int wi=line.indexOf("WHEEL_MM="),ti=line.indexOf("TRACK_MM="),sl=line.indexOf("SAFE_LEFT_CM="),sr=line.indexOf("SAFE_RIGHT_CM=");float w=wi>=0?line.substring(wi+9).toFloat():0,t=ti>=0?line.substring(ti+9).toFloat():0;if(w>=20&&w<=150&&t>=50&&t<=300){wheel=w;track=t;geometryConfirmed=true;if(sl>=0)safe[0]=line.substring(sl+13).toFloat();if(sr>=0)safe[1]=line.substring(sr+14).toFloat();}}
+  if((action=="WAIT_PATROL_CONFIG"||action=="LINK_RECOVERY_CONFIG")&&line.indexOf(" CONFIG ")>=0){
+    unsigned configId=0,slots=0;float w=0,t=0,sl=0,sr=0;char tail=0;
+    if(sscanf(line.c_str(),"DATA %u CONFIG WHEEL_MM=%f TRACK_MM=%f SLOTS_PER_REV=%u SAFE_LEFT_CM=%f SAFE_RIGHT_CM=%f %c",&configId,&w,&t,&slots,&sl,&sr,&tail)==6&&matchesPending(configId,sessionId)&&isfinite(w)&&isfinite(t)&&isfinite(sl)&&isfinite(sr)&&w>=20&&w<=150&&t>=50&&t<=300&&slots==20&&sl>=1&&sl<=100&&sr>=1&&sr<=100){wheel=w;track=t;safe[0]=sl;safe[1]=sr;geometryConfirmed=true;}
+  }
   if(line.startsWith("EVENT")&&line.indexOf(" TOUCH ")>=0){String rest=line.substring(line.indexOf(" TOUCH ")+7);int a=rest.startsWith("LEFT ")?0:rest.startsWith("RIGHT ")?1:rest.startsWith("REAR ")?2:rest.startsWith("TOP ")?3:-1;if(a>=0){if(rest.indexOf(" PRESS")>=0)onTouch(a,rest.substring(rest.indexOf(" PRESS")+7).toInt());else if(rest.indexOf(" RELEASE")>=0)touch[a]=false;}return;}
   if(line.startsWith("DATA ")&&line.indexOf(" HW ")>=0){unsigned long uptime=0;if(sscanf(line.c_str(),"DATA %u HW STATE %lu",&id,&uptime)==2)telemetryUnoAt=uptime;char kind[4],area[8],src[12];int en,raw,pressed;unsigned long count;float rpm;
     if(sscanf(line.c_str(),"DATA %u HW %3s %d %d %lu %f %11s %c",&id,kind,&en,&raw,&count,&rpm,src,&extra)==7&&isfinite(rpm)&&rpm>=0&&(!strcmp(kind,"EL")||!strcmp(kind,"ER"))){int s=!strcmp(kind,"ER");encoder[s]=count;encoderRpm[s]=rpm;encoderAt[s]=now();if(count!=quietEncoder[s]||rpm>0){quietAt=now();quietEncoder[s]=count;}}

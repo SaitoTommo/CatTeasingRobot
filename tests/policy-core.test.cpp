@@ -131,7 +131,7 @@ int main(){
   policyControl("alert");CHECK(phase=="STARTING");CHECK(startCat);CHECK(!returnToPatrol);
   policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");
   policyInput("DONE "+String(sessionId)+" GEOMETRY_SET");
-  policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0");
+  policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
   policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");
   CHECK(phase=="INTERACTION");CHECK(initiator=="ROBOT_SEARCH");CHECK(afterFace=="CHOOSE_ROBOT");
   finish();stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(phase=="IDLE");CHECK(action=="IDLE");
@@ -340,7 +340,7 @@ int main(){
  auto recoveryStop=stopId;policyInput("DONE "+String(recoveryStop)+" TELEMETRY");CHECK(stopId==recoveryStop);
  stopped();policyTick();CHECK(action=="LINK_RECOVERY_SESSION_STOP");
  policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(action=="LINK_RECOVERY_CONFIG");
- geometryConfirmed=true;policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(action=="LINK_RECOVERY_SESSION_START");
+ policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(action=="LINK_RECOVERY_SESSION_START");
  lastUnoAt=tick;policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(!linkRecovering);
  CHECK(phase=="INTERACTION");CHECK(action=="WAIT_STOP");CHECK(afterFace=="CHASE_ALIGN");CHECK(branch==1);
  // Diagnostics alone never release recovery or authorize motion. Bounded failure.
@@ -348,14 +348,21 @@ int main(){
  policyInput("EVENT DIAG M 507 507 0 0 0 0");CHECK(action=="LINK_RECOVERY_STOP");
  policyStopUnconfirmed();CHECK(linkRecoveryAttempts==2);CHECK(linkRecovering);
  policyStopUnconfirmed();CHECK(linkRecoveryAttempts==3);CHECK(linkRecovering);
+ policyStopUnconfirmed();CHECK(linkRecoveryAttempts==4);CHECK(linkRecovering);
  policyStopUnconfirmed();CHECK(!linkRecovering);CHECK(phase=="STOPPED");CHECK(action=="FAULT");
  fixture();mode="UART";lastUnoAt=tick-2500;policyTick();policyControl("stop");CHECK(!linkRecovering);
  // A failed STOP after a scan fault recovers diagnostics, without restarting motion.
  fixture();mode="UART";fail("tag search failed result=3");policyStopUnconfirmed();CHECK(linkRecovering);CHECK(linkResumePhase=="STOPPED");
- stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");geometryConfirmed=true;
+ stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);
  policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(commands.back().text=="GET_CONFIG");
  CHECK(!linkRecovering);CHECK(phase=="STOPPED");CHECK(action=="FAULT");CHECK(lastFault=="tag search failed result=3");CHECK(!motorId);CHECK(!scanId);
- fixture();mode="UART";fail("Uno link recovery failed after 3 attempts");policyStopUnconfirmed();CHECK(!linkRecovering);CHECK(phase=="STOPPED");
+ fixture();mode="UART";fail("Uno link recovery failed after 4 attempts");policyStopUnconfirmed();CHECK(!linkRecovering);CHECK(phase=="STOPPED");
+ // Correct CONFIG is required, including on the final (fourth) recovery.
+ fixture();mode="UART";phase="INTERACTION";initiator="CAT_TOUCH";branch=1;recoverLink();retryLink();retryLink();retryLink();CHECK(linkRecoveryAttempts==4);stopped();lastUnoAt=tick;policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");
+ auto recoveryConfig=sessionId;
+ for(const char *bad:{"CONFIG WHEEL_MM=67.5 TRACK_MM=120.0","CONFIG WHEEL_MM=nan TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=19 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=0.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0 EXTRA"}){policyInput("DATA "+String(recoveryConfig)+" "+bad);CHECK(!geometryConfirmed);}
+ policyInput("DATA "+String(recoveryConfig+1)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(!geometryConfirmed);
+ policyInput("DATA "+String(recoveryConfig)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);policyInput("DONE "+String(recoveryConfig));CHECK(action=="LINK_RECOVERY_SESSION_START");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(!linkRecovering);CHECK(phase=="INTERACTION");CHECK(branch==1);
  printf("actual ESP policy core: %u checks passed\n",checks);
  return 0;
 }

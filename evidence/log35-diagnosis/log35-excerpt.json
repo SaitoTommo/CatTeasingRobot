@@ -1,0 +1,1051 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.28",
+  "ms": 508055,
+  "mode": "UART",
+  "phase": "STOPPED",
+  "patrolStatus": {
+    "action": "FAULT",
+    "touchSignalActive": false,
+    "confirmationStage": "NONE",
+    "confirmationRemainingMs": 0,
+    "nextAction": "LINK_RECOVERY_STOPPED",
+    "scanPhase": "NONE",
+    "targetId": 46,
+    "visionAgeMs": 4294967295,
+    "frameSeq": 0,
+    "tagStopWidth": 0.19,
+    "routeCount": 2,
+    "tagWidth": -1,
+    "targetIndex": 0,
+    "rounds": 1,
+    "selectedBehavior": "WAIT_CHASE",
+    "interactionBranch": 1,
+    "lightPattern": -1,
+    "responseActive": false,
+    "responseName": "未选择",
+    "responseLight": -1,
+    "responseSound": -1,
+    "probeStep": 0,
+    "escape": "SLOW_STRAIGHT_ESCAPE",
+    "firstTouch": 3,
+    "multipleTouches": false,
+    "simultaneousDetection": false,
+    "touchSearchRequired": false,
+    "lastFault": "Uno link recovery failed after 3 attempts",
+    "lastMotionFailure": "",
+    "motorId": 0,
+    "motorConfirmed": false,
+    "motorRunning": false,
+    "minimumDrivePwm": 255,
+    "requestedLeftPwm": 0,
+    "requestedRightPwm": 0,
+    "leftPwm": 0,
+    "rightPwm": 0,
+    "scanId": 0,
+    "scanStep": 0,
+    "generation": 111,
+    "scanAngle": 384.75,
+    "scanBudgetDegrees": 718.875,
+    "remainingApproachCm": 0,
+    "scanCapability": false,
+    "catFailure": {
+      "message": "找猫失败",
+      "reason": "encoder settle unavailable",
+      "at": 499914,
+      "angle": 0
+    },
+    "unsupportedSettings": [
+      "farCatThresholdCm",
+      "catLeaveDistanceCm",
+      "finalSearchTimeoutMs",
+      "searchTimeoutMs",
+      "postEscapeWaitSeconds"
+    ],
+    "escapeStage": "NONE",
+    "escapeTargetCm": 23,
+    "escapeDistanceCm": 0,
+    "escapeTravelCm": 0,
+    "interactionId": 8,
+    "escapeRounds": 1,
+    "exploreRounds": 0,
+    "catDistance": -1,
+    "interactionExitReason": "",
+    "linkRecovering": false,
+    "linkRecoveryAttempt": 3,
+    "encoderLeftRpm": 0,
+    "encoderRightRpm": 0,
+    "catWidth": -1,
+    "settleElapsedMs": 0,
+    "settleQuietMs": 0,
+    "settleSamples": 0,
+    "exploreElapsedMs": 0,
+    "exploreRemainingMs": 30000,
+    "remainingWaitMs": 0,
+    "departureElapsedMs": 0
+  },
+  "lastUnoAgeMs": 133,
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "logs": [
+    {
+      "seq": 4494,
+      "ms": 493784,
+      "source": "DECISION",
+      "line": "INTERACTION CAT_CONFIRM"
+    },
+    {
+      "seq": 4495,
+      "ms": 493787,
+      "source": "UNO_TX",
+      "line": "C 682 LED OFF*F8"
+    },
+    {
+      "seq": 4496,
+      "ms": 493794,
+      "source": "UNO_RX",
+      "line": "AK 682"
+    },
+    {
+      "seq": 4497,
+      "ms": 493797,
+      "source": "UNO_RX",
+      "line": "DONE 682 LED_OFF"
+    },
+    {
+      "seq": 4498,
+      "ms": 493802,
+      "source": "UNO_TX",
+      "line": "C 683 BEEP 0*A7"
+    },
+    {
+      "seq": 4499,
+      "ms": 493809,
+      "source": "UNO_RX",
+      "line": "AK 683"
+    },
+    {
+      "seq": 4500,
+      "ms": 493813,
+      "source": "UNO_RX",
+      "line": "DONE 683 BEEP_STARTED"
+    },
+    {
+      "seq": 4501,
+      "ms": 493927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4502,
+      "ms": 494022,
+      "source": "UNO_TX",
+      "line": "C 684 GET_TELEMETRY*0C"
+    },
+    {
+      "seq": 4503,
+      "ms": 494046,
+      "source": "UART_BAD_FRAME",
+      "line": "discarded bytes=12 prefix=FE 82 82 82 82 82 82 82 52 A2 CA 6A "
+    },
+    {
+      "seq": 4504,
+      "ms": 494054,
+      "source": "UNO_RX",
+      "line": "TB 684 2 24012401F6FFF6FF02000F000000F6FF"
+    },
+    {
+      "seq": 4505,
+      "ms": 494058,
+      "source": "TELEMETRY_INCOMPLETE",
+      "line": "DONE 684 TELEMETRY"
+    },
+    {
+      "seq": 4506,
+      "ms": 494265,
+      "source": "UNO_RX",
+      "line": "SD 679 104 1"
+    },
+    {
+      "seq": 4507,
+      "ms": 494396,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b69f4 16b3 7 0 3 0 4 0"
+    },
+    {
+      "seq": 4508,
+      "ms": 494765,
+      "source": "UNO_RX",
+      "line": "SD 679 104 1"
+    },
+    {
+      "seq": 4509,
+      "ms": 494929,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4510,
+      "ms": 495264,
+      "source": "UNO_RX",
+      "line": "SD 679 104 1"
+    },
+    {
+      "seq": 4511,
+      "ms": 495395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b6ddc 17a7 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4512,
+      "ms": 495768,
+      "source": "UNO_RX",
+      "line": "SD 679 104 1"
+    },
+    {
+      "seq": 4513,
+      "ms": 495927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4514,
+      "ms": 496395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b71c4 17c7 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4515,
+      "ms": 496927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4516,
+      "ms": 497395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b75ac 17cd 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4517,
+      "ms": 497677,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 751260"
+    },
+    {
+      "seq": 4518,
+      "ms": 497678,
+      "source": "TOUCH_CONTINUED",
+      "line": "same interaction; no redraw"
+    },
+    {
+      "seq": 4519,
+      "ms": 497807,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 751430 170"
+    },
+    {
+      "seq": 4520,
+      "ms": 497927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4521,
+      "ms": 498059,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 751684"
+    },
+    {
+      "seq": 4522,
+      "ms": 498060,
+      "source": "TOUCH_CONTINUED",
+      "line": "same interaction; no redraw"
+    },
+    {
+      "seq": 4523,
+      "ms": 498208,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 751832 148"
+    },
+    {
+      "seq": 4524,
+      "ms": 498395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b7994 17b0 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4525,
+      "ms": 498412,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 752036"
+    },
+    {
+      "seq": 4526,
+      "ms": 498413,
+      "source": "TOUCH_CONTINUED",
+      "line": "same interaction; no redraw"
+    },
+    {
+      "seq": 4527,
+      "ms": 498608,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 752232 196"
+    },
+    {
+      "seq": 4528,
+      "ms": 498764,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 752389"
+    },
+    {
+      "seq": 4529,
+      "ms": 498764,
+      "source": "TOUCH_CONTINUED",
+      "line": "same interaction; no redraw"
+    },
+    {
+      "seq": 4530,
+      "ms": 498928,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4531,
+      "ms": 498942,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 752566 177"
+    },
+    {
+      "seq": 4532,
+      "ms": 499022,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 4533,
+      "ms": 499084,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 752709"
+    },
+    {
+      "seq": 4534,
+      "ms": 499085,
+      "source": "TOUCH_CONTINUED",
+      "line": "same interaction; no redraw"
+    },
+    {
+      "seq": 4535,
+      "ms": 499257,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 752880 171"
+    },
+    {
+      "seq": 4536,
+      "ms": 499273,
+      "source": "UNO_TX",
+      "line": "C 685 GET_TELEMETRY*B9"
+    },
+    {
+      "seq": 4537,
+      "ms": 499277,
+      "source": "UART_LOOPBACK",
+      "line": "C 685 GET_TELEMETRY*B9"
+    },
+    {
+      "seq": 4538,
+      "ms": 499396,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b7d7c 179b 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4539,
+      "ms": 499403,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 753028"
+    },
+    {
+      "seq": 4540,
+      "ms": 499404,
+      "source": "TOUCH_CONTINUED",
+      "line": "same interaction; no redraw"
+    },
+    {
+      "seq": 4541,
+      "ms": 499598,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 753221 193"
+    },
+    {
+      "seq": 4542,
+      "ms": 499740,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 753364"
+    },
+    {
+      "seq": 4543,
+      "ms": 499741,
+      "source": "TOUCH_CONTINUED",
+      "line": "same interaction; no redraw"
+    },
+    {
+      "seq": 4544,
+      "ms": 499913,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 753537 173"
+    },
+    {
+      "seq": 4545,
+      "ms": 499914,
+      "source": "CAT_SEARCH_FAILED",
+      "line": "找猫失败 encoder settle unavailable angle=384.8"
+    },
+    {
+      "seq": 4546,
+      "ms": 499916,
+      "source": "DECISION",
+      "line": "ENDING WAIT_STOP"
+    },
+    {
+      "seq": 4547,
+      "ms": 499916,
+      "source": "UNO_TX",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4548,
+      "ms": 499920,
+      "source": "UART_LOOPBACK",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4549,
+      "ms": 499927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4550,
+      "ms": 500088,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 753713"
+    },
+    {
+      "seq": 4551,
+      "ms": 500217,
+      "source": "STOP_RETRY",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4552,
+      "ms": 500221,
+      "source": "UART_LOOPBACK",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4553,
+      "ms": 500294,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 753917 204"
+    },
+    {
+      "seq": 4554,
+      "ms": 500444,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b8164 1792 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4555,
+      "ms": 500448,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 754072"
+    },
+    {
+      "seq": 4556,
+      "ms": 500517,
+      "source": "STOP_RETRY",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4557,
+      "ms": 500521,
+      "source": "UART_LOOPBACK",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4558,
+      "ms": 500638,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 754262 190"
+    },
+    {
+      "seq": 4559,
+      "ms": 500812,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP PRESS 754437"
+    },
+    {
+      "seq": 4560,
+      "ms": 500817,
+      "source": "STOP_RETRY",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4561,
+      "ms": 500821,
+      "source": "UART_LOOPBACK",
+      "line": "C 688 STOP*B0"
+    },
+    {
+      "seq": 4562,
+      "ms": 500928,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4563,
+      "ms": 500983,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 754607 170"
+    },
+    {
+      "seq": 4564,
+      "ms": 501118,
+      "source": "STOP_UNCONFIRMED",
+      "line": "No checked MOTOR_STOPPED reply; further motor commands blocked"
+    },
+    {
+      "seq": 4565,
+      "ms": 501120,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOP"
+    },
+    {
+      "seq": 4566,
+      "ms": 501120,
+      "source": "LINK_RECOVERY",
+      "line": "1/3: confirm stop before resynchronizing"
+    },
+    {
+      "seq": 4567,
+      "ms": 501120,
+      "source": "UNO_TX",
+      "line": "C 691 STOP*09"
+    },
+    {
+      "seq": 4568,
+      "ms": 501124,
+      "source": "UART_BAD_FRAME",
+      "line": "discarded bytes=21 prefix=54 4F 55 43 48 20 54 4F 50 20 50 52 45 13 20 92 A2 22 13 10 42 "
+    },
+    {
+      "seq": 4569,
+      "ms": 501125,
+      "source": "UART_BAD_FRAME",
+      "line": "discarded bytes=2 prefix=CA 6A "
+    },
+    {
+      "seq": 4570,
+      "ms": 501358,
+      "source": "UNO_RX",
+      "line": "EVENT PHYSICAL TOUCH TOP RELEASE 754962 214"
+    },
+    {
+      "seq": 4571,
+      "ms": 501396,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b854c 1793 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4572,
+      "ms": 501420,
+      "source": "STOP_RETRY",
+      "line": "C 691 STOP*09"
+    },
+    {
+      "seq": 4573,
+      "ms": 501424,
+      "source": "UART_LOOPBACK",
+      "line": "C 691 STOP*09"
+    },
+    {
+      "seq": 4574,
+      "ms": 501720,
+      "source": "STOP_RETRY",
+      "line": "C 691 STOP*09"
+    },
+    {
+      "seq": 4575,
+      "ms": 501724,
+      "source": "UART_LOOPBACK",
+      "line": "C 691 STOP*09"
+    },
+    {
+      "seq": 4576,
+      "ms": 501927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4577,
+      "ms": 502021,
+      "source": "STOP_RETRY",
+      "line": "C 691 STOP*09"
+    },
+    {
+      "seq": 4578,
+      "ms": 502025,
+      "source": "UART_LOOPBACK",
+      "line": "C 691 STOP*09"
+    },
+    {
+      "seq": 4579,
+      "ms": 502322,
+      "source": "STOP_UNCONFIRMED",
+      "line": "No checked MOTOR_STOPPED reply; further motor commands blocked"
+    },
+    {
+      "seq": 4580,
+      "ms": 502323,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOP"
+    },
+    {
+      "seq": 4581,
+      "ms": 502324,
+      "source": "LINK_RECOVERY",
+      "line": "2/3: confirm stop before resynchronizing"
+    },
+    {
+      "seq": 4582,
+      "ms": 502324,
+      "source": "UNO_TX",
+      "line": "C 693 STOP*5B"
+    },
+    {
+      "seq": 4583,
+      "ms": 502329,
+      "source": "UART_LOOPBACK",
+      "line": "C 693 STOP*5B"
+    },
+    {
+      "seq": 4584,
+      "ms": 502395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b8934 17c4 0 0 3 1 4 0"
+    },
+    {
+      "seq": 4585,
+      "ms": 502625,
+      "source": "STOP_RETRY",
+      "line": "C 693 STOP*5B"
+    },
+    {
+      "seq": 4586,
+      "ms": 502629,
+      "source": "UART_LOOPBACK",
+      "line": "C 693 STOP*5B"
+    },
+    {
+      "seq": 4587,
+      "ms": 502927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4588,
+      "ms": 502927,
+      "source": "STOP_RETRY",
+      "line": "C 693 STOP*5B"
+    },
+    {
+      "seq": 4589,
+      "ms": 502931,
+      "source": "UART_BAD_FRAME",
+      "line": "discarded bytes=12 prefix=14 B2 CA 9A 02 9A 51 3D 41 A9 35 42 "
+    },
+    {
+      "seq": 4590,
+      "ms": 503227,
+      "source": "STOP_RETRY",
+      "line": "C 693 STOP*5B"
+    },
+    {
+      "seq": 4591,
+      "ms": 503240,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG RX 19 BD 5B FF7FFFFEFFFB432036393320"
+    },
+    {
+      "seq": 4592,
+      "ms": 503244,
+      "source": "UNO_RX",
+      "line": "ERROR 0 BAD_CHECKSUM"
+    },
+    {
+      "seq": 4593,
+      "ms": 503245,
+      "source": "UNO_PROTOCOL_ERROR",
+      "line": "BAD_CHECKSUM"
+    },
+    {
+      "seq": 4594,
+      "ms": 503396,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b8d1c 17ae 2 0 3 0 4 0"
+    },
+    {
+      "seq": 4595,
+      "ms": 503528,
+      "source": "STOP_UNCONFIRMED",
+      "line": "No checked MOTOR_STOPPED reply; further motor commands blocked"
+    },
+    {
+      "seq": 4596,
+      "ms": 503529,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOP"
+    },
+    {
+      "seq": 4597,
+      "ms": 503529,
+      "source": "LINK_RECOVERY",
+      "line": "3/3: confirm stop before resynchronizing"
+    },
+    {
+      "seq": 4598,
+      "ms": 503530,
+      "source": "UNO_TX",
+      "line": "C 695 STOP*AD"
+    },
+    {
+      "seq": 4599,
+      "ms": 503536,
+      "source": "UNO_RX",
+      "line": "AK 695"
+    },
+    {
+      "seq": 4600,
+      "ms": 503541,
+      "source": "STOP_CONFIRMED",
+      "line": "DONE 695 MOTOR_STOPPED"
+    },
+    {
+      "seq": 4601,
+      "ms": 503542,
+      "source": "UNO_RX",
+      "line": "DONE 695 MOTOR_STOPPED"
+    },
+    {
+      "seq": 4602,
+      "ms": 503542,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOPPED"
+    },
+    {
+      "seq": 4603,
+      "ms": 503543,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_SESSION_STOP"
+    },
+    {
+      "seq": 4604,
+      "ms": 503545,
+      "source": "UNO_TX",
+      "line": "C 696 GET_TELEMETRY*63"
+    },
+    {
+      "seq": 4605,
+      "ms": 503553,
+      "source": "UNO_RX",
+      "line": "AK 696"
+    },
+    {
+      "seq": 4606,
+      "ms": 503560,
+      "source": "UNO_TX",
+      "line": "C 697 SESSION_STOP*4C"
+    },
+    {
+      "seq": 4607,
+      "ms": 503563,
+      "source": "UNO_RX",
+      "line": "TB 696 0 01BF8D0B0000FF3F000000000000000000"
+    },
+    {
+      "seq": 4608,
+      "ms": 503570,
+      "source": "UNO_RX",
+      "line": "TB 696 1 034E030000E00200000000000000000000"
+    },
+    {
+      "seq": 4609,
+      "ms": 503571,
+      "source": "UNO_RX",
+      "line": "AK 697"
+    },
+    {
+      "seq": 4610,
+      "ms": 503576,
+      "source": "UNO_RX",
+      "line": "DONE 697 SESSION_STOPPED"
+    },
+    {
+      "seq": 4611,
+      "ms": 503577,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_CONFIG"
+    },
+    {
+      "seq": 4612,
+      "ms": 503578,
+      "source": "UNO_TX",
+      "line": "C 698 GET_CONFIG*12"
+    },
+    {
+      "seq": 4613,
+      "ms": 503585,
+      "source": "UNO_RX",
+      "line": "TB 696 2 1E001E00F6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 4614,
+      "ms": 503585,
+      "source": "UNO_RX",
+      "line": "AK 698"
+    },
+    {
+      "seq": 4615,
+      "ms": 503602,
+      "source": "UNO_RX",
+      "line": "DATA 698 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0"
+    },
+    {
+      "seq": 4616,
+      "ms": 503605,
+      "source": "UNO_RX",
+      "line": "DONE 698"
+    },
+    {
+      "seq": 4617,
+      "ms": 503607,
+      "source": "DECISION",
+      "line": "STOPPED FAULT"
+    },
+    {
+      "seq": 4618,
+      "ms": 503607,
+      "source": "FAULT",
+      "line": "Uno link recovery failed after 3 attempts"
+    },
+    {
+      "seq": 4619,
+      "ms": 503607,
+      "source": "UNO_TX",
+      "line": "C 699 STOP*46"
+    },
+    {
+      "seq": 4620,
+      "ms": 503614,
+      "source": "UNO_RX",
+      "line": "AK 699"
+    },
+    {
+      "seq": 4621,
+      "ms": 503618,
+      "source": "STOP_CONFIRMED",
+      "line": "DONE 699 MOTOR_STOPPED"
+    },
+    {
+      "seq": 4622,
+      "ms": 503618,
+      "source": "UNO_RX",
+      "line": "DONE 699 MOTOR_STOPPED"
+    },
+    {
+      "seq": 4623,
+      "ms": 503622,
+      "source": "UNO_TX",
+      "line": "C 700 SESSION_STOP*FD"
+    },
+    {
+      "seq": 4624,
+      "ms": 503629,
+      "source": "UNO_RX",
+      "line": "DONE 696 TELEMETRY"
+    },
+    {
+      "seq": 4625,
+      "ms": 503630,
+      "source": "UNO_RX",
+      "line": "AK 700"
+    },
+    {
+      "seq": 4626,
+      "ms": 503634,
+      "source": "UNO_RX",
+      "line": "DONE 700 SESSION_STOPPED"
+    },
+    {
+      "seq": 4627,
+      "ms": 503637,
+      "source": "UNO_TX",
+      "line": "C 701 LED OFF*25"
+    },
+    {
+      "seq": 4628,
+      "ms": 503643,
+      "source": "UNO_RX",
+      "line": "AK 701"
+    },
+    {
+      "seq": 4629,
+      "ms": 503648,
+      "source": "UNO_RX",
+      "line": "DONE 701 LED_OFF"
+    },
+    {
+      "seq": 4630,
+      "ms": 503653,
+      "source": "UNO_TX",
+      "line": "C 702 BEEP 0*1D"
+    },
+    {
+      "seq": 4631,
+      "ms": 503660,
+      "source": "UNO_RX",
+      "line": "AK 702"
+    },
+    {
+      "seq": 4632,
+      "ms": 503665,
+      "source": "UNO_RX",
+      "line": "DONE 702 BEEP_STARTED"
+    },
+    {
+      "seq": 4633,
+      "ms": 503926,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4634,
+      "ms": 504395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b9104 1685 a 0 3 0 4 0"
+    },
+    {
+      "seq": 4635,
+      "ms": 504927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4636,
+      "ms": 505395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b94ec 17d8 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4637,
+      "ms": 505607,
+      "source": "UNO_TX",
+      "line": "C 703 GET_TELEMETRY*10"
+    },
+    {
+      "seq": 4638,
+      "ms": 505615,
+      "source": "UNO_RX",
+      "line": "AK 703"
+    },
+    {
+      "seq": 4639,
+      "ms": 505623,
+      "source": "UNO_RX",
+      "line": "TB 703 0 01CC950B0001FF3F000000000000000000"
+    },
+    {
+      "seq": 4640,
+      "ms": 505631,
+      "source": "UNO_RX",
+      "line": "TB 703 1 034E030000E00200000000000000000000"
+    },
+    {
+      "seq": 4641,
+      "ms": 505639,
+      "source": "UNO_RX",
+      "line": "TB 703 2 22012201F6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 4642,
+      "ms": 505646,
+      "source": "UNO_RX",
+      "line": "DONE 703 TELEMETRY"
+    },
+    {
+      "seq": 4643,
+      "ms": 505967,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4644,
+      "ms": 506395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b98d4 1793 4 0 3 0 4 0"
+    },
+    {
+      "seq": 4645,
+      "ms": 506927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 4646,
+      "ms": 507395,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H b9cbc 17d0 0 0 3 0 4 0"
+    },
+    {
+      "seq": 4647,
+      "ms": 507607,
+      "source": "UNO_TX",
+      "line": "C 704 GET_TELEMETRY*12"
+    },
+    {
+      "seq": 4648,
+      "ms": 507615,
+      "source": "UNO_RX",
+      "line": "AK 704"
+    },
+    {
+      "seq": 4649,
+      "ms": 507623,
+      "source": "UNO_RX",
+      "line": "TB 704 0 019D9D0B0001FF3F000000000000000000"
+    },
+    {
+      "seq": 4650,
+      "ms": 507634,
+      "source": "UNO_RX",
+      "line": "TB 704 1 034E030000E00200000000000000000000"
+    },
+    {
+      "seq": 4651,
+      "ms": 507641,
+      "source": "UNO_RX",
+      "line": "TB 704 2 22012201F6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 4652,
+      "ms": 507649,
+      "source": "UNO_RX",
+      "line": "DONE 704 TELEMETRY"
+    },
+    {
+      "seq": 4653,
+      "ms": 507927,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    }
+  ]
+}

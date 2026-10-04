@@ -1,0 +1,12 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.29",
+  "mode": "SIM_UNO",
+  "phase": "IDLE",
+  "configPropertyCount": 88,
+  "configChanged": [],
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "writtenBytes": 3744560,
+  "uploadSeconds": 46.5,
+  "hashVerified": true
+}
