@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-04",
+  "scope": "offline active-search transitions; no upload, UART or physical test",
+  "commits": {"first_attack":"6a8052c","patrol_return":"4a99abe"},
+  "native": {"policy_checks":1172,"continuous_interaction_checks":513,"scan_checks":259,"pwm_settings_checks":2647,"vision_gate":"passed","wire_guard":"passed"},
+  "state_inventory": {"passed":2,"failed":0},
+  "esp32_compile": {"passed":true,"flash_bytes":3756790,"flash_limit":8257536,"static_ram_bytes":83656,"ram_limit":327680,"log":"build.txt","context":"combined current working tree includes pre-existing experiment/UI changes"},
+  "covered": ["first attack during stationary, approach, scan and paused invitation", "subsequent contact keeps branch and first contact", "observation/static/signal invitation timeout", "checked STOP/session close/session reopen", "patrol target and TAG_REARM preservation", "idle/stopped alert starts saved route index 0", "no-cat scan returns to patrol", "empty saved route gives explicit stopped fault"],
+  "pending": ["physical touch/recognition and wheel behavior", "UI acceptance", "UART long-run stability", "firmware upload"]
+}
