@@ -238,3 +238,28 @@ test('local ESP LED controls work without Uno link or stop confirmation',()=>{
  const local=source.slice(source.indexOf('if(op=="manual_test"&&(action=="led_on"'),source.indexOf('if(op=="manual_test"&&action=="stop")'));
  assert.match(local,/hostLedManual/);assert.ok(!local.includes('sendUno'));assert.ok(!source.includes('command="LED ON"'));assert.ok(!source.includes('command="LED OFF"'));
 });
+
+test('active cat search probabilities validate groups, preserve drafts and require board readback',()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const config={robotActionLimit:5,robotFastApproachCm:15,robotFastApproachPwm:180,robotSlowFlashPercent:50,catFarWidth:.12,catNearWidth:.35,initialLookSeconds:5,decisionIntervalMs:2500,robotFarApproachPercent:85,robotFarProbePercent:15,robotNearSignalPercent:20,robotNearObservePercent:40,robotNearStayPercent:40,robotProbeCooldownSeconds:15,slowApproachCm:9,slowApproachPwm:95,probePwm:90,probeStep1Cm:3,probeStep2Cm:4,probeStep3Cm:3,probePause1Ms:700,probePause2Ms:900,probePause3Ms:600,signalFlashMs:1400,signalBeepMs:180,minimumDrivePwm:255};
+ const render=(patch={})=>vm.runInContext(`syncRobotSettings(${JSON.stringify({...base,config,logs:[],...patch})})`,context);
+ render();element('robotCfg_robotFarApproachPercent').value='70';element('robotCfg_robotFarProbePercent').value='30';render();assert.equal(element('robotCfg_robotFarProbePercent').value,'30');
+ vm.runInContext('saveRobotSettings()',context);assert.equal(requests.at(-1).config.robotFarProbePercent,30);assert.equal(requests.at(-1).config.robotFarApproachPercent,70);assert.match(element('robotConfigStatus').textContent,/等待板上回读/);
+ render({config:{...config,robotFarApproachPercent:70,robotFarProbePercent:30}});assert.doesNotMatch(element('robotConfigStatus').textContent,/等待板上保存/);assert.match(element('robotConfigStatus').textContent,/实际至少 255/);
+ const n=requests.length;element('robotCfg_robotNearSignalPercent').value='100';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,n);
+ element('robotCfg_robotNearObservePercent').value='0';element('robotCfg_robotNearStayPercent').value='0';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.at(-1).config.robotNearSignalPercent,100);
+ render({logs:[{seq:50,source:'CONFIG_ERROR',line:'invalid group'}]});assert.match(element('robotConfigStatus').textContent,/保存失败/);
+ for(const patch of [{phase:'INTERACTION'},{stopUnconfirmed:true},{stopPendingId:7},{debugBusy:true}]){render(patch);const count=requests.length;vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,count);}
+});
+test('invitation controls round-trip durations and widths and show fresh cat evidence',()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const config=Object.fromEntries(vm.runInContext('Object.entries(robotFields).map(([k,v])=>[k,v[1]/(v[3]||1)])',context));
+ Object.assign(config,{robotActionLimit:5,robotFastApproachPwm:180,slowApproachPwm:95,minimumDrivePwm:255,catFarWidth:.12,catNearWidth:.35,initialLookSeconds:8,signalFlashMs:2500,signalBeepMs:500,robotFarApproachPercent:85,robotFarProbePercent:15,robotNearSignalPercent:20,robotNearObservePercent:40,robotNearStayPercent:40,visionMaxAgeMs:1500});
+ const state={...base,ms:2000,config,logs:[],patrolStatus:{robotAction:'SLOW_APPROACH',robotActionsCompleted:2,robotActionLimit:5,catDistance:0},cameraVision:{at:1950,cat:{valid:true,detected:true,width:.18}}};
+ const render=d=>vm.runInContext(`syncRobotSettings(${JSON.stringify(d)})`,context);render(state);
+ assert.match(element('robotLiveStatus').textContent,/2\/5.*18.0%.*远≤12.0%.*近≥35.0%/);assert.match(element('robotLiveStatus').textContent,/PWM至少 255/);
+ element('robotCfg_catFarWidth').value='15';element('robotCfg_initialLookSeconds').value='9';element('robotCfg_signalFlashMs').value='2800';element('robotCfg_signalBeepMs').value='600';
+ vm.runInContext('saveRobotSettings()',context);assert.equal(requests.at(-1).config.catFarWidth,.15);assert.equal(requests.at(-1).config.initialLookSeconds,9);assert.equal(requests.at(-1).config.signalFlashMs,2800);assert.equal(requests.at(-1).config.signalBeepMs,600);
+ const count=requests.length;element('robotCfg_robotActionLimit').value='5.5';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,count);
+ render({...state,ms:5000});assert.match(element('robotLiveStatus').textContent,/无有效新鲜检测/);assert.doesNotMatch(element('robotLiveStatus').textContent,/18.0%/);
+});
