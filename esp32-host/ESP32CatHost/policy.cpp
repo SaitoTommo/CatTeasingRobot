@@ -216,6 +216,12 @@ void chooseConfirmedTouch(){
 void onTouch(int area,uint32_t stamp=0){
   if(touch[area])return;bool wasHeld=touching();touch[area]=true;lastTouch=now();farAt=leaveFrame=0;
   if(phase=="INTERACTION"){
+    if(initiator=="ROBOT_SEARCH"){
+      // The first attack replaces the robot approach, including any paused
+      // motion/scan. Later contacts remain in the selected cat interaction.
+      newInteraction();initiator="CAT_TOUCH";sessionAt=now();
+      firstTouchPlan(area,stamp);logLine("SEARCH_ATTACK","enter patrol touch interaction");return;
+    }
     if(wasHeld&&stamp&&stamp==firstTouchUnoAt&&rounds==1){touchTie=true;multiTouch=true;touchSearch=true;}
     if(initiator=="CAT_TOUCH"&&branch==0&&action!="PREY_WAIT"){
       pauseForTouch();playExplorationResponse();

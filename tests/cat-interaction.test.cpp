@@ -8,8 +8,17 @@ int main(){
  // Repeated touch never redraws branch, first direction, or interaction identity.
  fixture();draws={99,0,99};onTouch(0,100);stopped();releaseAll();auto interaction=interactionId;auto originalBranch=branch;auto originalEscape=escape;
  for(int a:{1,2,3,0}){draws={42};onTouch(a,200);CHECK(interactionId==interaction);CHECK(firstTouch==0);CHECK(rounds==1);CHECK(branch==originalBranch);CHECK(escape==originalEscape);CHECK(draws.size()==1);releaseAll();}
- // Existing robot-initiated interaction is not converted by new cat contact.
- fixture();policyControl("alert");auto robot=interactionId;onTouch(1);CHECK(initiator=="ROBOT_SEARCH");CHECK(interactionId==robot);CHECK(branch==-1);
+ // First attack during an invitation uses the same plan as patrol contact.
+ for(const char *previous:{"OBSERVE","CAT_DRIVE","SEARCH_CAT_ACTIVE","WAIT_TOUCH_RESUME"}){
+  fixture();policyControl("alert");stopId=0;state(previous);auto robot=interactionId;
+  if(String(previous)=="CAT_DRIVE")drive(10,95,"CAT_DRIVE");
+  if(String(previous)=="SEARCH_CAT_ACTIVE"){scanId=motorId=123;scanUsed=10;}
+  if(String(previous)=="WAIT_TOUCH_RESUME")touchPaused=true;
+  draws={99};onTouch(1,200);CHECK(initiator=="CAT_TOUCH");CHECK(interactionId==robot+1);CHECK(branch==-1);
+  CHECK(firstTouch==1);CHECK(firstTouchUnoAt==200);CHECK(rounds==1);CHECK(!touchPaused);CHECK(!motorId&&!scanId);
+  CHECK(action=="WAIT_STOP");CHECK(afterStop=="WAIT_RELEASE");stopped();releaseAll();touchFound(0);CHECK(action=="PREY_WAIT");CHECK(branch==2);
+ auto attacked=interactionId;onTouch(0,300);CHECK(interactionId==attacked);CHECK(firstTouch==1);CHECK(branch==2);
+ }
  // Explicit direction node -> turn -> checked stop -> actual DRIVE, no camera turn loop.
  fixture();config["escapePreyPercent"]=0;draws={99};onTouch(0);stopped();releaseAll();touchFound(99);CHECK(action=="ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE "));
  md(18,18);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(commands.back().text=="DRIVE 23.00 140");CHECK(escapeRounds==0);
