@@ -1,0 +1,20 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_1",
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "cameraOk": true,
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "motorId": 0,
+  "changedExistingConfig": [],
+  "route": [
+    46,
+    40
+  ],
+  "versionCommit": "f76aca4",
+  "unoUploaded": false,
+  "physicalTested": false,
+  "hashVerified": true,
+  "writtenBytes": 3756960,
+  "uploadSeconds": 25.5
+}
