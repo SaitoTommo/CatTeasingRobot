@@ -11,6 +11,26 @@ void endAndResumePatrol(){
  policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="PATROL");CHECK(!motorId);
 }
 int main(){
+ // Only completed high-level actions consume the default five-action budget.
+ fixture();policyControl("alert");stopped();freshCat(.4);
+ for(int n=1;n<=5;n++){
+  behavior("OBSERVE");CHECK(robotActions==n-1);tick=due-1;freshCat(.4);policyTick();CHECK(robotActions==n-1);
+  tick=due;freshCat(.4);policyTick();CHECK(robotActions==n);
+  if(n<5){CHECK(action=="FOLLOW_WAIT");CHECK(phase=="INTERACTION");tick=due;freshCat(.4);draws={20};policyTick();CHECK(action=="WAIT_STOP");CHECK(afterFace=="OBSERVE");stopped();settled();frame(true,true,n+10);policyTick();CHECK(action=="OBSERVE");}
+ }
+ CHECK(interactionExitReason=="robot action limit reached");endAndResumePatrol();
+ // Fast/slow segments share checked motion; segment completion is not a round.
+ fixture();policyControl("alert");stopped();freshCat(.1);config["robotFastApproachCm"]=3;config["robotSlowFlashPercent"]=100;
+ behavior("FAST_APPROACH");CHECK(robotFast);policyTick();CHECK(action=="CAT_DRIVE");CHECK(commands.back().text=="DRIVE 1.00 180");
+ md(1,1);stopped();settled();frame(true,true,20);policyTick();CHECK(!robotActions);CHECK(action=="APPROACH_CAT");
+ freshCat(.2);policyTick();CHECK(robotActions==1);CHECK(afterFace=="SLOW_APPROACH");CHECK(!robotFast);stopped();settled();frame(true,true,21);policyTick();CHECK(robotSlowFlash);
+ auto flashDraws=draws.size();policyTick();CHECK(action=="CAT_DRIVE");bool flashed=false;for(auto &c:commands)if(c.text.startsWith("LED FLASH 200 "))flashed=true;CHECK(flashed);CHECK(robotActions==1);CHECK(draws.size()==flashDraws);
+ md(6,6);stopped();settled();frame(true,true,22);policyTick();CHECK(action=="APPROACH_CAT");policyTick();CHECK(robotActions==2);CHECK(action=="WAIT_STOP");CHECK(!robotSlowFlash);
+ // Fresh absence preempts the remaining actions; invalid input is not absence.
+ fixture();policyControl("alert");stopped();behavior("OBSERVE");freshCat(.4,false,false);policyTick();CHECK(phase=="INTERACTION");freshCat(.4,false,true);policyTick();CHECK(phase=="ENDING");CHECK(robotActions==0);CHECK(interactionExitReason=="cat left invitation frame");
+ fixture();policyControl("alert");stopped();behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,true,30);policyTick();CHECK(phase=="ENDING");CHECK(robotActions==0);
+ // New settings reject fractional budgets; existing saved fields retain values.
+ fixture();CHECK(config["robotActionLimit"].as<int>()==5);
  // Repeated touch never redraws branch, first direction, or interaction identity.
  fixture();draws={99,0,99};onTouch(0,100);stopped();releaseAll();auto interaction=interactionId;auto originalBranch=branch;auto originalEscape=escape;
  for(int a:{1,2,3,0}){draws={42};onTouch(a,200);CHECK(interactionId==interaction);CHECK(firstTouch==0);CHECK(rounds==1);CHECK(branch==originalBranch);CHECK(escape==originalEscape);CHECK(draws.size()==1);releaseAll();}
@@ -28,20 +48,19 @@ int main(){
  // A complete invitation ends after observation + decision wait, without a
  // second probability draw, even if the cat remains in frame indefinitely.
  for(const char *invitation:{"OBSERVE","STAY","STAY_SIGNAL"}){
-  fixture();routeIndex=1;needRearm=true;policyControl("alert");stopped();resetMotor();scanId=0;
-  behavior(invitation);if(action=="SIGNAL"){tick=due;freshCat(.4);policyTick();stopped();settled();frame();policyTick();CHECK(action=="OBSERVE");}
-  tick=due;freshCat(.4);policyTick();CHECK(action=="FOLLOW_WAIT");
-  tick=due-1;freshCat(.4);policyTick();CHECK(phase=="INTERACTION");draws={42};
-  tick=due;freshCat(.4);policyTick();CHECK(interactionExitReason=="cat ignored robot invitation");CHECK(draws.size()==1);
+  fixture();config["robotActionLimit"]=1;routeIndex=1;needRearm=true;policyControl("alert");stopped();resetMotor();scanId=0;
+  behavior(invitation);if(action=="SIGNAL"){tick=due;freshCat(.4);policyTick();CHECK(phase=="ENDING");endAndResumePatrol();continue;}
+  tick=due;freshCat(.4);policyTick();CHECK(phase=="ENDING");
+  CHECK(interactionExitReason=="robot action limit reached");
   scanDirection=-1;alignSteps=8;endAndResumePatrol();CHECK(routeIndex==1);CHECK(needRearm);CHECK(action=="TAG_REARM");CHECK(scanDirection==1);CHECK(alignSteps==0);
  }
  // Independent alert resets stale patrol progress and starts the saved route.
  for(const char *initial:{"IDLE","STOPPED"}){
-  fixture();phase=initial;routeIndex=1;needRearm=true;arrivalFrame=99;policyControl("alert");CHECK(returnToPatrol);CHECK(routeIndex==0);CHECK(!needRearm);CHECK(!arrivalFrame);
+  fixture();config["robotActionLimit"]=1;phase=initial;routeIndex=1;needRearm=true;arrivalFrame=99;policyControl("alert");CHECK(returnToPatrol);CHECK(routeIndex==0);CHECK(!needRearm);CHECK(!arrivalFrame);
   policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");policyInput("DONE "+String(sessionId)+" GEOMETRY_SET");
   policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
   policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="INTERACTION");
-  stopped();behavior("OBSERVE");tick=due;freshCat(.4);policyTick();tick=due;freshCat(.4);policyTick();endAndResumePatrol();CHECK(action=="SCAN_TAG");CHECK(policyTargetId()==9);
+  stopped();behavior("OBSERVE");tick=due;freshCat(.4);policyTick();endAndResumePatrol();CHECK(action=="SCAN_TAG");CHECK(policyTargetId()==9);
  }
  // Checked no-cat scan completion also returns to the interrupted target.
  fixture();routeIndex=1;policyControl("alert");stopped();policyTick();configDone();auto failedScan=scanId,failedGen=generation;

@@ -55,6 +55,10 @@ d["touchFeedbackBeepMs"]=180;
 d["escapeDistanceCm"]=26;
 d["slowEscapePwm"]=95;
 d["fastEscapePwm"]=210;
+d["robotActionLimit"]=5;
+d["robotFastApproachCm"]=15;
+d["robotFastApproachPwm"]=180;
+d["robotSlowFlashPercent"]=50;
 d["catInteractionIdleSeconds"]=12;
 d["catObserveTimeoutSeconds"]=10;
 d["escapeMinDistanceCm"]=23;
@@ -131,6 +135,10 @@ if(!d["slowEscapePwm"].is<float>()||!isfinite(d["slowEscapePwm"].as<float>())||d
 if(!d["fastEscapePwm"].is<float>()||!isfinite(d["fastEscapePwm"].as<float>())||d["fastEscapePwm"].as<float>()<50||d["fastEscapePwm"].as<float>()>255){error="invalid fastEscapePwm";return false;}
 if(!d["catInteractionIdleSeconds"].is<float>()||!isfinite(d["catInteractionIdleSeconds"].as<float>())||d["catInteractionIdleSeconds"].as<float>()<1||d["catInteractionIdleSeconds"].as<float>()>120){error="invalid catInteractionIdleSeconds";return false;}
 if(!d["catObserveTimeoutSeconds"].is<float>()||!isfinite(d["catObserveTimeoutSeconds"].as<float>())||d["catObserveTimeoutSeconds"].as<float>()<1||d["catObserveTimeoutSeconds"].as<float>()>120){error="invalid catObserveTimeoutSeconds";return false;}
+if(!d["robotActionLimit"].is<float>()||!isfinite(d["robotActionLimit"].as<float>())||d["robotActionLimit"].as<float>()<1||d["robotActionLimit"].as<float>()>100){error="invalid robotActionLimit";return false;}
+if(!d["robotFastApproachCm"].is<float>()||!isfinite(d["robotFastApproachCm"].as<float>())||d["robotFastApproachCm"].as<float>()<1||d["robotFastApproachCm"].as<float>()>50){error="invalid robotFastApproachCm";return false;}
+if(!d["robotFastApproachPwm"].is<float>()||!isfinite(d["robotFastApproachPwm"].as<float>())||d["robotFastApproachPwm"].as<float>()<50||d["robotFastApproachPwm"].as<float>()>255){error="invalid robotFastApproachPwm";return false;}
+if(!d["robotSlowFlashPercent"].is<float>()||!isfinite(d["robotSlowFlashPercent"].as<float>())||d["robotSlowFlashPercent"].as<float>()<0||d["robotSlowFlashPercent"].as<float>()>100){error="invalid robotSlowFlashPercent";return false;}
 if(!d["escapeMinDistanceCm"].is<float>()||!isfinite(d["escapeMinDistanceCm"].as<float>())||d["escapeMinDistanceCm"].as<float>()<1||d["escapeMinDistanceCm"].as<float>()>100){error="invalid escapeMinDistanceCm";return false;}
 if(!d["escapeMaxDistanceCm"].is<float>()||!isfinite(d["escapeMaxDistanceCm"].as<float>())||d["escapeMaxDistanceCm"].as<float>()<1||d["escapeMaxDistanceCm"].as<float>()>100){error="invalid escapeMaxDistanceCm";return false;}
 if(!d["catConfirmWaitSeconds"].is<float>()||!isfinite(d["catConfirmWaitSeconds"].as<float>())||d["catConfirmWaitSeconds"].as<float>()<0||d["catConfirmWaitSeconds"].as<float>()>30){error="invalid catConfirmWaitSeconds";return false;}
@@ -177,6 +185,6 @@ for(JsonVariant v:d["floorReference"].as<JsonArray>())if(!v.is<float>()||v.as<fl
 if(d["scanSettleTimeoutMs"].as<float>()<=d["scanMinimumMs"].as<float>()||d["scanSettleTimeoutMs"].as<float>()<=d["scanQuietMs"].as<float>()){error="settle timeout must exceed both windows";return false;}
 if(!d["scanStepPulses"].is<int>()){error="scan step pulses must be integer";return false;}
 if(!d["minimumDrivePwm"].is<int>()){error="minimumDrivePwm must be integer";return false;}
-for(const char *key:{"escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
+for(const char *key:{"robotActionLimit","escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
 return true;
 }

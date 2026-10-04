@@ -18,6 +18,8 @@ extern void hostLedResponse(bool on,bool active);
 namespace {
 String action="IDLE",afterFace="OBSERVE",afterStop,afterSettle,scanKind,scanNext;
 bool returnToPatrol=true,startCat=false;
+int robotActions=0;String robotAction;
+bool robotFast=false,robotSlowFlash=false,robotFound=false;
 bool linkRecovering=false;uint8_t linkRecoveryAttempts=0;
 String linkResumePhase,linkResumeNext,linkResumeFault;
 int pendingFirstTouch=-1,escapeRounds=0,exploreRounds=0,catDistance=-1;
@@ -129,7 +131,12 @@ void requestConfig(){geometryConfirmed=false;waitCommand("WAIT_PATROL_CONFIG","G
 void beginSession(){phase="STARTING";waitCommand("WAIT_SESSION_START","SESSION_START");}
 void finish(){touchPaused=false;invalidate();quietOutputs(true);phase="ENDING";awaitStop("END_SESSION");}
 void exitInteraction(const String &reason){interactionExitReason=reason;logLine("INTERACTION_EXIT",reason);finish();}
-void newInteraction(){escapeTargetCm=0;interactionId++;escapeRounds=exploreRounds=0;exploring=false;exploreAt=0;catDistance=-1;farAt=leaveFrame=0;touchPaused=false;chaseDetected=false;directionLocated=false;interactionExitReason="";}
+void newInteraction(){robotActions=0;robotAction="";robotFast=robotSlowFlash=robotFound=false;escapeTargetCm=0;interactionId++;escapeRounds=exploreRounds=0;exploring=false;exploreAt=0;catDistance=-1;farAt=leaveFrame=0;touchPaused=false;chaseDetected=false;directionLocated=false;interactionExitReason="";}
+bool completeRobotAction(){
+  if(initiator!="ROBOT_SEARCH"||!robotAction.length())return false;
+  ++robotActions;logLine("ROBOT_ACTION_COMPLETE",robotAction+" "+String(robotActions)+"/"+String((int)setting("robotActionLimit")));robotAction="";
+  if(robotActions>=(int)setting("robotActionLimit")){exitInteraction("robot action limit reached");return true;}return false;
+}
 int distanceClass(){if(!seen())return -1;float w=cat()["width"].as<float>();if(w<=setting("catFarWidth"))catDistance=0;else if(w>=setting("catNearWidth"))catDistance=1;return catDistance;}
 bool departed(bool allowAbsent){
   if(touching()||!fresh()||!cat()["valid"].as<bool>()){farAt=leaveFrame=0;return false;}
@@ -178,7 +185,9 @@ void signal(bool exploration=false){
 }
 void chooseEscapeDistance(){float low=setting("escapeMinDistanceCm"),high=setting("escapeMaxDistanceCm");escapeTargetCm=low==high?low:low+(high-low)*(double(esp_random())/4294967295.0);segmentCm=escapeTargetCm;logLine("ESCAPE_DISTANCE",String(escapeTargetCm,2)+" cm");}
 void behavior(const String &s){
-  if(s=="SLOW_APPROACH"){remainingCm=max(0.0f,setting("slowApproachCm")-setting("stopMarginCm"));state("APPROACH_CAT");}
+  if(initiator=="ROBOT_SEARCH"&&(s=="FAST_APPROACH"||s=="SLOW_APPROACH"||s=="PROBE_APPROACH"||s=="STAY_SIGNAL"||s=="OBSERVE"||s=="STAY")){robotAction=s;robotFound=true;}
+  if(s=="FAST_APPROACH"){robotFast=true;robotSlowFlash=false;remainingCm=setting("robotFastApproachCm");state("APPROACH_CAT");}
+  else if(s=="SLOW_APPROACH"){robotFast=false;robotSlowFlash=initiator=="ROBOT_SEARCH"&&draw()<setting("robotSlowFlashPercent");remainingCm=max(0.0f,setting("slowApproachCm")-setting("stopMarginCm"));state("APPROACH_CAT");}
   else if(s=="RESUME_APPROACH")state("APPROACH_CAT");
   else if(s=="PROBE_APPROACH"){probeStep=1;segmentCm=setting("probeStep1Cm");state("PROBE_DRIVE");}
   else if(s=="STAY_SIGNAL")signal();else if(s=="TOUCH_SIGNAL")signal(true);
@@ -190,7 +199,8 @@ void behavior(const String &s){
   else if(s=="ESCAPE_DRIVE"){state("ESCAPE_DRIVE");}
   else hold("OBSERVE",setting("initialLookSeconds")*1000);
 }
-void chooseRobot(){if(!seen()){search("CHOOSE_ROBOT");return;}int range=distanceClass();if(range<0){face("OBSERVE");return;}bool far=range==0;if(far){bool probe=draw()<setting("robotFarProbePercent")&&elapsed(lastRobotProbe,setting("robotProbeCooldownSeconds")*1000);if(probe)lastRobotProbe=now();face(probe?"PROBE_APPROACH":"SLOW_APPROACH");}else{int n=draw();face(n<setting("robotNearSignalPercent")?"STAY_SIGNAL":n<setting("robotNearSignalPercent")+setting("robotNearObservePercent")?"OBSERVE":"STAY");}}
+void chooseStoppedRobot(){int n=draw();face(n<setting("robotNearSignalPercent")?"STAY_SIGNAL":n<setting("robotNearSignalPercent")+setting("robotNearObservePercent")?"OBSERVE":"STAY");}
+void chooseRobot(){if(!seen()){search("CHOOSE_ROBOT");return;}robotFound=true;int range=distanceClass();if(range<0){face("SLOW_APPROACH");return;}if(range==0){bool probe=draw()<setting("robotFarProbePercent")&&elapsed(lastRobotProbe,setting("robotProbeCooldownSeconds")*1000);if(probe)lastRobotProbe=now();face(probe?"PROBE_APPROACH":"FAST_APPROACH");}else chooseStoppedRobot();}
 void orient(){if(!seen()){beginScan("CAT",afterFace);return;}float e=cat()["centerX"].as<float>()-.5f;if(fabs(e)<=setting("centerTolerancePercent")/100){if(afterFace=="CHOOSE_ROBOT")chooseRobot();else behavior(afterFace);return;}if(alignSteps++>=8){catFailed("alignment budget exhausted");return;}rotate(e<0?-20.25f:20.25f,(int)setting("alignPwm"),"ALIGN_CAT");}
 void pauseForTouch(){
   if(touchPaused||(!motorId&&action!="WAIT_SCAN_CONFIG"))return;
@@ -253,7 +263,7 @@ String policyVisionMode(){
   if(phase=="INTERACTION")return "CAT";
   return "USER";
 }
-void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["action"]=action;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
+void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["robotActionsCompleted"]=robotActions;p["robotActionLimit"]=(int)setting("robotActionLimit");p["robotAction"]=robotAction;p["robotSlowFlash"]=robotSlowFlash;p["robotFastApproach"]=robotFast;p["interactionInitiator"]=initiator;p["action"]=action;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
   if(action!="ESCAPE_MOVE"){p["escapeTravelCm"]=0;p["escapeDistanceCm"]=action=="ESCAPE_DRIVE"?segmentCm:0;}
   p["linkRecovering"]=linkRecovering;p["linkRecoveryAttempt"]=linkRecoveryAttempts;p["encoderLeftRpm"]=encoderRpm[0];p["encoderRightRpm"]=encoderRpm[1];
   p["catWidth"]=seen()?cat()["width"].as<float>():-1;p["settleElapsedMs"]=(action=="SETTLE"||action=="CAT_CONFIRM"&&!due)?now()-actionAt:0;p["settleQuietMs"]=(action=="SETTLE"||action=="CAT_CONFIRM"&&!due)?now()-quietAt:0;
@@ -434,7 +444,7 @@ void policyTick(){
     }
     if(chaseDetected){logLine("CHASE_DETECTED","next interaction");if(branch==0){signal(true);return;}escape=draw()<50?"SLOW_STRAIGHT_ESCAPE":"FAST_STRAIGHT_ESCAPE";turnDeg=180;touchNext="ESCAPE";touchSearch=false;directionLocated=true;state("WAIT_RELEASE");}else if(reached(due))exitInteraction("chase wait timeout");return;
   }
-  if(phase=="INTERACTION"&&initiator!="CAT_TOUCH"&&!motorId&&action!="WAIT_RELEASE"&&action!="WAIT_TOUCH_RESUME"&&departed(false)){exitInteraction("cat departed");return;}
+  if(phase=="INTERACTION"&&initiator=="ROBOT_SEARCH"&&robotFound&&!motorId&&(action=="OBSERVE"||action=="SIGNAL"||action=="FOLLOW_WAIT")&&fresh()&&cat()["valid"].as<bool>()&&!cat()["detected"].as<bool>()){exitInteraction("cat left invitation frame");return;}
   if(touching()&&action!="SIGNAL"&&action!="OBSERVE"&&action!="FOLLOW_WAIT"){if(motorId)pauseForTouch();return;}
   if(action=="CAT_CONFIRM"&&due&&(encoderRpm[0]>0||encoderRpm[1]>0)){logLine("CONFIRM_MOVING","wheel RPM nonzero; stop and restart confirmation");confirmCat(afterFace);return;}
   if(action=="SETTLE"||action=="CAT_CONFIRM"&&!due){
@@ -450,6 +460,7 @@ void policyTick(){
   if(action=="CAT_CHECK"||action=="CAT_CONFIRM"){
     if(checkReady){checkReady=false;if(!fresh()){catFailed("stopped frame expired");return;}if(!cat()["valid"].as<bool>()){catFailed("invalid cat frame");return;}if(!cat()["detected"].as<bool>()){
       if(afterSettle=="CAT_CONFIRMED"){if(scanUsed>=scanBudget){catFailed("confirmation lost cat; scan budget exhausted");return;}beginScan("CAT",afterFace,scanFlags,scanUsed);}
+      if(initiator=="ROBOT_SEARCH"&&robotFound){exitInteraction("cat left invitation frame");return;}
       else beginScan("CAT",afterSettle=="APPROACH_CAT"?"RESUME_APPROACH":afterSettle=="PROBE_DONE"?"PROBE_DONE":afterFace);return;
     }String next=afterSettle;if(next=="CAT_CONFIRMED"){logLine("CAT_CONFIRMED","new stationary frame="+String(observation["frameSeq"]|0u));if(afterFace=="CHOOSE_TOUCH")chooseConfirmedTouch();else if(initiator=="CAT_TOUCH")behavior(afterFace);else orient();}else if(next=="ORIENT")orient();else if(next=="PROBE_DONE"){hold("PROBE_PAUSE",setting(probeStep==1?"probePause1Ms":probeStep==2?"probePause2Ms":"probePause3Ms"));}else state(next);}
     else if(elapsed(checkAt,setting("scanVisionTimeoutMs")))catFailed("new stopped cat frame timeout");return;
@@ -457,18 +468,18 @@ void policyTick(){
   if(action=="FACE_CAT"){settle("ORIENT");return;}
   if(action=="SEARCH_CAT"){beginScan("CAT",afterFace);return;}
   if(initiator=="CAT_TOUCH"&&branch==0&&!touching()&&(action=="SIGNAL"||action=="OBSERVE"||action=="FOLLOW_WAIT")&&elapsed(lastTouch,setting("catInteractionIdleSeconds")*1000)){search("CHASE_ALIGN");return;}
-  if(action=="SIGNAL"){if(reached(due)){quietOutputs();if(branch==0&&initiator=="CAT_TOUCH"){hold("OBSERVE",setting("initialLookSeconds")*1000);return;}face("OBSERVE");}return;}
-  if(action=="OBSERVE"){if(reached(due))hold("FOLLOW_WAIT",setting("decisionIntervalMs"));return;}
+  if(action=="SIGNAL"){if(reached(due)){quietOutputs();if(completeRobotAction())return;if(branch==0&&initiator=="CAT_TOUCH"){hold("OBSERVE",setting("initialLookSeconds")*1000);return;}face("OBSERVE");}return;}
+  if(action=="OBSERVE"){if(reached(due)){if(completeRobotAction())return;hold("FOLLOW_WAIT",setting("decisionIntervalMs"));}return;}
   if(action=="FOLLOW_WAIT"){if(!reached(due))return;
     if(initiator=="CAT_TOUCH"){
       if(branch==0)return;
       else{escape=draw()<50?"SLOW_STRAIGHT_ESCAPE":"FAST_STRAIGHT_ESCAPE";turnDeg=180;touchNext="ESCAPE";touchSearch=false;directionLocated=false;state("WAIT_RELEASE");}
-    }else exitInteraction("cat ignored robot invitation");return;
+    }else chooseRobot();return;
   }
-  if(action=="PROBE_PAUSE"){if(!reached(due))return;probeStep++;if(probeStep>3)face("OBSERVE");else{segmentCm=setting(probeStep==2?"probeStep2Cm":"probeStep3Cm");state("PROBE_DRIVE");}return;}
+  if(action=="PROBE_PAUSE"){if(!reached(due))return;probeStep++;if(probeStep>3){if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH")chooseStoppedRobot();else face("OBSERVE");}else{segmentCm=setting(probeStep==2?"probeStep2Cm":"probeStep3Cm");state("PROBE_DRIVE");}return;}
   if(action=="APPROACH_CAT"||action=="PROBE_DRIVE"||action=="ESCAPE_DRIVE"){
     if(!frontClear()){if(elapsed(actionAt,2000))finish();return;}
-    if(action=="APPROACH_CAT"){if(remainingCm<=0){face("OBSERVE");return;}if(!seen()){beginScan("CAT","RESUME_APPROACH");return;}drive(min(remainingCm,setting("catApproachStepCm")),(int)setting("slowApproachPwm"),"CAT_DRIVE");}
+    if(action=="APPROACH_CAT"){if(remainingCm<=0||robotFast&&seen()&&cat()["width"].as<float>()>setting("catFarWidth")){bool wasFast=robotFast;robotFast=robotSlowFlash=false;if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH"){if(wasFast)face("SLOW_APPROACH");else chooseStoppedRobot();}else face("OBSERVE");return;}if(!seen()){beginScan("CAT","RESUME_APPROACH");return;}if(robotSlowFlash)sendUno("LED FLASH 200 "+String((int)setting("signalFlashMs")));drive(min(remainingCm,setting("catApproachStepCm")),(int)setting(robotFast?"robotFastApproachPwm":"slowApproachPwm"),"CAT_DRIVE");}
     else if(action=="PROBE_DRIVE")drive(segmentCm,(int)setting("probePwm"),"PROBE_MOVE");
     else{chooseEscapeDistance();drive(segmentCm,(int)setting(escape=="FAST_STRAIGHT_ESCAPE"?"fastEscapePwm":"slowEscapePwm"),"ESCAPE_MOVE");}return;
   }

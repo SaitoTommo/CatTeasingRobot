@@ -31,6 +31,7 @@ int main(){
  d["route"][0]=9;d["patrolSearchPwm"]=45;d["patrolAlignPwm"]=30;d["wheelMm"]=67.5;d["trackMm"]=120;d["stopMarginCm"]=3;
  d["tagStopWidth"]=.25;d["catNearWidth"]=.35;d["catFarWidth"]=.12;d["visionMaxAgeMs"]=1500;d["frontBlockBottom"]=.88;d["floorRoiTop"]=.75;d["floorDifferenceThreshold"]=35;
  d["frontAvoidanceEnabled"]=false;d["frontCalibrated"]=false;d["floorReference"].to<JsonArray>();String error;
+ CHECK(d["robotActionLimit"].as<int>()==5);d["robotActionLimit"]=5.5;CHECK(!validateSettings(d,error));d["robotActionLimit"]=5;
  CHECK(validateSettings(d,error));
  for(int good:{1,100,140,255}){d["minimumDrivePwm"]=good;CHECK(validateSettings(d,error));}
  for(float bad:{0.f,256.f,140.5f,NAN,INFINITY}){d["minimumDrivePwm"]=bad;CHECK(!validateSettings(d,error));CHECK(error.indexOf("minimumDrivePwm")>=0);}
