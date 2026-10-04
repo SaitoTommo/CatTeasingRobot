@@ -269,7 +269,7 @@ void policyControl(const String &control){
   }
   if(control=="alert"){
     if(phase=="PATROL"){newInteraction();pendingFirstTouch=-1;returnToPatrol=true;phase="INTERACTION";initiator="ROBOT_SEARCH";sessionAt=now();rounds=0;branch=-1;search("CHOOSE_ROBOT");}
-    else if((phase=="IDLE"||phase=="STOPPED")&&stopReady()){newInteraction();pendingFirstTouch=-1;startCat=true;returnToPatrol=false;invalidate();clearTx();resetMotor();initiator="ROBOT_SEARCH";rounds=0;branch=-1;geometryConfirmed=false;lastFault=lastMotionFailure="";phase="STARTING";waitCommand("WAIT_PATROL_STOP","STOP");}
+    else if((phase=="IDLE"||phase=="STOPPED")&&stopReady()){newInteraction();pendingFirstTouch=-1;startCat=true;returnToPatrol=true;routeIndex=0;needRearm=false;lastDecisionFrame=arrivalFrame=0;invalidate();clearTx();resetMotor();initiator="ROBOT_SEARCH";rounds=0;branch=-1;geometryConfirmed=false;lastFault=lastMotionFailure="";phase="STARTING";waitCommand("WAIT_PATROL_STOP","STOP");}
   }
 }
 void policyVision(){
@@ -350,8 +350,8 @@ void policyInput(const String &line){
     if(action=="WAIT_PATROL_STOP"&&line.endsWith(" MOTOR_STOPPED")){if(mode=="SIM_UNO")waitCommand("WAIT_PATROL_GEOMETRY","SET_GEOMETRY "+String(setting("wheelMm"))+" "+String(setting("trackMm")));else requestConfig();}
     else if(action=="WAIT_PATROL_GEOMETRY")requestConfig();
     else if(action=="WAIT_PATROL_CONFIG"){if(!geometryConfirmed)fail("geometry not confirmed");else beginSession();}
-    else if(action=="WAIT_SESSION_STOP"){rounds=0;branch=-1;followPending=false;if(returnToPatrol)beginSession();else{phase="IDLE";state("IDLE");}}
-    else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed)fail("geometry not confirmed");else if(startCat){startCat=false;phase="INTERACTION";sessionAt=now();if(pendingFirstTouch>=0){int area=pendingFirstTouch;pendingFirstTouch=-1;firstTouchPlan(area,firstTouchUnoAt);}else search("CHOOSE_ROBOT");}else{phase="PATROL";state(needRearm?"TAG_REARM":"SCAN_TAG");}}
+    else if(action=="WAIT_SESSION_STOP"){rounds=0;branch=-1;followPending=false;if(returnToPatrol){if(!config["route"].size())fail("empty route: save a tag route before returning to patrol");else beginSession();}else{phase="IDLE";state("IDLE");}}
+    else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed)fail("geometry not confirmed");else if(startCat){startCat=false;phase="INTERACTION";sessionAt=now();if(pendingFirstTouch>=0){int area=pendingFirstTouch;pendingFirstTouch=-1;firstTouchPlan(area,firstTouchUnoAt);}else search("CHOOSE_ROBOT");}else{scanDirection=1;alignSteps=0;lastDecisionFrame=0;phase="PATROL";state(needRearm?"TAG_REARM":"SCAN_TAG");}}
     else if(action=="WAIT_SCAN_CONFIG"){
       int pwm=scanKind=="TAG"?(int)setting("patrolSearchPwm"):(int)setting("searchPwm");
       scanStartCommand="SR "+String(generation)+" "+String(scanDirection*(int)setting("scanStepPulses"))+" "+String(drivePwmFloor(pwm,(int)setting("minimumDrivePwm")))+" "+String(scanBudget-scanUsed)+" "+String(scanFlags);
@@ -463,7 +463,7 @@ void policyTick(){
     if(initiator=="CAT_TOUCH"){
       if(branch==0)return;
       else{escape=draw()<50?"SLOW_STRAIGHT_ESCAPE":"FAST_STRAIGHT_ESCAPE";turnDeg=180;touchNext="ESCAPE";touchSearch=false;directionLocated=false;state("WAIT_RELEASE");}
-    }else chooseRobot();return;
+    }else exitInteraction("cat ignored robot invitation");return;
   }
   if(action=="PROBE_PAUSE"){if(!reached(due))return;probeStep++;if(probeStep>3)face("OBSERVE");else{segmentCm=setting(probeStep==2?"probeStep2Cm":"probeStep3Cm");state("PROBE_DRIVE");}return;}
   if(action=="APPROACH_CAT"||action=="PROBE_DRIVE"||action=="ESCAPE_DRIVE"){

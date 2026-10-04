@@ -128,13 +128,13 @@ int main(){
  // Independent search opens a session directly; a tag route is not needed.
  for(const char *initial:{"IDLE","STOPPED"}){
   fixture();phase=initial;config["route"].to<JsonArray>().clear();geometryConfirmed=false;
-  policyControl("alert");CHECK(phase=="STARTING");CHECK(startCat);CHECK(!returnToPatrol);
+  policyControl("alert");CHECK(phase=="STARTING");CHECK(startCat);CHECK(returnToPatrol);
   policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");
   policyInput("DONE "+String(sessionId)+" GEOMETRY_SET");
   policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
   policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");
   CHECK(phase=="INTERACTION");CHECK(initiator=="ROBOT_SEARCH");CHECK(afterFace=="CHOOSE_ROBOT");
-  finish();stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(phase=="IDLE");CHECK(action=="IDLE");
+  finish();stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(phase=="STOPPED");CHECK(action=="FAULT");CHECK(lastFault.startsWith("empty route:"));
  }
  returnToPatrol=true;
  // No PING/READY/capability event is needed to start the current firmware.

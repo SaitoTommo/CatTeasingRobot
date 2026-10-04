@@ -4,6 +4,12 @@
 #undef main
 void releaseAll(){memset(touch,0,sizeof(touch));}
 void freshCat(float width,bool detected=true,bool valid=true){observation["at"]=tick;observation["frameSeq"]=observation["frameSeq"].as<unsigned>()+1;observation["cat"]["width"]=width;observation["cat"]["detected"]=detected;observation["cat"]["valid"]=valid;}
+void endAndResumePatrol(){
+ CHECK(phase=="ENDING");CHECK(action=="WAIT_STOP");stopped();policyTick();CHECK(action=="WAIT_SESSION_STOP");
+ auto closing=sessionId;policyInput("DONE "+String(closing)+" WRONG_RESULT");CHECK(action=="WAIT_SESSION_STOP");
+ policyInput("DONE "+String(closing)+" SESSION_STOPPED");CHECK(action=="WAIT_SESSION_START");CHECK(phase=="STARTING");
+ policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="PATROL");CHECK(!motorId);
+}
 int main(){
  // Repeated touch never redraws branch, first direction, or interaction identity.
  fixture();draws={99,0,99};onTouch(0,100);stopped();releaseAll();auto interaction=interactionId;auto originalBranch=branch;auto originalEscape=escape;
@@ -19,6 +25,27 @@ int main(){
   CHECK(action=="WAIT_STOP");CHECK(afterStop=="WAIT_RELEASE");stopped();releaseAll();touchFound(0);CHECK(action=="PREY_WAIT");CHECK(branch==2);
  auto attacked=interactionId;onTouch(0,300);CHECK(interactionId==attacked);CHECK(firstTouch==1);CHECK(branch==2);
  }
+ // A complete invitation ends after observation + decision wait, without a
+ // second probability draw, even if the cat remains in frame indefinitely.
+ for(const char *invitation:{"OBSERVE","STAY","STAY_SIGNAL"}){
+  fixture();routeIndex=1;needRearm=true;policyControl("alert");stopped();resetMotor();scanId=0;
+  behavior(invitation);if(action=="SIGNAL"){tick=due;freshCat(.4);policyTick();stopped();settled();frame();policyTick();CHECK(action=="OBSERVE");}
+  tick=due;freshCat(.4);policyTick();CHECK(action=="FOLLOW_WAIT");
+  tick=due-1;freshCat(.4);policyTick();CHECK(phase=="INTERACTION");draws={42};
+  tick=due;freshCat(.4);policyTick();CHECK(interactionExitReason=="cat ignored robot invitation");CHECK(draws.size()==1);
+  scanDirection=-1;alignSteps=8;endAndResumePatrol();CHECK(routeIndex==1);CHECK(needRearm);CHECK(action=="TAG_REARM");CHECK(scanDirection==1);CHECK(alignSteps==0);
+ }
+ // Independent alert resets stale patrol progress and starts the saved route.
+ for(const char *initial:{"IDLE","STOPPED"}){
+  fixture();phase=initial;routeIndex=1;needRearm=true;arrivalFrame=99;policyControl("alert");CHECK(returnToPatrol);CHECK(routeIndex==0);CHECK(!needRearm);CHECK(!arrivalFrame);
+  policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");policyInput("DONE "+String(sessionId)+" GEOMETRY_SET");
+  policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
+  policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="INTERACTION");
+  stopped();behavior("OBSERVE");tick=due;freshCat(.4);policyTick();tick=due;freshCat(.4);policyTick();endAndResumePatrol();CHECK(action=="SCAN_TAG");CHECK(policyTargetId()==9);
+ }
+ // Checked no-cat scan completion also returns to the interrupted target.
+ fixture();routeIndex=1;policyControl("alert");stopped();policyTick();configDone();auto failedScan=scanId,failedGen=generation;
+ policyInput("SD "+String(failedScan)+" "+String(failedGen)+" 0");CHECK(catFailure.length()>0);endAndResumePatrol();CHECK(routeIndex==1);CHECK(policyTargetId()==10);
  // Explicit direction node -> turn -> checked stop -> actual DRIVE, no camera turn loop.
  fixture();config["escapePreyPercent"]=0;draws={99};onTouch(0);stopped();releaseAll();touchFound(99);CHECK(action=="ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE "));
  md(18,18);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(commands.back().text=="DRIVE 23.00 140");CHECK(escapeRounds==0);
