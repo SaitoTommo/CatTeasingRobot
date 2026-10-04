@@ -13,7 +13,7 @@ struct ScanMachine {
   uint32_t baseL=0, baseR=0, quietL=0, quietR=0, lastFrame=0;
   int16_t increment=1;
   uint8_t pwm=45, flags=0, result=NOT_FOUND;
-  bool terminalSent=false;
+  uint8_t terminalSent=0; // Initial terminal frame plus four retries.
   bool active() const { return phase!=IDLE && phase!=TERMINAL; }
   bool matches(uint16_t i,uint16_t s,uint32_t g) const { return i && i==id && s==step && g && g==generation; }
   bool begin(uint16_t i,uint32_t g,int16_t inc,uint8_t p,uint16_t limit,uint8_t f,uint32_t now) {
@@ -44,7 +44,12 @@ struct ScanMachine {
   }
   Event tick(uint32_t now,uint32_t l,uint32_t r) {
     if (active() && uint32_t(now-began)>=cfg.total) end(TIMEOUT);
-    if (phase==TERMINAL && !terminalSent) { terminalSent=true;return COMPLETE; }
+    // Repeat the same terminal identity/result; never restart motion.
+    // Retry spacing only needs 16-bit time; long gaps may delay a repeat,
+    // never create motion or change its bounded count.
+    if (phase==TERMINAL && terminalSent<5 && (!terminalSent || uint16_t(now-sent)>=500)) {
+      ++terminalSent;sent=now;return COMPLETE;
+    }
     if (phase==NEXT) {
       if (used>=budget) { end(NOT_FOUND);return tick(now,l,r); }
       ++step;phase=TURN;return START_STEP;

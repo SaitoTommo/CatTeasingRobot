@@ -16,24 +16,28 @@ const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
 test('cat settings preserve drafts, validate relative widths and round trip every timeout',()=>{
   const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
-  const config={catFarWidth:.12,catNearWidth:.35,postEscapeWaitSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+  const config={escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
   const render=patch=>{const d={...base,config,...patch};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
   render({});assert.equal(element('catCfg_catNearWidth').value,'35.0');
   element('catCfg_explorePreyMinimumSeconds').value='45';element('catCfg_captureWaitMaxSeconds').value='25';render({ms:1100});
+  element('catCfg_catConfirmWaitSeconds').value='7';
   assert.equal(element('catCfg_explorePreyMinimumSeconds').value,'45');
   vm.runInContext('saveCatSettings()',context);assert.equal(requests.at(-1).config.explorePreyMinimumSeconds,45);assert.equal(requests.at(-1).config.captureWaitMaxSeconds,25);assert.equal(requests.at(-1).config.catNearWidth,.35);
+  assert.equal(requests.at(-1).config.catConfirmWaitSeconds,7);assert.equal(requests.at(-1).config.touchFlashPercent,20);
+  assert.equal(requests.at(-1).config.escapeMinDistanceCm,30);assert.equal(requests.at(-1).config.escapeMaxDistanceCm,80);const distanceRequests=requests.length;element('catCfg_escapeMinDistanceCm').value='90';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,distanceRequests);element('catCfg_escapeMinDistanceCm').value='30';
+  const probabilityRequests=requests.length;element('catCfg_catConfirmPreyPercent').value='90';element('catCfg_catConfirmExplorePercent').value='20';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,probabilityRequests);element('catCfg_catConfirmPreyPercent').value='20';
   const n=requests.length;element('catCfg_catFarWidth').value='40';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,n);
   render({config:{...config,explorePreyMinimumSeconds:45,captureWaitMaxSeconds:25}});assert.match(element('catConfigStatus').textContent,/45/);
   for(const patch of [{phase:'INTERACTION'},{stopUnconfirmed:true},{stopPendingId:1},{debugBusy:true}]){render(patch);vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,n);}
 });
 
 test('cat progress names chase and displays separate rounds and time',()=>{
- vm.runInContext(`syncCatProgress(${JSON.stringify({...base,config:{escapePreyAfterRounds:5},patrolStatus:{action:'WAIT_CHASE',interactionId:2,escapeRounds:3,exploreRounds:4,exploreElapsedMs:31000,exploreRemainingMs:0,remainingWaitMs:2000}})})`,context);
- assert.match(element('catProgress').textContent,/等待猫追击/);assert.match(element('catProgress').textContent,/3\/5/);assert.match(element('catProgress').textContent,/31.0 秒/);
+ vm.runInContext(`syncCatProgress(${JSON.stringify({...base,config:{escapePreyAfterRounds:5},patrolStatus:{action:'WAIT_CHASE',interactionId:2,escapeRounds:3,exploreRounds:4,exploreElapsedMs:31000,exploreRemainingMs:0,remainingWaitMs:2000,escapeTargetCm:55}})})`,context);
+ assert.match(element('catProgress').textContent,/面向猫观察，等待互动/);assert.match(element('catProgress').textContent,/逃跑完成 3 轮/);assert.match(element('catProgress').textContent,/31.0 秒/);assert.match(element('catProgress').textContent,/55.0 厘米/);
 });
 
 test('cat save failure is reported from board logs rather than assumed successful',()=>{
- const config={catFarWidth:.12,catNearWidth:.35,postEscapeWaitSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+ const config={escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
  const render=logs=>{const d={...base,config,logs};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
  render([{seq:9,source:'CONFIG',line:'saved'}]);
  for(const [k,v] of Object.entries(config))element('catCfg_'+k).value=String(k.includes('Width')?v*100:v);
@@ -169,6 +173,7 @@ test('diagnostic log decodes hexadecimal heartbeat and reset breadcrumbs',()=>{
   assert.match(heartbeat,/RX 溢出 2，丢弃命令 1/);
   assert.match(describe('EVENT DIAG S 36 99'),/遥测右超声波，命令 99/);
   assert.match(describe('EVENT DIAG_BOOT PREV_STAGE=21 CMD=99'),/校验帧发送/);
+  assert.match(describe('EVENT DIAG_BOOT STAGE=21 CMD=99'),/校验帧发送/);
   assert.equal(describe('EVENT DIAG H malformed'),'');
   assert.match(describe('EVENT DIAG M 640 620 0 0 0 0'),/SRAM 当前余量 640 B，采样最低 620 B/);
   assert.match(describe('EVENT DIAG M 610 590 2 0 -2048 1'),/电机 0\/-2048；异常锁定，需复位/);
@@ -182,7 +187,7 @@ test('page reports ESP active-low LED control separately from Uno buzzer',()=>{
   assert.match(element('hostLed').textContent,/控制电平 LOW/);
   assert.match(element('hostLed').textContent,/蜂鸣器输出在 Uno D13/);
   sync({...base,mode:'SIM_UNO',hostLed:{on:false,mode:'OFF',gpioLevel:1}});
-  assert.match(element('hostLed').textContent,/物理 LED 关闭/);
+  assert.match(element('hostLed').textContent,/板载 LED：OFF，灭/);
 });
 test('compiled page bundles the shared telemetry parser without imports',()=>{
   assert.ok(html.includes('class HardwareTelemetry'));assert.ok(!html.includes('/* HARDWARE_TELEMETRY */'));
@@ -217,4 +222,19 @@ test('partial telemetry does not refresh old sensor rows and changing mode clear
   sync({...base,ms:4000,unoTelemetry:[{line:'DATA 1 HW SL 1 1 0 32 32 P',at:3900},{line:'DATA 1 HW ML 150 150 150 1 1 0',at:1000}],unoConfig:{line:'DATA 1 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=5.0 SAFE_RIGHT_CM=6.0',at:3900,source:'UNO_RX'}});
   assert.match(element('sensor_SL').textContent,/物理测距 32 cm/);assert.match(element('sensor_ML').textContent,/过期/);assert.equal(element('safeRight').value,'6.0');
   sync({...base,ms:4100,mode:'SIM_UNO'});assert.equal(element('safeRight').value,'');assert.match(element('sensor_SL').textContent,/等待 Uno/);
+});
+
+test('exploration shows independent light and sound combination and playback state',()=>{
+ vm.runInContext(`syncCatProgress(${JSON.stringify({...base,patrolStatus:{action:'SIGNAL',responseName:'双闪＋静音',responseActive:true}})})`,context);
+ assert.match(element('catProgress').textContent,/探索声光 双闪＋静音（播放中）/);
+ vm.runInContext(`syncCatProgress(${JSON.stringify({...base,patrolStatus:{action:'FOLLOW_WAIT',responseName:'不亮＋长响',responseActive:false}})})`,context);
+ assert.match(element('catProgress').textContent,/不亮＋长响（等待新按压）/);
+});
+
+test('local ESP LED controls work without Uno link or stop confirmation',()=>{
+ sync({...base,mode:'SIM_UNO',stopUnconfirmed:true});assert.equal(element('localLedOn').disabled,false);
+ sync({...base,phase:'INTERACTION'});assert.equal(element('localLedOn').disabled,true);
+ const source=readFileSync(new URL('uno_debug.h',root),'utf8');
+ const local=source.slice(source.indexOf('if(op=="manual_test"&&(action=="led_on"'),source.indexOf('if(op=="manual_test"&&action=="stop")'));
+ assert.match(local,/hostLedManual/);assert.ok(!local.includes('sendUno'));assert.ok(!source.includes('command="LED ON"'));assert.ok(!source.includes('command="LED OFF"'));
 });

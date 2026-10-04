@@ -55,6 +55,13 @@ d["touchFeedbackBeepMs"]=180;
 d["escapeDistanceCm"]=26;
 d["slowEscapePwm"]=95;
 d["fastEscapePwm"]=210;
+d["catInteractionIdleSeconds"]=12;
+d["catObserveTimeoutSeconds"]=10;
+d["escapeMinDistanceCm"]=23;
+d["escapeMaxDistanceCm"]=23;
+d["catConfirmWaitSeconds"]=5;
+d["catConfirmPreyPercent"]=20;
+d["catConfirmExplorePercent"]=20;
 d["escapePreyAfterRounds"]=5;
 d["escapePreyPercent"]=20;
 d["explorePreyMinimumSeconds"]=30;
@@ -122,6 +129,13 @@ if(!d["touchFeedbackBeepMs"].is<float>()||!isfinite(d["touchFeedbackBeepMs"].as<
 if(!d["escapeDistanceCm"].is<float>()||!isfinite(d["escapeDistanceCm"].as<float>())||d["escapeDistanceCm"].as<float>()<1||d["escapeDistanceCm"].as<float>()>60){error="invalid escapeDistanceCm";return false;}
 if(!d["slowEscapePwm"].is<float>()||!isfinite(d["slowEscapePwm"].as<float>())||d["slowEscapePwm"].as<float>()<50||d["slowEscapePwm"].as<float>()>255){error="invalid slowEscapePwm";return false;}
 if(!d["fastEscapePwm"].is<float>()||!isfinite(d["fastEscapePwm"].as<float>())||d["fastEscapePwm"].as<float>()<50||d["fastEscapePwm"].as<float>()>255){error="invalid fastEscapePwm";return false;}
+if(!d["catInteractionIdleSeconds"].is<float>()||!isfinite(d["catInteractionIdleSeconds"].as<float>())||d["catInteractionIdleSeconds"].as<float>()<1||d["catInteractionIdleSeconds"].as<float>()>120){error="invalid catInteractionIdleSeconds";return false;}
+if(!d["catObserveTimeoutSeconds"].is<float>()||!isfinite(d["catObserveTimeoutSeconds"].as<float>())||d["catObserveTimeoutSeconds"].as<float>()<1||d["catObserveTimeoutSeconds"].as<float>()>120){error="invalid catObserveTimeoutSeconds";return false;}
+if(!d["escapeMinDistanceCm"].is<float>()||!isfinite(d["escapeMinDistanceCm"].as<float>())||d["escapeMinDistanceCm"].as<float>()<1||d["escapeMinDistanceCm"].as<float>()>100){error="invalid escapeMinDistanceCm";return false;}
+if(!d["escapeMaxDistanceCm"].is<float>()||!isfinite(d["escapeMaxDistanceCm"].as<float>())||d["escapeMaxDistanceCm"].as<float>()<1||d["escapeMaxDistanceCm"].as<float>()>100){error="invalid escapeMaxDistanceCm";return false;}
+if(!d["catConfirmWaitSeconds"].is<float>()||!isfinite(d["catConfirmWaitSeconds"].as<float>())||d["catConfirmWaitSeconds"].as<float>()<0||d["catConfirmWaitSeconds"].as<float>()>30){error="invalid catConfirmWaitSeconds";return false;}
+if(!d["catConfirmPreyPercent"].is<float>()||!isfinite(d["catConfirmPreyPercent"].as<float>())||d["catConfirmPreyPercent"].as<float>()<0||d["catConfirmPreyPercent"].as<float>()>100){error="invalid catConfirmPreyPercent";return false;}
+if(!d["catConfirmExplorePercent"].is<float>()||!isfinite(d["catConfirmExplorePercent"].as<float>())||d["catConfirmExplorePercent"].as<float>()<0||d["catConfirmExplorePercent"].as<float>()>100){error="invalid catConfirmExplorePercent";return false;}
 if(!d["escapePreyAfterRounds"].is<float>()||!isfinite(d["escapePreyAfterRounds"].as<float>())||d["escapePreyAfterRounds"].as<float>()<1||d["escapePreyAfterRounds"].as<float>()>100){error="invalid escapePreyAfterRounds";return false;}
 if(!d["escapePreyPercent"].is<float>()||!isfinite(d["escapePreyPercent"].as<float>())||d["escapePreyPercent"].as<float>()<0||d["escapePreyPercent"].as<float>()>100){error="invalid escapePreyPercent";return false;}
 if(!d["explorePreyMinimumSeconds"].is<float>()||!isfinite(d["explorePreyMinimumSeconds"].as<float>())||d["explorePreyMinimumSeconds"].as<float>()<0||d["explorePreyMinimumSeconds"].as<float>()>600){error="invalid explorePreyMinimumSeconds";return false;}
@@ -146,6 +160,8 @@ if(!d["visionMaxAgeMs"].is<float>()||!isfinite(d["visionMaxAgeMs"].as<float>())|
 if(!d["frontBlockBottom"].is<float>()||!isfinite(d["frontBlockBottom"].as<float>())||d["frontBlockBottom"].as<float>()<0.5||d["frontBlockBottom"].as<float>()>1){error="invalid frontBlockBottom";return false;}
 if(!d["floorRoiTop"].is<float>()||!isfinite(d["floorRoiTop"].as<float>())||d["floorRoiTop"].as<float>()<0.5||d["floorRoiTop"].as<float>()>0.95){error="invalid floorRoiTop";return false;}
 if(!d["floorDifferenceThreshold"].is<float>()||!isfinite(d["floorDifferenceThreshold"].as<float>())||d["floorDifferenceThreshold"].as<float>()<5||d["floorDifferenceThreshold"].as<float>()>100){error="invalid floorDifferenceThreshold";return false;}
+if(d["escapeMinDistanceCm"].as<float>()>d["escapeMaxDistanceCm"].as<float>()){error="escape minimum exceeds maximum";return false;}
+if(d["catConfirmPreyPercent"].as<float>()+d["catConfirmExplorePercent"].as<float>()>100){error="confirmed cat probabilities exceed 100";return false;}
 for(auto route=d["route"].as<JsonArray>();JsonVariant id:route){if(!id.is<int>()||id.as<int>()<0||id.as<int>()>586){error="invalid tag ID";return false;}}
 if(!d["route"].is<JsonArray>()||d["route"].size()>128){error="route size 0..128 (save a nonempty route before starting)";return false;}
 if(d["catFarWidth"].as<float>()>=d["catNearWidth"].as<float>()){error="catFarWidth must be less than catNearWidth";return false;}

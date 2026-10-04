@@ -1,5 +1,5 @@
-// Firmware version: ESP32_CAT_HOST_0.18. Reported by /api/state.
-// Uno pairing: UNO_CAT_V6.8 with SCAN_V1; minimumDrivePwm is web-configurable.
+// Firmware version: ESP32_CAT_HOST_0.28. Reported by /api/state.
+// Uno pairing: UNO_CAT_V6.10 with SCAN_V1; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -84,6 +84,7 @@ uint32_t sendUno(const String &command) {
   outgoing.push_back({payload+suffix,mode=="UART"});
   return id;
 }
+#include "stop_query_guard.h"
 void flushTx(){
   if(stopPendingId){
     if(millis()-stopSentAt>=300){
@@ -91,10 +92,10 @@ void flushTx(){
       else if(!stopUnconfirmed){stopUnconfirmed=true;outgoing.clear();telemetryId=0;hostLedStop();logLine("STOP_UNCONFIRMED","No checked MOTOR_STOPPED reply; further motor commands blocked");policyStopUnconfirmed();}
     }
     if(!stopUnconfirmed)return;
-    // Only a new explicit STOP may restart the bounded confirmation attempt.
-    while(!outgoing.empty()&&(!outgoing.front().physical||outgoing.front().wire.indexOf(" STOP*")<0)){logLine("TX_BLOCKED","stop is unconfirmed: "+outgoing.front().wire);outgoing.pop_front();}
+    // Keep diagnosis available without allowing queries to clear a failed STOP.
+    while(!outgoing.empty()&&(!outgoing.front().physical||(outgoing.front().wire.indexOf(" STOP*")<0&&!stopDiagnosticQuery(outgoing.front().wire.c_str())))){logLine("TX_BLOCKED","stop is unconfirmed: "+outgoing.front().wire);outgoing.pop_front();}
     if(outgoing.empty())return;
-    stopPendingId=0;
+    if(outgoing.front().wire.indexOf(" STOP*")>=0)stopPendingId=0;
   }
   if(outgoing.empty()||millis()-lastWrite<15)return;
   auto o=outgoing.front();outgoing.pop_front();lastWrite=millis();lastTx=o.wire;
@@ -114,6 +115,7 @@ void policySnapshot(JsonDocument &);
 #include "uno_debug.h"
 #include "compact_telemetry.h"
 CompactTelemetry compactTelemetry;
+void resetLinkState(){uartLine="";compactTelemetry.reset();debugReset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;}
 void acceptUno(String line,bool physical) {
   line.trim(); if(!line.length())return;
   bool pendingStopReply=physical&&stopPendingId&&line.startsWith("DONE "+String(stopPendingId)+" MOTOR_STOPPED*");
@@ -178,7 +180,7 @@ void defaults() {
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.18";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.28";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
@@ -270,7 +272,7 @@ void initCamera() {
 void setup() {
   hostLedInit();
   heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
-  prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
+  prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();if(!d["catObserveTimeoutSeconds"].is<float>())candidate["catObserveTimeoutSeconds"]=max(1.0f,candidate["postEscapeWaitSeconds"].as<float>());if(!d["escapeMinDistanceCm"].is<float>()||!d["escapeMaxDistanceCm"].is<float>()){float legacy=max(1.0f,candidate["escapeDistanceCm"].as<float>()-candidate["stopMarginCm"].as<float>());candidate["escapeMinDistanceCm"]=legacy;candidate["escapeMaxDistanceCm"]=legacy;}String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
   WiFi.mode(WIFI_AP_STA);WiFi.softAP("ESP32-CatHost","catrobot32");String ssid=prefs.getString("ssid","");if(ssid.length())WiFi.begin(ssid.c_str(),prefs.getString("password","").c_str());
   logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO");initCamera();startServers();
 }

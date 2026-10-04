@@ -1,0 +1,1051 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.28",
+  "ms": 214121,
+  "mode": "UART",
+  "phase": "STOPPED",
+  "patrolStatus": {
+    "action": "FAULT",
+    "touchSignalActive": false,
+    "confirmationStage": "NONE",
+    "confirmationRemainingMs": 0,
+    "nextAction": "LINK_RECOVERY_STOPPED",
+    "scanPhase": "NONE",
+    "targetId": 46,
+    "visionAgeMs": 4294967295,
+    "frameSeq": 0,
+    "tagStopWidth": 0.19,
+    "routeCount": 2,
+    "tagWidth": -1,
+    "targetIndex": 0,
+    "rounds": 1,
+    "selectedBehavior": "CHOOSE_TOUCH",
+    "interactionBranch": -1,
+    "lightPattern": 8,
+    "responseActive": false,
+    "responseName": "慢闪＋长响",
+    "responseLight": 2,
+    "responseSound": 1,
+    "probeStep": 0,
+    "escape": "SLOW_STRAIGHT_ESCAPE",
+    "firstTouch": 3,
+    "multipleTouches": false,
+    "simultaneousDetection": false,
+    "touchSearchRequired": true,
+    "lastFault": "operator_stop",
+    "lastMotionFailure": "",
+    "motorId": 0,
+    "motorConfirmed": false,
+    "motorRunning": false,
+    "minimumDrivePwm": 255,
+    "requestedLeftPwm": 0,
+    "requestedRightPwm": 0,
+    "leftPwm": 0,
+    "rightPwm": 0,
+    "scanId": 0,
+    "scanStep": 0,
+    "generation": 49,
+    "scanAngle": 40.5,
+    "scanBudgetDegrees": 718.875,
+    "remainingApproachCm": 0,
+    "scanCapability": false,
+    "catFailure": {
+      "message": "找猫失败",
+      "reason": "scan result=3",
+      "at": 199568,
+      "angle": 40.5
+    },
+    "unsupportedSettings": [
+      "farCatThresholdCm",
+      "catLeaveDistanceCm",
+      "finalSearchTimeoutMs",
+      "searchTimeoutMs",
+      "postEscapeWaitSeconds"
+    ],
+    "escapeStage": "NONE",
+    "escapeTargetCm": 0,
+    "escapeDistanceCm": 0,
+    "escapeTravelCm": 0,
+    "interactionId": 5,
+    "escapeRounds": 0,
+    "exploreRounds": 0,
+    "catDistance": -1,
+    "interactionExitReason": "",
+    "linkRecovering": false,
+    "linkRecoveryAttempt": 3,
+    "encoderLeftRpm": 0,
+    "encoderRightRpm": 0,
+    "catWidth": -1,
+    "settleElapsedMs": 0,
+    "settleQuietMs": 0,
+    "settleSamples": 0,
+    "exploreElapsedMs": 0,
+    "exploreRemainingMs": 30000,
+    "remainingWaitMs": 0,
+    "departureElapsedMs": 0
+  },
+  "lastUnoAgeMs": 92,
+  "lastRx": "EVENT DIAG M 507 507 0 0 0 0",
+  "lastTx": "C 293 GET_TELEMETRY*34",
+  "logs": [
+    {
+      "seq": 1793,
+      "ms": 199570,
+      "source": "UNO_TX",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1794,
+      "ms": 199638,
+      "source": "UART_LOOPBACK",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1795,
+      "ms": 199870,
+      "source": "STOP_RETRY",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1796,
+      "ms": 199874,
+      "source": "UART_LOOPBACK",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1797,
+      "ms": 200034,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1798,
+      "ms": 200068,
+      "source": "UNO_RX",
+      "line": "SD 251 39 3"
+    },
+    {
+      "seq": 1799,
+      "ms": 200170,
+      "source": "STOP_RETRY",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1800,
+      "ms": 200174,
+      "source": "UART_LOOPBACK",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1801,
+      "ms": 200471,
+      "source": "STOP_RETRY",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1802,
+      "ms": 200474,
+      "source": "UART_LOOPBACK",
+      "line": "C 261 STOP*BC"
+    },
+    {
+      "seq": 1803,
+      "ms": 200533,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 101d1 17a8 0 0 3 0 0 0"
+    },
+    {
+      "seq": 1804,
+      "ms": 200568,
+      "source": "UNO_RX",
+      "line": "SD 251 39 3"
+    },
+    {
+      "seq": 1805,
+      "ms": 200771,
+      "source": "STOP_UNCONFIRMED",
+      "line": "No checked MOTOR_STOPPED reply; further motor commands blocked"
+    },
+    {
+      "seq": 1806,
+      "ms": 200773,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOP"
+    },
+    {
+      "seq": 1807,
+      "ms": 200774,
+      "source": "LINK_RECOVERY",
+      "line": "1/3: confirm stop before resynchronizing"
+    },
+    {
+      "seq": 1808,
+      "ms": 200775,
+      "source": "UNO_TX",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1809,
+      "ms": 200780,
+      "source": "UART_LOOPBACK",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1810,
+      "ms": 201076,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1811,
+      "ms": 201077,
+      "source": "UNO_RX",
+      "line": "SD 251 39 3"
+    },
+    {
+      "seq": 1812,
+      "ms": 201078,
+      "source": "STOP_RETRY",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1813,
+      "ms": 201081,
+      "source": "UART_LOOPBACK",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1814,
+      "ms": 201379,
+      "source": "STOP_RETRY",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1815,
+      "ms": 201383,
+      "source": "UART_LOOPBACK",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1816,
+      "ms": 201533,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 105b9 17af 0 0 3 0 0 0"
+    },
+    {
+      "seq": 1817,
+      "ms": 201679,
+      "source": "STOP_RETRY",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1818,
+      "ms": 201683,
+      "source": "UART_LOOPBACK",
+      "line": "C 264 STOP*31"
+    },
+    {
+      "seq": 1819,
+      "ms": 201980,
+      "source": "STOP_UNCONFIRMED",
+      "line": "No checked MOTOR_STOPPED reply; further motor commands blocked"
+    },
+    {
+      "seq": 1820,
+      "ms": 201981,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOP"
+    },
+    {
+      "seq": 1821,
+      "ms": 201981,
+      "source": "LINK_RECOVERY",
+      "line": "2/3: confirm stop before resynchronizing"
+    },
+    {
+      "seq": 1822,
+      "ms": 201982,
+      "source": "UNO_TX",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1823,
+      "ms": 201987,
+      "source": "UART_LOOPBACK",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1824,
+      "ms": 202033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1825,
+      "ms": 202283,
+      "source": "STOP_RETRY",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1826,
+      "ms": 202287,
+      "source": "UART_LOOPBACK",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1827,
+      "ms": 202533,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 109a1 17d0 0 0 3 0 0 0"
+    },
+    {
+      "seq": 1828,
+      "ms": 202584,
+      "source": "STOP_RETRY",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1829,
+      "ms": 202588,
+      "source": "UART_LOOPBACK",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1830,
+      "ms": 202884,
+      "source": "STOP_RETRY",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1831,
+      "ms": 202888,
+      "source": "UART_LOOPBACK",
+      "line": "C 266 STOP*63"
+    },
+    {
+      "seq": 1832,
+      "ms": 203033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1833,
+      "ms": 203185,
+      "source": "STOP_UNCONFIRMED",
+      "line": "No checked MOTOR_STOPPED reply; further motor commands blocked"
+    },
+    {
+      "seq": 1834,
+      "ms": 203186,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOP"
+    },
+    {
+      "seq": 1835,
+      "ms": 203186,
+      "source": "LINK_RECOVERY",
+      "line": "3/3: confirm stop before resynchronizing"
+    },
+    {
+      "seq": 1836,
+      "ms": 203187,
+      "source": "UNO_TX",
+      "line": "C 268 STOP*DA"
+    },
+    {
+      "seq": 1837,
+      "ms": 203193,
+      "source": "UNO_RX",
+      "line": "AK 268"
+    },
+    {
+      "seq": 1838,
+      "ms": 203198,
+      "source": "STOP_CONFIRMED",
+      "line": "DONE 268 MOTOR_STOPPED"
+    },
+    {
+      "seq": 1839,
+      "ms": 203199,
+      "source": "UNO_RX",
+      "line": "DONE 268 MOTOR_STOPPED"
+    },
+    {
+      "seq": 1840,
+      "ms": 203199,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_STOPPED"
+    },
+    {
+      "seq": 1841,
+      "ms": 203200,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_SESSION_STOP"
+    },
+    {
+      "seq": 1842,
+      "ms": 203202,
+      "source": "UNO_TX",
+      "line": "C 269 GET_TELEMETRY*F4"
+    },
+    {
+      "seq": 1843,
+      "ms": 203210,
+      "source": "UNO_RX",
+      "line": "AK 269"
+    },
+    {
+      "seq": 1844,
+      "ms": 203218,
+      "source": "UNO_RX",
+      "line": "TB 269 0 014C0C010000FF3F000000000000000000"
+    },
+    {
+      "seq": 1845,
+      "ms": 203219,
+      "source": "UNO_TX",
+      "line": "C 270 SESSION_STOP*F5"
+    },
+    {
+      "seq": 1846,
+      "ms": 203227,
+      "source": "UNO_RX",
+      "line": "TB 269 1 03AC000000360000000000000000000000"
+    },
+    {
+      "seq": 1847,
+      "ms": 203228,
+      "source": "UNO_RX",
+      "line": "AK 270"
+    },
+    {
+      "seq": 1848,
+      "ms": 203233,
+      "source": "UNO_RX",
+      "line": "DONE 270 SESSION_STOPPED"
+    },
+    {
+      "seq": 1849,
+      "ms": 203234,
+      "source": "DECISION",
+      "line": "RECOVERING LINK_RECOVERY_CONFIG"
+    },
+    {
+      "seq": 1850,
+      "ms": 203235,
+      "source": "UNO_TX",
+      "line": "C 271 GET_CONFIG*F9"
+    },
+    {
+      "seq": 1851,
+      "ms": 203242,
+      "source": "UNO_RX",
+      "line": "TB 269 2 3A003A00B904B90400000F000000F6FF"
+    },
+    {
+      "seq": 1852,
+      "ms": 203242,
+      "source": "UNO_RX",
+      "line": "AK 271"
+    },
+    {
+      "seq": 1853,
+      "ms": 203259,
+      "source": "UNO_RX",
+      "line": "DATA 271 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0"
+    },
+    {
+      "seq": 1854,
+      "ms": 203263,
+      "source": "UNO_RX",
+      "line": "DONE 271"
+    },
+    {
+      "seq": 1855,
+      "ms": 203265,
+      "source": "DECISION",
+      "line": "STOPPED FAULT"
+    },
+    {
+      "seq": 1856,
+      "ms": 203265,
+      "source": "FAULT",
+      "line": "Uno link recovery failed after 3 attempts"
+    },
+    {
+      "seq": 1857,
+      "ms": 203265,
+      "source": "UNO_TX",
+      "line": "C 272 STOP*18"
+    },
+    {
+      "seq": 1858,
+      "ms": 203272,
+      "source": "UNO_RX",
+      "line": "AK 272"
+    },
+    {
+      "seq": 1859,
+      "ms": 203276,
+      "source": "STOP_CONFIRMED",
+      "line": "DONE 272 MOTOR_STOPPED"
+    },
+    {
+      "seq": 1860,
+      "ms": 203277,
+      "source": "UNO_RX",
+      "line": "DONE 272 MOTOR_STOPPED"
+    },
+    {
+      "seq": 1861,
+      "ms": 203281,
+      "source": "UNO_TX",
+      "line": "C 273 SESSION_STOP*DD"
+    },
+    {
+      "seq": 1862,
+      "ms": 203289,
+      "source": "UNO_RX",
+      "line": "AK 273"
+    },
+    {
+      "seq": 1863,
+      "ms": 203294,
+      "source": "UNO_RX",
+      "line": "DONE 273 SESSION_STOPPED"
+    },
+    {
+      "seq": 1864,
+      "ms": 203296,
+      "source": "UNO_TX",
+      "line": "C 274 LED OFF*C3"
+    },
+    {
+      "seq": 1865,
+      "ms": 203303,
+      "source": "UNO_RX",
+      "line": "DONE 269 TELEMETRY"
+    },
+    {
+      "seq": 1866,
+      "ms": 203304,
+      "source": "UNO_RX",
+      "line": "AK 274"
+    },
+    {
+      "seq": 1867,
+      "ms": 203306,
+      "source": "UNO_RX",
+      "line": "DONE 274 LED_OFF"
+    },
+    {
+      "seq": 1868,
+      "ms": 203311,
+      "source": "UNO_TX",
+      "line": "C 275 BEEP 0*C3"
+    },
+    {
+      "seq": 1869,
+      "ms": 203318,
+      "source": "UNO_RX",
+      "line": "AK 275"
+    },
+    {
+      "seq": 1870,
+      "ms": 203323,
+      "source": "UNO_RX",
+      "line": "DONE 275 BEEP_STARTED"
+    },
+    {
+      "seq": 1871,
+      "ms": 203532,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 10d89 1691 e 0 3 0 0 0"
+    },
+    {
+      "seq": 1872,
+      "ms": 204034,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1873,
+      "ms": 204532,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 11171 17eb 0 0 3 0 0 0"
+    },
+    {
+      "seq": 1874,
+      "ms": 205033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1875,
+      "ms": 205266,
+      "source": "UNO_TX",
+      "line": "C 276 GET_TELEMETRY*47"
+    },
+    {
+      "seq": 1876,
+      "ms": 205274,
+      "source": "UNO_RX",
+      "line": "AK 276"
+    },
+    {
+      "seq": 1877,
+      "ms": 205282,
+      "source": "UNO_RX",
+      "line": "TB 276 0 015C14010001FF3F000000000000000000"
+    },
+    {
+      "seq": 1878,
+      "ms": 205290,
+      "source": "UNO_RX",
+      "line": "TB 276 1 03AC000000360000000000000000000000"
+    },
+    {
+      "seq": 1879,
+      "ms": 205298,
+      "source": "UNO_RX",
+      "line": "TB 276 2 1C001C00F6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 1880,
+      "ms": 205305,
+      "source": "UNO_RX",
+      "line": "DONE 276 TELEMETRY"
+    },
+    {
+      "seq": 1881,
+      "ms": 205532,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 11559 17a1 2 0 3 0 0 0"
+    },
+    {
+      "seq": 1882,
+      "ms": 206033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1883,
+      "ms": 206533,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 11941 17d7 0 0 3 0 0 0"
+    },
+    {
+      "seq": 1884,
+      "ms": 207033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1885,
+      "ms": 207266,
+      "source": "UNO_TX",
+      "line": "C 277 GET_TELEMETRY*F2"
+    },
+    {
+      "seq": 1886,
+      "ms": 207274,
+      "source": "UNO_RX",
+      "line": "AK 277"
+    },
+    {
+      "seq": 1887,
+      "ms": 207282,
+      "source": "UNO_RX",
+      "line": "TB 277 0 012C1C010001FF3F000000000000000000"
+    },
+    {
+      "seq": 1888,
+      "ms": 207292,
+      "source": "UNO_RX",
+      "line": "TB 277 1 03AC000000360000000000000000000000"
+    },
+    {
+      "seq": 1889,
+      "ms": 207300,
+      "source": "UNO_RX",
+      "line": "TB 277 2 1D001D00B904B90400000F000000F6FF"
+    },
+    {
+      "seq": 1890,
+      "ms": 207306,
+      "source": "UNO_RX",
+      "line": "DONE 277 TELEMETRY"
+    },
+    {
+      "seq": 1891,
+      "ms": 207533,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 11d29 17aa 3 0 3 0 0 0"
+    },
+    {
+      "seq": 1892,
+      "ms": 208033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1893,
+      "ms": 208071,
+      "source": "DECISION",
+      "line": "STOPPED FAULT"
+    },
+    {
+      "seq": 1894,
+      "ms": 208071,
+      "source": "FAULT",
+      "line": "operator_stop"
+    },
+    {
+      "seq": 1895,
+      "ms": 208072,
+      "source": "MODE",
+      "line": "SIM_UNO"
+    },
+    {
+      "seq": 1896,
+      "ms": 208073,
+      "source": "UNO_TX",
+      "line": "C 278 STOP*05"
+    },
+    {
+      "seq": 1897,
+      "ms": 208079,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1898,
+      "ms": 208084,
+      "source": "STOP_CONFIRMED",
+      "line": "DONE 278 MOTOR_STOPPED"
+    },
+    {
+      "seq": 1899,
+      "ms": 208089,
+      "source": "UNO_TX",
+      "line": "C 279 SESSION_STOP*2D"
+    },
+    {
+      "seq": 1900,
+      "ms": 208155,
+      "source": "UNO_TX",
+      "line": "C 280 LED OFF*76"
+    },
+    {
+      "seq": 1901,
+      "ms": 208162,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1902,
+      "ms": 208167,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1903,
+      "ms": 208171,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1904,
+      "ms": 208172,
+      "source": "UNO_TX",
+      "line": "C 281 BEEP 0*26"
+    },
+    {
+      "seq": 1905,
+      "ms": 208175,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1906,
+      "ms": 208179,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1907,
+      "ms": 208183,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1908,
+      "ms": 208187,
+      "source": "SIM_TX",
+      "line": "C 282 STOP*E1"
+    },
+    {
+      "seq": 1909,
+      "ms": 208203,
+      "source": "SIM_TX",
+      "line": "C 283 SESSION_STOP*6C"
+    },
+    {
+      "seq": 1910,
+      "ms": 208219,
+      "source": "SIM_TX",
+      "line": "C 284 GET_CONFIG*8E"
+    },
+    {
+      "seq": 1911,
+      "ms": 208533,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1912,
+      "ms": 209032,
+      "source": "INPUT_REJECTED",
+      "line": "source does not match mode"
+    },
+    {
+      "seq": 1913,
+      "ms": 209195,
+      "source": "DECISION",
+      "line": "STOPPED FAULT"
+    },
+    {
+      "seq": 1914,
+      "ms": 209195,
+      "source": "FAULT",
+      "line": "operator_stop"
+    },
+    {
+      "seq": 1915,
+      "ms": 209196,
+      "source": "MODE",
+      "line": "UART"
+    },
+    {
+      "seq": 1916,
+      "ms": 209196,
+      "source": "SIM_TX",
+      "line": "C 285 STOP*3E"
+    },
+    {
+      "seq": 1917,
+      "ms": 209211,
+      "source": "SIM_TX",
+      "line": "C 286 SESSION_STOP*14"
+    },
+    {
+      "seq": 1918,
+      "ms": 209227,
+      "source": "SIM_TX",
+      "line": "C 287 LED OFF*1E"
+    },
+    {
+      "seq": 1919,
+      "ms": 209243,
+      "source": "SIM_TX",
+      "line": "C 288 BEEP 0*AD"
+    },
+    {
+      "seq": 1920,
+      "ms": 209259,
+      "source": "UNO_TX",
+      "line": "C 289 STOP*D5"
+    },
+    {
+      "seq": 1921,
+      "ms": 209266,
+      "source": "UNO_RX",
+      "line": "AK 289"
+    },
+    {
+      "seq": 1922,
+      "ms": 209270,
+      "source": "STOP_CONFIRMED",
+      "line": "DONE 289 MOTOR_STOPPED"
+    },
+    {
+      "seq": 1923,
+      "ms": 209270,
+      "source": "UNO_RX",
+      "line": "DONE 289 MOTOR_STOPPED"
+    },
+    {
+      "seq": 1924,
+      "ms": 209274,
+      "source": "UNO_TX",
+      "line": "C 290 SESSION_STOP*F1"
+    },
+    {
+      "seq": 1925,
+      "ms": 209282,
+      "source": "UNO_RX",
+      "line": "AK 290"
+    },
+    {
+      "seq": 1926,
+      "ms": 209287,
+      "source": "UNO_RX",
+      "line": "DONE 290 SESSION_STOPPED"
+    },
+    {
+      "seq": 1927,
+      "ms": 209290,
+      "source": "UNO_TX",
+      "line": "C 291 GET_CONFIG*34"
+    },
+    {
+      "seq": 1928,
+      "ms": 209298,
+      "source": "UNO_RX",
+      "line": "AK 291"
+    },
+    {
+      "seq": 1929,
+      "ms": 209314,
+      "source": "UNO_RX",
+      "line": "DATA 291 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0"
+    },
+    {
+      "seq": 1930,
+      "ms": 209316,
+      "source": "UNO_RX",
+      "line": "DONE 291"
+    },
+    {
+      "seq": 1931,
+      "ms": 209533,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 124f9 174c c 0 3 1 0 0"
+    },
+    {
+      "seq": 1932,
+      "ms": 210033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1933,
+      "ms": 210532,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 128e1 17f1 0 0 3 1 0 0"
+    },
+    {
+      "seq": 1934,
+      "ms": 210896,
+      "source": "UNO_TX",
+      "line": "C 292 GET_TELEMETRY*81"
+    },
+    {
+      "seq": 1935,
+      "ms": 210904,
+      "source": "UNO_RX",
+      "line": "AK 292"
+    },
+    {
+      "seq": 1936,
+      "ms": 210912,
+      "source": "UNO_RX",
+      "line": "TB 292 0 015A2A010001FF3F000000000000000000"
+    },
+    {
+      "seq": 1937,
+      "ms": 210921,
+      "source": "UNO_RX",
+      "line": "TB 292 1 03AC000000360000000000000000000000"
+    },
+    {
+      "seq": 1938,
+      "ms": 210928,
+      "source": "UNO_RX",
+      "line": "TB 292 2 39003900F6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 1939,
+      "ms": 210935,
+      "source": "UNO_RX",
+      "line": "DONE 292 TELEMETRY"
+    },
+    {
+      "seq": 1940,
+      "ms": 211032,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1941,
+      "ms": 211533,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 12cc9 17b6 2 0 3 0 0 0"
+    },
+    {
+      "seq": 1942,
+      "ms": 212033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1943,
+      "ms": 212532,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 130b1 17fe 0 0 3 0 0 0"
+    },
+    {
+      "seq": 1944,
+      "ms": 212896,
+      "source": "UNO_TX",
+      "line": "C 293 GET_TELEMETRY*34"
+    },
+    {
+      "seq": 1945,
+      "ms": 212904,
+      "source": "UNO_RX",
+      "line": "AK 293"
+    },
+    {
+      "seq": 1946,
+      "ms": 212914,
+      "source": "UNO_RX",
+      "line": "TB 293 0 012B32010001FF3F000000000000000000"
+    },
+    {
+      "seq": 1947,
+      "ms": 212921,
+      "source": "UNO_RX",
+      "line": "TB 293 1 03AC000000360000000000000000000000"
+    },
+    {
+      "seq": 1948,
+      "ms": 212930,
+      "source": "UNO_RX",
+      "line": "TB 293 2 1C001C00D104D10400000F000000F6FF"
+    },
+    {
+      "seq": 1949,
+      "ms": 212936,
+      "source": "UNO_RX",
+      "line": "DONE 293 TELEMETRY"
+    },
+    {
+      "seq": 1950,
+      "ms": 213033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    },
+    {
+      "seq": 1951,
+      "ms": 213532,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG H 13499 17c2 3 0 3 1 0 0"
+    },
+    {
+      "seq": 1952,
+      "ms": 214033,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 507 507 0 0 0 0"
+    }
+  ]
+}

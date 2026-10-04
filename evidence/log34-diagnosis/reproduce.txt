@@ -1,0 +1,3 @@
+normal config geometryConfirmed=1
+recovery config geometryConfirmed=0, state=LINK_RECOVERY_CONFIG
+recovery after valid DONE: phase=STOPPED, action=FAULT, fault=Uno link recovery failed after 3 attempts

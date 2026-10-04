@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.8. Boot log: READY UNO_CAT_V6.8.
+// Firmware version: UNO_CAT_V6.9. Boot log: READY UNO_CAT_V6.9.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -271,6 +271,8 @@ void stopOutputs() {
 
 void abortMotion(const __FlashStringHelper *reason) {
   if (scan.active()) scan.end(ScanMachine::ABORTED);
+  // STOP must clear physical outputs even when the motion record is already empty.
+  stopOutputs();
   if (motion.kind == MOTION_NONE) return;
   const uint16_t id = motion.id;
   uint32_t leftPulses, rightPulses;
@@ -279,7 +281,6 @@ void abortMotion(const __FlashStringHelper *reason) {
   rightPulses -= motion.basePulses[1];
   motion.kind = MOTION_NONE;
   motionBypassAvoidance = false;
-  stopOutputs();
   char line[88];
   snprintf_P(line, sizeof(line), PSTR("MA %u %S %lu %lu"), id,
     reinterpret_cast<const char *>(reason), leftPulses, rightPulses);
@@ -616,8 +617,8 @@ void tickScan(uint32_t now) {
   }else if(event==ScanMachine::REQUEST){
     char line[46];snprintf_P(line,sizeof(line),PSTR("VQ %u %u %lu %u"),scan.id,scan.step,(unsigned long)scan.generation,scan.used);printProtectedLine(line);
   }else if(event==ScanMachine::COMPLETE){
-    if(motion.kind!=MOTION_NONE)abortMotion(F("SCAN_ENDED"));
-    stopOutputs();scan.flags=0;
+    if(motion.kind!=MOTION_NONE&&motion.id==scan.id)abortMotion(F("SCAN_ENDED"));
+    scan.flags=0; // Motion completion/abort already stopped its outputs.
     char line[46];snprintf_P(line,sizeof(line),PSTR("SD %u %lu %u"),scan.id,(unsigned long)scan.generation,scan.result);printProtectedLine(line);
   }
 }
@@ -799,7 +800,11 @@ void processCommand(char *line) {
     long v[5];if(!star||!parseScanFields(words,v,1)){error(id,F("INVALID_SCAN_FRAME"));return;}
     if(sessionStopped||anyTouchPressed()){error(id,F("SESSION_OR_TOUCH_LOCK"));return;}
     // Same scan retry only repeats the acknowledgement, never its movement.
-    if(scan.id==id&&scan.generation==uint32_t(v[0])){ack(id);if(scan.phase==ScanMachine::TERMINAL)scan.terminalSent=false;return;}
+    if(scan.id==id&&scan.generation==uint32_t(v[0])){
+      ack(id);
+      if(scan.phase==ScanMachine::TERMINAL)scan.terminalSent=false;
+      return;
+    }
     if(motion.kind!=MOTION_NONE&&!(scan.id==id&&scan.generation==uint32_t(v[0]))){error(id,F("BUSY"));return;}
     if(v[4]){float dl,dr;if(!currentSideDistance(0,dl,millis())||!currentSideDistance(1,dr,millis())||dl>=safeDistanceCm[0]||dr>=safeDistanceCm[1]){error(id,F("BOTH_SIDES_REQUIRED"));return;}}
     if(!scan.begin(id,v[0],v[1],v[2],v[3],v[4],millis())){error(id,F("INVALID_SCAN"));return;}
@@ -1295,17 +1300,17 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.8"));
+  Serial.println(F("READY UNO_CAT_V6.10"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
       static_cast<uint16_t>(~diagBreadcrumb.command) == diagBreadcrumb.commandInverse) {
-    Serial.print(F("EVENT DIAG_BOOT PREV_STAGE=")); Serial.print(diagBreadcrumb.stage);
+    Serial.print(F("EVENT DIAG_BOOT STAGE=")); Serial.print(diagBreadcrumb.stage);
     Serial.print(F(" CMD=")); Serial.println(diagBreadcrumb.command);
-  } else Serial.println(F("EVENT DIAG_BOOT NO_VALID_BREADCRUMB"));
+  } else Serial.println(F("EVENT DIAG_BOOT NONE"));
   diagBreadcrumb.magic = 0xD159; diagCommand(0); diagStage(0);
   Serial.println(F("EVENT HOST_LED OFF"));
-  Serial.println(F("EVENT UART_SOFT_RX D12 BAUD=57600 TX=D1"));
+  Serial.println(F("EVENT UART_SOFT_RX D12 57600 TX=D1"));
   // V5.1: keep assembling host commands while Serial.print waits for TX headroom, so
   // command bursts (sensor injections + ROTATE/DRIVE) can no longer overrun the RX ring.
 }

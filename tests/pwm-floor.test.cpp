@@ -44,5 +44,14 @@ int main(){
  for(const char *key:{"escapePreyAfterRounds","explorePreyMinimumSeconds"}){d[key]=3.5;CHECK(!validateSettings(d,error));d[key]=key[0]=='e'&&key[1]=='s'?5:30;}
  d["catFarWidth"]=.4;d["catNearWidth"]=.35;CHECK(!validateSettings(d,error));d["catFarWidth"]=.12;
  d["captureWaitMaxSeconds"]=60;CHECK(validateSettings(d,error));d["captureWaitMaxSeconds"]=61;CHECK(!validateSettings(d,error));
+ d["captureWaitMaxSeconds"]=15;d["catConfirmPreyPercent"]=60;d["catConfirmExplorePercent"]=41;CHECK(!validateSettings(d,error));
+ d["catConfirmExplorePercent"]=40;CHECK(validateSettings(d,error));
+ for(float value:{-1.f,31.f,NAN}){d["catConfirmWaitSeconds"]=value;CHECK(!validateSettings(d,error));}
+ d["catConfirmWaitSeconds"]=5;CHECK(validateSettings(d,error));
+ d["escapeMinDistanceCm"]=30;d["escapeMaxDistanceCm"]=80;CHECK(validateSettings(d,error));
+ d["escapeMinDistanceCm"]=81;CHECK(!validateSettings(d,error));
+ d["escapeMinDistanceCm"]=30;d["escapeMaxDistanceCm"]=101;CHECK(!validateSettings(d,error));
+ d["escapeMaxDistanceCm"]=30;CHECK(validateSettings(d,error));
+ for(const char *key:{"catInteractionIdleSeconds","catObserveTimeoutSeconds"}){for(float v:{0.f,121.f,NAN}){d[key]=v;CHECK(!validateSettings(d,error));}d[key]=10;CHECK(validateSettings(d,error));}
  printf("actual ESP PWM floor and settings: %u checks passed\n",checks);
 }

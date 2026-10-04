@@ -62,5 +62,17 @@ int main(){
   ScanMachine two;CHECK(two.begin(8,13,1,45,71,0,0));
   for(unsigned i=0;i<50;i++){auto t=i*400;CHECK(two.tick(t,i,i)==ScanMachine::START_STEP);two.motionStarted(i,i);two.motionStopped(t+100,i+1,i+1);CHECK(two.tick(t+300,i+1,i+1)==ScanMachine::REQUEST);CHECK(two.reply(8,i+1,13,i==49?1:0,i+1,t+301));}
   CHECK(two.result==ScanMachine::FOUND);CHECK(two.used==50);
+  // Lost terminal frames: four spaced repeats, bounded and no new turn.
+  ScanMachine terminal;CHECK(terminal.begin(20,30,2,45,71,0,100));
+  terminal.end(ScanMachine::TIMEOUT);CHECK(terminal.tick(100,0,0)==ScanMachine::COMPLETE);
+  for(unsigned i=1;i<=4;i++){
+    CHECK(terminal.tick(100+i*500-1,0,0)==ScanMachine::NONE);
+    CHECK(terminal.tick(100+i*500,0,0)==ScanMachine::COMPLETE);
+    CHECK(terminal.result==ScanMachine::TIMEOUT);CHECK(!terminal.active());
+  }
+  CHECK(terminal.tick(3100,0,0)==ScanMachine::NONE);
+  CHECK(terminal.begin(20,30,2,45,71,0,3101));CHECK(!terminal.active());
+  terminal.terminalSent=false;CHECK(terminal.tick(3102,0,0)==ScanMachine::COMPLETE);
+  CHECK(terminal.tick(3602,0,0)==ScanMachine::COMPLETE);CHECK(!terminal.active());
   std::printf("scan core: %u checks passed\n",checks);
 }

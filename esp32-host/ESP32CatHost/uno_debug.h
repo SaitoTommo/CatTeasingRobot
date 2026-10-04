@@ -52,6 +52,11 @@ void debugTick(){
 }
 void debugInput(JsonDocument &d){
   String op=d["op"]|"",action=d["action"]|"";
+  if(op=="manual_test"&&(action=="led_on"||action=="led_off")){
+    if(phase!="IDLE"&&phase!="STOPPED"){debugResult="请先停止策略，再手动控制 ESP LED";logLine("DEBUG_ERROR",debugResult);return;}
+    hostLedManual(action=="led_on");debugResult=action=="led_on"?"ESP 板载 LED 已打开":"ESP 板载 LED 已关闭";
+    logLine("HOST_LED_LOCAL",debugResult);return;
+  }
   if(op=="manual_test"&&action=="stop"){debugCancel();policyControl("stop");debugResult="已发送停止命令";return;}
   if(phase!="IDLE"&&phase!="STOPPED"||!stopReady()){debugResult="请先停止巡游";logLine("DEBUG_ERROR",debugResult);return;}
   if(debugId||manualUntil||configStep>=0){debugResult="请等待当前操作完成，或点击停止";logLine("DEBUG_ERROR",debugResult);return;}
@@ -73,8 +78,6 @@ void debugInput(JsonDocument &d){
   else if(action=="telemetry")command="GET_TELEMETRY";
   else if(action=="lock")command="SESSION_STOP";
   else if(action=="unlock")command="SESSION_START";
-  else if(action=="led_on")command="LED ON";
-  else if(action=="led_off")command="LED OFF";
   else if(action=="beep")command="BEEP 180";
   else if(action=="forward"||action=="backward"||action=="left"||action=="right"||action=="left_forward"||action=="left_reverse"||action=="right_forward"||action=="right_reverse"){
     if(!d["pwm"].is<int>()||!d["durationMs"].is<int>()){debugResult="PWM 和时长必须是整数";return;}
