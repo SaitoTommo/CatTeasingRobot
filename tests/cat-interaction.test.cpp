@@ -11,6 +11,10 @@ void endAndResumePatrol(){
  policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="PATROL");CHECK(!motorId);
 }
 int main(){
+ // Independently configurable light/beep lengths finish at the longer output.
+ fixture();policyControl("alert");stopped();config["signalFlashMs"]=100;config["signalBeepMs"]=800;behavior("STAY_SIGNAL");
+ CHECK(due==tick+800);tick+=100;freshCat(.4);policyTick();CHECK(action=="SIGNAL");CHECK(robotActions==0);
+ tick=due;freshCat(.4);policyTick();CHECK(robotActions==1);CHECK(action=="WAIT_STOP");
  // Only completed high-level actions consume the default five-action budget.
  fixture();policyControl("alert");stopped();freshCat(.4);
  for(int n=1;n<=5;n++){

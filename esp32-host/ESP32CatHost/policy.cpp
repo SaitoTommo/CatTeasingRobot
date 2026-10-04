@@ -180,7 +180,7 @@ void playExplorationResponse(){
 void signal(bool exploration=false){
   uint32_t duration=setting("signalFlashMs");
   if(exploration){playExplorationResponse();duration=max(lightLengths[responseLight()],soundLengths[responseSound()]);}
-  else{sendUno("LED FLASH 200 "+String(duration));sendUno("BEEP "+String((int)setting("signalBeepMs")));}
+  else{sendUno("LED FLASH 200 "+String(duration));sendUno("BEEP "+String((int)setting("signalBeepMs")));duration=max(duration,(uint32_t)setting("signalBeepMs"));}
   hold("SIGNAL",duration);
 }
 void chooseEscapeDistance(){float low=setting("escapeMinDistanceCm"),high=setting("escapeMaxDistanceCm");escapeTargetCm=low==high?low:low+(high-low)*(double(esp_random())/4294967295.0);segmentCm=escapeTargetCm;logLine("ESCAPE_DISTANCE",String(escapeTargetCm,2)+" cm");}
