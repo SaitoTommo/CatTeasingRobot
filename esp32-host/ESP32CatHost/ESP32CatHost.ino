@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.17. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.18. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.8 with SCAN_V1; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -109,6 +109,7 @@ void policyInput(const String &line);
 void policyTick();
 void policyControl(const String &action);
 bool policyPreparing();
+uint32_t policyTelemetryInterval();
 void policySnapshot(JsonDocument &);
 #include "uno_debug.h"
 #include "compact_telemetry.h"
@@ -177,7 +178,7 @@ void defaults() {
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.17";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.18";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
@@ -279,7 +280,7 @@ void loop() {
   if(visionPayload.length()){JsonDocument d;String payload=visionPayload;visionPayload="";if(!deserializeJson(d,payload))acceptCamera(d);else visionRejected++;}
   debugTick();policyTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
   if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis();logLine("TELEMETRY_TIMEOUT","retry in 2s");}
-  if(!policyPreparing()&&(int32_t)(millis()-lastPoll)>=2000&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
+  if(!policyPreparing()&&(int32_t)(millis()-lastPoll)>=int32_t(policyTelemetryInterval())&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
   flushTx();
   delay(2);
 }

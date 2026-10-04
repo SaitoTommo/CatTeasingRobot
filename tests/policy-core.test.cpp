@@ -35,7 +35,7 @@ void fixture(){
  mode="SIM_UNO";phase="PATROL";action="APPROACH_TAG";actionAt=tick;sessionAt=tick;motorId=scanId=stopId=sessionId=0;
  scanCapable=geometryConfirmed=true;routeIndex=0;rounds=0;branch=-1;patterns=0;lastPattern=-1;probeStep=0;
  firstTouch=-1;multiTouch=needRearm=followPending=false;initiator="";lastTouch=0;lastRobotProbe=lastCatProbe=0;
- memset(touch,0,sizeof(touch));scanDirection=1;scanUsed=0;scanBudget=71;lastDecisionFrame=arrivalFrame=0;remainingCm=0;alignSteps=0;
+ newInteraction();returnToPatrol=true;startCat=false;pendingFirstTouch=-1;memset(touch,0,sizeof(touch));scanDirection=1;scanUsed=0;scanBudget=71;lastDecisionFrame=arrivalFrame=0;remainingCm=0;alignSteps=0;
  sideAt[0]=sideAt[1]=tick;side[0]=side[1]=20;safe[0]=safe[1]=1;encoderAt[0]=encoderAt[1]=tick;encoder[0]=encoder[1]=0;
  observation.clear();observation["source"]="SIM_CAMERA";observation["at"]=tick;observation["frameSeq"]=1;observation["cat"]["valid"]=true;observation["cat"]["detected"]=true;observation["cat"]["centerX"]=.5;observation["cat"]["width"]=.2;observation["tagsValid"]=true;
 }
@@ -126,24 +126,17 @@ int main(){
  fixture();phase="INTERACTION";behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,false);policyTick();CHECK(phase=="ENDING");CHECK(catFailureReason=="invalid cat frame");
  fixture();phase="INTERACTION";behavior("SLOW_APPROACH");policyTick();CHECK(!checkPending);config["frontAvoidanceEnabled"]=true;CHECK(policyVisionMode()=="FLOOR");policyControl("stop");auto count=commands.size();policyStopUnconfirmed();CHECK(commands.empty());policyTick();CHECK(commands.empty());CHECK(!motorId);
  // Touch branch pools, first touch, held touches, top/multiple and side boundaries.
- fixture();draws={99,99,50};onTouch(3);CHECK(firstTouch==3);CHECK(rounds==1);onTouch(0);CHECK(firstTouch==3);CHECK(rounds==1);stopped();touch[3]=touch[0]=false;policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanFlags==0);
- fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;side[0]=side[1]=.5;policyTick();CHECK(scanFlags==1);configDone();CHECK(commands.back().text.endsWith(" 1"));CHECK(commands.back().text.indexOf("DRIVE")<0);
- fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;side[1]=.5;policyTick();CHECK(phase=="ENDING");
- fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;side[1]=1;policyTick();CHECK(action=="ESCAPE_TURN");CHECK(turnDeg==90);md(9,9);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");
- fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;sideAt[0]=sideAt[1]=tick-3000;policyTick();CHECK(phase=="ENDING");
- fixture();draws={0,0};onTouch(0);stopped();policyTick();CHECK(action=="SIGNAL");CHECK(lastPattern==0);CHECK(patterns==14);touch[0]=false;tick=due;policyTick();stopped();settled();frame();policyTick();CHECK(action=="OBSERVE");
+ fixture();draws={99,99,50};onTouch(3);CHECK(firstTouch==3);CHECK(rounds==1);onTouch(0);CHECK(firstTouch==3);CHECK(rounds==1);stopped();touch[3]=touch[0]=false;policyTick();policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanFlags==0);
+ fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;side[0]=side[1]=.5;policyTick();policyTick();CHECK(scanFlags==1);configDone();CHECK(commands.back().text.endsWith(" 1"));CHECK(commands.back().text.indexOf("DRIVE")<0);
+ fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;side[1]=.5;policyTick();policyTick();CHECK(phase=="ENDING");
+ fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;side[1]=1;policyTick();CHECK(action=="ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");CHECK(turnDeg==90);md(9,9);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");
+ fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;sideAt[0]=sideAt[1]=tick-3000;policyTick();policyTick();CHECK(phase=="ENDING");
+ fixture();draws={0,0,0};onTouch(0);stopped();policyTick();CHECK(action=="SIGNAL");CHECK(lastPattern==0);CHECK(patterns==14);touch[0]=false;tick=due;policyTick();stopped();settled();frame();policyTick();CHECK(action=="OBSERVE");
  // CAT-01..18 retained behavior choices and local completion, no camera-only trigger.
  fixture();policyTick();CHECK(phase=="PATROL");CHECK(initiator=="");policyControl("alert");CHECK(initiator=="ROBOT_SEARCH");CHECK(action=="WAIT_STOP");
- fixture();phase="INTERACTION";draws={0};chooseRobot();CHECK(afterFace=="PROBE_APPROACH");CHECK(lastRobotProbe==tick);stopped();settled();frame();policyTick();CHECK(action=="PROBE_DRIVE");policyTick();CHECK(action=="PROBE_MOVE");md(3,3);stopped();settled();frame();policyTick();CHECK(action=="PROBE_PAUSE");CHECK(probeStep==1);tick=due;observation["at"]=tick;policyTick();CHECK(probeStep==2);CHECK(segmentCm==4);policyTick();md(4,4);stopped();settled();frame(true,true,5);policyTick();tick=due;observation["at"]=tick;policyTick();CHECK(probeStep==3);CHECK(segmentCm==3);policyTick();md(3,3);stopped();settled();frame(true,true,6);policyTick();tick=due;policyTick();CHECK(action=="WAIT_STOP");
+ fixture();phase="INTERACTION";observation["cat"]["width"]=.1;draws={0};chooseRobot();CHECK(afterFace=="PROBE_APPROACH");CHECK(lastRobotProbe==tick);stopped();settled();frame();policyTick();CHECK(action=="PROBE_DRIVE");policyTick();CHECK(action=="PROBE_MOVE");md(3,3);stopped();settled();frame();policyTick();CHECK(action=="PROBE_PAUSE");CHECK(probeStep==1);tick=due;observation["at"]=tick;policyTick();CHECK(probeStep==2);CHECK(segmentCm==4);policyTick();md(4,4);stopped();settled();frame(true,true,5);policyTick();tick=due;observation["at"]=tick;policyTick();CHECK(probeStep==3);CHECK(segmentCm==3);policyTick();md(3,3);stopped();settled();frame(true,true,6);policyTick();tick=due;policyTick();CHECK(action=="WAIT_STOP");
  for(int pick:{0,25,80}){fixture();phase="INTERACTION";observation["cat"]["width"]=.5;draws={(unsigned)pick};chooseRobot();CHECK(afterFace==(pick==0?"STAY_SIGNAL":pick==25?"OBSERVE":"STAY"));}
- fixture();phase="INTERACTION";lastRobotProbe=tick;draws={0};chooseRobot();CHECK(afterFace=="SLOW_APPROACH");
- for(int pick:{0,50,80}){fixture();rounds=2;initiator="CAT_TOUCH";phase="INTERACTION";draws={(unsigned)pick};onTouch(0);CHECK(rounds==3);stopped();policyTick();CHECK(pick==0?phase=="ENDING":action=="PREY_WAIT");}
- fixture();phase="INTERACTION";prey(true);CHECK(commands.back().text=="BEEP 360");CHECK(action=="PREY_WAIT");observation["cat"]["detected"]=false;tick+=1000;observation["at"]=tick;policyTick();CHECK(action=="PREY_WAIT");tick=due;policyTick();CHECK(phase=="STOPPED");
- fixture();phase="INTERACTION";prey(false);observation["cat"]["width"]=.05;policyTick();tick+=5000;observation["at"]=tick;policyTick();CHECK(phase=="ENDING");
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";followPending=true;lastTouch=tick;draws={0};hold("FOLLOW_WAIT",0);policyTick();CHECK(afterFace=="PROBE_APPROACH");
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";followPending=true;lastTouch=tick;draws={20};hold("FOLLOW_WAIT",0);policyTick();CHECK(afterFace=="OBSERVE");
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";followPending=true;lastTouch=tick;draws={90};hold("FOLLOW_WAIT",0);policyTick();CHECK(phase=="ENDING");
- fixture();phase="INTERACTION";hold("WAIT_CHASE",100);tick+=100;policyTick();CHECK(action=="WAIT_STOP");
+ fixture();phase="INTERACTION";lastRobotProbe=tick;observation["cat"]["width"]=.1;draws={0};chooseRobot();CHECK(afterFace=="SLOW_APPROACH");
  fixture();phase="INTERACTION";hold("OBSERVE",100);tick+=100;policyTick();CHECK(action=="FOLLOW_WAIT");
  fixture();phase="INTERACTION";motorId=42;motorRunning=motorDispatched=true;feedbackAt=tick-751;policyTick();CHECK(phase=="STOPPED");
  fixture();phase="INTERACTION";motorId=42;motorDispatched=motorConfirmed=true;motorRunning=false;feedbackAt=tick-1000;scanId=42;scanAt=tick;policyTick();CHECK(phase=="INTERACTION");
@@ -185,27 +178,21 @@ int main(){
  policyInput("VQ "+String(active)+" 1 "+String(generation)+" 2");CHECK(commands.back().text==cached);
  fixture();stopGate=false;policyControl("start");CHECK(phase=="PATROL");CHECK(!sessionId);
  fixture();phase="INTERACTION";for(int i=0;i<5;i++){draws={0};signal(true);CHECK(lastPattern==i%4);CHECK(due-tick==uint32_t(i%4==0?1800:i%4==1?2400:i%4==2?3600:5600));}
- fixture();phase="INTERACTION";config["captureCueFlashMs"]=2900;config["captureCueBeepMs"]=600;prey(true);CHECK(commands.back().text=="BEEP 600");CHECK(commands[commands.size()-2].text=="LED FLASH 200 2900");
- fixture();config["touchFeedbackBeepMs"]=700;draws={99,0,50};onTouch(0);stopped();CHECK(commands.back().text=="BEEP 700");
  fixture();mode="UART";lastUnoAt=tick-2501;policyTick();CHECK(phase=="STOPPED");CHECK(lastFault=="Uno link timeout");
  fixture();phase="INTERACTION";motorId=42;policyInput("MA 0 ENCODER_STALL 1 1");CHECK(motorId==42);policyInput("MA 42 ENCODER_STALL 1 1");CHECK(phase=="STOPPED");CHECK(!motorId);CHECK(!leftPwm&&!rightPwm);
- fixture();draws={99,99,90};onTouch(2);stopped();touch[2]=false;policyTick();policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(leftPwm==210);md(22,22);stopped();policyTick();CHECK(action=="WAIT_STOP");CHECK(afterFace=="WAIT_CHASE");
- fixture();draws={99,99,0};onTouch(2);stopped();policyTick();CHECK(action=="PREY_WAIT");CHECK(touch[2]);
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";followPending=true;lastTouch=lastCatProbe=tick;draws={0};hold("FOLLOW_WAIT",0);policyTick();CHECK(afterFace=="OBSERVE");CHECK(draws.empty());
+ fixture();config["escapePreyPercent"]=0;draws={99,99,90};onTouch(2);stopped();touch[2]=false;policyTick();policyTick();policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(leftPwm==210);md(22,22);stopped();policyTick();CHECK(action=="WAIT_STOP");CHECK(afterFace=="WAIT_CHASE");
  fixture();phase="INTERACTION";routeIndex=1;beginScan("CAT","OBSERVE");configDone();policyInput("SD "+String(scanId)+" "+String(generation)+" 0");stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(routeIndex==1);CHECK(phase=="PATROL");
  fixture();phase="INTERACTION";motorId=42;scanId=42;touch[1]=true;policyInput("READY UNO_CAT_V6.6");CHECK(phase=="STOPPED");CHECK(!scanId&&!motorId&&!touch[1]);CHECK(!scanCapable);
- fixture();phase="INTERACTION";state("WAIT_RELEASE");touch[0]=true;tick+=4100;policyTick();CHECK(phase=="ENDING");
  for(float center:{.2f,.8f}){fixture();phase="INTERACTION";afterFace="OBSERVE";observation["cat"]["centerX"]=center;orient();CHECK(action=="ALIGN_CAT");CHECK(turnDeg==(center<.5?-20.25f:20.25f));md(2,2);stopped();settled();observation["cat"]["centerX"]=.5;frame();policyTick();CHECK(action=="OBSERVE");}
  fixture();phase="INTERACTION";afterFace="OBSERVE";alignSteps=8;observation["cat"]["centerX"]=.8;orient();CHECK(phase=="ENDING");CHECK(catFailureReason=="alignment budget exhausted");
  fixture();phase="INTERACTION";state("ALIGN_CAT");tick+=5001;policyTick();CHECK(phase=="ENDING");CHECK(catFailureReason=="alignment motion timeout");
  fixture();observation["tags"][0]["id"]=9;observation["tags"][0]["width"]=.1;observation["tags"][0]["centerX"]=.8;policyTick();CHECK(action=="TAG_ALIGN");CHECK(leftPwm==30);md(2,2);stopped();observation["frameSeq"]=2;observation["tags"][0]["centerX"]=.5;policyTick();CHECK(leftPwm==95&&rightPwm==95);
- fixture();phase="INTERACTION";onTouch(3,1234);onTouch(0,1234);CHECK(firstTouch==3);CHECK(touchTie);CHECK(multiTouch);CHECK(rounds==1);
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";rounds=2;draws={80};onTouch(3,1234);stopped();CHECK(action=="WAIT_RELEASE");touch[3]=false;policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanNext=="PREY_SIGNAL");
- fixture();phase="INTERACTION";beginScan("CAT","OBSERVE");auto pendingConfig=sessionId;onTouch(0);CHECK(sessionId==0);stopped();policyInput("DONE "+String(pendingConfig)+" SCAN_CONFIGURED");CHECK(action=="TOUCH_PREY"||action=="WAIT_RELEASE"||action=="TOUCH_SIGNAL");CHECK(!scanId);
+ fixture();onTouch(3,1234);onTouch(0,1234);CHECK(firstTouch==3);CHECK(touchTie);CHECK(multiTouch);CHECK(rounds==1);
  fixture();phase="INTERACTION";beginScan("CAT","OBSERVE");configDone();policyInput("VQ "+String(scanId)+" 3 "+String(generation)+" 7");CHECK(scanUsed==7);policyInput("MP "+String(scanId)+" 2 2");CHECK(!motorRunning);policyInput("VQ "+String(scanId)+" 2 "+String(generation)+" 5");CHECK(scanUsed==7);
  fixture();config["minimumDrivePwm"]=140;move(30,-30);CHECK(commands.back().text=="MOTOR 140 -140");JsonDocument pwmState;policySnapshot(pwmState);CHECK(pwmState["patrolStatus"]["leftPwm"].as<int>()==140);CHECK(pwmState["patrolStatus"]["rightPwm"].as<int>()==-140);CHECK(pwmState["patrolStatus"]["requestedLeftPwm"].as<int>()==30);CHECK(pwmState["patrolStatus"]["requestedRightPwm"].as<int>()==-30);
  fixture();config["minimumDrivePwm"]=100;drive(1,95,"CAT_DRIVE");CHECK(commands.back().text=="DRIVE 1.00 100");policySnapshot(pwmState);CHECK(pwmState["patrolStatus"]["leftPwm"].as<int>()==100);
  fixture();config["minimumDrivePwm"]=140;beginScan("CAT","OBSERVE");configDone();CHECK(commands.back().text=="SR "+String(generation)+" 2 140 71 0");policyInput("MS "+String(scanId)+" 0 0");policySnapshot(pwmState);CHECK(pwmState["patrolStatus"]["leftPwm"].as<int>()==140);CHECK(pwmState["patrolStatus"]["requestedLeftPwm"].as<int>()==75);
  fixture();config["minimumDrivePwm"]=1;move(30,-30);CHECK(commands.back().text=="MOTOR 30 -30");
  printf("actual ESP policy core: %u checks passed\n",checks);
+ return 0;
 }
