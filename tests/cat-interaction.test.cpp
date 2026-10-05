@@ -30,27 +30,6 @@ int main(){
  freshCat(.2);policyTick();CHECK(robotActions==1);CHECK(afterFace=="SLOW_APPROACH");CHECK(!robotFast);stopped();settled();frame(true,true,21);policyTick();CHECK(robotSlowFlash);
  auto flashDraws=draws.size();policyTick();CHECK(action=="CAT_DRIVE");bool flashed=false;for(auto &c:commands)if(c.text.startsWith("LED FLASH 200 "))flashed=true;CHECK(flashed);CHECK(robotActions==1);CHECK(draws.size()==flashDraws);
  md(6,6);stopped();settled();frame(true,true,22);policyTick();CHECK(action=="APPROACH_CAT");policyTick();CHECK(robotActions==2);CHECK(action=="WAIT_STOP");CHECK(!robotSlowFlash);
- // Invitations wait for continuous fresh absence, without consuming actions.
- for(const char *stage:{"OBSERVE","SIGNAL","FOLLOW_WAIT"}){
-  fixture();policyControl("alert");stopped();config["catLeaveSeconds"]=2;config["robotActionLimit"]=1;
-  behavior(stage==String("SIGNAL")?"STAY_SIGNAL":"OBSERVE");if(String(stage)=="FOLLOW_WAIT")hold("FOLLOW_WAIT",1);
-  auto from=commands.size();auto original=action;
-  freshCat(.4,false);policyTick();CHECK(farAt);CHECK(phase=="INTERACTION");auto began=farAt;
-  for(int n=1;n<=3;n++){tick=began+n*500;freshCat(.4,false);policyTick();CHECK(action==original);CHECK(phase=="INTERACTION");CHECK(!robotActions);CHECK(!motorId);}
-  tick=began+1999;freshCat(.4,false);policyTick();CHECK(phase=="INTERACTION");
-  tick=began+2000;freshCat(.4,false);policyTick();CHECK(phase=="ENDING");CHECK(!robotActions);
-  CHECK(interactionExitReason=="cat absent for configured leave interval");
-  for(size_t i=from;i<commands.size();i++)CHECK(!commands[i].text.startsWith("ROTATE ")&&!commands[i].text.startsWith("DRIVE ")&&!commands[i].text.startsWith("SR ")&&!commands[i].text.startsWith("MOTOR "));
- }
- // A visible distant cat is still present. Detection, invalid and stale frames
- // reset absence; one cached negative cannot establish sustained departure.
- fixture();policyControl("alert");stopped();behavior("OBSERVE");config["catLeaveSeconds"]=2;
- freshCat(.1);policyTick();CHECK(!farAt);freshCat(.4,false);policyTick();CHECK(farAt);
- tick+=500;freshCat(.1);policyTick();CHECK(!farAt);freshCat(.4,false);policyTick();
- tick+=500;freshCat(.4,false,false);policyTick();CHECK(!farAt);
- freshCat(.4,false);policyTick();tick+=1500;policyTick();CHECK(!farAt);CHECK(phase=="INTERACTION");
- freshCat(.4,false);policyTick();auto restarted=farAt;tick+=1000;policyTick();CHECK(phase=="INTERACTION");CHECK(farAt==restarted);
- tick+=1000;freshCat(.4,false);policyTick();CHECK(phase=="ENDING");
  // WAIT_CHASE uses the same absence threshold and holds past its observation
  // deadline while confirming absence; a brief miss and reappearance reset it.
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";config["catLeaveSeconds"]=2;config["catObserveTimeoutSeconds"]=1;
@@ -69,11 +48,23 @@ int main(){
  tick+=3000;freshCat(.4,false,false);policyTick();CHECK(phase=="ENDING");CHECK(interactionExitReason=="cat observation unavailable");
  // A new attack during absence still wins immediately over departure waiting.
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";branch=1;freshCat(.4);behavior("WAIT_CHASE");freshCat(.4,false);policyTick();onTouch(0);policyTick();CHECK(action=="WAIT_RELEASE");CHECK(!farAt);
- // A first negative at the action deadline cannot finish the action limit.
- fixture();policyControl("alert");stopped();behavior("OBSERVE");config["robotActionLimit"]=1;
- tick=due;freshCat(.4,false);policyTick();CHECK(phase=="INTERACTION");CHECK(!robotActions);
- freshCat(.4);policyTick();CHECK(phase=="ENDING");CHECK(robotActions==1);CHECK(interactionExitReason=="robot action limit reached");
- fixture();policyControl("alert");stopped();behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,true,30);policyTick();CHECK(phase=="ENDING");CHECK(robotActions==0);
+ // After finding a cat, absence never overrides the robot action rounds.
+ for(const char *first:{"OBSERVE","STAY_SIGNAL"}){
+  fixture();policyControl("alert");stopped();config["robotActionLimit"]=5;config["catLeaveSeconds"]=1;behavior(first);
+  for(int n=1;n<=5;n++){
+   freshCat(.4,false);tick=due;freshCat(.4,false);policyTick();CHECK(robotActions==n);
+   if(n==5){CHECK(phase=="ENDING");CHECK(interactionExitReason=="robot action limit reached");break;}
+   CHECK(phase=="INTERACTION");
+   if(action=="WAIT_STOP"){stopped();settled();frame(false);policyTick();CHECK(action=="OBSERVE");}
+   else{CHECK(action=="FOLLOW_WAIT");tick=due;freshCat(.4,false);policyTick();CHECK(action=="OBSERVE");}
+   CHECK(!motorId&&!scanId);CHECK(robotActions==n);
+  }
+ }
+ // Losing the target after a movement does not count an unfinished movement,
+ // scan indefinitely, or start another blind DRIVE. Remaining rounds observe.
+ fixture();policyControl("alert");stopped();behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,true,30);policyTick();CHECK(action=="OBSERVE");CHECK(phase=="INTERACTION");CHECK(robotActions==0);CHECK(!motorId);
+ fixture();policyControl("alert");stopped();behavior("FAST_APPROACH");freshCat(.1,false);policyTick();CHECK(action=="OBSERVE");CHECK(!motorId&&!scanId);CHECK(!robotFast);
+ fixture();policyControl("alert");stopped();behavior("PROBE_APPROACH");freshCat(.1,false);policyTick();CHECK(action=="OBSERVE");CHECK(!motorId);
  // New settings reject fractional budgets; existing saved fields retain values.
  fixture();CHECK(config["robotActionLimit"].as<int>()==5);
  // Repeated touch never redraws branch, first direction, or interaction identity.

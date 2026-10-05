@@ -203,7 +203,8 @@ void behavior(const String &s){
 }
 void robotBehavior(const String &next,bool confirmed){afterFace=next;if(confirmed)behavior(next);else face(next);}
 void chooseStoppedRobot(bool confirmed=false){int n=draw();robotBehavior(n<setting("robotNearSignalPercent")?"STAY_SIGNAL":n<setting("robotNearSignalPercent")+setting("robotNearObservePercent")?"OBSERVE":"STAY",confirmed);}
-void chooseRobot(bool confirmed=false){if(!seen()){search("CHOOSE_ROBOT");return;}robotFound=true;int range=distanceClass();if(range<0){robotBehavior("SLOW_APPROACH",confirmed);return;}if(range==0){bool probe=draw()<setting("robotFarProbePercent")&&elapsed(lastRobotProbe,setting("robotProbeCooldownSeconds")*1000);if(probe)lastRobotProbe=now();robotBehavior(probe?"PROBE_APPROACH":"FAST_APPROACH",confirmed);}else chooseStoppedRobot(confirmed);}
+void robotObserveWithoutCat(){robotFast=robotSlowFlash=false;remainingCm=0;quietOutputs();logLine("ROBOT_CAT_MISSING","stay stopped and continue action rounds");behavior("OBSERVE");}
+void chooseRobot(bool confirmed=false){if(!seen()){if(robotFound)robotObserveWithoutCat();else search("CHOOSE_ROBOT");return;}robotFound=true;int range=distanceClass();if(range<0){robotBehavior("SLOW_APPROACH",confirmed);return;}if(range==0){bool probe=draw()<setting("robotFarProbePercent")&&elapsed(lastRobotProbe,setting("robotProbeCooldownSeconds")*1000);if(probe)lastRobotProbe=now();robotBehavior(probe?"PROBE_APPROACH":"FAST_APPROACH",confirmed);}else chooseStoppedRobot(confirmed);}
 // The stopped cat frame authorizes the next behavior regardless of centerX.
 // Reuse this confirmation when choosing a robot invitation; do not stop/check twice.
 void chooseConfirmedTouch();
@@ -463,12 +464,6 @@ void policyTick(){
     }
     if(chaseDetected){logLine("CHASE_DETECTED","next interaction");if(branch==0){signal(true);return;}escape=draw()<50?"SLOW_STRAIGHT_ESCAPE":"FAST_STRAIGHT_ESCAPE";turnDeg=180;touchNext="ESCAPE";touchSearch=false;directionLocated=true;state("WAIT_RELEASE");}else if(reached(due))exitInteraction("chase wait timeout");return;
   }
-  if(phase=="INTERACTION"&&initiator=="ROBOT_SEARCH"&&robotFound&&!motorId&&(action=="OBSERVE"||action=="SIGNAL"||action=="FOLLOW_WAIT")){
-    if(departed(true,true)){exitInteraction("cat absent for configured leave interval");return;}
-    // Hold the invitation while fresh negative frames confirm absence. Do not
-    // finish its action budget or start another movement during this window.
-    if(farAt)return;
-  }
   if(touching()&&action!="SIGNAL"&&action!="OBSERVE"&&action!="FOLLOW_WAIT"){if(motorId)pauseForTouch();return;}
   if(action=="CAT_CONFIRM"&&due&&(encoderRpm[0]>0||encoderRpm[1]>0)){logLine("CONFIRM_MOVING","wheel RPM nonzero; stop and restart confirmation");confirmCat(afterFace);return;}
   if(action=="SETTLE"||action=="CAT_CONFIRM"&&!due){
@@ -483,7 +478,7 @@ void policyTick(){
   if(action=="POST_ESCAPE"){escapeRounds++;if(escapeRounds>=(int)setting("escapePreyAfterRounds")||draw()<setting("escapePreyPercent")){prey(false);return;}search("CHASE_ALIGN");return;}
   if(action=="CAT_CHECK"||action=="CAT_CONFIRM"){
     if(checkReady){checkReady=false;if(!fresh()){if(action=="CAT_CHECK")fail("cat check stopped frame expired");else catFailed("stopped frame expired");return;}if(!cat()["valid"].as<bool>()){if(action=="CAT_CHECK")fail("cat check invalid cat frame");else catFailed("invalid cat frame");return;}if(!cat()["detected"].as<bool>()){
-      if(initiator=="ROBOT_SEARCH"&&robotFound){exitInteraction("cat left invitation frame");return;}
+      if(initiator=="ROBOT_SEARCH"&&robotFound){robotObserveWithoutCat();return;}
       if(afterSettle=="CAT_CONFIRMED"){if(scanUsed>=scanBudget){catFailed("confirmation lost cat; scan budget exhausted");return;}beginScan("CAT",afterFace,scanFlags,scanUsed);}
       else beginScan("CAT",afterSettle=="APPROACH_CAT"?"RESUME_APPROACH":afterSettle=="PROBE_DONE"?"PROBE_DONE":afterFace);return;
     }String next=afterSettle;if(next=="CAT_CONFIRMED"){logLine("CAT_CONFIRMED","new stationary frame="+String(observation["frameSeq"]|0u));catLocated();}else if(next=="CAT_LOCATED")catLocated();else if(next=="PROBE_DONE"){hold("PROBE_PAUSE",setting(probeStep==1?"probePause1Ms":probeStep==2?"probePause2Ms":"probePause3Ms"));}else state(next);}
@@ -503,8 +498,8 @@ void policyTick(){
   if(action=="PROBE_PAUSE"){if(!reached(due))return;probeStep++;if(probeStep>3){if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH")chooseStoppedRobot();else face("OBSERVE");}else{segmentCm=setting(probeStep==2?"probeStep2Cm":"probeStep3Cm");state("PROBE_DRIVE");}return;}
   if(action=="APPROACH_CAT"||action=="PROBE_DRIVE"||action=="ESCAPE_DRIVE"){
     if(!frontClear()){if(elapsed(actionAt,2000))finish();return;}
-    if(action=="APPROACH_CAT"){if(remainingCm<=0||robotFast&&seen()&&cat()["width"].as<float>()>setting("catFarWidth")){bool wasFast=robotFast;robotFast=robotSlowFlash=false;if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH"){if(wasFast)face("SLOW_APPROACH");else chooseStoppedRobot();}else face("OBSERVE");return;}if(!seen()){beginScan("CAT","RESUME_APPROACH");return;}if(robotSlowFlash)sendUno("LED FLASH 200 "+String((int)setting("signalFlashMs")));drive(min(remainingCm,setting("catApproachStepCm")),(int)setting(robotFast?"robotFastApproachPwm":"slowApproachPwm"),"CAT_DRIVE");}
-    else if(action=="PROBE_DRIVE")drive(segmentCm,(int)setting("probePwm"),"PROBE_MOVE");
+    if(action=="APPROACH_CAT"){if(remainingCm<=0||robotFast&&seen()&&cat()["width"].as<float>()>setting("catFarWidth")){bool wasFast=robotFast;robotFast=robotSlowFlash=false;if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH"){if(wasFast)face("SLOW_APPROACH");else chooseStoppedRobot();}else face("OBSERVE");return;}if(!seen()){if(initiator=="ROBOT_SEARCH"&&robotFound)robotObserveWithoutCat();else beginScan("CAT","RESUME_APPROACH");return;}if(robotSlowFlash)sendUno("LED FLASH 200 "+String((int)setting("signalFlashMs")));drive(min(remainingCm,setting("catApproachStepCm")),(int)setting(robotFast?"robotFastApproachPwm":"slowApproachPwm"),"CAT_DRIVE");}
+    else if(action=="PROBE_DRIVE"){if(initiator=="ROBOT_SEARCH"&&robotFound&&!seen())robotObserveWithoutCat();else drive(segmentCm,(int)setting("probePwm"),"PROBE_MOVE");}
     else{chooseEscapeDistance();drive(segmentCm,(int)setting(escape=="FAST_STRAIGHT_ESCAPE"?"fastEscapePwm":"slowEscapePwm"),"ESCAPE_MOVE");}return;
   }
 
