@@ -18,17 +18,17 @@ async function setBench(enabled,reset=false){
 }
 function exportBench(){const csv='id,frame,decodeMs,modelMs,totalMs,startPeriodMs,idleMs,captureToFinishMs,withTags\n'+benchRows.map(r=>r.join(',')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='cat-vision-bench.csv';a.click();URL.revokeObjectURL(url);}
 async function benchPoll(){
- try{const r=await fetch('/api/vision-bench',{signal:AbortSignal.timeout(4000)});if(!r.ok)throw Error(r.status);mergeBench(await r.json());}
+ try{await (typeof withPageRead==='function'?withPageRead:async read=>read())(async()=>{if(typeof deviceOnline!=='undefined'&&!deviceOnline)return;const r=await fetch('/api/vision-bench',{signal:AbortSignal.timeout(4000)});if(!r.ok)throw Error(r.status);mergeBench(await r.json());});}
  catch(e){$('benchMetrics').textContent='帧率测试读回失败：'+e.message;}
- setTimeout(benchPoll,benchActive?250:1000);
+ finally{setTimeout(benchPoll,benchActive?600:3000);}
 }
 async function benchFramePoll(){
- try{if(benchActive){const r=await fetch('/vision-bench-frame',{signal:AbortSignal.timeout(4000)});if(r.ok){const meta=JSON.parse(r.headers.get('X-Vision-Result')),id=meta.epoch+':'+meta.id;
+ try{await (typeof withPageRead==='function'?withPageRead:async read=>read())(async()=>{if(benchActive&&(typeof deviceOnline==='undefined'||deviceOnline)){const r=await fetch('/vision-bench-frame',{signal:AbortSignal.timeout(4000)});if(r.ok){const meta=JSON.parse(r.headers.get('X-Vision-Result')),id=meta.epoch+':'+meta.id;
  if(id!==benchFrameId&&meta.epoch===benchUiEpoch){const bitmap=await createImageBitmap(await r.blob());if(meta.epoch!==benchUiEpoch||!benchActive){bitmap.close();throw Error("结果已换轮，等待新帧");}const canvas=$('benchCanvas');canvas.width=meta.width;canvas.height=meta.height;const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);bitmap.close();const cat=meta.cat||{};
  if(cat.detected&&cat.box){const [x1,y1,x2,y2]=cat.box;ctx.strokeStyle='#00ff55';ctx.lineWidth=2;ctx.strokeRect(x1,y1,x2-x1,y2-y1);ctx.fillStyle='#00ff55';ctx.font='14px sans-serif';ctx.fillText('CAT '+Number(cat.score).toFixed(2),Math.max(0,x1),Math.max(15,y1-3));}
  $('benchFrame').textContent=`识别原图帧 ${meta.frameSeq}，结果 #${meta.id}；${cat.detected?'检测到猫，框 '+cat.box.join(', '):'未检测到猫'}`;benchFrameId=id;}
- }}}
+ }} });}
  catch(e){$('benchFrame').textContent='识别原图读取失败：'+e.message;}
- setTimeout(benchFramePoll,100);
+ setTimeout(benchFramePoll,350);
 }
 benchPoll();benchFramePoll();

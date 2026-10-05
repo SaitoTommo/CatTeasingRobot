@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3_CAT_CHECK_3_PREVIEW. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.34_SHARED_HTTP. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.10 with SCAN_V1; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -9,6 +9,7 @@
 #include <esp_http_server.h>
 #include <esp_heap_caps.h>
 #include <esp_timer.h>
+#include <esp_system.h>
 #include "vision_gate.h"
 #include "wire_integrity.h"
 #include "pwm_floor.h"
@@ -58,6 +59,8 @@ void logLine(const char *source,const String &line) {
   emitUsb(out);
 }
 uint32_t cmdSeq=0;
+#include "network_health.h"
+#include "video_stream.h"
 void enqueueCamera(const String &out){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);if(out.length()>12287){visionOversize++;}else{if(visionPayload.length())visionSuperseded++;visionPayload=out;}xSemaphoreGiveRecursive(stateLock);}
 void acceptCamera(JsonDocument &d){
  auto v=d["vision"].as<JsonObject>();uint32_t token=v["ticket"]|0u;String desired=policyVisionMode();if(desired=="USER")desired=visionMode;
@@ -184,14 +187,18 @@ void defaults() {
   config["decisionIntervalMs"]=2500;config["signalFlashMs"]=1400;config["signalBeepMs"]=180;
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
-String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3_CAT_CHECK_3_PREVIEW";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
+String snapshot(uint32_t afterLog,uint16_t logLimit) {
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.34_SHARED_HTTP";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
+  if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
   d["actualVisionMode"]=actualVisionMode;d["visionMailbox"]["oversize"]=visionOversize;d["visionMailbox"]["superseded"]=visionSuperseded;d["visionMailbox"]["rejected"]=visionRejected;d["visionMailbox"]["consumed"]=visionConsumed;d["visionMode"]=visionMode;d["visionIntervalMs"]=visionIntervalMs;
-  d["apIP"]=WiFi.softAPIP().toString();d["stationIP"]=WiFi.localIP().toString();d["config"]=config;d["vision"]=observation;d["cameraVision"]=realVision;
+  d["apIP"]=WiFi.softAPIP().toString();d["stationIP"]=WiFi.localIP().toString();networkSnapshot(d);videoSnapshot(d);d["config"]=config;d["vision"]=observation;d["cameraVision"]=realVision;
   d["droppedLogs"]=dropped;JsonArray arr=d["logs"].to<JsonArray>();uint32_t start=logSeq>160?logSeq-160:0;
+  if(afterLog<=logSeq)start=max(start,afterLog); // A newer client cursor means ESP rebooted.
+  start=max(start,logSeq>logLimit?logSeq-logLimit:0u);
+  d["logSeq"]=logSeq;d["logsFromSeq"]=start+1;
   for(uint32_t n=start;n<logSeq;n++){JsonDocument item;deserializeJson(item,logs[n%160]);arr.add(item);}
   String out;serializeJson(d,out);return out;
 }
@@ -200,7 +207,8 @@ void handleInput(const Input &in) {
   String op=d["op"]|"";
   if(d["expectedMode"].is<const char*>()&&String(d["expectedMode"].as<const char*>())!=mode){logLine("INPUT_REJECTED","mode changed before requested operation");return;}
   if(op=="uno")acceptUno(d["line"]|"",in.physical);
-  else if(op=="state"){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String out=snapshot();xSemaphoreGiveRecursive(stateLock);emitUsb(out);}
+  else if(op=="uno_batch"&&mode=="SIM_UNO"&&!in.physical){JsonArray lines=d["lines"].as<JsonArray>();if(!lines.size()||lines.size()>32){logLine("INPUT_ERROR","invalid SIM batch");return;}for(JsonVariant row:lines){if(!row.is<const char*>()||strlen(row.as<const char*>())>512){logLine("INPUT_ERROR","invalid SIM row");return;}}for(JsonVariant row:lines)acceptUno(row.as<const char*>(),false);}
+  else if(op=="state"){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String out=snapshot(0,160);xSemaphoreGiveRecursive(stateLock);emitUsb(out);}
   else if(op=="control") {
     String control=d["action"]|"";
     debugCancel();policyControl(control);
@@ -225,11 +233,19 @@ void handleInput(const Input &in) {
     JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}config=candidate;
     String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CONFIG","saved");
   }
-  else if(op=="wifi") {String ssid=d["ssid"]|"",pass=d["password"]|"";prefs.putString("ssid",ssid);prefs.putString("password",pass);WiFi.begin(ssid.c_str(),pass.c_str());logLine("WIFI","station connecting; AP remains available");}
+  else if(op=="wifi") {String ssid=d["ssid"]|"",pass=d["password"]|"";prefs.putString("ssid",ssid);prefs.putString("password",pass);networkBegin(ssid,pass);logLine("WIFI","station connecting; AP remains available");}
   else logLine("INPUT_ERROR","unsupported op or source");
 }
 esp_err_t pageHandler(httpd_req_t *r) {httpd_resp_set_type(r,"text/html; charset=utf-8");httpd_resp_set_hdr(r,"Content-Encoding","gzip");return httpd_resp_send(r,(const char*)DEBUG_PAGE_GZIP,sizeof(DEBUG_PAGE_GZIP));}
-esp_err_t stateHandler(httpd_req_t *r) {xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String s=snapshot();xSemaphoreGiveRecursive(stateLock);httpd_resp_set_type(r,"application/json");httpd_resp_set_hdr(r,"Cache-Control","no-store");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");return httpd_resp_send(r,s.c_str(),s.length());}
+esp_err_t stateHandler(httpd_req_t *r) {
+ uint32_t afterLog=0;uint16_t logLimit=160;char query[96]={},value[24]={};
+ if(httpd_req_get_url_query_str(r,query,sizeof(query))==ESP_OK){
+  if(httpd_query_key_value(query,"afterLog",value,sizeof(value))==ESP_OK)afterLog=strtoul(value,nullptr,10);
+  if(httpd_query_key_value(query,"logLimit",value,sizeof(value))==ESP_OK)logLimit=constrain(strtoul(value,nullptr,10),1ul,160ul);
+ }
+ if(xSemaphoreTakeRecursive(stateLock,pdMS_TO_TICKS(250))!=pdTRUE){httpd_resp_set_status(r,"503 Service Unavailable");return httpd_resp_sendstr(r,"controller busy; retry");}
+ String s=snapshot(afterLog,logLimit);xSemaphoreGiveRecursive(stateLock);httpd_resp_set_type(r,"application/json");httpd_resp_set_hdr(r,"Cache-Control","no-store");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");return httpd_resp_send(r,s.c_str(),s.length());
+}
 void policyFlowSnapshot(JsonDocument &);
 esp_err_t flowHandler(httpd_req_t *r){
  JsonDocument d;xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);d["ms"]=millis();d["phase"]=phase;policyFlowSnapshot(d);d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
@@ -244,21 +260,10 @@ esp_err_t inputHandler(httpd_req_t *r) {
   if(xQueueSend(inputs,&in,0)!=pdTRUE){httpd_resp_set_status(r,"503 Service Unavailable");httpd_resp_sendstr(r,"input queue full");return ESP_FAIL;}
   httpd_resp_set_type(r,"application/json");return httpd_resp_sendstr(r,"{\"queued\":true}");
 }
-esp_err_t streamHandler(httpd_req_t *r) {
-  httpd_resp_set_type(r,"multipart/x-mixed-replace;boundary=frame");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");
-  uint32_t previous=0;
-  while(true) {
-    uint8_t *copy=nullptr;size_t len=0;xSemaphoreTake(frameLock,portMAX_DELAY);
-    if(jpegLen&&frameSeq!=previous){len=jpegLen;copy=(uint8_t*)ps_malloc(len);if(copy){memcpy(copy,jpegCache,len);previous=frameSeq;}}
-    xSemaphoreGive(frameLock);
-    if(copy){char head[100];int n=snprintf(head,sizeof(head),"\r\n--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n",(unsigned)len);esp_err_t e=httpd_resp_send_chunk(r,head,n);if(e==ESP_OK)e=httpd_resp_send_chunk(r,(char*)copy,len);free(copy);if(e!=ESP_OK)return e;}
-    vTaskDelay(pdMS_TO_TICKS(80));
-  }
-}
 void startServers() {
-  httpd_config_t c=HTTPD_DEFAULT_CONFIG();c.server_port=80;c.stack_size=8192;c.max_uri_handlers=10;httpd_handle_t h=nullptr;
-  if(httpd_start(&h,&c)==ESP_OK){httpd_uri_t p={.uri="/",.method=HTTP_GET,.handler=pageHandler};httpd_register_uri_handler(h,&p);p.uri="/api/state";p.handler=stateHandler;httpd_register_uri_handler(h,&p);p.uri="/api/flow";p.handler=flowHandler;httpd_register_uri_handler(h,&p);p.uri="/capture";p.handler=captureHandler;httpd_register_uri_handler(h,&p);p.uri="/api/vision-bench";p.handler=benchStateHandler;httpd_register_uri_handler(h,&p);p.uri="/vision-bench-frame";p.handler=benchFrameHandler;httpd_register_uri_handler(h,&p);p.uri="/cat-preview-frame";p.handler=catPreviewHandler;httpd_register_uri_handler(h,&p);p.uri="/api/input";p.method=HTTP_POST;p.handler=inputHandler;httpd_register_uri_handler(h,&p);}
-  c.server_port=81;c.ctrl_port=32769;c.stack_size=4096;c.max_open_sockets=2;if(httpd_start(&h,&c)==ESP_OK){httpd_uri_t p={.uri="/stream",.method=HTTP_GET,.handler=streamHandler};httpd_register_uri_handler(h,&p);}
+  videoStart();
+  httpd_config_t c=HTTPD_DEFAULT_CONFIG();c.server_port=80;c.stack_size=8192;c.max_uri_handlers=10;c.max_open_sockets=SHARED_HTTP_MAX_SOCKETS;c.lru_purge_enable=true;c.recv_wait_timeout=2;c.send_wait_timeout=2;httpd_handle_t h=nullptr;
+  if(httpd_start(&h,&c)==ESP_OK){httpd_uri_t p={.uri="/",.method=HTTP_GET,.handler=pageHandler};httpd_register_uri_handler(h,&p);p.uri="/api/state";p.handler=stateHandler;httpd_register_uri_handler(h,&p);p.uri="/api/flow";p.handler=flowHandler;httpd_register_uri_handler(h,&p);p.uri="/capture";p.handler=captureHandler;httpd_register_uri_handler(h,&p);p.uri="/api/vision-bench";p.handler=benchStateHandler;httpd_register_uri_handler(h,&p);p.uri="/vision-bench-frame";p.handler=benchFrameHandler;httpd_register_uri_handler(h,&p);p.uri="/cat-preview-frame";p.handler=catPreviewHandler;httpd_register_uri_handler(h,&p);p.uri="/stream";p.handler=streamHandler;httpd_register_uri_handler(h,&p);p.uri="/api/input";p.method=HTTP_POST;p.handler=inputHandler;httpd_register_uri_handler(h,&p);}
 }
 void processVision(camera_fb_t *,const VisionTicket &,uint32_t,uint64_t,uint32_t,uint32_t);
 void visionTask(void*){
@@ -291,16 +296,18 @@ void setup() {
   hostLedInit();
   heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
   prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();migrateCenterSettings(candidate,d);if(!d["catObserveTimeoutSeconds"].is<float>())candidate["catObserveTimeoutSeconds"]=max(1.0f,candidate["postEscapeWaitSeconds"].as<float>());if(!d["escapeMinDistanceCm"].is<float>()||!d["escapeMaxDistanceCm"].is<float>()){float legacy=max(1.0f,candidate["escapeDistanceCm"].as<float>()-candidate["stopMarginCm"].as<float>());candidate["escapeMinDistanceCm"]=legacy;candidate["escapeMaxDistanceCm"]=legacy;}String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
-  WiFi.mode(WIFI_AP_STA);WiFi.softAP("ESP32-CatHost","catrobot32");String ssid=prefs.getString("ssid","");if(ssid.length())WiFi.begin(ssid.c_str(),prefs.getString("password","").c_str());
+  networkEvents=xQueueCreate(8,sizeof(NetworkEvent));WiFi.onEvent(networkEvent);
+  WiFi.mode(WIFI_AP_STA);WiFi.setAutoReconnect(true);WiFi.setSleep(false);WiFi.softAP("ESP32-CatHost","catrobot32");networkBegin(prefs.getString("ssid",""),prefs.getString("password",""));
   logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO");initCamera();startServers();
 }
 void readLines(Stream &s,String &buffer,bool physical) {static Input in;static bool usbOverflow=false,uartOverflow=false;bool &overflow=physical?uartOverflow:usbOverflow;int count=0;while(s.available()&&count++<1024){char c=s.read();if(c=='\n'){if(!overflow){if(physical)acceptUno(buffer,true);else {buffer.toCharArray(in.text,sizeof(in.text));handleInput(in);}}overflow=false;buffer="";}else if(c!='\r'&&!overflow){if(buffer.length()<4095)buffer+=c;else{buffer="";overflow=true;logLine("OVERFLOW","serial line discarded");}}}}
 void loop() {
+  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);networkTick();xSemaphoreGiveRecursive(stateLock);
   xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);readLines(Serial,usbLine,false);readLines(uno,uartLine,true);static Input in;for(int i=0;i<8&&xQueueReceive(inputs,&in,0)==pdTRUE;i++)handleInput(in);
   if(visionPayload.length()){JsonDocument d;String payload=visionPayload;visionPayload="";if(!deserializeJson(d,payload))acceptCamera(d);else visionRejected++;}
   debugTick();policyTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
   if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis();logLine("TELEMETRY_TIMEOUT","retry in 2s");}
-  if(!policyPreparing()&&(int32_t)(millis()-lastPoll)>=int32_t(policyTelemetryInterval())&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
+  if(!policyPreparing()&&(int32_t)(millis()-lastPoll)>=int32_t(mode=="SIM_UNO"?min(uint32_t(1000),policyTelemetryInterval()):policyTelemetryInterval())&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
   flushTx();
   delay(2);
 }

@@ -21,7 +21,7 @@ test('preview visibility and live video choice are local and leave status update
  const f=fixture();let requests=0;f.context.fetch=async()=>{++requests;throw Error('not expected');};
  f.$('showPreview').checked=false;f.run('previewOptionsChanged()');await f.run('cameraPreviewPoll()');assert.equal(requests,0);assert.equal(f.$('video').src,'');assert.equal(f.$('catPreviewCanvas').style.display,'none');
  f.run('syncCameraPreview({ms:1200,config:{visionMaxAgeMs:1500},catPreview:{id:1,at:1000,frameSeq:9,cat:{valid:true,detected:true,score:.8},samples:[]}})');assert.match(f.$('catDetected').textContent,/检测到猫/);assert.match(f.$('previewVisibility').textContent,/已关闭/);
- f.$('showPreview').checked=true;f.$('previewSource').value='live';f.run('previewOptionsChanged()');assert.equal(f.$('video').src,'http://localhost:81/stream');await f.run('cameraPreviewPoll()');assert.equal(requests,0);
+ f.$('showPreview').checked=true;f.$('previewSource').value='live';f.run('previewOptionsChanged()');assert.equal(f.$('video').src,'http://localhost/stream');await f.run('cameraPreviewPoll()');assert.equal(requests,0);
 });
 test('box toggle repaints a matched frame without starting inference or motion',async()=>{
  const f=fixture();const meta={id:1,frameSeq:2,width:320,height:240,cat:{valid:true,detected:true,box:[1,2,11,12],score:.8}};
@@ -47,4 +47,26 @@ test('primary panels are sensor/control/camera, settings follow, profiling is la
  assert.ok(main.indexOf('id="cameraPanel"')<main.indexOf('id="settingsWorkspace"'));
  assert.ok(main.lastIndexOf('<section')===main.indexOf('<section id="performancePanel"'));
  assert.ok(main.indexOf('id="catPreviewCanvas"')<main.indexOf('id="catPreviewPerformance"'));
+});
+
+test('preview skips absent and unchanged frames, pauses offline, and resumes on a new result',async()=>{
+ const f=fixture();let requests=0;
+ f.context.deviceOnline=true;
+ let meta={id:1,frameSeq:9,width:320,height:240,cat:{valid:true,detected:false}};
+ f.context.fetch=async()=>{requests++;return {ok:true,status:200,headers:{get:()=>JSON.stringify(meta)},blob:async()=>({})};};
+ f.run('syncCameraPreview({ms:1000,catPreview:{available:false}})');await f.run('cameraPreviewPoll()');assert.equal(requests,0);
+ f.run('syncCameraPreview({ms:1100,catPreview:{id:1,available:true}})');await f.run('cameraPreviewPoll()');assert.equal(requests,1);
+ await f.run('cameraPreviewPoll()');assert.equal(requests,1);
+ meta={...meta,id:2};f.context.deviceOnline=false;
+ f.run('syncCameraPreview({ms:1200,catPreview:{id:2,available:true}})');await f.run('cameraPreviewPoll()');assert.equal(requests,1);
+ f.context.deviceOnline=true;await f.run('cameraPreviewPoll()');assert.equal(requests,2);
+});
+
+test('a JPEG finishing after a lost state connection is discarded',async()=>{
+ const f=fixture();let finish,closed=false;f.context.deviceOnline=true;
+ f.context.createImageBitmap=()=>new Promise(resolve=>finish=resolve);
+ f.context.fetch=async()=>({ok:true,status:200,headers:{get:()=>JSON.stringify({id:1,width:320,height:240,cat:{}})},blob:async()=>({})});
+ const pending=f.run('cameraPreviewPoll()');await new Promise(resolve=>setImmediate(resolve));
+ f.context.deviceOnline=false;finish({close(){closed=true;}});await pending;
+ assert.equal(f.draws.length,0);assert.ok(closed);
 });

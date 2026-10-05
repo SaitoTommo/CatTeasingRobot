@@ -10,9 +10,48 @@ const html=gunzipSync(Buffer.from(header.split('{')[1].split('}')[0].match(/\d+/
 const elements=new Map();
 function element(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',style:{},attrs:{},getAttribute(k){return k==='src'?this.src:this.attrs[k];},append(){},setAttribute(k,v){this.attrs[k]=v;}});return elements.get(id);}
 const context=vm.createContext({document:{getElementById:element,createElement:()=>({append(){},setAttribute(){}}),querySelectorAll:()=>[]},location:{hostname:'localhost'},fetch:()=>new Promise(()=>{}),setTimeout(){},AbortSignal,TextEncoder,alert(){}});
-vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
+vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1].replace(/\b(?:poll|flowPoll|benchPoll|benchFramePoll|cameraPreviewPoll)\(\);/g,''),context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
+
+test('state, flow and preview reads share one in-flight request and release it after errors',async()=>{
+ let release,started=0;
+ context.testRead=async()=>{started++;await new Promise(resolve=>release=resolve);return 1;};
+ context.testNext=async()=>{started++;return 2;};
+ const first=vm.runInContext('withPageRead(testRead)',context),second=vm.runInContext('withPageRead(testNext)',context);
+ await Promise.resolve();await Promise.resolve();assert.equal(started,1);release();assert.equal(await first,1);assert.equal(await second,2);
+ context.testRead=async()=>{throw Error('closed');};await assert.rejects(vm.runInContext('withPageRead(testRead)',context));
+ assert.equal(await vm.runInContext('withPageRead(testNext)',context),2);
+});
+
+test('one closed keep-alive connection is retried before clearing live readings',async()=>{
+ let calls=0;context.fetch=async()=>{if(++calls===1)throw TypeError('connection reset');return {ok:true,json:async()=>({ms:1234})};};
+ const d=await vm.runInContext('readPageState()',context);assert.equal(d.ms,1234);assert.equal(calls,2);
+ context.fetch=()=>new Promise(()=>{});
+});
+
+test('failed state polls disable controls, release video, back off and recover on successful readback',async()=>{
+ const delays=[];context.setTimeout=(fn,ms)=>delays.push(ms);
+ context.fetch=async()=>{throw Error('network lost');};element('video').src='http://localhost:81/stream';
+ await vm.runInContext('poll()',context);assert.equal(vm.runInContext('deviceOnline',context),false);
+ assert.equal(element('video').src,'');assert.equal(element('saveUno').disabled,true);assert.equal(delays.at(-1),1200);
+ await vm.runInContext('poll()',context);assert.equal(delays.at(-1),2400);
+ await vm.runInContext('poll()',context);assert.equal(delays.at(-1),3000);
+ const state={...base,config:{route:[]},logs:[]};context.fetch=async()=>({ok:true,json:async()=>state});
+ await vm.runInContext('poll()',context);assert.equal(vm.runInContext('deviceOnline',context),true);
+ assert.equal(vm.runInContext('pollFailures',context),0);assert.equal(delays.at(-1),600);
+ context.setTimeout=()=>{};
+});
+
+test('incremental logs retain history, deduplicate replies, cap memory and reset after a reboot',()=>{
+ vm.runInContext('pageLogs=[];pageLogAfter=0;pageLogMs=0',context);
+ const merge=d=>vm.runInContext(`(()=>{const d=${JSON.stringify(d)};mergePageLogs(d);return d.logs.map(r=>r.seq);})()`,context);
+ assert.deepEqual(Array.from(merge({ms:100,logSeq:2,logs:[{seq:1},{seq:2}]})),[1,2]);
+ assert.deepEqual(Array.from(merge({ms:200,logSeq:3,logs:[{seq:2},{seq:3}]})),[1,2,3]);
+ assert.deepEqual(Array.from(merge({ms:300,logSeq:3,logs:[]})),[1,2,3]);
+ const many=Array.from({length:200},(_,i)=>({seq:i+4}));const retained=merge({ms:400,logSeq:203,logs:many});assert.equal(retained.length,160);assert.equal(retained[0],44);
+ assert.deepEqual(Array.from(merge({ms:10,logSeq:1,logs:[{seq:1}]})),[1]);
+});
 
 test('CAT_CHECK frame limit is saved and read back in both cat panels, rejecting fractional counts',()=>{
  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};

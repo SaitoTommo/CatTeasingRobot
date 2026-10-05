@@ -8,6 +8,9 @@ const files = new Map([
   ["/esp32-lab.html", ["esp32-lab.html", "text/html; charset=utf-8"]],
   ["/esp32-lab.mjs", ["esp32-lab.mjs", "text/javascript; charset=utf-8"]],
   ["/esp32-link.mjs", ["esp32-link.mjs", "text/javascript; charset=utf-8"]],
+  ["/firmware-uno-simulator.mjs", ["firmware-uno-simulator.mjs", "text/javascript; charset=utf-8"]],
+  ["/scan-simulator.mjs", ["scan-simulator.mjs", "text/javascript; charset=utf-8"]],
+  ["/sim-http-transport.mjs", ["sim-http-transport.mjs", "text/javascript; charset=utf-8"]],
   ["/", ["index.html", "text/html; charset=utf-8"]],
   ["/index.html", ["index.html", "text/html; charset=utf-8"]],
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
@@ -37,6 +40,15 @@ function jsonReply(response, status, payload) {
   }).end(JSON.stringify(payload));
 }
 
+async function simState(url){
+  let failure;
+  for(let attempt=0;attempt<2;attempt++){
+    try{const r=await fetch(url,{headers:{Connection:'close'},signal:AbortSignal.timeout(2000)});return {status:r.status,data:await r.json()};}
+    catch(e){failure=e;}
+  }
+  throw failure;
+}
+
 async function readBody(request) {
   const chunks = [];
   let size = 0;
@@ -58,6 +70,31 @@ createServer(async (request, response) => {
   let pathname;
   try { pathname = new URL(request.url, "http://localhost").pathname; }
   catch { response.writeHead(400).end("Bad request"); return; }
+  // Same-origin bridge for the browser simulator. Only the named bench ESP32
+  // is reachable; every write is guarded again by firmware at execution time.
+  if (pathname === '/sim-host/state' || pathname === '/sim-host/input') {
+    try {
+      const origin='http://192.168.137.130';
+      if(pathname.endsWith('/state')&&request.method==='GET'){
+        const q=new URL(request.url,'http://localhost').searchParams;
+        const after=Number(q.get('afterLog'))||0;
+        const upstream=await simState(`${origin}/api/state?afterLog=${Math.max(0,after)}&logLimit=40`);
+        jsonReply(response,upstream.status,upstream.data);return;
+      }
+      if(pathname.endsWith('/input')&&request.method==='POST'){
+        const input=JSON.parse(await readBody(request));
+        const allowed=input.op==='mode'?input.mode==='SIM_UNO':['uno','uno_batch','vision','control','config','vision_mode'].includes(input.op);
+        if(!allowed){jsonReply(response,400,{error:'SIM_UNO only'});return;}
+        // Firmware checks expectedMode when dequeuing this operation, closing
+        // the race between a prior state read and a concurrent UART switch.
+        input.expectedMode='SIM_UNO';
+        const upstream=await fetch(`${origin}/api/input`,{method:'POST',headers:{Connection:'close'},body:JSON.stringify(input),signal:AbortSignal.timeout(4000)});
+        jsonReply(response,upstream.status,{ok:upstream.ok});return;
+      }
+      jsonReply(response,405,{error:'method'});
+    }catch(e){jsonReply(response,502,{error:e.message});}
+    return;
+  }
   if (pathname === "/mood_alert" && request.method === "POST") {
     const source = parseSource(await readBody(request));
     if (!ALLOWED_SOURCES.has(source)) { jsonReply(response, 400, { error: "unsupported_source" }); return; }
