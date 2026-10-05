@@ -1,0 +1,10 @@
+{
+  "command": "arduino-cli upload --fqbn arduino:avr:uno --port COM10 --input-dir %TEMP%/codex-uno-scan-build --verify",
+  "uploadExitCode": 0,
+  "applicationFlashBytes": 32244,
+  "applicationVersion": "UNO_CAT_V6.11",
+  "pongRows": 21,
+  "configRows": 1,
+  "readyCaptured": false,
+  "serialCaveat": "Post-upload capture includes garbled/repeated fragments; PONG/config response is not UART stability acceptance."
+}

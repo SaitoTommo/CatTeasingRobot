@@ -1,0 +1,561 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.37_ROBOT_ACTION_ROUNDS",
+  "ms": 135279,
+  "mode": "SIM_UNO",
+  "phase": "IDLE",
+  "unoTelemetry": [],
+  "unoConfig": {
+    "line": "",
+    "at": 0,
+    "source": "SIM_RX"
+  },
+  "debugResult": "",
+  "debugBusy": false,
+  "benchBypass": false,
+  "hostLed": {
+    "pin": "onboard/GPIO21",
+    "on": false,
+    "mode": "OFF",
+    "gpioLevel": 1,
+    "source": "ESP_GPIO_CONTROL"
+  },
+  "patrolStatus": {
+    "robotActionsCompleted": 0,
+    "robotActionLimit": 5,
+    "robotAction": "",
+    "robotSlowFlash": false,
+    "robotFastApproach": false,
+    "interactionInitiator": "",
+    "action": "IDLE",
+    "touchSignalActive": false,
+    "confirmationStage": "NONE",
+    "confirmationRemainingMs": 0,
+    "nextAction": "",
+    "scanPhase": "NONE",
+    "targetId": 46,
+    "visionAgeMs": 4294967295,
+    "frameSeq": 0,
+    "tagStopWidth": 0.25,
+    "routeCount": 2,
+    "tagWidth": -1,
+    "targetIndex": 0,
+    "rounds": 0,
+    "selectedBehavior": "OBSERVE",
+    "interactionBranch": -1,
+    "lightPattern": -1,
+    "responseActive": false,
+    "responseName": "?????????",
+    "responseLight": -1,
+    "responseSound": -1,
+    "probeStep": 0,
+    "escape": "SLOW_STRAIGHT_ESCAPE",
+    "firstTouch": -1,
+    "multipleTouches": false,
+    "simultaneousDetection": false,
+    "touchSearchRequired": false,
+    "lastFault": "",
+    "lastMotionFailure": "",
+    "motorId": 0,
+    "motorConfirmed": false,
+    "motorRunning": false,
+    "minimumDrivePwm": 150,
+    "requestedLeftPwm": 0,
+    "requestedRightPwm": 0,
+    "leftPwm": 0,
+    "rightPwm": 0,
+    "scanId": 0,
+    "scanStep": 0,
+    "generation": 1,
+    "scanAngle": 0,
+    "scanBudgetDegrees": 0,
+    "remainingApproachCm": 0,
+    "scanCapability": false,
+    "catFailure": {
+      "message": "",
+      "reason": "",
+      "at": 0,
+      "angle": 0
+    },
+    "unsupportedSettings": [
+      "farCatThresholdCm",
+      "catLeaveDistanceCm",
+      "finalSearchTimeoutMs",
+      "searchTimeoutMs",
+      "postEscapeWaitSeconds",
+      "centerTolerancePercent",
+      "alignPwm"
+    ],
+    "escapeStage": "NONE",
+    "escapeTargetCm": 0,
+    "escapeDistanceCm": 0,
+    "escapeTravelCm": 0,
+    "interactionId": 0,
+    "escapeRounds": 0,
+    "exploreRounds": 0,
+    "catDistance": -1,
+    "interactionExitReason": "",
+    "linkRecovering": false,
+    "linkRecoveryAttempt": 0,
+    "encoderLeftRpm": 0,
+    "encoderRightRpm": 0,
+    "catWidth": -1,
+    "settleElapsedMs": 0,
+    "settleQuietMs": 0,
+    "catCheckMaxFrames": 3,
+    "catCheckSamples": 0,
+    "settleSamples": 0,
+    "exploreElapsedMs": 0,
+    "exploreRemainingMs": 30000,
+    "remainingWaitMs": 0,
+    "departureElapsedMs": 0
+  },
+  "catPreview": {
+    "available": false,
+    "samples": []
+  },
+  "simVisionRequest": {
+    "scanId": 0,
+    "stepId": 0,
+    "generation": 0,
+    "mode": "OFF",
+    "pending": false
+  },
+  "lastUnoAgeMs": 4294967295,
+  "lastRx": "",
+  "lastTx": "C 23 GET_TELEMETRY*3B",
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "cameraOk": true,
+  "frameSeq": 673,
+  "heap": 49512,
+  "psram": 8168124,
+  "actualVisionMode": "OFF",
+  "visionMailbox": {
+    "oversize": 0,
+    "superseded": 0,
+    "rejected": 0,
+    "consumed": 0
+  },
+  "visionMode": "OFF",
+  "visionIntervalMs": 200,
+  "apIP": "192.168.4.1",
+  "stationIP": "192.168.137.130",
+  "network": {
+    "stationConnected": true,
+    "status": 3,
+    "rssiDbm": -29,
+    "disconnects": 0,
+    "lastDisconnectReason": 0,
+    "lastDisconnectAt": 0,
+    "reconnectAttempts": 0,
+    "sleepEnabled": false,
+    "controlMaxSockets": 9,
+    "streamMaxSockets": 4,
+    "sdkMaxSockets": 16,
+    "sharedHttpMaxSockets": 13,
+    "httpInternalSockets": 3,
+    "resetReason": 11,
+    "minFreeHeap": 46004,
+    "largestFreeBlock": 31732
+  },
+  "videoStream": {
+    "path": "/stream",
+    "maxClients": 4,
+    "workerReady": true,
+    "clients": []
+  },
+  "config": {
+    "explorationBranchPercent": 20,
+    "touchFlashPercent": 20,
+    "touchPreyPercent": 20,
+    "touchSlowEscapePercent": 40,
+    "touchFastEscapePercent": 40,
+    "catFollowProbePercent": 5,
+    "catFollowObservePercent": 35,
+    "catFollowPatrolPercent": 60,
+    "endingAfterRounds": 3,
+    "endingInactivitySeconds": 12,
+    "endingPatrolPercent": 40,
+    "endingSilentPercent": 30,
+    "endingSignalPercent": 30,
+    "captureWaitMaxSeconds": 15,
+    "captureCueFlashMs": 2200,
+    "captureCueBeepMs": 360,
+    "robotFarApproachPercent": 85,
+    "robotFarProbePercent": 15,
+    "robotNearSignalPercent": 50,
+    "robotNearObservePercent": 40,
+    "robotNearStayPercent": 10,
+    "catProbeCooldownSeconds": 15,
+    "robotProbeCooldownSeconds": 15,
+    "farCatThresholdCm": 40,
+    "initialLookSeconds": 5,
+    "postEscapeWaitSeconds": 10,
+    "touchDebounceMs": 1000,
+    "catLeaveDistanceCm": 70,
+    "catLeaveSeconds": 5,
+    "sessionLimitSeconds": 60,
+    "decisionIntervalMs": 2500,
+    "searchTimeoutMs": 15000,
+    "finalSearchTimeoutMs": 8000,
+    "alignTimeoutMs": 5000,
+    "touchReleaseTimeoutMs": 4000,
+    "searchPwm": 75,
+    "centerTolerancePercent": 20,
+    "alignPwm": 52,
+    "slowApproachCm": 9,
+    "slowApproachPwm": 95,
+    "probeStep1Cm": 3,
+    "probeStep2Cm": 4,
+    "probeStep3Cm": 3,
+    "probePause1Ms": 700,
+    "probePause2Ms": 900,
+    "probePause3Ms": 600,
+    "probePwm": 90,
+    "signalFlashMs": 1400,
+    "signalBeepMs": 180,
+    "touchFeedbackBeepMs": 180,
+    "escapeDistanceCm": 26,
+    "slowEscapePwm": 95,
+    "fastEscapePwm": 210,
+    "catCheckMaxFrames": 3,
+    "robotActionLimit": 5,
+    "robotFastApproachCm": 15,
+    "robotFastApproachPwm": 180,
+    "robotSlowFlashPercent": 50,
+    "tagCenterTolerancePercent": 20,
+    "catInteractionIdleSeconds": 12,
+    "catObserveTimeoutSeconds": 10,
+    "escapeMinDistanceCm": 23,
+    "escapeMaxDistanceCm": 23,
+    "catConfirmWaitSeconds": 2,
+    "catConfirmPreyPercent": 0,
+    "catConfirmExplorePercent": 0,
+    "escapePreyAfterRounds": 5,
+    "escapePreyPercent": 20,
+    "explorePreyMinimumSeconds": 30,
+    "explorePreyPercent": 20,
+    "minimumDrivePwm": 150,
+    "scanStepPulses": 2,
+    "scanMinimumMs": 500,
+    "scanQuietMs": 100,
+    "scanVisionTimeoutMs": 3000,
+    "scanSettleTimeoutMs": 3000,
+    "catSettleTimeoutMs": 6000,
+    "catApproachStepCm": 1,
+    "route": [
+      46,
+      43
+    ],
+    "patrolSearchPwm": 45,
+    "patrolAlignPwm": 30,
+    "wheelMm": 67.5,
+    "trackMm": 120,
+    "stopMarginCm": 3,
+    "tagStopWidth": 0.25,
+    "catNearWidth": 0.35,
+    "catFarWidth": 0.12,
+    "visionMaxAgeMs": 1500,
+    "frontAvoidanceEnabled": false,
+    "frontCalibrated": false,
+    "frontBlockBottom": 0.88,
+    "floorRoiTop": 0.75,
+    "floorDifferenceThreshold": 35,
+    "floorReference": []
+  },
+  "vision": null,
+  "cameraVision": null,
+  "droppedLogs": 0,
+  "logs": [
+    {
+      "seq": 1,
+      "ms": 207,
+      "source": "READY",
+      "line": "ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO"
+    },
+    {
+      "seq": 2,
+      "ms": 558,
+      "source": "CAMERA",
+      "line": "init=0 psram=8388608"
+    },
+    {
+      "seq": 3,
+      "ms": 1001,
+      "source": "SIM_TX",
+      "line": "C 1 GET_TELEMETRY*E6"
+    },
+    {
+      "seq": 4,
+      "ms": 1298,
+      "source": "WIFI_GOT_IP",
+      "line": "192.168.137.130 RSSI=-29"
+    },
+    {
+      "seq": 5,
+      "ms": 6003,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 6,
+      "ms": 7003,
+      "source": "SIM_TX",
+      "line": "C 2 GET_TELEMETRY*3E"
+    },
+    {
+      "seq": 7,
+      "ms": 12004,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 8,
+      "ms": 13004,
+      "source": "SIM_TX",
+      "line": "C 3 GET_TELEMETRY*8B"
+    },
+    {
+      "seq": 9,
+      "ms": 18005,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 10,
+      "ms": 19005,
+      "source": "SIM_TX",
+      "line": "C 4 GET_TELEMETRY*89"
+    },
+    {
+      "seq": 11,
+      "ms": 24006,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 12,
+      "ms": 25006,
+      "source": "SIM_TX",
+      "line": "C 5 GET_TELEMETRY*3C"
+    },
+    {
+      "seq": 13,
+      "ms": 30007,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 14,
+      "ms": 31007,
+      "source": "SIM_TX",
+      "line": "C 6 GET_TELEMETRY*E4"
+    },
+    {
+      "seq": 15,
+      "ms": 36008,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 16,
+      "ms": 37008,
+      "source": "SIM_TX",
+      "line": "C 7 GET_TELEMETRY*51"
+    },
+    {
+      "seq": 17,
+      "ms": 42010,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 18,
+      "ms": 43010,
+      "source": "SIM_TX",
+      "line": "C 8 GET_TELEMETRY*E0"
+    },
+    {
+      "seq": 19,
+      "ms": 48011,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 20,
+      "ms": 49011,
+      "source": "SIM_TX",
+      "line": "C 9 GET_TELEMETRY*55"
+    },
+    {
+      "seq": 21,
+      "ms": 54012,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 22,
+      "ms": 55012,
+      "source": "SIM_TX",
+      "line": "C 10 GET_TELEMETRY*E5"
+    },
+    {
+      "seq": 23,
+      "ms": 60013,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 24,
+      "ms": 61014,
+      "source": "SIM_TX",
+      "line": "C 11 GET_TELEMETRY*50"
+    },
+    {
+      "seq": 25,
+      "ms": 66015,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 26,
+      "ms": 67015,
+      "source": "SIM_TX",
+      "line": "C 12 GET_TELEMETRY*88"
+    },
+    {
+      "seq": 27,
+      "ms": 72016,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 28,
+      "ms": 73016,
+      "source": "SIM_TX",
+      "line": "C 13 GET_TELEMETRY*3D"
+    },
+    {
+      "seq": 29,
+      "ms": 78017,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 30,
+      "ms": 79017,
+      "source": "SIM_TX",
+      "line": "C 14 GET_TELEMETRY*3F"
+    },
+    {
+      "seq": 31,
+      "ms": 84018,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 32,
+      "ms": 85018,
+      "source": "SIM_TX",
+      "line": "C 15 GET_TELEMETRY*8A"
+    },
+    {
+      "seq": 33,
+      "ms": 90019,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 34,
+      "ms": 91019,
+      "source": "SIM_TX",
+      "line": "C 16 GET_TELEMETRY*52"
+    },
+    {
+      "seq": 35,
+      "ms": 96020,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 36,
+      "ms": 97020,
+      "source": "SIM_TX",
+      "line": "C 17 GET_TELEMETRY*E7"
+    },
+    {
+      "seq": 37,
+      "ms": 102021,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 38,
+      "ms": 103021,
+      "source": "SIM_TX",
+      "line": "C 18 GET_TELEMETRY*56"
+    },
+    {
+      "seq": 39,
+      "ms": 108022,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 40,
+      "ms": 109022,
+      "source": "SIM_TX",
+      "line": "C 19 GET_TELEMETRY*E3"
+    },
+    {
+      "seq": 41,
+      "ms": 114023,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 42,
+      "ms": 115023,
+      "source": "SIM_TX",
+      "line": "C 20 GET_TELEMETRY*E3"
+    },
+    {
+      "seq": 43,
+      "ms": 120024,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 44,
+      "ms": 121024,
+      "source": "SIM_TX",
+      "line": "C 21 GET_TELEMETRY*56"
+    },
+    {
+      "seq": 45,
+      "ms": 126025,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 46,
+      "ms": 127025,
+      "source": "SIM_TX",
+      "line": "C 22 GET_TELEMETRY*8E"
+    },
+    {
+      "seq": 47,
+      "ms": 132026,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 48,
+      "ms": 133026,
+      "source": "SIM_TX",
+      "line": "C 23 GET_TELEMETRY*3B"
+    }
+  ],
+  "logSeq": 48,
+  "logsFromSeq": 1
+}

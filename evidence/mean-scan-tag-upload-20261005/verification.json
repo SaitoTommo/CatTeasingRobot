@@ -1,0 +1,31 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.38_MEAN_SCAN_TAG_CHECKS",
+  "unoVersion": "UNO_CAT_V6.11",
+  "unoUploadVerifyExitCode": 0,
+  "existingPartitionBytes": 3072,
+  "partitionMatches": true,
+  "espAppOffset": "0x10000",
+  "espWrittenBytes": 3776912,
+  "espWriteSeconds": 25.6,
+  "espHashVerified": true,
+  "usbAndHttpVersionMatch": true,
+  "pageMatchesCompiledHeader": true,
+  "oldSettingsCompared": 94,
+  "oldSettingsChanges": [],
+  "addedSettings": [
+    {
+      "key": "tagScanMaxFrames",
+      "value": 3
+    }
+  ],
+  "route": [
+    46,
+    43
+  ],
+  "tagScanMaxFrames": 3,
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "cameraOk": true,
+  "physicalMotionTested": false,
+  "physicalRecognitionTested": false
+}

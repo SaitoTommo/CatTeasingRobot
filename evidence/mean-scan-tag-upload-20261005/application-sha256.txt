@@ -1,0 +1,6 @@
+
+Algorithm : SHA256
+Hash      : D928AB301C1986C9923A41BB77F1261ADC9F0B213F113AFB23B51A3F3705459B
+Path      : C:\Users\guoto\AppData\Local\Temp\codex-esp32-cat-build\ESP32CatHost.ino.bin
+
+

@@ -1,3 +1,11 @@
+# Uno V6.11：Arduino IDE 编译参数更新（2026-10-05）
+
+当前版本必须使用仓库 platform.local.txt 的完整优化参数，包含新增的 -fno-inline-small-functions。旧参数即使已生效，也会把当前 V6.11 编译为 **32310 bytes**，仍超过 32256；完整参数编译为 **32244 bytes**，静态 RAM **1381 bytes**。本轮已检查电脑上的 AVR 1.8.8 配置，旧文件缺少该项，更新前保留备份；安装后的不带额外 build-property 编译结果见项目日志。
+
+配置路径仍为 C:\Users\guoto\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.8\platform.local.txt。Arduino IDE 的 arduino-cli daemon 已运行时需重新加载核心配置，最简单是关闭并重新打开 IDE；本轮不关闭用户编辑窗口。不能把超过容量的 HEX 强行写入或提高板子的 maximum_size。
+
+以下保留历史说明；本版容量与参数以上述说明及当前仓库配置为准。
+
 # Uno V6.6：Arduino IDE 编译与用户手动上传
 
 2026-10-03。Arduino AVR Boards 1.8.8 默认参数将当前完整固件编译为33828 bytes，超过Uno应用区32256 bytes。原有离线脚本使用以下优化参数，完整固件编译为32084 bytes、静态RAM1379 bytes；没有删除功能，Flash剩172 bytes，运行稳定性仍待实测。
