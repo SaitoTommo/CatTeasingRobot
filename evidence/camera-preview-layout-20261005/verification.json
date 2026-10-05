@@ -1,0 +1,31 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3_CAT_CHECK_3_PREVIEW",
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "changedExistingConfig": [],
+  "route": [
+    46,
+    40
+  ],
+  "hashVerified": true,
+  "servedPageEqualsCompiled": null,
+  "httpError": "The operation was aborted due to timeout",
+  "previewEndpointStatus": null,
+  "catPreview": {
+    "available": false,
+    "samples": []
+  },
+  "motorId": 0,
+  "motorRunning": false,
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "flashBytes": 3767914,
+  "staticRamBytes": 85264,
+  "writtenBytes": 3768064,
+  "nativePreviewChecks": 20,
+  "pagePreviewBenchTests": 41,
+  "nativeRegressionPassed": true,
+  "unoUploaded": false,
+  "visualUIChecked": false,
+  "physicalMotionTested": false
+}

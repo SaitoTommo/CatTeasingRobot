@@ -39,7 +39,7 @@ unsigned checks=0;
 #define CHECK(x) do{++checks;if(!(x)){fprintf(stderr,"FAIL line %d: %s action=%s phase=%s\n",__LINE__,#x,action.c_str(),phase.c_str());exit(1);}}while(0)
 void fixture(){
  stopGate=true;tick=100000;draws.clear();phase="STOPPED";policyControl("stop");commands.clear();requests.clear();
- config.clear();policyDefaults(config);config["route"][0]=9;config["route"][1]=10;
+ config.clear();policyDefaults(config);config["catCheckMaxFrames"]=1;config["route"][0]=9;config["route"][1]=10;
  config["frontAvoidanceEnabled"]=false;config["visionMaxAgeMs"]=1500;config["tagStopWidth"]=.25;
  config["catNearWidth"]=.35;config["catFarWidth"]=.12;config["patrolSearchPwm"]=45;config["patrolAlignPwm"]=30;config["stopMarginCm"]=3;
  mode="SIM_UNO";phase="PATROL";action="APPROACH_TAG";actionAt=tick;sessionAt=tick;motorId=scanId=stopId=sessionId=0;
@@ -200,7 +200,7 @@ int main(){
  fixture();phase="INTERACTION";beginScan("CAT","OBSERVE");configDone();scanUsed=71;sid=scanId;gen=generation;policyInput("SD "+String(sid)+" "+String(gen)+" 0");CHECK(catFailure=="找猫失败");CHECK(phase=="ENDING");CHECK(action=="WAIT_STOP");stopped();policyTick();CHECK(action=="WAIT_SESSION_STOP");policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(action=="WAIT_SESSION_START");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="PATROL");CHECK(routeIndex==0);CHECK(catFailure=="找猫失败");JsonDocument d;policySnapshot(d);CHECK(d["patrolStatus"]["catFailure"]["angle"].as<float>()>700);
  // CAT-07A..F: stopped recognition, loss/reacquisition, remaining distance and STOP.
  fixture();phase="INTERACTION";behavior("SLOW_APPROACH");CHECK(remainingCm==6);policyTick();CHECK(action=="CAT_DRIVE");CHECK(policyVisionMode()=="OFF");auto original=motorId;md();CHECK(remainingCm<6&&remainingCm>4);CHECK(action=="WAIT_STOP");stopped();settled();frame(false);policyTick();CHECK(action=="WAIT_SCAN_CONFIG");auto remaining=remainingCm;configDone();scanRequest();frame(true,true,4);policyInput("SD "+String(scanId)+" "+String(generation)+" 1");CHECK(action=="APPROACH_CAT");CHECK(remainingCm==remaining);policyTick();CHECK(action=="CAT_DRIVE");policyInput("MD "+String(original)+" 20 20");CHECK(action=="CAT_DRIVE");CHECK(remainingCm==remaining);policyControl("stop");frame(true,true,5);policyTick();CHECK(phase=="STOPPED");CHECK(!motorId);
- fixture();phase="INTERACTION";behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,false);policyTick();CHECK(phase=="ENDING");CHECK(catFailureReason=="invalid cat frame");
+ fixture();phase="INTERACTION";behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,false);policyTick();CHECK(phase=="STOPPED");CHECK(lastFault=="cat check invalid cat frame");
  fixture();phase="INTERACTION";behavior("SLOW_APPROACH");policyTick();CHECK(!checkPending);config["frontAvoidanceEnabled"]=true;CHECK(policyVisionMode()=="FLOOR");policyControl("stop");auto count=commands.size();policyStopUnconfirmed();CHECK(commands.empty());policyTick();CHECK(commands.empty());CHECK(!motorId);
  // Touch branch pools, first touch, held touches, top/multiple and side boundaries.
  fixture();draws={99,99,50};onTouch(3);CHECK(firstTouch==3);CHECK(rounds==1);onTouch(0);CHECK(firstTouch==3);CHECK(rounds==1);stopped();touch[3]=touch[0]=false;policyTick();policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanFlags==0);
@@ -363,6 +363,14 @@ int main(){
  for(const char *bad:{"CONFIG WHEEL_MM=67.5 TRACK_MM=120.0","CONFIG WHEEL_MM=nan TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=19 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=0.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0 EXTRA"}){policyInput("DATA "+String(recoveryConfig)+" "+bad);CHECK(!geometryConfirmed);}
  policyInput("DATA "+String(recoveryConfig+1)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(!geometryConfirmed);
  policyInput("DATA "+String(recoveryConfig)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);policyInput("DONE "+String(recoveryConfig));CHECK(action=="LINK_RECOVERY_SESSION_START");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(!linkRecovering);CHECK(phase=="INTERACTION");CHECK(branch==1);
+ // Cat and tag tolerance must independently affect the real decision path.
+ fixture();config["centerTolerancePercent"]=2;config["tagCenterTolerancePercent"]=15;observation["tags"][0]["id"]=9;observation["tags"][0]["width"]=.1;observation["tags"][0]["centerX"]=.6;policyTick();CHECK(action=="APPROACH_TAG");CHECK(leftPwm>0&&leftPwm==rightPwm);
+ fixture();config["centerTolerancePercent"]=15;config["tagCenterTolerancePercent"]=2;observation["tags"][0]["id"]=9;observation["tags"][0]["width"]=.1;observation["tags"][0]["centerX"]=.6;policyTick();CHECK(action=="TAG_ALIGN");
+ fixture();phase="INTERACTION";config["centerTolerancePercent"]=2;config["tagCenterTolerancePercent"]=15;afterFace="OBSERVE";observation["cat"]["centerX"]=.6;orient();CHECK(action=="ALIGN_CAT");
+ fixture();phase="INTERACTION";config["centerTolerancePercent"]=15;config["tagCenterTolerancePercent"]=2;afterFace="OBSERVE";observation["cat"]["centerX"]=.6;orient();CHECK(action=="OBSERVE");
+ // Exposed 0/100 probabilities select existing branches, respecting cooldown.
+ for(bool probe:{false,true}){fixture();phase="INTERACTION";observation["cat"]["width"]=.1;config["robotFarProbePercent"]=probe?100:0;config["robotFarApproachPercent"]=probe?0:100;draws={99};chooseRobot();CHECK(afterFace==(probe?"PROBE_APPROACH":"FAST_APPROACH"));}
+ for(int choice:{0,1,2}){fixture();phase="INTERACTION";observation["cat"]["width"]=.5;config["robotNearSignalPercent"]=choice==0?100:0;config["robotNearObservePercent"]=choice==1?100:0;config["robotNearStayPercent"]=choice==2?100:0;draws={99};chooseRobot();CHECK(afterFace==(choice==0?"STAY_SIGNAL":choice==1?"OBSERVE":"STAY"));}
  printf("actual ESP policy core: %u checks passed\n",checks);
  return 0;
 }

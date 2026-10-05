@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3_CAT_CHECK_3_PREVIEW. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.10 with SCAN_V1; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -46,6 +46,8 @@ void requestVision(uint32_t scan,uint16_t step,uint32_t generation,const char *s
 // Post-inference rest, not a fixed observation period. processVision also
 // enforces at least 350 ms between inference starts.
 String visionMode="OFF";uint32_t visionIntervalMs=200;
+#include "vision_bench.h"
+#include "vision_preview.h"
 void emitUsb(const String &s){String *copy=new String(s);if(xQueueSend(usbPackets,&copy,0)!=pdTRUE){delete copy;}}
 void usbTask(void*){String *s;while(true){if(xQueueReceive(usbPackets,&s,portMAX_DELAY)==pdTRUE){Serial.println(*s);delete s;}}}
 uint8_t crc8(const String &s){return wireCrc8(s.c_str(),s.length());}
@@ -59,6 +61,9 @@ uint32_t cmdSeq=0;
 void enqueueCamera(const String &out){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);if(out.length()>12287){visionOversize++;}else{if(visionPayload.length())visionSuperseded++;visionPayload=out;}xSemaphoreGiveRecursive(stateLock);}
 void acceptCamera(JsonDocument &d){
  auto v=d["vision"].as<JsonObject>();uint32_t token=v["ticket"]|0u;String desired=policyVisionMode();if(desired=="USER")desired=visionMode;
+ // Benchmark observations retain the policy's required tag/floor work.
+ // Never promote a continuous benchmark frame to a requested stop/scan ticket.
+ if(!token&&visionBench){String measured=v["mode"]|"";if(desired=="TAGS"&&measured=="BOTH"){v["mode"]="TAGS";v["cat"]["valid"]=false;v["cat"]["detected"]=false;}else if(desired=="FLOOR"&&measured=="CAT"){v["mode"]="FLOOR";v["cat"]["valid"]=false;v["cat"]["detected"]=false;v["front"]=!v["frontCalibrated"].as<bool>()?"INVALID":v["floorDifference"].as<float>()>(config["floorDifferenceThreshold"]|35.0f)?"BLOCKED":"CLEAR";}else if(desired=="CAT"&&measured=="BOTH")v["mode"]="CAT";}
  if(token){VisionTicket t=visionGate.ticket;t.token=token;t.scan=v["scanId"]|0u;t.step=v["stepId"]|0u;t.generation=v["generation"]|0u;if(!visionGate.finish(t,v["frameSeq"]|0u,v["captureUs"].as<uint64_t>())){visionRejected++;return;}}
  else if(desired=="OFF"||String(v["mode"]|"")!=desired||(v["epoch"]|0u)!=visionGate.serial){visionRejected++;return;}
  realVision=v;visionConsumed++;if(mode=="UART"){observation=realVision;policyVision();}
@@ -180,7 +185,7 @@ void defaults() {
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 String snapshot() {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3_CAT_CHECK_3_PREVIEW";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
@@ -205,6 +210,12 @@ void handleInput(const Input &in) {
   else if(op=="mode") {hostLedStop();policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();compactTelemetry.reset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
   else if(op=="vision" && mode=="SIM_UNO") {observation=d["vision"];observation["source"]="SIM_CAMERA";observation["at"]=millis();policyVision();}
   else if(op=="camera"&&in.physical) acceptCamera(d);
+  else if(op=="vision_bench") {
+    if(!d["enabled"].is<bool>()||!d["gapMs"].is<unsigned>()||!d["captureGapMs"].is<unsigned>()||d["gapMs"].as<unsigned>()>5000||d["captureGapMs"].as<unsigned>()>2000){logLine("INPUT_ERROR","invalid benchmark interval");return;}
+    bool reset=d["reset"]|false;bool enable=d["enabled"].as<bool>();
+    if(reset||(enable&&!visionBench)){xSemaphoreTake(frameLock,portMAX_DELAY);benchEpoch++;benchCount=benchPreviousStart=benchPreviousEnd=0;benchJpegLen=0;benchResult="";xSemaphoreGive(frameLock);}
+    visionBench=enable;benchGapMs=d["gapMs"];benchCaptureMs=d["captureGapMs"];logLine("VISION_BENCH",enable?"enabled":"disabled");
+  }
   else if(op=="vision_mode") {String m=d["mode"]|"OFF";if(m!="OFF"&&m!="TAGS"&&m!="CAT"&&m!="BOTH"){logLine("INPUT_ERROR","invalid vision mode");return;}visionMode=m;if(policyVisionMode()=="USER"){cancelVision();realVision.clear();if(mode=="UART")observation.clear();}logLine("VISION_MODE",visionMode);}
   else if(op=="calibrate_front") {if(phase!="IDLE"&&phase!="STOPPED"||stopPendingId||stopUnconfirmed){logLine("CONFIG_ERROR","confirmed stop required first");return;}if(millis()-realVision["at"].as<uint32_t>()>5000||realVision["floorSignature"].size()!=72){logLine("CONFIG_ERROR","no fresh camera signature");return;}config["floorReference"]=realVision["floorSignature"];config["frontCalibrated"]=true;String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CALIBRATION","ground appearance reference captured; experimental qualitative front input");}
   else if(op=="config") {
@@ -219,6 +230,13 @@ void handleInput(const Input &in) {
 }
 esp_err_t pageHandler(httpd_req_t *r) {httpd_resp_set_type(r,"text/html; charset=utf-8");httpd_resp_set_hdr(r,"Content-Encoding","gzip");return httpd_resp_send(r,(const char*)DEBUG_PAGE_GZIP,sizeof(DEBUG_PAGE_GZIP));}
 esp_err_t stateHandler(httpd_req_t *r) {xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String s=snapshot();xSemaphoreGiveRecursive(stateLock);httpd_resp_set_type(r,"application/json");httpd_resp_set_hdr(r,"Cache-Control","no-store");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");return httpd_resp_send(r,s.c_str(),s.length());}
+void policyFlowSnapshot(JsonDocument &);
+esp_err_t flowHandler(httpd_req_t *r){
+ JsonDocument d;xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);d["ms"]=millis();d["phase"]=phase;policyFlowSnapshot(d);d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
+ String recent[8];int n=0;for(uint32_t id=logSeq;id&&logSeq-id<160&&n<8;id--){const String &row=logs[(id-1)%160];if(row.indexOf("\"source\":\"DECISION\"")>=0&&row.indexOf("\"line\":\"PATROL ")>=0)recent[n++]=row;}
+ xSemaphoreGiveRecursive(stateLock);auto events=d["logs"].to<JsonArray>();while(n){JsonDocument item;if(!deserializeJson(item,recent[--n]))events.add(item.as<JsonObject>());}
+ String out;serializeJson(d,out);httpd_resp_set_type(r,"application/json");httpd_resp_set_hdr(r,"Cache-Control","no-store");return httpd_resp_send(r,out.c_str(),out.length());
+}
 esp_err_t captureHandler(httpd_req_t *r){uint8_t *copy=nullptr;size_t len=0;xSemaphoreTake(frameLock,portMAX_DELAY);if(jpegLen){len=jpegLen;copy=(uint8_t*)ps_malloc(len);if(copy)memcpy(copy,jpegCache,len);}xSemaphoreGive(frameLock);if(!copy){httpd_resp_send_err(r,HTTPD_500_INTERNAL_SERVER_ERROR,"camera unavailable");return ESP_FAIL;}httpd_resp_set_type(r,"image/jpeg");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");esp_err_t e=httpd_resp_send(r,(const char*)copy,len);free(copy);return e;}
 esp_err_t inputHandler(httpd_req_t *r) {
   if(r->content_len>4095){httpd_resp_send_err(r,HTTPD_400_BAD_REQUEST,"body too large");return ESP_FAIL;}
@@ -238,28 +256,28 @@ esp_err_t streamHandler(httpd_req_t *r) {
   }
 }
 void startServers() {
-  httpd_config_t c=HTTPD_DEFAULT_CONFIG();c.server_port=80;c.stack_size=8192;c.max_uri_handlers=8;httpd_handle_t h=nullptr;
-  if(httpd_start(&h,&c)==ESP_OK){httpd_uri_t p={.uri="/",.method=HTTP_GET,.handler=pageHandler};httpd_register_uri_handler(h,&p);p.uri="/api/state";p.handler=stateHandler;httpd_register_uri_handler(h,&p);p.uri="/capture";p.handler=captureHandler;httpd_register_uri_handler(h,&p);p.uri="/api/input";p.method=HTTP_POST;p.handler=inputHandler;httpd_register_uri_handler(h,&p);}
+  httpd_config_t c=HTTPD_DEFAULT_CONFIG();c.server_port=80;c.stack_size=8192;c.max_uri_handlers=10;httpd_handle_t h=nullptr;
+  if(httpd_start(&h,&c)==ESP_OK){httpd_uri_t p={.uri="/",.method=HTTP_GET,.handler=pageHandler};httpd_register_uri_handler(h,&p);p.uri="/api/state";p.handler=stateHandler;httpd_register_uri_handler(h,&p);p.uri="/api/flow";p.handler=flowHandler;httpd_register_uri_handler(h,&p);p.uri="/capture";p.handler=captureHandler;httpd_register_uri_handler(h,&p);p.uri="/api/vision-bench";p.handler=benchStateHandler;httpd_register_uri_handler(h,&p);p.uri="/vision-bench-frame";p.handler=benchFrameHandler;httpd_register_uri_handler(h,&p);p.uri="/cat-preview-frame";p.handler=catPreviewHandler;httpd_register_uri_handler(h,&p);p.uri="/api/input";p.method=HTTP_POST;p.handler=inputHandler;httpd_register_uri_handler(h,&p);}
   c.server_port=81;c.ctrl_port=32769;c.stack_size=4096;c.max_open_sockets=2;if(httpd_start(&h,&c)==ESP_OK){httpd_uri_t p={.uri="/stream",.method=HTTP_GET,.handler=streamHandler};httpd_register_uri_handler(h,&p);}
 }
-void processVision(camera_fb_t *,const VisionTicket &,uint32_t,uint64_t,uint32_t);
+void processVision(camera_fb_t *,const VisionTicket &,uint32_t,uint64_t,uint32_t,uint32_t);
 void visionTask(void*){
- uint32_t previous=0,lastContinuous=0;
+ uint32_t previous=0,lastContinuous=0,lastFinished=0;
  while(true){
-  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);VisionTicket ticket=visionGate.ticket;bool requested=visionGate.pending;uint32_t epoch=visionGate.serial;
-  String selected=requested?String(ticket.mode):policyVisionMode();if(selected=="USER")selected=visionMode;actualVisionMode=selected;xSemaphoreGiveRecursive(stateLock);
+  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);VisionTicket ticket=visionGate.ticket;bool requested=visionGate.pending;uint32_t epoch=visionGate.serial,benchRun=visionBench?benchEpoch:UINT32_MAX;
+  String policyMode=policyVisionMode();bool bench=visionBench;uint32_t gap=benchGapMs;String normalMode=policyMode=="USER"?visionMode:policyMode;String selected=requested?String(ticket.mode):bench?(normalMode=="TAGS"||normalMode=="BOTH"?String("BOTH"):String("CAT")):normalMode;actualVisionMode=selected;xSemaphoreGiveRecursive(stateLock);
   if(selected!="OFF"){
    camera_fb_t fb={};uint32_t seq=0;uint64_t capture=0;xSemaphoreTake(frameLock,portMAX_DELAY);seq=frameSeq;capture=frameCaptureUs;
-   if(jpegLen&&seq!=previous&&(requested||millis()-lastContinuous>=350)){fb.len=jpegLen;fb.buf=(uint8_t*)ps_malloc(fb.len);if(fb.buf){memcpy(fb.buf,jpegCache,fb.len);fb.width=320;fb.height=240;fb.format=PIXFORMAT_JPEG;}}xSemaphoreGive(frameLock);
+   if(jpegLen&&seq!=previous&&(requested||(bench?millis()-lastFinished>=gap:millis()-lastContinuous>=350))){fb.len=jpegLen;fb.buf=(uint8_t*)ps_malloc(fb.len);if(fb.buf){memcpy(fb.buf,jpegCache,fb.len);fb.width=320;fb.height=240;fb.format=PIXFORMAT_JPEG;}}xSemaphoreGive(frameLock);
    if(fb.buf){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);bool eligible=!requested||visionGate.frame(ticket,seq,capture);xSemaphoreGiveRecursive(stateLock);
-    if(eligible){if(!requested){ticket.token=0;strcpy(ticket.mode,selected.c_str());lastContinuous=millis();}processVision(&fb,ticket,seq,capture,epoch);previous=seq;}free(fb.buf);
+    if(eligible){if(!requested){ticket.token=0;strcpy(ticket.mode,selected.c_str());lastContinuous=millis();}processVision(&fb,ticket,seq,capture,epoch,benchRun);lastFinished=millis();previous=seq;}free(fb.buf);
    }
   }
-  vTaskDelay(pdMS_TO_TICKS(20));
+  vTaskDelay(bench?1:pdMS_TO_TICKS(20));
  }
 }
 void cameraTask(void*){
- while(true){camera_fb_t *fb=esp_camera_fb_get();if(fb){xSemaphoreTake(frameLock,portMAX_DELAY);if(fb->len<160000){memcpy(jpegCache,fb->buf,fb->len);jpegLen=fb->len;frameCaptureUs=uint64_t(fb->timestamp.tv_sec)*1000000+fb->timestamp.tv_usec;frameSeq++;}xSemaphoreGive(frameLock);esp_camera_fb_return(fb);}vTaskDelay(pdMS_TO_TICKS(200));}
+ while(true){camera_fb_t *fb=esp_camera_fb_get();if(fb){xSemaphoreTake(frameLock,portMAX_DELAY);if(fb->len<160000){memcpy(jpegCache,fb->buf,fb->len);jpegLen=fb->len;frameCaptureUs=uint64_t(fb->timestamp.tv_sec)*1000000+fb->timestamp.tv_usec;frameSeq++;}xSemaphoreGive(frameLock);esp_camera_fb_return(fb);}xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);uint32_t captureRest=visionBench?benchCaptureMs:200;xSemaphoreGiveRecursive(stateLock);vTaskDelay(captureRest?max((TickType_t)1,pdMS_TO_TICKS(captureRest)):(TickType_t)1);}
 }
 void initCamera() {
   camera_config_t c={};c.ledc_channel=LEDC_CHANNEL_0;c.ledc_timer=LEDC_TIMER_0;
@@ -272,7 +290,7 @@ void initCamera() {
 void setup() {
   hostLedInit();
   heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
-  prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();if(!d["catObserveTimeoutSeconds"].is<float>())candidate["catObserveTimeoutSeconds"]=max(1.0f,candidate["postEscapeWaitSeconds"].as<float>());if(!d["escapeMinDistanceCm"].is<float>()||!d["escapeMaxDistanceCm"].is<float>()){float legacy=max(1.0f,candidate["escapeDistanceCm"].as<float>()-candidate["stopMarginCm"].as<float>());candidate["escapeMinDistanceCm"]=legacy;candidate["escapeMaxDistanceCm"]=legacy;}String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
+  prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();migrateCenterSettings(candidate,d);if(!d["catObserveTimeoutSeconds"].is<float>())candidate["catObserveTimeoutSeconds"]=max(1.0f,candidate["postEscapeWaitSeconds"].as<float>());if(!d["escapeMinDistanceCm"].is<float>()||!d["escapeMaxDistanceCm"].is<float>()){float legacy=max(1.0f,candidate["escapeDistanceCm"].as<float>()-candidate["stopMarginCm"].as<float>());candidate["escapeMinDistanceCm"]=legacy;candidate["escapeMaxDistanceCm"]=legacy;}String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
   WiFi.mode(WIFI_AP_STA);WiFi.softAP("ESP32-CatHost","catrobot32");String ssid=prefs.getString("ssid","");if(ssid.length())WiFi.begin(ssid.c_str(),prefs.getString("password","").c_str());
   logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO");initCamera();startServers();
 }

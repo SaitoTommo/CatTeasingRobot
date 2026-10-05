@@ -55,10 +55,12 @@ d["touchFeedbackBeepMs"]=180;
 d["escapeDistanceCm"]=26;
 d["slowEscapePwm"]=95;
 d["fastEscapePwm"]=210;
+d["catCheckMaxFrames"]=3;
 d["robotActionLimit"]=5;
 d["robotFastApproachCm"]=15;
 d["robotFastApproachPwm"]=180;
 d["robotSlowFlashPercent"]=50;
+d["tagCenterTolerancePercent"]=5.5;
 d["catInteractionIdleSeconds"]=12;
 d["catObserveTimeoutSeconds"]=10;
 d["escapeMinDistanceCm"]=23;
@@ -79,6 +81,7 @@ d["scanSettleTimeoutMs"]=3000;
 d["catSettleTimeoutMs"]=6000;
 d["catApproachStepCm"]=1;
 }
+inline void migrateCenterSettings(JsonDocument &candidate,JsonDocument &saved){if(!saved["tagCenterTolerancePercent"].is<float>())candidate["tagCenterTolerancePercent"]=candidate["centerTolerancePercent"]; }
 inline bool validateSettings(JsonDocument &d,String &error){
 if(!d["explorationBranchPercent"].is<float>()||!isfinite(d["explorationBranchPercent"].as<float>())||d["explorationBranchPercent"].as<float>()<0||d["explorationBranchPercent"].as<float>()>100){error="invalid explorationBranchPercent";return false;}
 if(!d["touchFlashPercent"].is<float>()||!isfinite(d["touchFlashPercent"].as<float>())||d["touchFlashPercent"].as<float>()<0||d["touchFlashPercent"].as<float>()>100){error="invalid touchFlashPercent";return false;}
@@ -133,12 +136,14 @@ if(!d["touchFeedbackBeepMs"].is<float>()||!isfinite(d["touchFeedbackBeepMs"].as<
 if(!d["escapeDistanceCm"].is<float>()||!isfinite(d["escapeDistanceCm"].as<float>())||d["escapeDistanceCm"].as<float>()<1||d["escapeDistanceCm"].as<float>()>60){error="invalid escapeDistanceCm";return false;}
 if(!d["slowEscapePwm"].is<float>()||!isfinite(d["slowEscapePwm"].as<float>())||d["slowEscapePwm"].as<float>()<50||d["slowEscapePwm"].as<float>()>255){error="invalid slowEscapePwm";return false;}
 if(!d["fastEscapePwm"].is<float>()||!isfinite(d["fastEscapePwm"].as<float>())||d["fastEscapePwm"].as<float>()<50||d["fastEscapePwm"].as<float>()>255){error="invalid fastEscapePwm";return false;}
-if(!d["catInteractionIdleSeconds"].is<float>()||!isfinite(d["catInteractionIdleSeconds"].as<float>())||d["catInteractionIdleSeconds"].as<float>()<1||d["catInteractionIdleSeconds"].as<float>()>120){error="invalid catInteractionIdleSeconds";return false;}
-if(!d["catObserveTimeoutSeconds"].is<float>()||!isfinite(d["catObserveTimeoutSeconds"].as<float>())||d["catObserveTimeoutSeconds"].as<float>()<1||d["catObserveTimeoutSeconds"].as<float>()>120){error="invalid catObserveTimeoutSeconds";return false;}
+if(!d["catCheckMaxFrames"].is<float>()||!isfinite(d["catCheckMaxFrames"].as<float>())||d["catCheckMaxFrames"].as<float>()<1||d["catCheckMaxFrames"].as<float>()>3){error="invalid catCheckMaxFrames";return false;}
 if(!d["robotActionLimit"].is<float>()||!isfinite(d["robotActionLimit"].as<float>())||d["robotActionLimit"].as<float>()<1||d["robotActionLimit"].as<float>()>100){error="invalid robotActionLimit";return false;}
 if(!d["robotFastApproachCm"].is<float>()||!isfinite(d["robotFastApproachCm"].as<float>())||d["robotFastApproachCm"].as<float>()<1||d["robotFastApproachCm"].as<float>()>50){error="invalid robotFastApproachCm";return false;}
 if(!d["robotFastApproachPwm"].is<float>()||!isfinite(d["robotFastApproachPwm"].as<float>())||d["robotFastApproachPwm"].as<float>()<50||d["robotFastApproachPwm"].as<float>()>255){error="invalid robotFastApproachPwm";return false;}
 if(!d["robotSlowFlashPercent"].is<float>()||!isfinite(d["robotSlowFlashPercent"].as<float>())||d["robotSlowFlashPercent"].as<float>()<0||d["robotSlowFlashPercent"].as<float>()>100){error="invalid robotSlowFlashPercent";return false;}
+if(!d["tagCenterTolerancePercent"].is<float>()||!isfinite(d["tagCenterTolerancePercent"].as<float>())||d["tagCenterTolerancePercent"].as<float>()<1||d["tagCenterTolerancePercent"].as<float>()>20){error="invalid tagCenterTolerancePercent";return false;}
+if(!d["catInteractionIdleSeconds"].is<float>()||!isfinite(d["catInteractionIdleSeconds"].as<float>())||d["catInteractionIdleSeconds"].as<float>()<1||d["catInteractionIdleSeconds"].as<float>()>120){error="invalid catInteractionIdleSeconds";return false;}
+if(!d["catObserveTimeoutSeconds"].is<float>()||!isfinite(d["catObserveTimeoutSeconds"].as<float>())||d["catObserveTimeoutSeconds"].as<float>()<1||d["catObserveTimeoutSeconds"].as<float>()>120){error="invalid catObserveTimeoutSeconds";return false;}
 if(!d["escapeMinDistanceCm"].is<float>()||!isfinite(d["escapeMinDistanceCm"].as<float>())||d["escapeMinDistanceCm"].as<float>()<1||d["escapeMinDistanceCm"].as<float>()>100){error="invalid escapeMinDistanceCm";return false;}
 if(!d["escapeMaxDistanceCm"].is<float>()||!isfinite(d["escapeMaxDistanceCm"].as<float>())||d["escapeMaxDistanceCm"].as<float>()<1||d["escapeMaxDistanceCm"].as<float>()>100){error="invalid escapeMaxDistanceCm";return false;}
 if(!d["catConfirmWaitSeconds"].is<float>()||!isfinite(d["catConfirmWaitSeconds"].as<float>())||d["catConfirmWaitSeconds"].as<float>()<0||d["catConfirmWaitSeconds"].as<float>()>30){error="invalid catConfirmWaitSeconds";return false;}
@@ -185,6 +190,6 @@ for(JsonVariant v:d["floorReference"].as<JsonArray>())if(!v.is<float>()||v.as<fl
 if(d["scanSettleTimeoutMs"].as<float>()<=d["scanMinimumMs"].as<float>()||d["scanSettleTimeoutMs"].as<float>()<=d["scanQuietMs"].as<float>()){error="settle timeout must exceed both windows";return false;}
 if(!d["scanStepPulses"].is<int>()){error="scan step pulses must be integer";return false;}
 if(!d["minimumDrivePwm"].is<int>()){error="minimumDrivePwm must be integer";return false;}
-for(const char *key:{"robotActionLimit","escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
+for(const char *key:{"catCheckMaxFrames","robotActionLimit","escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
 return true;
 }

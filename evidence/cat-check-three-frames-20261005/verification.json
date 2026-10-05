@@ -1,0 +1,31 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.29_FPS_BENCH_3_ACTIVE_SEARCH_3_CAT_CHECK_3",
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "catCheckMaxFrames": 3,
+  "changedExistingConfig": [],
+  "route": [
+    46,
+    40
+  ],
+  "hashVerified": true,
+  "servedPageEqualsCompiled": true,
+  "motorId": 0,
+  "motorRunning": false,
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "flashBytes": 3762754,
+  "staticRamBytes": 83696,
+  "writtenBytes": 3762896,
+  "native": {
+    "catCheck": 116,
+    "policy": 1172,
+    "catInteraction": 623,
+    "pwmSettings": 2656,
+    "scan": 259
+  },
+  "pageTests": 31,
+  "stateInventoryTests": 2,
+  "unoUploaded": false,
+  "physicalMotionTested": false
+}

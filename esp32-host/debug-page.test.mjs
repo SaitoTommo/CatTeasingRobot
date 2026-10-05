@@ -8,15 +8,72 @@ const root=new URL('./ESP32CatHost/',import.meta.url);
 const header=readFileSync(new URL('debug_page.h',root),'utf8');
 const html=gunzipSync(Buffer.from(header.split('{')[1].split('}')[0].match(/\d+/g).map(Number))).toString();
 const elements=new Map();
-function element(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',attrs:{},append(){},setAttribute(k,v){this.attrs[k]=v;}});return elements.get(id);}
+function element(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',style:{},attrs:{},getAttribute(k){return k==='src'?this.src:this.attrs[k];},append(){},setAttribute(k,v){this.attrs[k]=v;}});return elements.get(id);}
 const context=vm.createContext({document:{getElementById:element,createElement:()=>({append(){},setAttribute(){}}),querySelectorAll:()=>[]},location:{hostname:'localhost'},fetch:()=>new Promise(()=>{}),setTimeout(){},AbortSignal,TextEncoder,alert(){}});
 vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1],context);
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('CAT_CHECK frame limit is saved and read back in both cat panels, rejecting fractional counts',()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const config=Object.fromEntries(vm.runInContext('[...Object.entries(robotFields),...Object.entries(catFields)].map(([k,v])=>[k,v[1]/(v[3]||1)])',context));
+ Object.assign(config,{catCheckMaxFrames:3,catFarWidth:.12,catNearWidth:.35,robotFarApproachPercent:85,robotFarProbePercent:15,robotNearSignalPercent:50,robotNearObservePercent:40,robotNearStayPercent:10,catConfirmPreyPercent:20,catConfirmExplorePercent:20});
+ for(const [panel,render,save] of [['robot','syncRobotSettings','saveRobotSettings'],['cat','syncCatSettings','saveCatSettings']]){
+  const draw=c=>vm.runInContext(`${render}(${JSON.stringify({...base,config:c,logs:[]})})`,context);
+  draw(config);const field=element(panel+'Cfg_catCheckMaxFrames');field.value='2';draw(config);assert.equal(field.value,'2');
+  vm.runInContext(`${save}()`,context);assert.equal(requests.at(-1).config.catCheckMaxFrames,2);
+  draw({...config,catCheckMaxFrames:2});assert.equal(Number(field.value),2);
+  field.value='2.5';const before=requests.length;vm.runInContext(`${save}()`,context);assert.equal(requests.length,before);
+  draw({...config,catCheckMaxFrames:1});assert.equal(Number(field.value),1);
+ }
+});
+
+test('center tolerance is independently saved and read back without clobbering a draft',()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const state={...base,config:{centerTolerancePercent:5.5},logs:[]};vm.runInContext(`syncCenterTolerance(${JSON.stringify(state)})`,context);
+ assert.match(element('centerStatus').textContent,/44.5%–55.5%/);element('centerPercent').value='12.5';vm.runInContext(`syncCenterTolerance(${JSON.stringify(state)})`,context);assert.equal(element('centerPercent').value,'12.5');
+ vm.runInContext('saveCenterTolerance()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{centerTolerancePercent:12.5}});
+ vm.runInContext(`syncCenterTolerance(${JSON.stringify({...state,stopUnconfirmed:true})})`,context);assert.equal(element('saveCenterTolerance').disabled,true);assert.equal(element('centerPercent').disabled,true);
+ const count=requests.length;vm.runInContext('saveCenterTolerance()',context);assert.equal(requests.length,count);
+ vm.runInContext(`syncCenterTolerance(${JSON.stringify({...state,config:{centerTolerancePercent:12.5}})})`,context);assert.match(element('centerStatus').textContent,/37.5%–62.5%/);assert.doesNotMatch(element('centerStatus').textContent,/等待板上保存/);
+});
+test('horizontal FOV conversion uses perspective projection rather than a linear angle percentage',()=>{
+ const percent=vm.runInContext('centerPercentFromAngles(90,10)',context);assert.ok(Math.abs(percent-8.816349)<.00001);assert.ok(Number.isNaN(vm.runInContext('centerPercentFromAngles(90,46)',context)));
+});
+
+test('cat and tag centering save independently, with tag draft and FOV target preserved',()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const d={...base,config:{centerTolerancePercent:5.5,tagCenterTolerancePercent:12},logs:[]};
+ vm.runInContext(`syncCenterTolerance(${JSON.stringify(d)})`,context);
+ assert.match(element('tagCenterStatus').textContent,/38.0%–62.0%/);
+ element('tagCenterPercent').value='15';vm.runInContext(`syncCenterTolerance(${JSON.stringify(d)})`,context);assert.equal(element('tagCenterPercent').value,'15');
+ vm.runInContext('saveTagCenterTolerance()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{tagCenterTolerancePercent:15}});
+ element('centerTarget').value='TAG';element('centerFov').value='90';element('centerAngle').value='10';const catDraft=element('centerPercent').value;
+ vm.runInContext('convertCenterAngle()',context);assert.equal(element('tagCenterPercent').value,8.8);assert.equal(element('centerPercent').value,catDraft);
+ vm.runInContext(`syncCenterTolerance(${JSON.stringify({...d,config:{...d.config,tagCenterTolerancePercent:15}})})`,context);assert.doesNotMatch(element('tagCenterStatus').textContent,/等待板上保存/);
+ vm.runInContext(`syncCenterTolerance(${JSON.stringify({...d,stopPendingId:3})})`,context);assert.equal(element('saveTagCenterTolerance').disabled,true);
+});
+
+test('active cat search probabilities validate groups, preserve drafts and require board readback',()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const config={catCheckMaxFrames:3,robotActionLimit:5,robotFastApproachCm:15,robotFastApproachPwm:180,robotSlowFlashPercent:50,catFarWidth:.12,catNearWidth:.35,initialLookSeconds:5,decisionIntervalMs:2500,robotFarApproachPercent:85,robotFarProbePercent:15,robotNearSignalPercent:20,robotNearObservePercent:40,robotNearStayPercent:40,robotProbeCooldownSeconds:15,slowApproachCm:9,slowApproachPwm:95,probePwm:90,probeStep1Cm:3,probeStep2Cm:4,probeStep3Cm:3,probePause1Ms:700,probePause2Ms:900,probePause3Ms:600,signalFlashMs:1400,signalBeepMs:180,minimumDrivePwm:255};
+ const render=(patch={})=>vm.runInContext(`syncRobotSettings(${JSON.stringify({...base,config,logs:[],...patch})})`,context);
+ render();element('robotCfg_robotFarApproachPercent').value='70';element('robotCfg_robotFarProbePercent').value='30';render();assert.equal(element('robotCfg_robotFarProbePercent').value,'30');
+ vm.runInContext('saveRobotSettings()',context);assert.equal(requests.at(-1).config.robotFarProbePercent,30);assert.equal(requests.at(-1).config.robotFarApproachPercent,70);assert.match(element('robotConfigStatus').textContent,/等待板上回读/);
+ render({config:{...config,robotFarApproachPercent:70,robotFarProbePercent:30}});assert.doesNotMatch(element('robotConfigStatus').textContent,/等待板上保存/);assert.match(element('robotConfigStatus').textContent,/实际至少 255/);
+ const n=requests.length;element('robotCfg_robotNearSignalPercent').value='100';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,n);
+ element('robotCfg_robotNearObservePercent').value='0';element('robotCfg_robotNearStayPercent').value='0';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.at(-1).config.robotNearSignalPercent,100);
+ render({logs:[{seq:50,source:'CONFIG_ERROR',line:'invalid group'}]});assert.match(element('robotConfigStatus').textContent,/保存失败/);
+ for(const patch of [{phase:'INTERACTION'},{stopUnconfirmed:true},{stopPendingId:7},{debugBusy:true}]){render(patch);const count=requests.length;vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,count);}
+});
+test('brief tag alignment remains visible as history while current state is approach',()=>{
+ const d={...base,ms:2000,patrolStatus:{action:'APPROACH_TAG'},logs:[{seq:1,ms:1800,source:'DECISION',line:'PATROL TAG_ALIGN'},{seq:2,ms:1890,source:'DECISION',line:'PATROL WAIT_STOP'},{seq:3,ms:1900,source:'DECISION',line:'PATROL APPROACH_TAG'}]};
+ vm.runInContext(`syncPatrolTransitions(${JSON.stringify(d)});syncPatrolStatus(${JSON.stringify(d)})`,context);assert.match(element('patrolTransitions').textContent,/历史.*对准标签（原地转向） \[TAG_ALIGN\]/s);assert.match(element('patrolProgress').textContent,/标签已找到/);
+});
+
 test('cat settings preserve drafts, validate relative widths and round trip every timeout',()=>{
   const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
-  const config={escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+  const config={catCheckMaxFrames:3,escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
   const render=patch=>{const d={...base,config,...patch};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
   render({});assert.equal(element('catCfg_catNearWidth').value,'35.0');
   element('catCfg_explorePreyMinimumSeconds').value='45';element('catCfg_captureWaitMaxSeconds').value='25';render({ms:1100});
@@ -37,7 +94,7 @@ test('cat progress names chase and displays separate rounds and time',()=>{
 });
 
 test('cat save failure is reported from board logs rather than assumed successful',()=>{
- const config={escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+ const config={catCheckMaxFrames:3,escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
  const render=logs=>{const d={...base,config,logs};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
  render([{seq:9,source:'CONFIG',line:'saved'}]);
  for(const [k,v] of Object.entries(config))element('catCfg_'+k).value=String(k.includes('Width')?v*100:v);
@@ -239,18 +296,13 @@ test('local ESP LED controls work without Uno link or stop confirmation',()=>{
  assert.match(local,/hostLedManual/);assert.ok(!local.includes('sendUno'));assert.ok(!source.includes('command="LED ON"'));assert.ok(!source.includes('command="LED OFF"'));
 });
 
-test('active cat search probabilities validate groups, preserve drafts and require board readback',()=>{
- const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
- const config={robotActionLimit:5,robotFastApproachCm:15,robotFastApproachPwm:180,robotSlowFlashPercent:50,catFarWidth:.12,catNearWidth:.35,initialLookSeconds:5,decisionIntervalMs:2500,robotFarApproachPercent:85,robotFarProbePercent:15,robotNearSignalPercent:20,robotNearObservePercent:40,robotNearStayPercent:40,robotProbeCooldownSeconds:15,slowApproachCm:9,slowApproachPwm:95,probePwm:90,probeStep1Cm:3,probeStep2Cm:4,probeStep3Cm:3,probePause1Ms:700,probePause2Ms:900,probePause3Ms:600,signalFlashMs:1400,signalBeepMs:180,minimumDrivePwm:255};
- const render=(patch={})=>vm.runInContext(`syncRobotSettings(${JSON.stringify({...base,config,logs:[],...patch})})`,context);
- render();element('robotCfg_robotFarApproachPercent').value='70';element('robotCfg_robotFarProbePercent').value='30';render();assert.equal(element('robotCfg_robotFarProbePercent').value,'30');
- vm.runInContext('saveRobotSettings()',context);assert.equal(requests.at(-1).config.robotFarProbePercent,30);assert.equal(requests.at(-1).config.robotFarApproachPercent,70);assert.match(element('robotConfigStatus').textContent,/等待板上回读/);
- render({config:{...config,robotFarApproachPercent:70,robotFarProbePercent:30}});assert.doesNotMatch(element('robotConfigStatus').textContent,/等待板上保存/);assert.match(element('robotConfigStatus').textContent,/实际至少 255/);
- const n=requests.length;element('robotCfg_robotNearSignalPercent').value='100';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,n);
- element('robotCfg_robotNearObservePercent').value='0';element('robotCfg_robotNearStayPercent').value='0';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.at(-1).config.robotNearSignalPercent,100);
- render({logs:[{seq:50,source:'CONFIG_ERROR',line:'invalid group'}]});assert.match(element('robotConfigStatus').textContent,/保存失败/);
- for(const patch of [{phase:'INTERACTION'},{stopUnconfirmed:true},{stopPendingId:7},{debugBusy:true}]){render(patch);const count=requests.length;vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,count);}
+test('lightweight flow updates preserve transient history against a slower old telemetry reply',()=>{
+ const d={ms:5000,phase:'PATROL',action:'TAG_ALIGN',motorId:7,leftPwm:-255,rightPwm:255,motorConfirmed:true,logs:[{ms:4990,source:'DECISION',line:'PATROL TAG_ALIGN'}]};
+ vm.runInContext(`syncFlow(${JSON.stringify(d)})`,context);assert.match(element('patrolLive').textContent,/对准标签.*#7：-255\/255/);
+ vm.runInContext('syncPatrolTransitions({ms:4900,logs:[]})',context);assert.match(element('patrolTransitions').textContent,/TAG_ALIGN/);
+ vm.runInContext('syncFlow({ms:100,phase:"IDLE",action:"IDLE",motorId:0,leftPwm:0,rightPwm:0,logs:[]})',context);assert.match(element('patrolLive').textContent,/IDLE/);
 });
+
 test('invitation controls round-trip durations and widths and show fresh cat evidence',()=>{
  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
  const config=Object.fromEntries(vm.runInContext('Object.entries(robotFields).map(([k,v])=>[k,v[1]/(v[3]||1)])',context));

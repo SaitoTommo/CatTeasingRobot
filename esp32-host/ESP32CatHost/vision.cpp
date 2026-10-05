@@ -15,6 +15,8 @@ extern JsonDocument config;
 extern String visionMode;
 extern int policyTargetId();
 extern void enqueueCamera(const String &);
+extern void recordVisionBench(camera_fb_t *,JsonObject,uint32_t,uint32_t,uint32_t,uint32_t);
+extern void recordCatPreview(camera_fb_t *,JsonObject,uint32_t);
 class CatModel : public dl::detect::DetectImpl {
 public:
   CatModel() {
@@ -25,19 +27,20 @@ public:
     m_postprocessor=new dl::detect::ESPDetPostProcessor(m_model,m_image_preprocessor,.6,.7,10,{{8,8,4,4},{16,16,8,8},{32,32,16,16}});
   }
 };
-void processVision(camera_fb_t *fb,const VisionTicket &ticket,uint32_t seq,uint64_t capture,uint32_t epoch) {
+void processVision(camera_fb_t *fb,const VisionTicket &ticket,uint32_t seq,uint64_t capture,uint32_t epoch,uint32_t benchRun) {
   static CatModel *cats=nullptr;static apriltag_detector_t *tags=nullptr;static uint8_t *gray=nullptr;
   uint32_t start=millis();String selected=ticket.mode;
   if(selected=="OFF")return;
-  bool runCats=selected=="CAT"||selected=="BOTH",runTags=selected=="TAGS"||selected=="BOTH";
+  bool normalCats=selected=="CAT"||selected=="BOTH";bool runCats=normalCats||benchRun!=UINT32_MAX,runTags=selected=="TAGS"||selected=="BOTH";
   if(runCats&&!cats)cats=new CatModel();
   if(runTags&&!tags){tags=apriltag_detector_create();apriltag_detector_add_family_bits(tags,tag36h11_create(),0);tags->nthreads=1;tags->quad_decimate=1.5;tags->refine_edges=1;}
   if(!gray)gray=(uint8_t*)ps_malloc(320*240);
   dl::image::jpeg_img_t jpg={.data=fb->buf,.data_len=fb->len};auto img=dl::image::sw_decode_jpeg(jpg,dl::image::DL_IMAGE_PIX_TYPE_RGB888);
+  uint32_t decodeMs=millis()-start,modelMs=0;
   if(!img.data||!gray){if(img.data)heap_caps_free(img.data);return;}
   JsonDocument d;d["op"]="camera";auto v=d["vision"].to<JsonObject>();v["source"]="OV_CAMERA";v["at"]=uint32_t(capture/1000);v["captureUs"]=capture;v["frameSeq"]=seq;v["ticket"]=ticket.token;v["epoch"]=epoch;v["scanId"]=ticket.scan;v["stepId"]=ticket.step;v["generation"]=ticket.generation;v["frameWidth"]=fb->width;v["frameHeight"]=fb->height;
   auto cat=v["cat"].to<JsonObject>();cat["detected"]=false;cat["valid"]=runCats;v["mode"]=selected;
-  if(runCats){auto &results=cats->run(img);float best=0;for(auto &r:results)if(r.score>best){best=r.score;cat["detected"]=true;cat["score"]=r.score;cat["centerX"]=(r.box[0]+r.box[2])/(2.0f*fb->width);cat["width"]=(r.box[2]-r.box[0])/(float)fb->width;cat["bottom"]=r.box[3]/(float)fb->height;for(int i=0;i<4;i++)cat["box"][i]=r.box[i];}}
+  if(runCats){uint32_t modelStart=millis();auto &results=cats->run(img);modelMs=millis()-modelStart;float best=0;for(auto &r:results)if(r.score>best){best=r.score;cat["detected"]=true;cat["score"]=r.score;cat["centerX"]=(r.box[0]+r.box[2])/(2.0f*fb->width);cat["width"]=(r.box[2]-r.box[0])/(float)fb->width;cat["bottom"]=r.box[3]/(float)fb->height;for(int i=0;i<4;i++)cat["box"][i]=r.box[i];}}
   auto pixels=(uint8_t*)img.data;for(size_t i=0;i<fb->width*fb->height;i++)gray[i]=(pixels[3*i]*77+pixels[3*i+1]*150+pixels[3*i+2]*29)>>8;
   image_u8_t im={.width=(int)fb->width,.height=(int)fb->height,.stride=(int)fb->width,.buf=gray};
   zarray_t *found=runTags?apriltag_detector_detect(tags,&im):nullptr;auto arr=v["tags"].to<JsonArray>();v["tagsValid"]=runTags;
@@ -64,8 +67,10 @@ void processVision(camera_fb_t *fb,const VisionTicket &ticket,uint32_t seq,uint6
     for(int ch=0;ch<3;ch++){signature.add(mean);difference=max(difference,fabsf(mean-reference[feature++]));}
   }
   v["floorDifference"]=difference;v["frontCalibrated"]=calibrated;
-  v["front"]=cat["detected"].as<bool>()&&cat["bottom"].as<float>()>bottom?"BLOCKED":!calibrated?"INVALID":difference>threshold?"BLOCKED":"CLEAR";
-  v["latencyMs"]=millis()-start;
+  v["front"]=normalCats&&cat["detected"].as<bool>()&&cat["bottom"].as<float>()>bottom?"BLOCKED":!calibrated?"INVALID":difference>threshold?"BLOCKED":"CLEAR";
+  v["latencyMs"]=millis()-start;v["decodeMs"]=decodeMs;v["modelMs"]=modelMs;
+  if(runCats){recordVisionBench(fb,v,start,decodeMs,modelMs,benchRun);recordCatPreview(fb,v,start);}
+  if(!normalCats){cat["valid"]=false;cat["detected"]=false;}
   if(measureJson(d)>12287){for(JsonVariant tag:arr)tag.as<JsonObject>().remove("corners");v["displayLimited"]=true;}
   String out;serializeJson(d,out);enqueueCamera(out);
 }

@@ -32,7 +32,13 @@ int main(){
  d["tagStopWidth"]=.25;d["catNearWidth"]=.35;d["catFarWidth"]=.12;d["visionMaxAgeMs"]=1500;d["frontBlockBottom"]=.88;d["floorRoiTop"]=.75;d["floorDifferenceThreshold"]=35;
  d["frontAvoidanceEnabled"]=false;d["frontCalibrated"]=false;d["floorReference"].to<JsonArray>();String error;
  CHECK(d["robotActionLimit"].as<int>()==5);d["robotActionLimit"]=5.5;CHECK(!validateSettings(d,error));d["robotActionLimit"]=5;
+ CHECK(d["catCheckMaxFrames"].as<int>()==3);
+ for(float bad:{0.0f,4.0f,2.5f}){d["catCheckMaxFrames"]=bad;CHECK(!validateSettings(d,error));}
+ for(int good:{1,2,3}){d["catCheckMaxFrames"]=good;CHECK(validateSettings(d,error));}
  CHECK(validateSettings(d,error));
+ JsonDocument saved;saved["centerTolerancePercent"]=12;d["centerTolerancePercent"]=12;migrateCenterSettings(d,saved);CHECK(d["tagCenterTolerancePercent"].as<float>()==12);CHECK(validateSettings(d,error));
+ saved["tagCenterTolerancePercent"]=3;d["tagCenterTolerancePercent"]=3;migrateCenterSettings(d,saved);CHECK(d["tagCenterTolerancePercent"].as<float>()==3);CHECK(d["centerTolerancePercent"].as<float>()==12);
+ for(float bad:{0.f,21.f,NAN}){d["tagCenterTolerancePercent"]=bad;CHECK(!validateSettings(d,error));}d["tagCenterTolerancePercent"]=5.5;d["centerTolerancePercent"]=5.5;
  for(int good:{1,100,140,255}){d["minimumDrivePwm"]=good;CHECK(validateSettings(d,error));}
  for(float bad:{0.f,256.f,140.5f,NAN,INFINITY}){d["minimumDrivePwm"]=bad;CHECK(!validateSettings(d,error));CHECK(error.indexOf("minimumDrivePwm")>=0);}
  d["minimumDrivePwm"]="140";CHECK(!validateSettings(d,error));d["minimumDrivePwm"]=true;CHECK(!validateSettings(d,error));
