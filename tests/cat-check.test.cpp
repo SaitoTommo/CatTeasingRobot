@@ -7,6 +7,26 @@ void checkFixture(int limit=3){
  initiator="ROBOT_SEARCH";robotFound=true;oneFrame("APPROACH_CAT");
 }
 int main(){
+ // Both entry points use the same stopped confirmation with no centering turns,
+ // even at the image edges or with a saved narrow legacy centering tolerance.
+ for(const char *entry:{"CAT_TOUCH","ROBOT_SEARCH"})for(float center:{0.f,.2f,.8f,1.f})for(float width:{.1f,.2f,.5f}){
+  fixture();phase="INTERACTION";initiator=entry;config["centerTolerancePercent"]=1;
+  config["catConfirmPreyPercent"]=100;config["catConfirmExplorePercent"]=0;
+  config["robotNearSignalPercent"]=0;config["robotNearObservePercent"]=100;config["robotNearStayPercent"]=0;
+  observation["cat"]["centerX"]=center;observation["cat"]["width"]=width;
+  beginScan("CAT",initiator=="CAT_TOUCH"?"CHOOSE_TOUCH":"CHOOSE_ROBOT");configDone();scanRequest();frame(true);
+  policyInput("SD "+String(scanId)+" "+String(generation)+" 1");
+  CHECK(action=="WAIT_STOP");CHECK(afterStop=="CAT_CONFIRM");
+  completeConfirmation();CHECK(action==(initiator=="CAT_TOUCH"?"PREY_WAIT":width>=.35f?"OBSERVE":"APPROACH_CAT"));
+  CHECK(!motorId&&!scanId&&!stopId);CHECK(!checkPending);CHECK(robotActions==0);
+ }
+ // A lost confirmation resumes the remaining search budget for either entry.
+ for(const char *entry:{"CAT_TOUCH","ROBOT_SEARCH"}){
+  fixture();phase="INTERACTION";initiator=entry;
+  beginScan("CAT",initiator=="CAT_TOUCH"?"CHOOSE_TOUCH":"CHOOSE_ROBOT");configDone();scanRequest();frame(true);
+  auto used=scanUsed;policyInput("SD "+String(scanId)+" "+String(generation)+" 1");
+  completeConfirmation(false);CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanOrigin==used);CHECK(!robotFound);
+ }
  JsonDocument defaults;policyDefaults(defaults);CHECK(defaults["catCheckMaxFrames"].as<int>()==3);
  // A detection at any position succeeds early; misses never command motion.
  for(int limit:{1,2,3})for(int hit=1;hit<=limit;++hit){

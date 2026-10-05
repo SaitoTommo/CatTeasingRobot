@@ -105,7 +105,7 @@ int main(){
  // Far/middle/near boundaries and first middle observation.
  fixture();freshCat(.2);CHECK(distanceClass()==-1);freshCat(.12);CHECK(distanceClass()==0);freshCat(.2);CHECK(distanceClass()==0);freshCat(.35);CHECK(distanceClass()==1);freshCat(.2);CHECK(distanceClass()==1);freshCat(.2,false);CHECK(distanceClass()==-1);
  // SETTLE gets prompt samples but never skips the user-specified minimum wait.
- fixture();phase="INTERACTION";config["scanMinimumMs"]=1000;settle("ORIENT");CHECK(policyTelemetryInterval()==250);
+ fixture();phase="INTERACTION";config["scanMinimumMs"]=1000;settle("CAT_LOCATED");CHECK(policyTelemetryInterval()==250);
  tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="SETTLE");tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="SETTLE");tick+=500;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="CAT_CHECK");CHECK(policyTelemetryInterval()==2000);
  // Operator stop cancels a contact continuation and never resumes old movement.
  fixture();phase="INTERACTION";drive(23,95,"ESCAPE_MOVE");onTouch(0);CHECK(touchPaused);policyControl("stop");releaseAll();policyTick();CHECK(phase=="STOPPED");CHECK(!touchPaused);CHECK(!motorId);

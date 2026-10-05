@@ -4,14 +4,15 @@ function syncPatrolTransitions(d){if(d.ms<flowLastMs&&flowLastMs-d.ms<10000)retu
 function centerPercentFromAngles(fov,angle){if(!Number.isFinite(fov)||!Number.isFinite(angle)||fov<=0||fov>=180||angle<=0||angle>=fov/2)return NaN;return 50*Math.tan(angle*Math.PI/180)/Math.tan(fov*Math.PI/360);}
 function syncCenterTolerance(d){
  const v=d.config?.centerTolerancePercent,available=Number.isFinite(v)&&v>=1&&v<=20,stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;
- for(const id of ['centerPercent','saveCenterTolerance','centerFov','centerAngle','convertCenterAngle'])$(id).disabled=!available||!stopped;
+ for(const id of ['centerPercent','saveCenterTolerance'])$(id).disabled=true;
+ for(const id of ['centerFov','centerAngle','convertCenterAngle'])$(id).disabled=!stopped;
  if(available&&centerReadback!==v){$('centerPercent').value=v;centerReadback=v;}
  if(pendingCenterSave){const error=(d.logs||[]).find(x=>x.seq>pendingCenterSave.seq&&x.source==='CONFIG_ERROR');if(error)pendingCenterSave.error=error.line;else if(v===pendingCenterSave.value)pendingCenterSave=null;}
- $('centerStatus').textContent=available?`板上已保存：猫框中心左右各 ${v.toFixed(1)}%；允许中心位置 ${(50-v).toFixed(1)}%–${(50+v).toFixed(1)}%。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'等待读取猫居中容差';
+ $('centerStatus').textContent='找猫不再检测居中；旧保存值保留，不参与控制。';
  if(pendingCenterSave)$('centerStatus').textContent+=' '+(pendingCenterSave.error?'保存失败：'+pendingCenterSave.error:'等待板上保存回读。');
  const tag=d.config?.tagCenterTolerancePercent,tagAvailable=Number.isFinite(tag)&&tag>=1&&tag<=20;
  for(const id of ['tagCenterPercent','saveTagCenterTolerance'])$(id).disabled=!tagAvailable||!stopped;
- $('centerTarget').disabled=!available||!tagAvailable||!stopped;
+ $('centerTarget').value='TAG';$('centerTarget').disabled=!tagAvailable||!stopped;
  if(tagAvailable&&tagCenterReadback!==tag){$('tagCenterPercent').value=tag;tagCenterReadback=tag;}
  if(pendingTagCenterSave){const error=(d.logs||[]).find(x=>x.seq>pendingTagCenterSave.seq&&x.source==='CONFIG_ERROR');if(error)pendingTagCenterSave.error=error.line;else if(tag===pendingTagCenterSave.value)pendingTagCenterSave=null;}
  $('tagCenterStatus').textContent=tagAvailable?`板上已保存：标签中心左右各 ${tag.toFixed(1)}%；允许中心位置 ${(50-tag).toFixed(1)}%–${(50+tag).toFixed(1)}%。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'等待读取标签居中容差';

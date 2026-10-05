@@ -67,14 +67,13 @@ test('CAT_CHECK frame limit is saved and read back in both cat panels, rejecting
  }
 });
 
-test('center tolerance is independently saved and read back without clobbering a draft',()=>{
+test('legacy cat centering is disabled and cannot issue a save',()=>{
  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
- const state={...base,config:{centerTolerancePercent:5.5},logs:[]};vm.runInContext(`syncCenterTolerance(${JSON.stringify(state)})`,context);
- assert.match(element('centerStatus').textContent,/44.5%–55.5%/);element('centerPercent').value='12.5';vm.runInContext(`syncCenterTolerance(${JSON.stringify(state)})`,context);assert.equal(element('centerPercent').value,'12.5');
- vm.runInContext('saveCenterTolerance()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{centerTolerancePercent:12.5}});
- vm.runInContext(`syncCenterTolerance(${JSON.stringify({...state,stopUnconfirmed:true})})`,context);assert.equal(element('saveCenterTolerance').disabled,true);assert.equal(element('centerPercent').disabled,true);
- const count=requests.length;vm.runInContext('saveCenterTolerance()',context);assert.equal(requests.length,count);
- vm.runInContext(`syncCenterTolerance(${JSON.stringify({...state,config:{centerTolerancePercent:12.5}})})`,context);assert.match(element('centerStatus').textContent,/37.5%–62.5%/);assert.doesNotMatch(element('centerStatus').textContent,/等待板上保存/);
+ const state={...base,config:{centerTolerancePercent:5.5,tagCenterTolerancePercent:12},logs:[]};vm.runInContext(`syncCenterTolerance(${JSON.stringify(state)})`,context);
+ assert.match(element('centerStatus').textContent,/不再检测居中/);
+ assert.equal(element('centerPercent').disabled,true);assert.equal(element('saveCenterTolerance').disabled,true);
+ vm.runInContext('saveCenterTolerance()',context);assert.equal(requests.length,0);
+ assert.equal(element('centerTarget').value,'TAG');assert.equal(element('saveTagCenterTolerance').disabled,false);
 });
 test('horizontal FOV conversion uses perspective projection rather than a linear angle percentage',()=>{
  const percent=vm.runInContext('centerPercentFromAngles(90,10)',context);assert.ok(Math.abs(percent-8.816349)<.00001);assert.ok(Number.isNaN(vm.runInContext('centerPercentFromAngles(90,46)',context)));
@@ -129,7 +128,7 @@ test('cat settings preserve drafts, validate relative widths and round trip ever
 
 test('cat progress names chase and displays separate rounds and time',()=>{
  vm.runInContext(`syncCatProgress(${JSON.stringify({...base,config:{escapePreyAfterRounds:5},patrolStatus:{action:'WAIT_CHASE',interactionId:2,escapeRounds:3,exploreRounds:4,exploreElapsedMs:31000,exploreRemainingMs:0,remainingWaitMs:2000,escapeTargetCm:55}})})`,context);
- assert.match(element('catProgress').textContent,/面向猫观察，等待互动/);assert.match(element('catProgress').textContent,/逃跑完成 3 轮/);assert.match(element('catProgress').textContent,/31.0 秒/);assert.match(element('catProgress').textContent,/55.0 厘米/);
+ assert.match(element('catProgress').textContent,/观察猫，等待互动/);assert.match(element('catProgress').textContent,/逃跑完成 3 轮/);assert.match(element('catProgress').textContent,/31.0 秒/);assert.match(element('catProgress').textContent,/55.0 厘米/);
 });
 
 test('cat save failure is reported from board logs rather than assumed successful',()=>{
