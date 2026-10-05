@@ -9,6 +9,8 @@ void cameraSettingsSnapshot(JsonDocument &d){
  auto c=d["cameraSettings"].to<JsonObject>();c["available"]=cameraOk;c["width"]=320;c["height"]=240;
  auto s=cameraOk?esp_camera_sensor_get():nullptr;c["sensorPid"]=s?s->id.PID:0;c["revision"]=cameraRevision;
  c["actual"]=cameraActual;c["persisted"]=cameraPersisted;c["error"]=cameraError;c["requestId"]=cameraRequestId;
+ c["ranges"]["gainceiling"]["min"]=0;c["ranges"]["gainceiling"]["max"]=cameraGainCeilingMaximum(s);
+ c["ranges"]["gainceiling"]["unit"]=cameraRawGainCeiling(s)?"REGISTER_10_BIT":"ENUM_0_6";
  d["visionBench"]["enabled"]=visionBench;
 }
 void cameraInvalidateFrames(){

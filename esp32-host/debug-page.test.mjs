@@ -44,6 +44,18 @@ test('camera epoch and boot changes reset drafts and current diagnostic log curs
  assert.ok(html.includes('导出本地全部日志'));assert.ok(!html.includes('href="/api/state" download="esp32-log.json"'));
 });
 
+test('OV3660 full-width gain ceiling uses board-provided limits instead of OV2640 enum limits',async()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const actual=Object.fromEntries(vm.runInContext('Object.entries(cameraFields).map(([key,v])=>[key,v[1]])',context));actual.gainceiling=1016;
+ const state={...base,bootId:'raw-gain',cameraOk:true,cameraSettings:{available:true,revision:0,actual,ranges:{gainceiling:{min:0,max:1023,unit:'REGISTER_10_BIT'}}}};
+ vm.runInContext(`syncCameraSettings(${JSON.stringify(state)})`,context);
+ assert.equal(Number(element('cameraCfg_gainceiling').value),1016);assert.equal(element('cameraCfg_gainceiling').max,1023);
+ await vm.runInContext('applyCameraSettings()',context);assert.equal(requests.at(-1).settings.gainceiling,1016);
+ vm.runInContext(`syncCameraSettings(${JSON.stringify({...state,cameraSettings:{...state.cameraSettings,requestId:requests.at(-1).requestId,persisted:true}})})`,context);
+ element('cameraCfg_gainceiling').value='1024';const before=requests.length;await vm.runInContext('applyCameraSettings()',context);assert.equal(requests.length,before);
+ context.fetch=()=>new Promise(()=>{});
+});
+
 test('state, flow and preview reads share one in-flight request and release it after errors',async()=>{
  let release,started=0;
  context.testRead=async()=>{started++;await new Promise(resolve=>release=resolve);return 1;};

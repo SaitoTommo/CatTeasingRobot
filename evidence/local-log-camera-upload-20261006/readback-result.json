@@ -1,0 +1,45 @@
+{
+  "expectedVersion": true,
+  "phase": "IDLE",
+  "cameraOk": true,
+  "motorId": 0,
+  "motorRunning": false,
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "settingsCompared": 95,
+  "settingChanges": [],
+  "route": [
+    43,
+    46
+  ],
+  "cameraSettings": {
+    "available": true,
+    "width": 320,
+    "height": 240,
+    "sensorPid": 13920,
+    "revision": 0,
+    "actual": {
+      "quality": 12,
+      "brightness": 0,
+      "contrast": 0,
+      "saturation": 0,
+      "aec_value": 490,
+      "ae_level": 0,
+      "aec2": 0,
+      "agc_gain": 2,
+      "awb_gain": 0,
+      "wb_mode": 0,
+      "raw_gma": 1,
+      "lenc": 1,
+      "hmirror": 0,
+      "vflip": 1,
+      "awb": 1,
+      "aec": 1,
+      "agc": 1,
+      "gainceiling": 248
+    },
+    "persisted": false,
+    "error": "",
+    "requestId": ""
+  }
+}

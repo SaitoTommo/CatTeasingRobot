@@ -1,0 +1,8 @@
+{
+  "firmware": "0.39",
+  "pageMatchesCommittedHeader": true,
+  "headerCommit": "abcbd95",
+  "rawGainceilingStatus": 248,
+  "sensorPid": 13920,
+  "needsSensorRangeFix": true
+}

@@ -1,0 +1,28 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+  "usbAndHttpVersionMatch": true,
+  "pageMatchesCompiledHeader": true,
+  "oldSettingsCompared": 95,
+  "settingChanges": [],
+  "route": [
+    43,
+    46
+  ],
+  "mode": "SIM_UNO",
+  "phase": "IDLE",
+  "motorId": 0,
+  "motorRunning": false,
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "cameraOk": true,
+  "sensorPid": 13920,
+  "fullGainceilingReadback": 248,
+  "gainceilingRange": {
+    "min": 0,
+    "max": 1023,
+    "unit": "REGISTER_10_BIT"
+  },
+  "cameraSettingsCount": 18,
+  "physicalCameraSettingsWritten": false,
+  "browserIndexedDbVisuallyTested": false
+}

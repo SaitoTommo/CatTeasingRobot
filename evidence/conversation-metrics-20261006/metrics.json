@@ -1,0 +1,189 @@
+{
+  "captures": [
+    {
+      "path": "D:/data/download/esp32-log(49).json",
+      "firmware": "ESP32_CAT_HOST_0.34_SHARED_HTTP",
+      "uptimeMs": 504524,
+      "rows": 160,
+      "firstMs": 492911,
+      "lastMs": 504467,
+      "spanMs": 11556
+    },
+    {
+      "path": "D:/data/download/esp32-log(50).json",
+      "firmware": "ESP32_CAT_HOST_0.34_SHARED_HTTP",
+      "uptimeMs": 651198,
+      "rows": 160,
+      "firstMs": 645570,
+      "lastMs": 651197,
+      "spanMs": 5627
+    },
+    {
+      "path": "D:/data/download/esp32-log(51).json",
+      "firmware": "ESP32_CAT_HOST_0.34_SHARED_HTTP",
+      "uptimeMs": 57178,
+      "rows": 160,
+      "firstMs": 46990,
+      "lastMs": 57148,
+      "spanMs": 10158
+    }
+  ],
+  "earlyExit": {
+    "found": {
+      "seq": 659,
+      "ms": 47713,
+      "source": "CAT_CHECK_SAMPLE",
+      "line": "1/3 frame=231 found"
+    },
+    "observe": {
+      "seq": 660,
+      "ms": 47714,
+      "source": "DECISION",
+      "line": "INTERACTION OBSERVE"
+    },
+    "exit": {
+      "seq": 665,
+      "ms": 48397,
+      "source": "INTERACTION_EXIT",
+      "line": "cat left invitation frame"
+    },
+    "foundToExitMs": 684,
+    "observeToExitMs": 683,
+    "initialLookSeconds": 5,
+    "catLeaveSeconds": 5,
+    "robotActionLimit": 5
+  },
+  "restarted": {
+    "path": "../.codex-remote-attachments/01a10ce8-1c6f-7440-9496-178313911ee6/4f5e232f-9fe0-4f8e-a24d-aedaf462aff7/1-esp32-log-1-.json",
+    "firmware": "ESP32_CAT_HOST_0.38_MEAN_SCAN_TAG_CHECKS",
+    "uptimeMs": 5694,
+    "rows": 27,
+    "firstMs": 152,
+    "lastMs": 5657,
+    "spanMs": 5505,
+    "sources": {
+      "READY": 1,
+      "CAMERA": 1,
+      "INPUT_REJECTED": 23,
+      "SIM_TX": 1,
+      "WIFI_GOT_IP": 1
+    },
+    "heap": 48980,
+    "psram": 8167280,
+    "frameSeq": 26,
+    "network": {
+      "stationConnected": true,
+      "status": 3,
+      "rssiDbm": -52,
+      "disconnects": 0,
+      "lastDisconnectReason": 0,
+      "lastDisconnectAt": 0,
+      "reconnectAttempts": 0,
+      "sleepEnabled": false,
+      "controlMaxSockets": 9,
+      "streamMaxSockets": 4,
+      "sdkMaxSockets": 16,
+      "sharedHttpMaxSockets": 13,
+      "httpInternalSockets": 3,
+      "resetReason": 4,
+      "minFreeHeap": 40332,
+      "largestFreeBlock": 31732
+    }
+  },
+  "finalCompile": {
+    "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+    "board": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+    "compileExitCode": 0,
+    "flashBytes": 3792866,
+    "flashLimit": 8257536,
+    "staticRamBytes": 85584,
+    "ramLimit": 327680,
+    "debugPageBytes": 97301,
+    "debugPageGzipBytes": 34204,
+    "nodeTestsPassed": 61,
+    "nativeExecutablesPassed": 11,
+    "cameraDriverChecks": 82,
+    "cameraRuntimeChecks": 65,
+    "binaryPath": "C:\\Users\\guoto\\AppData\\Local\\Temp\\codex-esp32-cat-build\\ESP32CatHost.ino.bin",
+    "binaryBytes": 3793008,
+    "binarySha256": "3DE55BA03166083B9C4CD4395A202C0989735A934CED7F5A8E3130C72E371DB8",
+    "gainCeilingCompatibility": "OV3660/OV5640 register 0..1023; other sensors enum 0..6"
+  },
+  "finalDeployment": {
+    "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+    "usbAndHttpVersionMatch": true,
+    "pageMatchesCompiledHeader": true,
+    "oldSettingsCompared": 95,
+    "settingChanges": [],
+    "route": [
+      43,
+      46
+    ],
+    "mode": "SIM_UNO",
+    "phase": "IDLE",
+    "motorId": 0,
+    "motorRunning": false,
+    "stopPendingId": 0,
+    "stopUnconfirmed": false,
+    "cameraOk": true,
+    "sensorPid": 13920,
+    "fullGainceilingReadback": 248,
+    "gainceilingRange": {
+      "min": 0,
+      "max": 1023,
+      "unit": "REGISTER_10_BIT"
+    },
+    "cameraSettingsCount": 18,
+    "physicalCameraSettingsWritten": false,
+    "browserIndexedDbVisuallyTested": false
+  },
+  "tagDictionaryCodeCount": 587,
+  "tags": [
+    {
+      "id": 40,
+      "code": "0xaff6e5a8a",
+      "dataBits": 36,
+      "whiteCells": 22,
+      "blackCells": 14,
+      "blackPercent": 38.88888888888889
+    },
+    {
+      "id": 43,
+      "code": "0xdf8ba8c01",
+      "dataBits": 36,
+      "whiteCells": 17,
+      "blackCells": 19,
+      "blackPercent": 52.77777777777778
+    },
+    {
+      "id": 46,
+      "code": "0x18a916828",
+      "dataBits": 36,
+      "whiteCells": 12,
+      "blackCells": 24,
+      "blackPercent": 66.66666666666666
+    }
+  ],
+  "compile039": {
+    "flashBytes": 3791846,
+    "flashPercent": 45.9198240249876,
+    "staticRamBytes": 85584,
+    "ramPercent": 26.1181640625,
+    "flashDeltaFrom038": 15080,
+    "ramDeltaFrom038": 208,
+    "htmlBytes": 96953,
+    "gzipBytes": 34037,
+    "gzipReductionPercent": 64.89329881488969
+  },
+  "geometry": {
+    "wheelMm": 67.5,
+    "trackMm": 120,
+    "slots": 20,
+    "degreesPerWheelPulseSum": 5.0625,
+    "onePulseEachDegrees": 10.125,
+    "left2Right1Degrees": 15.1875,
+    "mean71Degrees": 718.875,
+    "basis": "formula only; no externally measured angle"
+  },
+  "scope": "Observed captures, source facts, offline tests and formula estimates are separate; not a post-fix physical success-rate comparison."
+}

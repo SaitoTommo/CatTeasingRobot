@@ -1,0 +1,10 @@
+{
+  "applicationSha256": "949BDB60CDC3CC04F96C29AB67B0E149E4EAC1D9E0C20AA794771B3592506C0A",
+  "applicationBytes": 3792000,
+  "partitionBytes": 3072,
+  "partitionMatches": true,
+  "offset": "0x10000",
+  "uploadExitCode": 0,
+  "elapsedSeconds": 33.2817096,
+  "hashVerified": true
+}

@@ -1,0 +1,94 @@
+{
+  "captures": [
+    {
+      "path": "D:/data/download/esp32-log(49).json",
+      "firmware": "ESP32_CAT_HOST_0.34_SHARED_HTTP",
+      "uptimeMs": 504524,
+      "rows": 160,
+      "firstMs": 492911,
+      "lastMs": 504467,
+      "spanMs": 11556
+    },
+    {
+      "path": "D:/data/download/esp32-log(50).json",
+      "firmware": "ESP32_CAT_HOST_0.34_SHARED_HTTP",
+      "uptimeMs": 651198,
+      "rows": 160,
+      "firstMs": 645570,
+      "lastMs": 651197,
+      "spanMs": 5627
+    },
+    {
+      "path": "D:/data/download/esp32-log(51).json",
+      "firmware": "ESP32_CAT_HOST_0.34_SHARED_HTTP",
+      "uptimeMs": 57178,
+      "rows": 160,
+      "firstMs": 46990,
+      "lastMs": 57148,
+      "spanMs": 10158
+    }
+  ],
+  "earlyExit": {
+    "found": {
+      "seq": 659,
+      "ms": 47713,
+      "source": "CAT_CHECK_SAMPLE",
+      "line": "1/3 frame=231 found"
+    },
+    "observe": {
+      "seq": 660,
+      "ms": 47714,
+      "source": "DECISION",
+      "line": "INTERACTION OBSERVE"
+    },
+    "exit": {
+      "seq": 665,
+      "ms": 48397,
+      "source": "INTERACTION_EXIT",
+      "line": "cat left invitation frame"
+    },
+    "foundToExitMs": 684,
+    "observeToExitMs": 683,
+    "initialLookSeconds": 5,
+    "catLeaveSeconds": 5,
+    "robotActionLimit": 5
+  },
+  "resetReason": 4,
+  "tags": [
+    {
+      "id": 40,
+      "code": "0xaff6e5a8a",
+      "dataBits": 36,
+      "whiteCells": 22,
+      "blackCells": 14,
+      "blackPercent": 38.88888888888889
+    },
+    {
+      "id": 43,
+      "code": "0xdf8ba8c01",
+      "dataBits": 36,
+      "whiteCells": 17,
+      "blackCells": 19,
+      "blackPercent": 52.77777777777778
+    },
+    {
+      "id": 46,
+      "code": "0x18a916828",
+      "dataBits": 36,
+      "whiteCells": 12,
+      "blackCells": 24,
+      "blackPercent": 66.66666666666666
+    }
+  ],
+  "compile039": {
+    "flashBytes": 3791846,
+    "flashPercent": 45.9198240249876,
+    "staticRamBytes": 85584,
+    "ramPercent": 26.1181640625,
+    "flashDeltaFrom038": 15080,
+    "ramDeltaFrom038": 208,
+    "htmlBytes": 96953,
+    "gzipBytes": 34037,
+    "gzipReductionPercent": 64.89329881488969
+  }
+}

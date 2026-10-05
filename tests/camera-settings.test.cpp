@@ -24,6 +24,9 @@ struct sensor_t {
  int (*set_exposure_ctrl)(sensor_t *,int)=nullptr;
  int (*set_gain_ctrl)(sensor_t *,int)=nullptr;
  int (*set_gainceiling)(sensor_t *,gainceiling_t)=nullptr;
+ int (*get_reg)(sensor_t *,int,int)=nullptr;
+ int (*set_reg)(sensor_t *,int,int,int)=nullptr;
+ int rawCeiling=1016;
 };
 #include "../esp32-host/ESP32CatHost/camera_settings.h"
 unsigned checks=0;int failQuality=0,failContrast=0;
@@ -66,6 +69,15 @@ int main(){
  d=request(R"({"quality":20,"contrast":2})");failContrast=1;CHECK(!cameraApplySettings(&s,d.as<JsonObjectConst>(),actual,error));CHECK(s.status.quality==8);CHECK(s.status.contrast==0);CHECK(actual["quality"].as<int>()==8);
  failQuality=2;CHECK(!cameraApplySettings(&s,d.as<JsonObjectConst>(),actual,error));CHECK(error.indexOf("rollback failed")>=0);
  CHECK(!cameraApplySettings(nullptr,d.as<JsonObjectConst>(),actual,error));
+ // Real OV3660 startup exposed uint8_t 248 while its register can be 1016.
+ auto raw=sensor();raw.id.PID=0x3660;raw.status.gainceiling=248;
+ raw.get_reg=[](sensor_t *p,int reg,int mask){CHECK(reg==0x3A18&&mask==0x3FF);return p->rawCeiling;};
+ raw.set_reg=[](sensor_t *p,int reg,int mask,int value){CHECK(reg==0x3A18&&mask==0x3FF);p->rawCeiling=value;return 0;};
+ cameraReadSettings(&raw,actual);CHECK(actual["gainceiling"].as<int>()==1016);CHECK(cameraGainCeilingMaximum(&raw)==1023);
+ d=request(R"({"quality":8,"gainceiling":512})");CHECK(cameraApplySettings(&raw,d.as<JsonObjectConst>(),actual,error));CHECK(raw.rawCeiling==512);CHECK(actual["gainceiling"].as<int>()==512);
+ d=request(R"({"gainceiling":1024})");CHECK(!cameraApplySettings(&raw,d.as<JsonObjectConst>(),actual,error));CHECK(raw.rawCeiling==512);
+ d=request(R"({"gainceiling":1016})");CHECK(cameraApplySettings(&raw,d.as<JsonObjectConst>(),actual,error));CHECK(raw.rawCeiling==1016);
+ raw.get_reg=[](sensor_t *,int,int){return -1;};CHECK(!cameraApplySettings(&raw,d.as<JsonObjectConst>(),actual,error));CHECK(error.indexOf("read failed")>=0);
  printf("camera driver settings: %u checks passed\n",checks);
  return 0;
 }

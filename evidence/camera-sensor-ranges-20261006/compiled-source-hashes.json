@@ -1,0 +1,32 @@
+[
+  {
+    "path": "ESP32CatHost.ino",
+    "sha256": "8C02B1AFD0B53781B24CD8E06C1C98E1989162CFBAFEEEE2BEF1458EFE957BC4",
+    "matchesCompiled": true
+  },
+  {
+    "path": "camera_settings.h",
+    "sha256": "5C5AA8DE0927D34FDB968D33E26ACFCE3BE9BAEF4B3CEBF5DC7A63BE0E19C07A",
+    "matchesCompiled": true
+  },
+  {
+    "path": "camera_settings_runtime.h",
+    "sha256": "CF00C73B89105E7D018021E7D77CC1142D4106C18D7FB61A291D9C636EB245C5",
+    "matchesCompiled": true
+  },
+  {
+    "path": "vision.cpp",
+    "sha256": "0A1524662EA973AB5ABCE7A0B2C1757D1D3BC1F078288815037AF247A274F731",
+    "matchesCompiled": true
+  },
+  {
+    "path": "vision_preview.h",
+    "sha256": "A0266CB3DC65D30AFAF3F28076A95B0F6FB304EBD6BAC59889FDCD456235B7F8",
+    "matchesCompiled": true
+  },
+  {
+    "path": "debug_page.h",
+    "sha256": "24F27FD1E3CE5FC43216448BBE855D875E859FFD9DDE815DF9AF3A873F668FB3",
+    "matchesCompiled": true
+  }
+]

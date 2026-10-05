@@ -1,0 +1,19 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+  "board": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+  "compileExitCode": 0,
+  "flashBytes": 3792866,
+  "flashLimit": 8257536,
+  "staticRamBytes": 85584,
+  "ramLimit": 327680,
+  "debugPageBytes": 97301,
+  "debugPageGzipBytes": 34204,
+  "nodeTestsPassed": 61,
+  "nativeExecutablesPassed": 11,
+  "cameraDriverChecks": 82,
+  "cameraRuntimeChecks": 65,
+  "binaryPath": "C:\\Users\\guoto\\AppData\\Local\\Temp\\codex-esp32-cat-build\\ESP32CatHost.ino.bin",
+  "binaryBytes": 3793008,
+  "binarySha256": "3DE55BA03166083B9C4CD4395A202C0989735A934CED7F5A8E3130C72E371DB8",
+  "gainCeilingCompatibility": "OV3660/OV5640 register 0..1023; other sensors enum 0..6"
+}

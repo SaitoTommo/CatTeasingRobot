@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+const read = path => JSON.parse(fs.readFileSync(path,'utf8').replace(/^\uFEFF/,''));
+const paths=[49,50,51].map(n=>'D:/data/download/esp32-log('+n+').json');
+const restartPath='../.codex-remote-attachments/01a10ce8-1c6f-7440-9496-178313911ee6/4f5e232f-9fe0-4f8e-a24d-aedaf462aff7/1-esp32-log-1-.json';
+const captures=paths.map(path=>{const d=read(path),rows=d.logs;return {path,firmware:d.firmware,uptimeMs:d.ms,rows:rows.length,firstMs:rows[0].ms,lastMs:rows.at(-1).ms,spanMs:rows.at(-1).ms-rows[0].ms};});
+const d51=read(paths[2]);const at=seq=>d51.logs.find(r=>r.seq===seq);
+const earlyExit={found:at(659),observe:at(660),exit:at(665),foundToExitMs:at(665).ms-at(659).ms,observeToExitMs:at(665).ms-at(660).ms,initialLookSeconds:d51.config.initialLookSeconds,catLeaveSeconds:d51.config.catLeaveSeconds,robotActionLimit:d51.config.robotActionLimit};
+const restart=read(restartPath),sources={};for(const row of restart.logs)sources[row.source]=(sources[row.source]||0)+1;
+const restarted={path:restartPath,firmware:restart.firmware,uptimeMs:restart.ms,rows:restart.logs.length,firstMs:restart.logs[0].ms,lastMs:restart.logs.at(-1).ms,spanMs:restart.logs.at(-1).ms-restart.logs[0].ms,sources,heap:restart.heap,psram:restart.psram,frameSeq:restart.frameSeq,network:restart.network};
+const source=fs.readFileSync('esp32-host/ESP32CatHost/src/tag36h11.c','utf8');const codes=[...source.matchAll(/0x([0-9a-f]+)UL/g)].map(m=>BigInt('0x'+m[1]));
+const tags=[40,43,46].map(id=>{const white=codes[id].toString(2).split('1').length-1;return{id,code:'0x'+codes[id].toString(16),dataBits:36,whiteCells:white,blackCells:36-white,blackPercent:(36-white)/36*100};});
+const current=read('evidence/local-log-camera-settings-20261006/verification.json');const previous=read('evidence/mean-scan-tag-upload-20261005/verification.json');
+const compile={flashBytes:current.flashBytes,flashPercent:current.flashBytes/current.flashLimit*100,staticRamBytes:current.staticRamBytes,ramPercent:current.staticRamBytes/current.ramLimit*100,flashDeltaFrom038:current.flashBytes-3776766,ramDeltaFrom038:current.staticRamBytes-85376,htmlBytes:current.debugPageBytes,gzipBytes:current.debugPageGzipBytes,gzipReductionPercent:(1-current.debugPageGzipBytes/current.debugPageBytes)*100};
+const geometry={wheelMm:67.5,trackMm:120,slots:20,degreesPerWheelPulseSum:180*67.5/(20*120),onePulseEachDegrees:360*67.5/(20*120),left2Right1Degrees:3*180*67.5/(20*120),mean71Degrees:71*360*67.5/(20*120),basis:'formula only; no externally measured angle'};
+const result={captures,earlyExit,restarted,finalCompile:fs.existsSync("evidence/camera-sensor-ranges-20261006/verification.json")?read("evidence/camera-sensor-ranges-20261006/verification.json"):null,finalDeployment:fs.existsSync("evidence/camera-sensor-ranges-upload-20261006/readback-result.json")?read("evidence/camera-sensor-ranges-upload-20261006/readback-result.json"):null,tagDictionaryCodeCount:codes.length,tags,compile039:compile,geometry,scope:'Observed captures, source facts, offline tests and formula estimates are separate; not a post-fix physical success-rate comparison.'};
+fs.writeFileSync('evidence/conversation-metrics-20261006/metrics.json',JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify({captures,earlyExit,resetReason:restart.network.resetReason,tags,compile039:compile},null,2));
