@@ -56,7 +56,7 @@ export class FirmwareUnoSimulator {
     if(['GET_TELEMETRY','GET_STATUS','GET_DISTANCE','GET_ENCODER'].includes(verb)&&!a.length){this.telemetry(id);return;}
     if(verb==='PING'&&!a.length){this.ack(id);this.done(id,'PONG');this.out('EVENT CAPABILITIES SCAN_V1');return;}
     if(['SC','SCAN_CONFIG'].includes(verb)){
-      const ranges=[[50,3000],[50,3000],[500,10000],[1000,600000],[100,10000]];
+      const ranges=[[50,3000],[50,3000],[500,60000],[1000,600000],[100,10000]];
       if(a.length!==5||a.some((x,i)=>!integer(x,...ranges[i]))){this.error(id,'INVALID_SCAN_FRAME');return;}
       if(this.scan.active||m.active){this.error(id,'BUSY');return;}
       if(n[4]<=n[0]||n[4]<=n[1]){this.error(id,'INVALID_ARGUMENT');return;}
@@ -127,7 +127,7 @@ export class FirmwareUnoSimulator {
       const safety=m.safetyReason;if(this.scan.flags)m.safetyReason=()=>null;
       m.startMotion(this.scan.id,p/255,-p/255,Infinity,'SCAN_ROTATE',now,true);m.safetyReason=safety;
       if(m.active?.id===this.scan.id){m.active.targetPulses=this.scan.stepPulses;m.active.deadline=now+10000;}else this.scan.end(2);
-    }else if(event==='REQUEST')this.out(`VQ ${this.scan.id} ${this.scan.step} ${this.scan.generation} ${this.scan.used}`);
+    }else if(event==='REQUEST')this.out(`VQ ${this.scan.id} ${this.scan.step} ${this.scan.generation} ${this.scan.used} ${this.scan.usedHalf}`);
     else if(event==='COMPLETE'){if(m.active?.id===this.scan.id)m.stopMotion('SCAN_ENDED');this.out(`SD ${this.scan.id} ${this.scan.generation} ${this.scan.result}`);}
   }
 }

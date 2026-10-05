@@ -25,3 +25,21 @@ let flowLastMs=0;
 function syncFlow(d){flowLastMs=d.ms;$('patrolLive').textContent=`即时流程：${d.phase} · ${patrolActionName(d.action)}；电机命令 #${d.motorId||0}：${d.leftPwm||0}/${d.rightPwm||0}，${d.motorConfirmed?'Uno 已确认':'尚未确认'}。`+(d.stopUnconfirmed?'停车未确认。':d.stopPendingId?'等待停车确认。':'');syncPatrolTransitions(d);}
 async function flowPoll(){let delay=100;try{const d=await withPageRead(async()=>{const r=await fetch('/api/flow',{signal:AbortSignal.timeout(2000)});if(!r.ok)throw Error(r.status);return await r.json();});syncFlow(d);}catch(e){$('patrolLive').textContent='即时流程连接中断：'+e.message;delay=1000;}setTimeout(flowPoll,delay);}
 flowPoll();
+
+let tagScanReadback=null,pendingTagScanSave=null;
+function syncTagScanChecks(d){
+ const value=d.config?.tagScanMaxFrames,available=Number.isInteger(value)&&value>=1&&value<=10;
+ const stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;
+ for(const id of ['tagScanMaxFrames','saveTagScanChecks'])$(id).disabled=!available||!stopped;
+ if(available&&tagScanReadback!==value){$('tagScanMaxFrames').value=value;tagScanReadback=value;}
+ if(pendingTagScanSave){const error=(d.logs||[]).find(x=>x.seq>pendingTagScanSave.seq&&x.source==='CONFIG_ERROR');if(error)pendingTagScanSave.error=error.line;else if(value===pendingTagScanSave.value)pendingTagScanSave=null;}
+ $('tagScanStatus').textContent=available?'板上已保存：每次停稳最多 '+value+' 次。'+(stopped?'可修改并保存。':'请先停止并等待停车确认。'):'等待板上识别次数回读';
+ if(pendingTagScanSave)$('tagScanStatus').textContent+=' '+(pendingTagScanSave.error?'保存失败：'+pendingTagScanSave.error:'等待板上保存回读。');
+}
+function saveTagScanChecks(){
+ if($('saveTagScanChecks').disabled)return;
+ const value=Number($('tagScanMaxFrames').value);
+ if(!$('tagScanMaxFrames').value||!Number.isInteger(value)||value<1||value>10){alert('标签识别次数请输入 1–10 的整数');return;}
+ pendingTagScanSave={value,seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config:{tagScanMaxFrames:value}});
+ try{const c=JSON.parse($('settings').value);c.tagScanMaxFrames=value;$('settings').value=JSON.stringify(c,null,2);}catch{}
+}

@@ -1,3 +1,11 @@
+# 当前 Uno V6.11（2026-10-05，未上传）
+
+本版按左右轮编码器增量的平均值累计扫描预算，保留半脉冲余数，包含停稳期间惯性增量。扩展回报为带 CRC 的 VQ scanId stepId generation used usedHalf：used 为平均脉冲的整数部分，usedHalf 为左右轮累计脉冲之和（平均脉冲的两倍）。SC 的识别窗口允许 500–60000 ms；SR 的预算仍为 1–1000 个平均脉冲。需要配套 ESP32 0.38；旧 ESP 不接受扩展 VQ，新 ESP 接受旧 VQ但显示旧计量方式。
+
+用 firmware/build-uno.ps1 离线编译；新增 -fno-inline-small-functions 容量优化，保留安全保护。本版 Flash **32244/32256 bytes**（剩 12），静态 SRAM **1381/2048 bytes**（剩 667，不等于运行栈最低余量）。默认轮径 67.5 mm、轮距 120 mm、每转 20 脉冲；轮距是两侧轮中心间距。物理转角、起转时差和打滑待测。
+
+以下为历史版本记录。
+
 # 当前 Uno V6.6（2026-10-03，未上传）
 
 增加 SC/SR/VR（SCAN_CONFIG/SCAN_ROTATE/VISION_RESULT）及受保护的 VQ/SD 回报。Uno 执行分步旋转、停稳、新帧请求和有限等待；每次搜索最多两圈。双侧近距时只允许专用扫描 flags=1 忽略侧向停车，触碰、失速、STOP、会话及内存保护继续生效。纯 ROTATE 仍为 ±360°，手动持续 MOTOR 不改为扫描。

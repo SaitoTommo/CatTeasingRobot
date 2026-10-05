@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.9. Boot log: READY UNO_CAT_V6.9.
+// Firmware version: UNO_CAT_V6.11. Boot log: READY UNO_CAT_V6.11.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -549,7 +549,7 @@ bool parseFloat(const char *text, float minValue, float maxValue, float &value) 
 }
 
 const int32_t scanLimits[3][10] PROGMEM = {
-  {50,3000,50,3000,500,10000,1000,600000,100,10000},
+  {50,3000,50,3000,500,60000,1000,600000,100,10000},
   {1,2147483647L,-64,64,1,255,1,1000,0,1},
   {1,65535,1,1000,1,2147483647L,0,2,0,2147483647L}
 };
@@ -615,7 +615,7 @@ void tickScan(uint32_t now) {
     startMotion(scan.id,MOTION_PULSES,p,-p,10000,count,true,F("SCAN_ROTATE"));
     if(motion.kind==MOTION_NONE)scan.end(ScanMachine::INVALID);
   }else if(event==ScanMachine::REQUEST){
-    char line[46];snprintf_P(line,sizeof(line),PSTR("VQ %u %u %lu %u"),scan.id,scan.step,(unsigned long)scan.generation,scan.used);printProtectedLine(line);
+    char line[46];snprintf_P(line,sizeof(line),PSTR("VQ %u %u %lu %u %u"),scan.id,scan.step,(unsigned long)scan.generation,scan.used,scan.usedHalf);printProtectedLine(line);
   }else if(event==ScanMachine::COMPLETE){
     if(motion.kind!=MOTION_NONE&&motion.id==scan.id)abortMotion(F("SCAN_ENDED"));
     scan.flags=0; // Motion completion/abort already stopped its outputs.
@@ -1300,7 +1300,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.10"));
+  Serial.println(F("READY UNO_CAT_V6.11"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&

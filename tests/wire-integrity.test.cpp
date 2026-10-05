@@ -10,7 +10,7 @@ int main(){
  for(auto s:{"C 1 GET_TELEMETRY*AB","C 65535 GET_CONFIG*01","C 12 PING*ff"})assert(stopDiagnosticQuery(s));
  for(auto s:{"C 1 MOTOR 1 1*AB","C 1 DRIVE 23 255*AB","C 1 ROTATE 20 255*AB","C 1 SR 1 2 255 71 0*AB","C 1 SESSION_START*AB","C 1 MOTOR GET_TELEMETRY*AB","C 1 GET_TELEMETRY*ABx","C 0 PING*AB","C 1 GET_CONFIG*Z1","C 1 PING*A","C 65536 PING*AB"})assert(!stopDiagnosticQuery(s));
  assert(wireCrc8("123456789",9)==0xf4);
- for(auto s:{"MS 1 0 0","MP 1 2 2","MD 1 2 2","MA 1 TOUCH 0 0","AK 1","TB 1 0 00","VQ 1 2 3 4","SD 1 2 0"}){
+ for(auto s:{"MS 1 0 0","MP 1 2 2","MD 1 2 2","MA 1 TOUCH 0 0","AK 1","TB 1 0 00","VQ 1 2 3 4","VQ 1 2 3 4 9","SD 1 2 0"}){
   assert(protectedReply(s,true,false));assert(protectedReply(s,false,false));
  }
  assert(protectedReply("DONE 42 MOTOR_STOPPED",true,false));

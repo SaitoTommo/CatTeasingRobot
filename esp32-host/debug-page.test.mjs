@@ -353,3 +353,17 @@ test('invitation controls round-trip durations and widths and show fresh cat evi
  const count=requests.length;element('robotCfg_robotActionLimit').value='5.5';vm.runInContext('saveRobotSettings()',context);assert.equal(requests.length,count);
  render({...state,ms:5000});assert.match(element('robotLiveStatus').textContent,/无有效新鲜检测/);assert.doesNotMatch(element('robotLiveStatus').textContent,/18.0%/);
 });
+
+test('tag stopped attempts save integer config and wait for board readback',()=>{
+ const requests=[];context.send=x=>requests.push(JSON.parse(JSON.stringify(x)));
+ const d={...base,config:{tagScanMaxFrames:3},logs:[]};
+ const draw=d=>vm.runInContext('syncTagScanChecks('+JSON.stringify(d)+')',context);
+ draw(d);assert.equal(Number(element('tagScanMaxFrames').value),3);
+ element('tagScanMaxFrames').value='5';draw(d);assert.equal(element('tagScanMaxFrames').value,'5');
+ vm.runInContext('saveTagScanChecks()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{tagScanMaxFrames:5}});
+ draw(d);assert.match(element('tagScanStatus').textContent,/等待板上保存/);
+ draw({...d,config:{tagScanMaxFrames:5}});assert.doesNotMatch(element('tagScanStatus').textContent,/等待板上保存/);
+ for(const value of ['0','11','2.5','']){element('tagScanMaxFrames').value=value;vm.runInContext('saveTagScanChecks()',context);}assert.equal(requests.length,1);
+ draw({...d,stopUnconfirmed:true});assert.equal(element('saveTagScanChecks').disabled,true);
+ draw({...d,phase:'PATROL'});assert.equal(element('tagScanMaxFrames').disabled,true);
+});

@@ -38,7 +38,7 @@ int main(){
   s.motionStarted(0,0);s.motionStopped(100,1,1);
   CHECK(s.tick(250,1,1)==ScanMachine::NONE);
   CHECK(s.tick(300,2,1)==ScanMachine::NONE); // coasting restarts quiet window
-  CHECK(s.tick(400,2,1)==ScanMachine::REQUEST);CHECK(s.used==2);
+  CHECK(s.tick(400,2,1)==ScanMachine::REQUEST);CHECK(s.used==1);CHECK(s.usedHalf==3);
   CHECK(!s.reply(2,1,7,1,1,410));CHECK(!s.reply(1,1,6,1,1,410));
   CHECK(!s.reply(1,1,7,1,0,410));
   CHECK(s.tick(900,2,1)==ScanMachine::REQUEST);CHECK(s.step==1);
@@ -74,5 +74,20 @@ int main(){
   CHECK(terminal.begin(20,30,2,45,71,0,3101));CHECK(!terminal.active());
   terminal.terminalSent=false;CHECK(terminal.tick(3102,0,0)==ScanMachine::COMPLETE);
   CHECK(terminal.tick(3602,0,0)==ScanMachine::COMPLETE);CHECK(!terminal.active());
+  // Asymmetric travel counts the mean, carries halves, and handles counter wrap.
+  ScanMachine mean;CHECK(mean.begin(30,40,-1,45,10,0,0));
+  uint32_t l=UINT32_MAX-1,r=UINT32_MAX-2;
+  for(int i=0;i<3;i++){
+    auto t=i*400;CHECK(mean.tick(t,l,r)==ScanMachine::START_STEP);mean.motionStarted(l,r);
+    l+=2;r+=1;mean.motionStopped(t+100,l,r);
+    CHECK(mean.tick(t+300,l,r)==ScanMachine::REQUEST);
+    CHECK(mean.usedHalf==unsigned((i+1)*3));CHECK(mean.used==unsigned((i+1)*3/2));
+    CHECK(mean.tick(t+301,l,r)==ScanMachine::NONE);CHECK(mean.usedHalf==unsigned((i+1)*3));
+    CHECK(mean.reply(30,i+1,40,0,i+1,t+302));
+  }
+  CHECK(mean.used==4);CHECK(mean.usedHalf==9);
+  ScanMachine cap;CHECK(cap.begin(31,41,1,45,2,0,0));cap.tick(0,0,0);cap.motionStarted(0,0);
+  cap.motionStopped(100,UINT32_MAX,UINT32_MAX);CHECK(cap.tick(300,UINT32_MAX,UINT32_MAX)==ScanMachine::REQUEST);
+  CHECK(cap.used==2&&cap.usedHalf==4);
   std::printf("scan core: %u checks passed\n",checks);
 }

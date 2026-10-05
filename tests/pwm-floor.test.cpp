@@ -32,6 +32,10 @@ int main(){
  d["tagStopWidth"]=.25;d["catNearWidth"]=.35;d["catFarWidth"]=.12;d["visionMaxAgeMs"]=1500;d["frontBlockBottom"]=.88;d["floorRoiTop"]=.75;d["floorDifferenceThreshold"]=35;
  d["frontAvoidanceEnabled"]=false;d["frontCalibrated"]=false;d["floorReference"].to<JsonArray>();String error;
  CHECK(d["robotActionLimit"].as<int>()==5);d["robotActionLimit"]=5.5;CHECK(!validateSettings(d,error));d["robotActionLimit"]=5;
+ CHECK(d["tagScanMaxFrames"].as<int>()==3);
+ for(float bad:{0.f,11.f,1.5f}){d["tagScanMaxFrames"]=bad;CHECK(!validateSettings(d,error));}
+ for(int good:{1,3,10}){d["tagScanMaxFrames"]=good;CHECK(validateSettings(d,error));}
+ d["tagScanMaxFrames"]=3;
  CHECK(d["catCheckMaxFrames"].as<int>()==3);
  for(float bad:{0.0f,4.0f,2.5f}){d["catCheckMaxFrames"]=bad;CHECK(!validateSettings(d,error));}
  for(int good:{1,2,3}){d["catCheckMaxFrames"]=good;CHECK(validateSettings(d,error));}

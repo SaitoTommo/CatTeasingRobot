@@ -9,6 +9,7 @@ struct ScanMachine {
   struct Config { uint16_t minimum=200, quiet=100, vision=3000, settle=3000; uint32_t total=300000; } cfg;
   Phase phase=IDLE;
   uint16_t id=0, step=0, budget=0, used=0;
+  uint16_t usedHalf=0; // Integer sum of left + right encoder pulses; twice the mean.
   uint32_t generation=0, began=0, stopped=0, quietAt=0, requested=0, sent=0;
   uint32_t baseL=0, baseR=0, quietL=0, quietR=0, lastFrame=0;
   int16_t increment=1;
@@ -17,11 +18,11 @@ struct ScanMachine {
   bool active() const { return phase!=IDLE && phase!=TERMINAL; }
   bool matches(uint16_t i,uint16_t s,uint32_t g) const { return i && i==id && s==step && g && g==generation; }
   bool begin(uint16_t i,uint32_t g,int16_t inc,uint8_t p,uint16_t limit,uint8_t f,uint32_t now) {
-    if (!i || !g || !inc || !p || !limit || f>1) return false;
+    if (!i || !g || !inc || !p || !limit || limit>1000 || f>1) return false;
     if (i==id && g==generation) return true; // retransmission never turns again
     if (active()) return false;
     id=i;generation=g;increment=inc;pwm=p;budget=limit;flags=f;
-    used=step=0;lastFrame=0;began=now;phase=NEXT;terminalSent=false;result=NOT_FOUND;return true;
+    used=step=0;usedHalf=0;lastFrame=0;began=now;phase=NEXT;terminalSent=false;result=NOT_FOUND;return true;
   }
   uint16_t stepPulses() const {
     uint16_t n=increment<0?-increment:increment, remaining=budget-used;
@@ -42,6 +43,10 @@ struct ScanMachine {
     else phase=NEXT;
     return true;
   }
+  __attribute__((noinline)) void addPulses(uint32_t delta) {
+    uint16_t remaining=budget*2-usedHalf;
+    usedHalf+=delta<remaining?uint16_t(delta):remaining;
+  }
   Event tick(uint32_t now,uint32_t l,uint32_t r) {
     if (active() && uint32_t(now-began)>=cfg.total) end(TIMEOUT);
     // Repeat the same terminal identity/result; never restart motion.
@@ -61,8 +66,9 @@ struct ScanMachine {
       if (l!=quietL || r!=quietR) { quietL=l;quietR=r;quietAt=now; }
       if (uint32_t(now-stopped)>=cfg.settle) { end(SETTLE_TIMEOUT);return tick(now,l,r); }
       if (uint32_t(now-stopped)>=cfg.minimum && uint32_t(now-quietAt)>=cfg.quiet) {
-        uint32_t dl=l-baseL,dr=r-baseR,n=dl>dr?dl:dr;
-        used=uint32_t(used)+n>=budget?budget:used+n;
+        // Saturate before adding, including wrapped encoder counters.
+        addPulses(l-baseL);addPulses(r-baseR);
+        used=usedHalf/2; // integer view only; the full L+R count remains in usedHalf
         requested=sent=now;phase=WAIT_VISION;return REQUEST;
       }
     }

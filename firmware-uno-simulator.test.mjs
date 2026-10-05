@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialWorld} from './core.mjs';
 import {FirmwareUnoSimulator} from './firmware-uno-simulator.mjs';
+import {ScanSimulator} from './scan-simulator.mjs';
 import {CompactTelemetry} from './compact-telemetry.mjs';
 import {compactReply} from './esp32-link.mjs';
 function bench(){const lines=[],uno=new FirmwareUnoSimulator(initialWorld(),line=>lines.push(line));uno.boot(0);return {uno,lines,send:(id,text,t=0)=>uno.receive(compactReply(`C ${id} ${text}`),t)};}
@@ -24,4 +25,20 @@ test('invalid CRC cannot start motion; scan bounds match firmware and touch abor
  send(2,'SC 49 100 3000 300000 3000');assert.ok(lines.some(r=>r.startsWith('ERROR 2 INVALID_SCAN_FRAME')));
  send(3,'SESSION_RESUME');send(4,'SR 1 65 100 100 0');assert.ok(lines.some(r=>r.startsWith('ERROR 4 INVALID_SCAN_FRAME')));
  send(5,'SR 1 3 100 100 0');uno.step(10);uno.injectTouch('TOP','PRESS',20);uno.step(20);assert.equal(uno.active,null);assert.ok(lines.some(r=>r.startsWith('SD 5 1 4')));
+});
+
+test('mean wheel scan carries halves across asymmetric stopped steps and retries',()=>{
+ const scan=new ScanSimulator();assert.equal(scan.begin(1,1,-1,100,10,0,0),true);
+ let l=0xfffffffe,r=0xfffffffd;
+ for(let i=0;i<3;i++){
+  const t=i*400;assert.equal(scan.tick(t,l,r),'START');scan.motionStarted(l,r);
+  l=(l+2)>>>0;r=(r+1)>>>0;scan.motionStopped(t+100,l,r);assert.equal(scan.tick(t+300,l,r),'REQUEST');
+  assert.equal(scan.usedHalf,(i+1)*3);assert.equal(scan.used,Math.floor((i+1)*1.5));
+  scan.tick(t+301,l,r);assert.equal(scan.usedHalf,(i+1)*3);assert.equal(scan.reply(1,i+1,1,0,i+1,t+302),true);
+ }
+ assert.equal(scan.usedHalf,9);assert.equal(scan.used,4);
+});
+test('extended stopped window config is accepted and still bounded',()=>{
+ const {send,lines}=bench();send(1,'SC 200 100 60000 600000 3000');assert.ok(lines.some(r=>r.startsWith('DONE 1 SCAN_CONFIGURED')));
+ send(2,'SC 200 100 60001 600000 3000');assert.ok(lines.some(r=>r.startsWith('ERROR 2 INVALID_SCAN_FRAME')));
 });

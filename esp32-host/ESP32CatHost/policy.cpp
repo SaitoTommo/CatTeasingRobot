@@ -60,12 +60,14 @@ float encoderRpm[2]={};
 uint32_t firstTouchUnoAt=0,telemetryUnoAt=0;bool touchTie=false;
 uint32_t firstSettleSampleAt=0;
 uint32_t catCheckLastFrame=0;int catCheckSamples=0,catCheckLimit=3;
+uint32_t scanTagLastFrame=0,scanTagWindowAt=0;int scanTagSamples=0;
 uint32_t sideAt[2]={};float side[2]={-1,-1},safe[2]={1,1};
 bool touch[4]={},motorConfirmed=false,motorDispatched=false,motorRunning=false;
+bool scanMeanProgress=false;
 bool geometryConfirmed=false,scanCapable=false,followPending=false,scanReplyFound=false;
 bool checkPending=false,checkReady=false,needRearm=false,multiTouch=false,touchSearch=false,touchCue=false,scanWaiting=false;
 int rounds=0,routeIndex=0,leftPwm=0,rightPwm=0,branch=-1,patterns=0,lastPattern=-1,probeStep=0,sessionRetries=0,firstTouch=-1;
-int scanReplyResult=0,scanOrigin=0;bool scanDoneSeen=false;int scanFlags=0,scanDirection=1,scanBudget=0,scanUsed=0,alignSteps=0;
+int scanReplyResult=0;float scanOrigin=0;bool scanDoneSeen=false;int scanFlags=0,scanDirection=1,scanBudget=0,alignSteps=0;float scanUsed=0;
 float escapeTargetCm=0;
 float catFailureAngle=0;float wheel=67.5f,track=120,segmentCm=0,remainingCm=0,driveCm=0,turnDeg=0,pulsesL=0,pulsesR=0;
 float setting(const char *k){return config[k].as<float>();}
@@ -153,11 +155,13 @@ void oneFrame(const String &next,const String &checkState="CAT_CHECK"){afterSett
 void move(int l,int r){if(motorId&&leftPwm==l&&rightPwm==r)return;if(motorId){awaitStop("APPROACH_TAG");return;}leftPwm=l;rightPwm=r;pulsesL=pulsesR=0;motorId=sendUno("MOTOR "+String(l)+" "+String(r));motorDispatched=motorConfirmed=motorRunning=false;feedbackAt=now();}
 void drive(float cm,int pwm,const String &s){driveCm=cm;leftPwm=rightPwm=pwm;pulsesL=pulsesR=0;motorId=sendUno("DRIVE "+String(cm,2)+" "+String(pwm));motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(s);}
 void rotate(float degrees,int pwm,const String &s){turnDeg=degrees;leftPwm=degrees>0?pwm:-pwm;rightPwm=-leftPwm;pulsesL=pulsesR=0;motorId=sendUno("ROTATE "+String(degrees,1)+" "+String(pwm));motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(s);}
-void beginScan(const String &kind,const String &next,int flags=0,int spent=0){
-  invalidate();clearTx();if(responseActive){responsePulse=0;responseStopPending=true;}scanKind=kind;scanNext=next;scanFlags=flags;scanOrigin=spent;scanUsed=spent;lastVqUsed=0;scanDoneSeen=false;scanBudget=max(1,(int)lroundf(720.0f*20*track/(360*wheel)));scanAt=now();scanProgressAt=now();scanRecoveryRetries=0;
-  int steps=(scanBudget-scanUsed+(int)setting("scanStepPulses")-1)/(int)setting("scanStepPulses");
-  uint32_t total=min(uint32_t(600000),(uint32_t)(steps*(setting("scanVisionTimeoutMs")+setting("scanSettleTimeoutMs")+10000)+1000));
-  waitCommand("WAIT_SCAN_CONFIG","SC "+String((int)setting("scanMinimumMs"))+" "+String((int)setting("scanQuietMs"))+" "+String((int)setting("scanVisionTimeoutMs"))+" "+String(total)+" "+String((int)setting("scanSettleTimeoutMs")));
+uint32_t scanVisionWindow(){return scanKind=="TAG"?min(uint32_t(60000),uint32_t(setting("scanVisionTimeoutMs"))*(config["tagScanMaxFrames"]|3)):uint32_t(setting("scanVisionTimeoutMs"));}
+void beginScan(const String &kind,const String &next,int flags=0,float spent=0){
+  invalidate();clearTx();if(responseActive){responsePulse=0;responseStopPending=true;}scanKind=kind;scanNext=next;scanFlags=flags;scanOrigin=spent;scanUsed=spent;scanMeanProgress=false;lastVqUsed=0;scanDoneSeen=false;scanBudget=max(1,(int)lroundf(720.0f*20*track/(360*wheel)));scanAt=now();scanProgressAt=now();scanRecoveryRetries=0;
+  if(scanBudget-scanUsed<1){if(kind=="CAT")catFailed("remaining scan budget below one pulse");else fail("remaining tag scan budget below one pulse");return;}
+  int steps=(int)ceilf(2*(scanBudget-scanUsed)/setting("scanStepPulses"));
+  uint32_t total=min(uint32_t(600000),(uint32_t)(steps*(scanVisionWindow()+setting("scanSettleTimeoutMs")+10000)+1000));
+  waitCommand("WAIT_SCAN_CONFIG","SC "+String((int)setting("scanMinimumMs"))+" "+String((int)setting("scanQuietMs"))+" "+String((int)scanVisionWindow())+" "+String(total)+" "+String((int)setting("scanSettleTimeoutMs")));
   // clearTx may have removed a just-queued contact cue. Restore only its
   // remaining duration, without extending it or blocking the scan.
   if(touchSignalUntil&&!reached(touchSignalUntil)){
@@ -212,7 +216,7 @@ void catLocated(){if(!seen()){beginScan("CAT",afterFace);return;}if(afterFace=="
 void pauseForTouch(){
   if(touchPaused||(!motorId&&action!="WAIT_SCAN_CONFIG"))return;
   touchPaused=true;pausedAction=action;pauseScan=scanId||action=="WAIT_SCAN_CONFIG";
-  if(pauseScan){if(scanId&&!scanWaiting&&!scanDoneSeen)scanUsed=min(scanBudget,scanUsed+(int)max(pulsesL,pulsesR));}
+  if(pauseScan){if(scanId&&!scanWaiting&&!scanDoneSeen)scanUsed=min(float(scanBudget),scanUsed+pulsesL/2.0f+pulsesR/2.0f);}
   else{resumeCm=max(0.0f,driveCm-travel());resumeDegrees=turnDeg>0?max(0.0f,turnDeg-angle()):min(0.0f,turnDeg+angle());resumePwm=abs(leftPwm);if(action=="CAT_DRIVE")remainingCm=max(0.0f,remainingCm-travel());}
   awaitStop("WAIT_TOUCH_RESUME");
 }
@@ -254,7 +258,7 @@ void onTouch(int area,uint32_t stamp=0){
     invalidate();clearTx();resetMotor();geometryConfirmed=false;lastFault=lastMotionFailure="";phase="STARTING";waitCommand("WAIT_PATROL_STOP","STOP");
   }
 }
-void motionFailure(const String &reason){if(reason.startsWith("TOUCH")&&phase=="INTERACTION"){pauseForTouch();return;}if(reason.startsWith("SIDE_")&&scanId&&scanKind=="CAT"&&!scanFlags&&closeSide(0)&&closeSide(1)){sessionAt+=now()-scanAt;scanUsed=min(scanBudget,scanUsed+(int)max(pulsesL,pulsesR));awaitStop("BOTH_SIDE_SCAN");return;}lastMotionFailure=reason;resetMotor();invalidate();logLine("MOTION_FAILED",reason);if(reason.startsWith("TOUCH"))return;if(reason.startsWith("SIDE_")&&phase=="INTERACTION")finish();else fail(reason);}
+void motionFailure(const String &reason){if(reason.startsWith("TOUCH")&&phase=="INTERACTION"){pauseForTouch();return;}if(reason.startsWith("SIDE_")&&scanId&&scanKind=="CAT"&&!scanFlags&&closeSide(0)&&closeSide(1)){sessionAt+=now()-scanAt;scanUsed=min(float(scanBudget),scanUsed+pulsesL/2.0f+pulsesR/2.0f);awaitStop("BOTH_SIDE_SCAN");return;}lastMotionFailure=reason;resetMotor();invalidate();logLine("MOTION_FAILED",reason);if(reason.startsWith("TOUCH"))return;if(reason.startsWith("SIDE_")&&phase=="INTERACTION")finish();else fail(reason);}
 }
 void policyCommandSent(uint32_t id){if(matchesPending(id,motorId)){motorDispatched=true;feedbackAt=now();}}
 void policyStopUnconfirmed(){cancelResponse();if(linkRecovering){retryLink();return;}if(mode=="UART"&&phase!="IDLE"&&(phase!="STOPPED"||lastFault!="operator_stop"&&!lastFault.startsWith("Uno link recovery failed")&&!lastFault.startsWith("STOP_UNCONFIRMED"))){recoverLink();return;}lastFault="STOP_UNCONFIRMED: motor stop has not been confirmed";invalidate();clearTx();resetMotor();stopId=sessionId=0;phase="STOPPED";state("FAULT");}
@@ -271,7 +275,7 @@ String policyVisionMode(){
   return "USER";
 }
 void policyFlowSnapshot(JsonDocument &d){d["action"]=action;d["motorId"]=motorId;d["motorConfirmed"]=motorConfirmed;d["leftPwm"]=motorId?drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm")):0;d["rightPwm"]=motorId?drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm")):0;}
-void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["robotActionsCompleted"]=robotActions;p["robotActionLimit"]=(int)setting("robotActionLimit");p["robotAction"]=robotAction;p["robotSlowFlash"]=robotSlowFlash;p["robotFastApproach"]=robotFast;p["interactionInitiator"]=initiator;p["action"]=action;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["unsupportedSettings"][5]="centerTolerancePercent";p["unsupportedSettings"][6]="alignPwm";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
+void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["robotActionsCompleted"]=robotActions;p["robotActionLimit"]=(int)setting("robotActionLimit");p["robotAction"]=robotAction;p["robotSlowFlash"]=robotSlowFlash;p["robotFastApproach"]=robotFast;p["interactionInitiator"]=initiator;p["action"]=action;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanAngleBasis"]=scanStep&&!scanMeanProgress?"LEGACY_MAX_WHEEL":"MEAN_WHEEL_PULSES";p["scanMeanProgressConfirmed"]=scanMeanProgress;p["tagScanMaxFrames"]=config["tagScanMaxFrames"]|3;p["tagScanSamples"]=scanId&&scanKind=="TAG"?scanTagSamples:0;p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["unsupportedSettings"][5]="centerTolerancePercent";p["unsupportedSettings"][6]="alignPwm";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
   if(action!="ESCAPE_MOVE"){p["escapeTravelCm"]=0;p["escapeDistanceCm"]=action=="ESCAPE_DRIVE"?segmentCm:0;}
   p["linkRecovering"]=linkRecovering;p["linkRecoveryAttempt"]=linkRecoveryAttempts;p["encoderLeftRpm"]=encoderRpm[0];p["encoderRightRpm"]=encoderRpm[1];
   p["catWidth"]=seen()?cat()["width"].as<float>():-1;p["settleElapsedMs"]=(action=="SETTLE"||action=="CAT_CONFIRM"&&!due)?now()-actionAt:0;p["settleQuietMs"]=(action=="SETTLE"||action=="CAT_CONFIRM"&&!due)?now()-quietAt:0;
@@ -295,9 +299,17 @@ void policyVision(){
   if(!frame||!fresh())return;
   uint32_t gen=observation["generation"]|0u,sid=observation["scanId"]|0u,step=observation["stepId"]|0u;
   if(gen!=generation)return;
-  if(scanId&&sid==scanId&&step==scanStep){
+  if(scanId&&scanWaiting&&scanStep&&sid==scanId&&step==scanStep){
     if(scanFrame==frame)return;bool valid=scanKind=="CAT"?cat()["valid"].as<bool>():observation["tagsValid"].as<bool>();bool found=false;
     if(valid){if(scanKind=="CAT")found=cat()["detected"].as<bool>();else{int target=config["route"][routeIndex];for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==target)found=true;}}
+    if(scanKind=="TAG"){
+      if(scanFrame)return; // decision already sent; only VQ may resend the cached reply
+      if(scanTagLastFrame&&int32_t(frame-scanTagLastFrame)<=0)return;
+      if(elapsed(scanTagWindowAt,scanVisionWindow()))return;
+      scanTagLastFrame=frame;++scanTagSamples;
+      logLine("TAG_SCAN_SAMPLE",String(scanTagSamples)+"/"+String(config["tagScanMaxFrames"]|3)+" frame="+String(frame)+(found?" found":valid?" absent":" invalid"));
+      if(valid&&!found&&scanTagSamples<(config["tagScanMaxFrames"]|3)){requestVision(scanId,scanStep,generation,"TAGS");return;}
+    }
     scanFrame=frame;scanReplyFound=found;scanReplyResult=valid?(found?1:0):2;sendUno("VR "+String(scanId)+" "+String(scanStep)+" "+String(generation)+" "+String(valid?(found?1:0):2)+" "+String(frame));
   }else if(checkPending&&!sid&&step==checkStep){
     if(action=="CAT_CHECK"){
@@ -313,7 +325,7 @@ void policyVision(){
   }
 }
 void policyInput(const String &line){
-  unsigned id=0;unsigned long l=0,r=0,gen=0,step=0;int result=0;unsigned used=0;char extra=0;
+  unsigned id=0;unsigned long l=0,r=0,gen=0,step=0;int result=0;unsigned used=0,halfUsed=0;char extra=0;
   if(line.startsWith("READY")){if(phase!="IDLE"&&phase!="STOPPED")fail("Uno reboot");geometryConfirmed=scanCapable=false;invalidate();memset(touch,0,sizeof(touch));return;}
   if(line=="EVENT CAPABILITIES SCAN_V1"){scanCapable=true;return;}
   if(linkRecovering&&sessionId){
@@ -331,11 +343,16 @@ void policyInput(const String &line){
       if(phase=="INTERACTION"){alignSteps=0;search(linkResumeNext);}else if(phase=="ENDING")finish();else{phase="PATROL";state("SCAN_TAG");}return;
     }
   }
-  if(sscanf(line.c_str(),"VQ %u %lu %lu %u %c",&id,&step,&gen,&used,&extra)==4&&matchesPending(id,scanId)&&gen==generation&&step>0&&step<=uint32_t((scanBudget+(int)setting("scanStepPulses")-1)/(int)setting("scanStepPulses"))){
-    if(step<scanStep||used>unsigned(scanBudget-scanOrigin)||step==scanStep&&used!=lastVqUsed||step>scanStep&&used<lastVqUsed)return;
-    lastVqUsed=used;scanUsed=scanOrigin+used;pulsesL=pulsesR=0;
+  bool extendedVq=sscanf(line.c_str(),"VQ %u %lu %lu %u %u %c",&id,&step,&gen,&used,&halfUsed,&extra)==5;
+  bool legacyVq=!extendedVq&&sscanf(line.c_str(),"VQ %u %lu %lu %u %c",&id,&step,&gen,&used,&extra)==4;
+  if((extendedVq||legacyVq)&&matchesPending(id,scanId)&&gen==generation&&step>0&&step<=uint32_t(2*scanBudget)){
+    if(!extendedVq)halfUsed=used*2;
+    if(halfUsed/2!=used||halfUsed>uint32_t(2*(scanBudget-scanOrigin)))return;
+    if(step<scanStep||step==scanStep&&halfUsed!=lastVqUsed||step>scanStep&&halfUsed<lastVqUsed)return;
+    if(!extendedVq&&!scanStep)logLine("SCAN_COMPAT","legacy VQ; paired Uno 6.11 needed for mean-wheel progress");
+    scanMeanProgress=extendedVq;scanDoneSeen=true;lastVqUsed=halfUsed;scanUsed=scanOrigin+halfUsed/2.0f;pulsesL=pulsesR=0;
     if(step==scanStep&&scanFrame){sendUno("VR "+String(scanId)+" "+String(scanStep)+" "+String(generation)+" "+String(scanReplyResult)+" "+String(scanFrame));return;}
-    if(step>scanStep){scanStep=step;scanFrame=0;scanProgressAt=now();scanRecoveryRetries=0;}
+    if(step>scanStep){scanStep=step;scanFrame=0;scanTagSamples=0;scanTagLastFrame=0;scanTagWindowAt=now();scanProgressAt=now();scanRecoveryRetries=0;}
     scanWaiting=true;motorConfirmed=true;motorRunning=false;leftPwm=rightPwm=0;requestVision(scanId,scanStep,generation,scanKind=="CAT"?"CAT":"TAGS");return;
   }
   if(sscanf(line.c_str(),"SD %u %lu %d %c",&id,&gen,&result,&extra)==3&&matchesPending(id,scanId)&&gen==generation&&result>=0&&result<=5){
@@ -347,7 +364,7 @@ void policyInput(const String &line){
   if(sscanf(line.c_str(),"MP %u %lu %lu %c",&id,&l,&r,&extra)==3&&matchesPending(id,motorId)){if(scanId&&scanWaiting)return;pulsesL=l;pulsesR=r;motorConfirmed=motorRunning=true;feedbackAt=now();return;}
   if(sscanf(line.c_str(),"MD %u %lu %lu %c",&id,&l,&r,&extra)==3&&matchesPending(id,motorId)){
     pulsesL=l;pulsesR=r;motorRunning=false;leftPwm=rightPwm=0;feedbackAt=now();
-    if(scanId){if(!scanDoneSeen){scanUsed=min(scanBudget,scanUsed+(int)max(l,r));scanProgressAt=now();scanRecoveryRetries=0;}scanDoneSeen=true;return;}
+    if(scanId){if(!scanDoneSeen){scanUsed=min(float(scanBudget),scanUsed+l/2.0f+r/2.0f);scanProgressAt=now();scanRecoveryRetries=0;}scanDoneSeen=true;return;}
     String previous=action;if(previous=="CAT_DRIVE")remainingCm=max(0.0f,remainingCm-travel());resetMotor();
     awaitStop(previous=="CAT_DRIVE"?"CHECK_APPROACH":previous=="PROBE_MOVE"?"CHECK_PROBE":previous=="ESCAPE_MOVE"?"POST_ESCAPE":previous=="ESCAPE_TURN"?"ESCAPE_DRIVE":"APPROACH_TAG");return;
   }
@@ -383,7 +400,7 @@ void policyInput(const String &line){
     else if(action=="WAIT_SESSION_START"){if(!geometryConfirmed)fail("geometry not confirmed");else if(startCat){startCat=false;phase="INTERACTION";sessionAt=now();if(pendingFirstTouch>=0){int area=pendingFirstTouch;pendingFirstTouch=-1;firstTouchPlan(area,firstTouchUnoAt);}else search("CHOOSE_ROBOT");}else{scanDirection=1;alignSteps=0;lastDecisionFrame=0;phase="PATROL";state(needRearm?"TAG_REARM":"SCAN_TAG");}}
     else if(action=="WAIT_SCAN_CONFIG"){
       int pwm=scanKind=="TAG"?(int)setting("patrolSearchPwm"):(int)setting("searchPwm");
-      scanStartCommand="SR "+String(generation)+" "+String(scanDirection*(int)setting("scanStepPulses"))+" "+String(drivePwmFloor(pwm,(int)setting("minimumDrivePwm")))+" "+String(scanBudget-scanUsed)+" "+String(scanFlags);
+      scanStartCommand="SR "+String(generation)+" "+String(scanDirection*(int)setting("scanStepPulses"))+" "+String(drivePwmFloor(pwm,(int)setting("minimumDrivePwm")))+" "+String((int)floorf(scanBudget-scanUsed))+" "+String(scanFlags);
       scanStartRetries=scanRecoveryRetries=0;scanProgressAt=now();scanWaiting=false;scanId=motorId=sendUno(scanStartCommand);motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(scanKind=="TAG"?"SCAN_TAG_ACTIVE":"SEARCH_CAT_ACTIVE");
     }
   }
@@ -412,9 +429,10 @@ void policyTick(){
   if(scanId&&!motorConfirmed){if(motorDispatched&&elapsed(feedbackAt,100))retryScanStart("no start confirmation for 100ms");return;}
   if(motorId&&motorDispatched&&!motorConfirmed&&elapsed(feedbackAt,2500)){fail("motion start not confirmed");return;}
   if(scanId){
+    if(scanKind=="TAG"&&scanWaiting&&elapsed(scanTagWindowAt,scanVisionWindow())){fail("tag stopped frame window timeout");return;}
     if(elapsed(scanAt,600000)){fail("scan transaction timeout");return;}
     // Diagnostic traffic/ACK/duplicate VQ cannot renew step progress.
-    uint32_t waitMs=(uint32_t)(setting("scanSettleTimeoutMs")+setting("scanVisionTimeoutMs"))+1500;
+    uint32_t waitMs=(uint32_t)(setting("scanSettleTimeoutMs")+scanVisionWindow())+1500;
     if(!motorRunning&&elapsed(scanProgressAt,waitMs)&&(!scanRecoveryRetries||elapsed(scanRecoveryAt,1000))){
       if(scanRecoveryRetries>=3){fail("scan handoff timeout: no step progress after 3 retries");return;}
       ++scanRecoveryRetries;scanRecoveryAt=now();
