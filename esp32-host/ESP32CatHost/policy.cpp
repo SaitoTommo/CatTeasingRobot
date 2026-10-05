@@ -25,6 +25,7 @@ String linkResumePhase,linkResumeNext,linkResumeFault;
 int pendingFirstTouch=-1,escapeRounds=0,exploreRounds=0,catDistance=-1;
 uint32_t interactionId=0,exploreAt=0,leaveFrame=0;
 uint32_t touchSignalUntil=0;
+uint32_t chaseUnavailableAt=0;
 bool responseActive=false,responseStopPending=false,responseCompleted=false;uint32_t responseAt=0;uint8_t responsePulse=0;
 const uint16_t lightLengths[4]={0,1800,2400,3000};
 const uint16_t soundLengths[4]={0,600,1100,1600};
@@ -139,9 +140,9 @@ bool completeRobotAction(){
   if(robotActions>=(int)setting("robotActionLimit")){exitInteraction("robot action limit reached");return true;}return false;
 }
 int distanceClass(){if(!seen())return -1;float w=cat()["width"].as<float>();if(w<=setting("catFarWidth"))catDistance=0;else if(w>=setting("catNearWidth"))catDistance=1;return catDistance;}
-bool departed(bool allowAbsent){
+bool departed(bool allowAbsent,bool absentOnly=false){
   if(touching()||!fresh()||!cat()["valid"].as<bool>()){farAt=leaveFrame=0;return false;}
-  bool away=cat()["detected"].as<bool>()?cat()["width"].as<float>()<=setting("catFarWidth"):allowAbsent;
+  bool away=cat()["detected"].as<bool>()?!absentOnly&&cat()["width"].as<float>()<=setting("catFarWidth"):allowAbsent;
   if(!away){farAt=leaveFrame=0;return false;}uint32_t frame=observation["frameSeq"]|0u;if(!frame||frame==leaveFrame)return false;leaveFrame=frame;
   if(!farAt)farAt=now();return elapsed(farAt,setting("catLeaveSeconds")*1000);
 }
@@ -166,7 +167,7 @@ void beginScan(const String &kind,const String &next,int flags=0,int spent=0){
   }
 }
 void search(const String &next){afterFace=next;awaitStop("SEARCH_CAT");}
-void confirmCat(const String &next){afterFace=next;firstSettleSampleAt=0;quietAt=now();quietEncoder[0]=encoder[0];quietEncoder[1]=encoder[1];due=0;awaitStop("CAT_CONFIRM");}
+void confirmCat(const String &next){farAt=leaveFrame=0;afterFace=next;firstSettleSampleAt=0;quietAt=now();quietEncoder[0]=encoder[0];quietEncoder[1]=encoder[1];due=0;awaitStop("CAT_CONFIRM");}
 void face(const String &next){confirmCat(next);}
 void prey(bool signal){resetMotor();quietOutputs(true);hold("PREY_WAIT",setting("captureWaitMaxSeconds")*1000);farAt=leaveFrame=0;logLine("PREY","stationary; MazeBot LED is manual");}
 void playExplorationResponse(){
@@ -195,7 +196,7 @@ void behavior(const String &s){
   else if(s=="END")finish();else if(s=="PREY_SIGNAL")prey(true);else if(s=="PREY")prey(false);
   else if(s=="PROBE_DONE")hold("PROBE_PAUSE",setting(probeStep==1?"probePause1Ms":probeStep==2?"probePause2Ms":"probePause3Ms"));
   else if(s=="CHASE_ALIGN"){confirmCat("WAIT_CHASE");}
-  else if(s=="WAIT_CHASE"){chaseDetected=false;chaseWasOutside=!seen()||cat()["width"].as<float>()<setting("catNearWidth");hold("WAIT_CHASE",setting("catObserveTimeoutSeconds")*1000);}
+  else if(s=="WAIT_CHASE"){farAt=leaveFrame=chaseUnavailableAt=0;chaseDetected=false;chaseWasOutside=!seen()||cat()["width"].as<float>()<setting("catNearWidth");hold("WAIT_CHASE",setting("catObserveTimeoutSeconds")*1000);}
   else if(s=="ESCAPE_DIRECTION_FOUND"){directionLocated=true;turnDeg=180;state("ESCAPE_DIRECTION");}
   else if(s=="ESCAPE_DRIVE"){state("ESCAPE_DRIVE");}
   else hold("OBSERVE",setting("initialLookSeconds")*1000);
@@ -269,7 +270,7 @@ String policyVisionMode(){
   return "USER";
 }
 void policyFlowSnapshot(JsonDocument &d){d["action"]=action;d["motorId"]=motorId;d["motorConfirmed"]=motorConfirmed;d["leftPwm"]=motorId?drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm")):0;d["rightPwm"]=motorId?drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm")):0;}
-void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["robotActionsCompleted"]=robotActions;p["robotActionLimit"]=(int)setting("robotActionLimit");p["robotAction"]=robotAction;p["robotSlowFlash"]=robotSlowFlash;p["robotFastApproach"]=robotFast;p["interactionInitiator"]=initiator;p["action"]=action;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["unsupportedSettings"][5]="centerTolerancePercent";p["unsupportedSettings"][6]="alignPwm";p["unsupportedSettings"][7]="alignTimeoutMs";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
+void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["robotActionsCompleted"]=robotActions;p["robotActionLimit"]=(int)setting("robotActionLimit");p["robotAction"]=robotAction;p["robotSlowFlash"]=robotSlowFlash;p["robotFastApproach"]=robotFast;p["interactionInitiator"]=initiator;p["action"]=action;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["unsupportedSettings"][5]="centerTolerancePercent";p["unsupportedSettings"][6]="alignPwm";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
   if(action!="ESCAPE_MOVE"){p["escapeTravelCm"]=0;p["escapeDistanceCm"]=action=="ESCAPE_DRIVE"?segmentCm:0;}
   p["linkRecovering"]=linkRecovering;p["linkRecoveryAttempt"]=linkRecoveryAttempts;p["encoderLeftRpm"]=encoderRpm[0];p["encoderRightRpm"]=encoderRpm[1];
   p["catWidth"]=seen()?cat()["width"].as<float>():-1;p["settleElapsedMs"]=(action=="SETTLE"||action=="CAT_CONFIRM"&&!due)?now()-actionAt:0;p["settleQuietMs"]=(action=="SETTLE"||action=="CAT_CONFIRM"&&!due)?now()-quietAt:0;
@@ -453,15 +454,21 @@ void policyTick(){
     if(fabs(turnDeg)<1)behavior("ESCAPE_DRIVE");else rotate(turnDeg,(int)setting("searchPwm"),"ESCAPE_TURN");return;
   }
   if(action=="WAIT_CHASE"){
-    if(!chaseDetected&&(!fresh()||!cat()["valid"].as<bool>())){if(elapsed(actionAt,setting("scanVisionTimeoutMs")))exitInteraction("cat observation unavailable");return;}
-    if(!chaseDetected&&!cat()["detected"].as<bool>()){exitInteraction("cat left observation frame");return;}
+    if(!chaseDetected&&(!fresh()||!cat()["valid"].as<bool>())){farAt=leaveFrame=0;if(!chaseUnavailableAt)chaseUnavailableAt=now();if(elapsed(chaseUnavailableAt,setting("scanVisionTimeoutMs")))exitInteraction("cat observation unavailable");return;}
+    chaseUnavailableAt=0;
+    if(!chaseDetected){if(departed(true,true)){exitInteraction("cat absent for configured leave interval");return;}if(farAt)return;}
     if(!chaseDetected&&fresh()&&cat()["valid"].as<bool>()){
       if(!cat()["detected"].as<bool>()||cat()["width"].as<float>()<setting("catNearWidth"))chaseWasOutside=true;
       else if(chaseWasOutside)chaseDetected=true;
     }
     if(chaseDetected){logLine("CHASE_DETECTED","next interaction");if(branch==0){signal(true);return;}escape=draw()<50?"SLOW_STRAIGHT_ESCAPE":"FAST_STRAIGHT_ESCAPE";turnDeg=180;touchNext="ESCAPE";touchSearch=false;directionLocated=true;state("WAIT_RELEASE");}else if(reached(due))exitInteraction("chase wait timeout");return;
   }
-  if(phase=="INTERACTION"&&initiator=="ROBOT_SEARCH"&&robotFound&&!motorId&&(action=="OBSERVE"||action=="SIGNAL"||action=="FOLLOW_WAIT")&&fresh()&&cat()["valid"].as<bool>()&&!cat()["detected"].as<bool>()){exitInteraction("cat left invitation frame");return;}
+  if(phase=="INTERACTION"&&initiator=="ROBOT_SEARCH"&&robotFound&&!motorId&&(action=="OBSERVE"||action=="SIGNAL"||action=="FOLLOW_WAIT")){
+    if(departed(true,true)){exitInteraction("cat absent for configured leave interval");return;}
+    // Hold the invitation while fresh negative frames confirm absence. Do not
+    // finish its action budget or start another movement during this window.
+    if(farAt)return;
+  }
   if(touching()&&action!="SIGNAL"&&action!="OBSERVE"&&action!="FOLLOW_WAIT"){if(motorId)pauseForTouch();return;}
   if(action=="CAT_CONFIRM"&&due&&(encoderRpm[0]>0||encoderRpm[1]>0)){logLine("CONFIRM_MOVING","wheel RPM nonzero; stop and restart confirmation");confirmCat(afterFace);return;}
   if(action=="SETTLE"||action=="CAT_CONFIRM"&&!due){

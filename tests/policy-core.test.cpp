@@ -71,8 +71,8 @@ void touchFound(unsigned pick){
  policyInput("SD "+String(scanId)+" "+String(generation)+" 1");CHECK(action=="WAIT_STOP");draws={pick,0};completeConfirmation();
 }
 int main(){
- // Observation always detects cats: a valid negative frame ends immediately.
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";behavior("WAIT_CHASE");observation["cat"]["detected"]=false;policyTick();CHECK(phase=="ENDING");CHECK(interactionExitReason=="cat left observation frame");
+ // Observation requires sustained absence before ending; invalid frames use their own timeout.
+ fixture();phase="INTERACTION";initiator="CAT_TOUCH";behavior("WAIT_CHASE");config["catLeaveSeconds"]=1;observation["cat"]["detected"]=false;policyTick();CHECK(phase=="INTERACTION");tick+=1000;frame(false);policyTick();CHECK(phase=="ENDING");CHECK(interactionExitReason=="cat absent for configured leave interval");
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";behavior("WAIT_CHASE");observation["cat"]["valid"]=false;policyTick();CHECK(action=="WAIT_CHASE");tick+=3000;policyTick();CHECK(interactionExitReason=="cat observation unavailable");
  // Touch still starts escape if visual input is temporarily unavailable.
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";behavior("WAIT_CHASE");tick+=1600;onTouch(0);policyTick();CHECK(action=="WAIT_RELEASE");
