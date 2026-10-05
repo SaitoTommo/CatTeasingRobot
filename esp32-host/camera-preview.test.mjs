@@ -39,6 +39,18 @@ test('a late decoded JPEG cannot restore the preview after a device reboot',asyn
  f.context.fetch=async()=>({ok:true,status:200,headers:{get:()=>JSON.stringify({id:9,width:320,height:240,cat:{valid:true,detected:true,box:[1,2,3,4]}})},blob:async()=>({})});
  f.run('syncCameraPreview({ms:1000})');const pending=f.run('cameraPreviewPoll()');await new Promise(resolve=>setImmediate(resolve));f.run('syncCameraPreview({ms:10})');let closed=false;finish({close(){closed=true;}});await pending;assert.equal(f.draws.length,0);assert.ok(closed);
 });
+
+test('camera settings revision rejects a late old JPEG and clears stale detection even when uptime grows',async()=>{
+ const f=fixture();let finish;f.context.createImageBitmap=()=>new Promise(resolve=>finish=resolve);
+ f.context.fetch=async()=>({ok:true,status:200,headers:{get:()=>JSON.stringify({id:9,width:320,height:240,cat:{valid:true,detected:true}})},blob:async()=>({})});
+ f.run('syncCameraPreview({bootId:"a",ms:1000,cameraSettings:{revision:0},catPreview:{id:8,at:900,cat:{valid:true,detected:true},samples:[[8,1,10,100,110,0]]}})');
+ const pending=f.run('cameraPreviewPoll()');await new Promise(resolve=>setImmediate(resolve));
+ f.run('syncCameraPreview({bootId:"a",ms:2000,cameraSettings:{revision:1},catPreview:{available:false,samples:[]}})');
+ let closed=false;finish({close(){closed=true;}});await pending;
+ assert.equal(f.draws.length,0);assert.ok(closed);assert.equal(f.run('previewTimingRows.length'),0);assert.match(f.$('catDetected').textContent,/尚无猫识别/);
+ f.run('syncCameraPreview({bootId:"a",ms:2100,cameraSettings:{revision:1},catPreview:{id:10,at:2050,cat:{valid:true,detected:false},samples:[[10,2,10,100,110,0]]}})');assert.equal(f.run('previewTimingMissed'),0);
+ f.run('syncCameraPreview({bootId:"b",ms:3000,cameraSettings:{revision:0},catPreview:{available:false,samples:[]}})');assert.equal(f.run('previewSettingsIdentity'),'b/0');
+});
 test('primary panels are sensor/control/camera, settings follow, profiling is last',()=>{
  const html=readFileSync(new URL('ESP32CatHost/debug_page.html',import.meta.url),'utf8');
  const main=html.slice(html.indexOf('<main>'),html.indexOf('</main>'));

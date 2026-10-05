@@ -14,6 +14,36 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1].replace(/\b(?:poll|
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('camera tuning preserves draft, requires confirmed parking and reports actual matching request readback',async()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const actual=Object.fromEntries(vm.runInContext('Object.entries(cameraFields).map(([key,v])=>[key,v[1]])',context));
+ Object.assign(actual,{quality:12,aec:1,agc:1,aec_value:300});
+ const state={...base,bootId:'test-boot',cameraOk:true,visionBench:{enabled:false},cameraSettings:{available:true,revision:0,actual,persisted:false,sensorPid:3660}};
+ const draw=d=>vm.runInContext(`syncCameraSettings(${JSON.stringify(d)})`,context);
+ draw(state);assert.equal(element('cameraCfg_aec_value').disabled,true);assert.equal(element('applyCameraSettings').disabled,false);
+ element('cameraCfg_quality').value='8';draw(state);assert.equal(element('cameraCfg_quality').value,'8');
+ await vm.runInContext('applyCameraSettings()',context);assert.equal(requests.at(-1).settings.quality,8);assert.equal(element('applyCameraSettings').disabled,true);
+ draw(state);assert.match(element('cameraSettingsStatus').textContent,/等待板上/);
+ const saved={...state,cameraSettings:{...state.cameraSettings,revision:1,actual:{...actual,quality:9},persisted:true,requestId:requests.at(-1).requestId}};
+ draw(saved);assert.equal(Number(element('cameraCfg_quality').value),9);assert.match(element('cameraSettingsStatus').textContent,/已应用并保存/);
+ for(const override of [{phase:'TAG_SEARCH'},{stopPendingId:1},{stopUnconfirmed:true},{debugBusy:true},{visionBench:{enabled:true}}]){
+  draw({...state,...override});const n=requests.length;await vm.runInContext('applyCameraSettings()',context);assert.equal(requests.length,n);assert.equal(element('applyCameraSettings').disabled,true);
+ }
+ draw(saved);element('cameraCfg_quality').value='7.5';const before=requests.length;await vm.runInContext('applyCameraSettings()',context);assert.equal(requests.length,before);
+ await vm.runInContext('applyCameraSettings(true)',context);assert.equal(requests.at(-1).op,'camera_reset');
+ draw({...saved,cameraSettings:{...saved.cameraSettings,requestId:requests.at(-1).requestId,error:'NVS save failed'}});assert.match(element('cameraSettingsStatus').textContent,/NVS save failed/);
+ vm.runInContext('cameraOffline()',context);assert.equal(element('cameraCfg_quality').disabled,true);assert.equal(element('applyCameraSettings').disabled,true);
+ context.fetch=()=>new Promise(()=>{});
+});
+
+test('camera epoch and boot changes reset drafts and current diagnostic log cursor independently of uptime',()=>{
+ vm.runInContext('pageLogs=[];pageLogAfter=0;pageLogMs=0;pageLogBoot=null',context);
+ vm.runInContext('mergePageLogs({bootId:"old",ms:100,logSeq:20,logs:[{seq:20}]})',context);
+ vm.runInContext('mergePageLogs({bootId:"new",ms:1000,logSeq:30,logs:[{seq:1},{seq:30}]})',context);
+ assert.deepEqual(Array.from(vm.runInContext('pageLogs.map(r=>r.seq)',context)),[1,30]);
+ assert.ok(html.includes('导出本地全部日志'));assert.ok(!html.includes('href="/api/state" download="esp32-log.json"'));
+});
+
 test('state, flow and preview reads share one in-flight request and release it after errors',async()=>{
  let release,started=0;
  context.testRead=async()=>{started++;await new Promise(resolve=>release=resolve);return 1;};

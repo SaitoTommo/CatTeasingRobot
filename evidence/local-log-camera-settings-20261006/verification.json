@@ -1,0 +1,57 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.39_LOCAL_LOG_CAMERA_SETTINGS",
+  "board": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+  "compileExitCode": 0,
+  "flashBytes": 3791846,
+  "flashLimit": 8257536,
+  "staticRamBytes": 85584,
+  "ramLimit": 327680,
+  "debugPageBytes": 96953,
+  "debugPageGzipBytes": 34037,
+  "nodeTestsPassed": 60,
+  "nativeExecutablesPassed": 11,
+  "cameraDriverChecks": 67,
+  "cameraRuntimeChecks": 65,
+  "binaryPath": "C:\\Users\\guoto\\AppData\\Local\\Temp\\codex-esp32-cat-build\\ESP32CatHost.ino.bin",
+  "binaryBytes": 3792000,
+  "binarySha256": "949BDB60CDC3CC04F96C29AB67B0E149E4EAC1D9E0C20AA794771B3592506C0A",
+  "compiledSources": [
+    {
+      "path": "ESP32CatHost.ino",
+      "sha256": "63639FE00E318A910D6974DD6AD283A57E35061DB04A7C509B8460B638392FC7",
+      "matchesCompiledSource": true
+    },
+    {
+      "path": "camera_settings.h",
+      "sha256": "9FD612523D531E9AE06E67859FF0B2FDA684FD164B00B4097C548AC4749B5F36",
+      "matchesCompiledSource": true
+    },
+    {
+      "path": "camera_settings_runtime.h",
+      "sha256": "C4392B774D3FAC69A13FC3BB08BC33D4A52699399185349411E5EC8A39484219",
+      "matchesCompiledSource": true
+    },
+    {
+      "path": "vision.cpp",
+      "sha256": "0A1524662EA973AB5ABCE7A0B2C1757D1D3BC1F078288815037AF247A274F731",
+      "matchesCompiledSource": true
+    },
+    {
+      "path": "vision_preview.h",
+      "sha256": "A0266CB3DC65D30AFAF3F28076A95B0F6FB304EBD6BAC59889FDCD456235B7F8",
+      "matchesCompiledSource": true
+    },
+    {
+      "path": "debug_page.h",
+      "sha256": "81FD1BDCD2474C0A068C6758DD0CDEACD76DB836657AEFF68D1505F6D6C2259F",
+      "matchesCompiledSource": true
+    }
+  ],
+  "notPerformed": [
+    "serial",
+    "upload",
+    "real browser IndexedDB/UI",
+    "physical sensor setters and NVS readback",
+    "recognition and motion"
+  ]
+}

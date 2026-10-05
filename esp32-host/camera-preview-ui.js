@@ -1,6 +1,7 @@
-let previewFrameId='',previewHasFrame=false,previewBoot=0,previewLastMs=0,previewMeta=null,previewNow=0;
-let previewAvailable=null,previewLatestId=null,previewTimingRows=[],previewTimingSeen=0,previewTimingMissed=0;
+let previewFrameId='',previewHasFrame=false,previewBoot=0,previewLastMs=0,previewMeta=null,previewNow=0,previewSettingsIdentity='';
+let previewAvailable=null,previewLatestId=null,previewTimingRows=[],previewTimingSeen=0,previewTimingMissed=0,previewTimingBaselinePending=false;
 function mergePreviewTimings(samples){
+ if(previewTimingBaselinePending&&samples?.length){previewTimingSeen=samples[0][0]-1;previewTimingBaselinePending=false;}
  for(const row of samples||[]){if(row[0]<=previewTimingSeen)continue;previewTimingMissed+=Math.max(0,row[0]-previewTimingSeen-1);previewTimingSeen=row[0];previewTimingRows.push(row);}
  if(previewTimingRows.length>500)previewTimingRows.splice(0,previewTimingRows.length-500);
  $('catPreviewTimes').textContent='编号 / 帧 / 解码 / 模型推理 / 总处理 / 启动间隔（ms）\n'+previewTimingRows.slice(-10).map(row=>row.join(' / ')).join('\n')+(previewTimingMissed?'\n未收到 '+previewTimingMissed+' 条耗时记录':'');
@@ -27,7 +28,9 @@ function previewOptionsChanged(){
  previewFrameId='';updatePreviewVisibility();
 }
 function syncCameraPreview(d){
- if(d.ms<previewLastMs){++previewBoot;previewHasFrame=false;previewFrameId='';previewMeta=null;previewTimingRows=[];previewTimingSeen=previewTimingMissed=0;}
+ const identity=d.bootId?d.bootId+'/'+(d.cameraSettings?.revision??0):'';
+ if(d.ms<previewLastMs||(identity&&previewSettingsIdentity&&identity!==previewSettingsIdentity)){++previewBoot;previewHasFrame=false;previewFrameId='';previewMeta=null;previewTimingRows=[];previewTimingSeen=previewTimingMissed=0;previewTimingBaselinePending=true;$('previewFrame').textContent='摄像头已更新，等待新的识别画面。';}
+ if(identity)previewSettingsIdentity=identity;
  previewAvailable=d.catPreview?.available??null;previewLatestId=d.catPreview?.id!=null?String(d.catPreview.id):null;
  previewLastMs=d.ms;previewNow=d.ms;if(d.catPreview?.id)previewMeta=d.catPreview;
  mergePreviewTimings(d.catPreview?.samples);describePreviewPerformance(previewMeta);

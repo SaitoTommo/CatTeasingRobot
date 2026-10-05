@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.38_MEAN_SCAN_TAG_CHECKS. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.39_LOCAL_LOG_CAMERA_SETTINGS. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.11 with extended SCAN_V1 VQ; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -22,7 +22,8 @@ SET_LOOP_TASK_STACK_SIZE(16384);
 // Control work stays on loop(); HTTP and camera tasks only enqueue input.
 QueueHandle_t inputs;
 QueueHandle_t usbPackets;
-SemaphoreHandle_t stateLock, frameLock;
+SemaphoreHandle_t stateLock, frameLock, cameraSensorLock;
+String deviceId,bootId;
 Preferences prefs;
 HardwareSerial uno(1);
 String usbLine, uartLine, mode="SIM_UNO", phase="IDLE", lastRx, lastTx;
@@ -187,8 +188,9 @@ void defaults() {
   config["decisionIntervalMs"]=2500;config["signalFlashMs"]=1400;config["signalBeepMs"]=180;
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
+#include "camera_settings_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.38_MEAN_SCAN_TAG_CHECKS";d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.39_LOCAL_LOG_CAMERA_SETTINGS";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
@@ -224,6 +226,7 @@ void handleInput(const Input &in) {
     if(reset||(enable&&!visionBench)){xSemaphoreTake(frameLock,portMAX_DELAY);benchEpoch++;benchCount=benchPreviousStart=benchPreviousEnd=0;benchJpegLen=0;benchResult="";xSemaphoreGive(frameLock);}
     visionBench=enable;benchGapMs=d["gapMs"];benchCaptureMs=d["captureGapMs"];logLine("VISION_BENCH",enable?"enabled":"disabled");
   }
+  else if(op=="camera_config"||op=="camera_reset")cameraSettingsInput(d,op=="camera_reset");
   else if(op=="vision_mode") {String m=d["mode"]|"OFF";if(m!="OFF"&&m!="TAGS"&&m!="CAT"&&m!="BOTH"){logLine("INPUT_ERROR","invalid vision mode");return;}visionMode=m;if(policyVisionMode()=="USER"){cancelVision();realVision.clear();if(mode=="UART")observation.clear();}logLine("VISION_MODE",visionMode);}
   else if(op=="calibrate_front") {if(phase!="IDLE"&&phase!="STOPPED"||stopPendingId||stopUnconfirmed){logLine("CONFIG_ERROR","confirmed stop required first");return;}if(millis()-realVision["at"].as<uint32_t>()>5000||realVision["floorSignature"].size()!=72){logLine("CONFIG_ERROR","no fresh camera signature");return;}config["floorReference"]=realVision["floorSignature"];config["frontCalibrated"]=true;String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CALIBRATION","ground appearance reference captured; experimental qualitative front input");}
   else if(op=="config") {
@@ -243,6 +246,7 @@ esp_err_t stateHandler(httpd_req_t *r) {
   if(httpd_query_key_value(query,"afterLog",value,sizeof(value))==ESP_OK)afterLog=strtoul(value,nullptr,10);
   if(httpd_query_key_value(query,"logLimit",value,sizeof(value))==ESP_OK)logLimit=constrain(strtoul(value,nullptr,10),1ul,160ul);
  }
+ if(httpd_query_key_value(query,"bootId",value,sizeof(value))==ESP_OK&&String(value)!=bootId)afterLog=0;
  if(xSemaphoreTakeRecursive(stateLock,pdMS_TO_TICKS(250))!=pdTRUE){httpd_resp_set_status(r,"503 Service Unavailable");return httpd_resp_sendstr(r,"controller busy; retry");}
  String s=snapshot(afterLog,logLimit);xSemaphoreGiveRecursive(stateLock);httpd_resp_set_type(r,"application/json");httpd_resp_set_hdr(r,"Cache-Control","no-store");httpd_resp_set_hdr(r,"Access-Control-Allow-Origin","*");return httpd_resp_send(r,s.c_str(),s.length());
 }
@@ -282,7 +286,23 @@ void visionTask(void*){
  }
 }
 void cameraTask(void*){
- while(true){camera_fb_t *fb=esp_camera_fb_get();if(fb){xSemaphoreTake(frameLock,portMAX_DELAY);if(fb->len<160000){memcpy(jpegCache,fb->buf,fb->len);jpegLen=fb->len;frameCaptureUs=uint64_t(fb->timestamp.tv_sec)*1000000+fb->timestamp.tv_usec;frameSeq++;}xSemaphoreGive(frameLock);esp_camera_fb_return(fb);}xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);uint32_t captureRest=visionBench?benchCaptureMs:200;xSemaphoreGiveRecursive(stateLock);vTaskDelay(captureRest?max((TickType_t)1,pdMS_TO_TICKS(captureRest)):(TickType_t)1);}
+ while(true){
+  xSemaphoreTake(cameraSensorLock,portMAX_DELAY);
+  camera_fb_t *fb=esp_camera_fb_get();
+  if(fb){
+   xSemaphoreTake(frameLock,portMAX_DELAY);
+   uint64_t captured=uint64_t(fb->timestamp.tv_sec)*1000000+fb->timestamp.tv_usec;
+   bool discard=cameraDiscardFrames>0;if(discard)cameraDiscardFrames--;
+   if(!discard&&captured>cameraSettingsBarrier&&fb->len<160000){
+    memcpy(jpegCache,fb->buf,fb->len);jpegLen=fb->len;frameCaptureUs=captured;frameSeq++;
+   }
+   xSemaphoreGive(frameLock);esp_camera_fb_return(fb);
+  }
+  // Release sensor lock before stateLock: settings run while holding stateLock.
+  xSemaphoreGive(cameraSensorLock);
+  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);uint32_t captureRest=visionBench?benchCaptureMs:200;xSemaphoreGiveRecursive(stateLock);
+  vTaskDelay(captureRest?max((TickType_t)1,pdMS_TO_TICKS(captureRest)):(TickType_t)1);
+ }
 }
 void initCamera() {
   camera_config_t c={};c.ledc_channel=LEDC_CHANNEL_0;c.ledc_timer=LEDC_TIMER_0;
@@ -290,11 +310,11 @@ void initCamera() {
   c.pin_xclk=10;c.pin_pclk=13;c.pin_vsync=38;c.pin_href=47;c.pin_sccb_sda=40;c.pin_sccb_scl=39;c.pin_pwdn=-1;c.pin_reset=-1;
   c.xclk_freq_hz=20000000;c.pixel_format=PIXFORMAT_JPEG;c.frame_size=FRAMESIZE_QVGA;c.jpeg_quality=12;c.fb_count=2;c.fb_location=CAMERA_FB_IN_PSRAM;c.grab_mode=CAMERA_GRAB_LATEST;
   esp_err_t err=esp_camera_init(&c);cameraOk=err==ESP_OK;logLine("CAMERA",String("init=")+err+" psram="+ESP.getPsramSize());
-  if(cameraOk){auto s=esp_camera_sensor_get();if(s->id.PID==OV3660_PID)s->set_vflip(s,1);jpegCache=(uint8_t*)ps_malloc(160000);if(jpegCache){xTaskCreatePinnedToCore(cameraTask,"camera",4096,nullptr,2,nullptr,0);xTaskCreatePinnedToCore(visionTask,"vision",16384,nullptr,1,nullptr,0);}else cameraOk=false;}
+  if(cameraOk){auto s=esp_camera_sensor_get();if(s->id.PID==OV3660_PID)s->set_vflip(s,1);cameraSettingsRestore(s);jpegCache=(uint8_t*)ps_malloc(160000);if(jpegCache){xTaskCreatePinnedToCore(cameraTask,"camera",4096,nullptr,2,nullptr,0);xTaskCreatePinnedToCore(visionTask,"vision",16384,nullptr,1,nullptr,0);}else cameraOk=false;}
 }
 void setup() {
   hostLedInit();
-  heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
+  heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();cameraSensorLock=xSemaphoreCreateMutex();char identity[24];snprintf(identity,sizeof(identity),"%012llx",(unsigned long long)ESP.getEfuseMac());deviceId=identity;snprintf(identity,sizeof(identity),"%08lx%08lx",(unsigned long)esp_random(),(unsigned long)esp_random());bootId=identity;xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
   prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();migrateCenterSettings(candidate,d);if(!d["catObserveTimeoutSeconds"].is<float>())candidate["catObserveTimeoutSeconds"]=max(1.0f,candidate["postEscapeWaitSeconds"].as<float>());if(!d["escapeMinDistanceCm"].is<float>()||!d["escapeMaxDistanceCm"].is<float>()){float legacy=max(1.0f,candidate["escapeDistanceCm"].as<float>()-candidate["stopMarginCm"].as<float>());candidate["escapeMinDistanceCm"]=legacy;candidate["escapeMaxDistanceCm"]=legacy;}String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
   networkEvents=xQueueCreate(8,sizeof(NetworkEvent));WiFi.onEvent(networkEvent);
   WiFi.mode(WIFI_AP_STA);WiFi.setAutoReconnect(true);WiFi.setSleep(false);WiFi.softAP("ESP32-CatHost","catrobot32");networkBegin(prefs.getString("ssid",""),prefs.getString("password",""));

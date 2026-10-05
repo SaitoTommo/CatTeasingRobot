@@ -13,6 +13,7 @@ extern "C" {
 extern SemaphoreHandle_t stateLock;
 extern JsonDocument config;
 extern String visionMode;
+extern VisionGate visionGate;
 extern int policyTargetId();
 extern void enqueueCamera(const String &);
 extern void recordVisionBench(camera_fb_t *,JsonObject,uint32_t,uint32_t,uint32_t,uint32_t);
@@ -69,7 +70,9 @@ void processVision(camera_fb_t *fb,const VisionTicket &ticket,uint32_t seq,uint6
   v["floorDifference"]=difference;v["frontCalibrated"]=calibrated;
   v["front"]=normalCats&&cat["detected"].as<bool>()&&cat["bottom"].as<float>()>bottom?"BLOCKED":!calibrated?"INVALID":difference>threshold?"BLOCKED":"CLEAR";
   v["latencyMs"]=millis()-start;v["decodeMs"]=decodeMs;v["modelMs"]=modelMs;
-  if(runCats){recordVisionBench(fb,v,start,decodeMs,modelMs,benchRun);recordCatPreview(fb,v,start);}
+  xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);
+  if(runCats&&epoch==visionGate.serial){recordVisionBench(fb,v,start,decodeMs,modelMs,benchRun);recordCatPreview(fb,v,start);}
+  xSemaphoreGiveRecursive(stateLock);
   if(!normalCats){cat["valid"]=false;cat["detected"]=false;}
   if(measureJson(d)>12287){for(JsonVariant tag:arr)tag.as<JsonObject>().remove("corners");v["displayLimited"]=true;}
   String out;serializeJson(d,out);enqueueCamera(out);

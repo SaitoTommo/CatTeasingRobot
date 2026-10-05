@@ -3,6 +3,7 @@
 // JPEG and metadata are replaced together under frameLock.
 uint8_t *catPreviewJpeg=nullptr;size_t catPreviewLen=0;
 uint32_t catPreviewCount=0;String catPreviewResult;
+uint32_t catPreviewFirstSample=1;
 struct CatPreviewTiming {uint32_t id,frame,decode,model,total,period;};
 CatPreviewTiming catPreviewTimings[64]={};uint32_t catPreviewPreviousStart=0;
 void recordCatPreview(camera_fb_t *fb,JsonObject v,uint32_t start){
@@ -21,7 +22,7 @@ void catPreviewSnapshot(JsonDocument &d){
  JsonDocument result;if(catPreviewResult.length()&&!deserializeJson(result,catPreviewResult))d["catPreview"]=result;
  d["catPreview"]["available"]=catPreviewLen>0;
  auto rows=d["catPreview"]["samples"].to<JsonArray>();
- for(uint32_t id=catPreviewCount>16?catPreviewCount-15:1;id<=catPreviewCount;++id){auto &s=catPreviewTimings[(id-1)%64];auto row=rows.add<JsonArray>();row.add(s.id);row.add(s.frame);row.add(s.decode);row.add(s.model);row.add(s.total);row.add(s.period);}
+ for(uint32_t id=max(catPreviewFirstSample,catPreviewCount>16?catPreviewCount-15:1u);id<=catPreviewCount;++id){auto &s=catPreviewTimings[(id-1)%64];auto row=rows.add<JsonArray>();row.add(s.id);row.add(s.frame);row.add(s.decode);row.add(s.model);row.add(s.total);row.add(s.period);}
  xSemaphoreGive(frameLock);
 }
 esp_err_t catPreviewHandler(httpd_req_t *r){
