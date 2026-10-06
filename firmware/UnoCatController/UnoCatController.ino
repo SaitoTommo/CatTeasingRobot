@@ -70,7 +70,7 @@ const char TOUCH_NAMES[4][6] PROGMEM = { "TOP", "LEFT", "RIGHT", "REAR" };
 
 constexpr uint8_t SLOTS_PER_WHEEL_REV = 20;         // One FALLING edge per slot, on the wheel axle.
 constexpr float DEFAULT_WHEEL_DIAMETER_MM = 67.5f;  // Measured wheel diameter.
-constexpr float DEFAULT_SAFE_CM = 1.0f;
+constexpr float DEFAULT_SAFE_CM = 3.0f;
 constexpr float MIN_SAFE_CM = 1.0f;
 constexpr float MAX_SAFE_CM = 100.0f;
 constexpr uint32_t TOUCH_DEBOUNCE_MS = 45;

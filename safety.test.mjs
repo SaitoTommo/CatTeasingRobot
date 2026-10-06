@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { cameraObservation, cameraTargetObservation, initialWorld, MockUno } from "./core.mjs";
 
-test("invalid and expired sonar permit motion; only a fresh reading below 1 cm stops it",()=>{
+test("invalid and expired sonar permit motion; only a fresh reading below 3 cm stops it",()=>{
   for(const side of ['LEFT','RIGHT']) {
     const lines=[],uno=new MockUno(initialWorld(),line=>lines.push(line));let id=1;
     const send=(command,now=0)=>{const n=id++;uno.receiveWire(`CMD ${n} ${command}`,now);return n;};
@@ -17,7 +17,7 @@ test("invalid and expired sonar permit motion; only a fresh reading below 1 cm s
     send(`DEBUG_INJECT SONAR ${side} 0.5`,1104);
     uno.step(1105);assert.equal(uno.active,null,'a fresh close reading must stop active motion');
     assert.ok(lines.some(line=>line.includes(`SIDE_${side}_OBSTACLE`)));
-    send(`DEBUG_INJECT SONAR ${side} 1.0`,1106);send(motor,1106);
+    send(`DEBUG_INJECT SONAR ${side} 3.0`,1106);send(motor,1106);
     assert.ok(uno.active,'exactly the threshold is allowed');
   }
 });
@@ -71,7 +71,7 @@ test("Uno leaves forward camera gating to the host and each sonar protects its o
   assert.ok(lines.includes(`EVENT MOTION_STARTED ${cameraClear} MOTOR`));
 });
 
-test("both side sonars default to 1 cm and have separate adjustable limits", () => {
+test("both side sonars default to 3 cm and have separate adjustable limits", () => {
   const lines = [];
   const uno = new MockUno(initialWorld(), line => lines.push(line));
   let id = 1;
@@ -82,18 +82,18 @@ test("both side sonars default to 1 cm and have separate adjustable limits", () 
   };
   const config = send("GET_CONFIG");
   assert.ok(lines.some(line => line.startsWith(`DATA ${config} CONFIG `) &&
-    line.includes("SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0")));
-  send("DEBUG_INJECT SONAR LEFT 0.9");
+    line.includes("SAFE_LEFT_CM=3.0 SAFE_RIGHT_CM=3.0")));
+  send("DEBUG_INJECT SONAR LEFT 2.9");
   const blockedLeft = send("TURN LEFT 80 100");
   assert.ok(lines.includes(`ERROR ${blockedLeft} SIDE_LEFT_OBSTACLE`));
-  send("DEBUG_INJECT SONAR LEFT 1");
+  send("DEBUG_INJECT SONAR LEFT 3");
   const allowedLeft = send("TURN LEFT 80 100");
   assert.ok(lines.includes(`EVENT MOTION_STARTED ${allowedLeft} TURN_LEFT`));
   send("STOP");
-  send("DEBUG_INJECT SONAR RIGHT 0.9");
+  send("DEBUG_INJECT SONAR RIGHT 2.9");
   const blockedRight = send("TURN RIGHT 80 100");
   assert.ok(lines.includes(`ERROR ${blockedRight} SIDE_RIGHT_OBSTACLE`));
-  send("DEBUG_INJECT SONAR RIGHT 1");
+  send("DEBUG_INJECT SONAR RIGHT 3");
   const allowedRight = send("TURN RIGHT 80 100");
   assert.ok(lines.includes(`EVENT MOTION_STARTED ${allowedRight} TURN_RIGHT`));
   send("STOP");
