@@ -1,0 +1,108 @@
+{
+  "source": "/D:/data/SynologyDrive/%E6%96%87%E6%A1%A3/%E8%AE%BA%E6%96%87+%E5%AD%A6%E4%B9%A0/Embodied%20behavior%20design%20for%20social%20context/.codex-remote-attachments/01a10ce8-1c6f-7440-9496-178313911ee6/6711a1cf-cce9-4d0a-b2e2-33e3bcd75533/1-esp32-local-history-2026-10-06T00-43-43-537Z.json",
+  "sha256": "41e0596bfd45e96f39414d5974a222623c9dd36388d8a016789745eafd14013c",
+  "bootId": "27b85c3ee485768e",
+  "route": [
+    43,
+    46
+  ],
+  "minimumDrivePwm": 110,
+  "events": [
+    {
+      "ms": 990050,
+      "source": "TAG_SCAN_SAMPLE",
+      "line": "1/3 frame=4935 found"
+    },
+    {
+      "ms": 990072,
+      "source": "DECISION",
+      "line": "PATROL APPROACH_TAG"
+    },
+    {
+      "ms": 990074,
+      "source": "UNO_TX",
+      "line": "C 1171 MOTOR 110 110*61"
+    },
+    {
+      "ms": 990665,
+      "source": "DECISION",
+      "line": "PATROL WAIT_STOP"
+    },
+    {
+      "ms": 990665,
+      "source": "UNO_TX",
+      "line": "C 1173 STOP*D1"
+    },
+    {
+      "ms": 990682,
+      "source": "DECISION",
+      "line": "PATROL SCAN_TAG"
+    },
+    {
+      "ms": 990684,
+      "source": "DECISION",
+      "line": "PATROL WAIT_SCAN_CONFIG"
+    },
+    {
+      "ms": 990702,
+      "source": "DECISION",
+      "line": "PATROL SCAN_TAG_ACTIVE"
+    },
+    {
+      "ms": 990702,
+      "source": "UNO_TX",
+      "line": "C 1177 SR 109 2 110 71 0*0E"
+    },
+    {
+      "ms": 992098,
+      "source": "TAG_SCAN_SAMPLE",
+      "line": "1/3 frame=4945 found"
+    },
+    {
+      "ms": 992120,
+      "source": "DECISION",
+      "line": "PATROL APPROACH_TAG"
+    },
+    {
+      "ms": 992122,
+      "source": "DECISION",
+      "line": "PATROL WAIT_STOP"
+    },
+    {
+      "ms": 992122,
+      "source": "UNO_TX",
+      "line": "C 1179 STOP*CC"
+    },
+    {
+      "ms": 992134,
+      "source": "DECISION",
+      "line": "PATROL TAG_ARRIVAL"
+    },
+    {
+      "ms": 992135,
+      "source": "TAG_REACHED",
+      "line": "43"
+    },
+    {
+      "ms": 992135,
+      "source": "DECISION",
+      "line": "PATROL SCAN_TAG"
+    },
+    {
+      "ms": 992138,
+      "source": "DECISION",
+      "line": "PATROL WAIT_SCAN_CONFIG"
+    },
+    {
+      "ms": 992156,
+      "source": "DECISION",
+      "line": "PATROL SCAN_TAG_ACTIVE"
+    },
+    {
+      "ms": 992156,
+      "source": "UNO_TX",
+      "line": "C 1183 SR 111 2 110 71 0*8E"
+    }
+  ],
+  "limits": "Device receive timestamps and a truncated history window; no synchronized target pose, per-frame target-negative reason, video or externally measured motion."
+}

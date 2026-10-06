@@ -1,0 +1,10 @@
+{
+  "baseline": "2361672",
+  "oldFields": 79,
+  "newFields": 81,
+  "changedExistingDefaults": [],
+  "addedFields": [
+    "tagLossGraceMs",
+    "tagRecoveryAngleDeg"
+  ]
+}

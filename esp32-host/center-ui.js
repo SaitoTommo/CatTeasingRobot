@@ -1,5 +1,5 @@
 let centerReadback=null,pendingCenterSave=null,tagCenterReadback=null,pendingTagCenterSave=null;
-function patrolActionName(action){const names={TAG_ALIGN:'对准标签（原地转向）',APPROACH_TAG:'标签已找到：判断对准或靠近',SCAN_TAG:'准备搜索标签',SCAN_TAG_ACTIVE:'分步旋转寻找标签',WAIT_STOP:'等待停车确认',TAG_ARRIVAL:'已到达标签',TAG_REARM:'等待重复标签重新进入',FAULT:'故障停车'};return (names[action]||action||'IDLE')+(names[action]?' ['+action+']':'');}
+function patrolActionName(action){const names={TAG_ALIGN:'对准标签（原地转向）',APPROACH_TAG:'标签已找到：判断对准或靠近',SCAN_TAG:'准备搜索标签',SCAN_TAG_ACTIVE:'分步旋转寻找标签',WAIT_STOP:'等待停车确认',TAG_ARRIVAL:'已到达标签',TAG_REARM:'等待重复标签重新进入',TAG_SETTLE:'标签丢失：等待编码器停稳',TAG_RECHECK:'标签丢失：停车多帧复核',FAULT:'故障停车'};return (names[action]||action||'IDLE')+(names[action]?' ['+action+']':'');}
 function syncPatrolTransitions(d){if(d.ms<flowLastMs&&flowLastMs-d.ms<10000)return;const rows=(d.logs||[]).filter(x=>x.source==='DECISION'&&x.line.startsWith('PATROL ')).slice(-8);$('patrolTransitions').textContent=rows.length?'最近巡游状态变化（历史，不代表当前正在执行）：\n'+rows.map(x=>`${Math.max(0,(d.ms-x.ms)/1000).toFixed(1)} 秒前：${patrolActionName(x.line.slice(7))}`).join('\n'):'最近巡游状态变化：暂无记录';}
 function centerPercentFromAngles(fov,angle){if(!Number.isFinite(fov)||!Number.isFinite(angle)||fov<=0||fov>=180||angle<=0||angle>=fov/2)return NaN;return 50*Math.tan(angle*Math.PI/180)/Math.tan(fov*Math.PI/360);}
 function syncCenterTolerance(d){
@@ -42,4 +42,27 @@ function saveTagScanChecks(){
  if(!$('tagScanMaxFrames').value||!Number.isInteger(value)||value<1||value>10){alert('标签识别次数请输入 1–10 的整数');return;}
  pendingTagScanSave={value,seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config:{tagScanMaxFrames:value}});
  try{const c=JSON.parse($('settings').value);c.tagScanMaxFrames=value;$('settings').value=JSON.stringify(c,null,2);}catch{}
+}
+
+let tagRecoveryReadback=null,pendingTagRecoverySave=null;
+function syncTagRecovery(d){
+ const c=d.config||{},grace=c.tagLossGraceMs,angle=c.tagRecoveryAngleDeg;
+ const available=Number.isInteger(grace)&&grace>=0&&grace<=3000&&Number.isFinite(angle)&&angle>=20&&angle<=120;
+ const stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;
+ for(const id of ['tagLossGraceMs','tagRecoveryAngleDeg','saveTagRecovery'])$(id).disabled=!available||!stopped;
+ const value=JSON.stringify([grace,angle]);
+ if(available&&tagRecoveryReadback!==value){$('tagLossGraceMs').value=grace;$('tagRecoveryAngleDeg').value=angle;tagRecoveryReadback=value;}
+ if(pendingTagRecoverySave){const error=(d.logs||[]).find(x=>x.seq>pendingTagRecoverySave.seq&&x.source==='CONFIG_ERROR');if(error)pendingTagRecoverySave.error=error.line;else if(value===pendingTagRecoverySave.value)pendingTagRecoverySave=null;}
+ $('tagRecoveryStatus').textContent=available?`板上已保存：漏检宽限 ${grace} 毫秒，首次局部转向 ${angle}°。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'等待板上标签恢复参数回读';
+ if(pendingTagRecoverySave)$('tagRecoveryStatus').textContent+=' '+(pendingTagRecoverySave.error?'保存失败：'+pendingTagRecoverySave.error:'等待板上保存回读。');
+ const p=d.patrolStatus||{},names={GRACE:'短暂漏检，保持直行',SETTLE:'等待停稳',RECHECK:'停车复核',LOCAL_FIRST:'按记忆方向局部寻找',LOCAL_REVERSE:'反向局部寻找',FULL:'使用剩余预算寻找',NONE:'无恢复动作'};
+ const direction=p.tagMemoryDirection<0?'左':p.tagMemoryDirection>0?'右':'无有效方向';
+ $('tagRecoveryLive').textContent=`标签恢复：${names[p.tagRecoveryStage]||'等待读取'}；记忆方向：${direction}`+(p.tagRecoveryStage==='GRACE'?`；宽限剩余 ${p.tagLossRemainingMs||0} 毫秒`:'')+(['LOCAL_FIRST','LOCAL_REVERSE','FULL'].includes(p.tagRecoveryStage)?`；当前转向 ${p.tagRecoveryDirection<0?'左':'右'}；总预算剩余 ${Number(p.tagRecoveryRemainingDegrees||0).toFixed(1)}°`:'');
+}
+function saveTagRecovery(){
+ if($('saveTagRecovery').disabled)return;
+ const grace=Number($('tagLossGraceMs').value),angle=Number($('tagRecoveryAngleDeg').value);
+ if($('tagLossGraceMs').value===''||!Number.isInteger(grace)||grace<0||grace>3000||$('tagRecoveryAngleDeg').value===''||!Number.isFinite(angle)||angle<20||angle>120){alert('漏检宽限请输入 0–3000 毫秒整数，局部转向请输入 20–120 度');return;}
+ const config={tagLossGraceMs:grace,tagRecoveryAngleDeg:angle};pendingTagRecoverySave={value:JSON.stringify([grace,angle]),seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config});
+ try{const c=JSON.parse($('settings').value);Object.assign(c,config);$('settings').value=JSON.stringify(c,null,2);}catch{}
 }

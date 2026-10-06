@@ -16,6 +16,7 @@ String mode="UART",phase="STOPPED",catPreviewResult="old",benchResult="old";
 bool cameraOk=true,visionBench=false,stopPending=false;uint32_t debugId=0,manualUntil=0;int configStep=-1;
 size_t jpegLen=30,catPreviewLen=30,benchJpegLen=30;uint32_t catPreviewPreviousStart=10;
 uint32_t catPreviewCount=5,catPreviewFirstSample=1;
+int recoveryResets=0;void policyResetTagRecovery(){++recoveryResets;}
 VisionGate visionGate;void cancelVision(){visionGate.cancel();}
 bool stopReady(){return !stopPending;}
 std::vector<std::string> logged,writes;
@@ -35,7 +36,7 @@ void baseline(){
 }
 int main(){
  baseline();auto d=request(R"({"requestId":"one","settings":{"quality":8,"aec":0,"aec_value":333}})");
- auto previousEpoch=visionGate.serial;cameraSettingsInput(d,false);
+ auto previousEpoch=visionGate.serial;auto previousResets=recoveryResets;cameraSettingsInput(d,false);CHECK(recoveryResets>previousResets);
  CHECK(cameraError.length()==0);CHECK(cameraPersisted);CHECK(cameraRequestId=="one");CHECK(cameraRevision==1);
  CHECK(writes.size()==2);CHECK(writes[0]=="config");CHECK(writes[1]=="camera");
  CHECK(!config["frontCalibrated"].as<bool>());CHECK(config["floorReference"].size()==0);

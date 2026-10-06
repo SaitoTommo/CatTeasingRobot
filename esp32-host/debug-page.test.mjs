@@ -14,6 +14,24 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1].replace(/\b(?:poll|
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('tag recovery tuning keeps drafts, gates saves on confirmed stop and waits for board readback',async()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const state={...base,config:{tagLossGraceMs:1000,tagRecoveryAngleDeg:60},logs:[],patrolStatus:{tagRecoveryStage:'GRACE',tagMemoryDirection:-1,tagLossRemainingMs:800}};
+ const draw=d=>vm.runInContext(`syncTagRecovery(${JSON.stringify(d)})`,context);
+ draw(state);assert.equal(element('saveTagRecovery').disabled,false);assert.match(element('tagRecoveryLive').textContent,/左/);assert.match(element('tagRecoveryLive').textContent,/800/);
+ element('tagLossGraceMs').value='1500';element('tagRecoveryAngleDeg').value='45';draw(state);assert.equal(element('tagLossGraceMs').value,'1500');
+ vm.runInContext('saveTagRecovery()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{tagLossGraceMs:1500,tagRecoveryAngleDeg:45}});
+ draw(state);assert.match(element('tagRecoveryStatus').textContent,/等待板上保存回读/);
+ draw({...state,config:{tagLossGraceMs:1500,tagRecoveryAngleDeg:45}});assert.doesNotMatch(element('tagRecoveryStatus').textContent,/等待板上保存回读/);
+ for(const override of [{phase:'PATROL'},{stopPendingId:1},{stopUnconfirmed:true},{debugBusy:true},{config:{}}]){draw({...state,...override});const n=requests.length;vm.runInContext('saveTagRecovery()',context);assert.equal(requests.length,n);assert.equal(element('saveTagRecovery').disabled,true);}
+ draw(state);for(const [id,v] of [['tagLossGraceMs','1.5'],['tagLossGraceMs','3001'],['tagLossGraceMs','-1'],['tagRecoveryAngleDeg','19'],['tagRecoveryAngleDeg','121']]){element('tagLossGraceMs').value='1000';element('tagRecoveryAngleDeg').value='60';element(id).value=v;const n=requests.length;vm.runInContext('saveTagRecovery()',context);assert.equal(requests.length,n);}
+ element('tagLossGraceMs').value='0';element('tagRecoveryAngleDeg').value='120';vm.runInContext('saveTagRecovery()',context);assert.equal(requests.at(-1).config.tagLossGraceMs,0);
+ draw({...state,logs:[{seq:999999,source:'CONFIG_ERROR',line:'NVS failed'}]});assert.match(element('tagRecoveryStatus').textContent,/NVS failed/);
+ context.fetch=async()=>{throw Error('offline');};await vm.runInContext('poll()',context);assert.equal(element('saveTagRecovery').disabled,true);assert.match(element('tagRecoveryLive').textContent,/连接中断/);
+ context.fetch=()=>new Promise(()=>{});vm.runInContext('pollFailures=0;deviceOnline=false',context);
+ assert.ok(html.includes('三个阶段合计最多约两圈'));
+});
+
 test('camera tuning preserves draft, requires confirmed parking and reports actual matching request readback',async()=>{
  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
  const actual=Object.fromEntries(vm.runInContext('Object.entries(cameraFields).map(([key,v])=>[key,v[1]])',context));

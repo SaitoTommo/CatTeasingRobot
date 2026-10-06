@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.41_TAG_RECOVERY. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.11 with extended SCAN_V1 VQ; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -16,6 +16,7 @@
 #include <deque>
 #include "debug_page.h"
 #include "policy_defaults.h"
+#include "policy_storage.h"
 #include "host_types.h"
 SET_LOOP_TASK_STACK_SIZE(16384);
 
@@ -38,6 +39,7 @@ uint64_t frameCaptureUs=0;
 VisionGate visionGate;String visionPayload,actualVisionMode="OFF";
 uint32_t visionOversize=0,visionSuperseded=0,visionRejected=0,visionConsumed=0;
 String policyVisionMode();
+void policyResetTagRecovery();
 void policyVision();
 void cancelVision(){visionGate.cancel();visionPayload="";}
 void requestVision(uint32_t scan,uint16_t step,uint32_t generation,const char *selected){
@@ -190,7 +192,7 @@ void defaults() {
 }
 #include "camera_settings_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.41_TAG_RECOVERY";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
@@ -233,8 +235,9 @@ void handleInput(const Input &in) {
     if(phase!="IDLE"&&phase!="STOPPED"||!stopReady()||debugId||manualUntil||configStep>=0){logLine("CONFIG_ERROR","confirmed stop required first");return;}
     JsonObject obj=d["config"].as<JsonObject>();
     if(obj["route"].is<JsonArray>()) {auto route=obj["route"].as<JsonArray>();if(!route.size()||route.size()>128){logLine("CONFIG_ERROR","route needs 1..128 IDs");return;}for(JsonVariant v:route)if(!v.is<int>()||v.as<int>()<0||v.as<int>()>586){logLine("CONFIG_ERROR","tag36h11 IDs must be 0..586");return;}}
-    JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}config=candidate;
-    String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CONFIG","saved");
+    JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}
+    if(!persistPolicySettings(prefs,candidate,config)){logLine("CONFIG_ERROR","NVS config save failed");return;}policyResetTagRecovery();
+    logLine("CONFIG","saved");
   }
   else if(op=="wifi") {String ssid=d["ssid"]|"",pass=d["password"]|"";prefs.putString("ssid",ssid);prefs.putString("password",pass);networkBegin(ssid,pass);logLine("WIFI","station connecting; AP remains available");}
   else logLine("INPUT_ERROR","unsupported op or source");

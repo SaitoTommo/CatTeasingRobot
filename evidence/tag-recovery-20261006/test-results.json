@@ -1,0 +1,50 @@
+{
+  "nativeExecutables": 12,
+  "numericallyReportedSuites": 10,
+  "numericallyReportedChecks": 6686,
+  "counts": [
+    {
+      "suite": "scan core",
+      "checks": 287
+    },
+    {
+      "suite": "actual cat preview cache and timings",
+      "checks": 20
+    },
+    {
+      "suite": "actual ESP policy core",
+      "checks": 1193
+    },
+    {
+      "suite": "CAT_CHECK multi-frame policy",
+      "checks": 662
+    },
+    {
+      "suite": "tag stopped checks and mean scan policy",
+      "checks": 429
+    },
+    {
+      "suite": "tag approach loss/recheck/recovery",
+      "checks": 560
+    },
+    {
+      "suite": "continuous cat interaction",
+      "checks": 703
+    },
+    {
+      "suite": "actual ESP PWM floor and settings",
+      "checks": 2684
+    },
+    {
+      "suite": "camera driver settings",
+      "checks": 82
+    },
+    {
+      "suite": "camera firmware runtime",
+      "checks": 66
+    }
+  ],
+  "nodeTests": 62,
+  "hardwareTested": false,
+  "uploaded": false
+}

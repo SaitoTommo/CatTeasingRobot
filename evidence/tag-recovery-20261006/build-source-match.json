@@ -1,0 +1,42 @@
+[
+  {
+    "file": "ESP32CatHost.ino",
+    "sha256": "7F6A2CD3D93BC46D4C133E5E7A20DF7A3F9EF3856AB60E212D52279B3F1C9BAA",
+    "copiedMatches": true
+  },
+  {
+    "file": "policy.cpp",
+    "sha256": "8E0AE6D0E9DE181F4BBA65A1111A25C70C01F5283333BCEE7E19E2E9DCD530F3",
+    "copiedMatches": true
+  },
+  {
+    "file": "tag_recovery.h",
+    "sha256": "31F5558933174D6272E638CFAC4428B9D320236C96F1C80E69D335B9C730F53D",
+    "copiedMatches": true
+  },
+  {
+    "file": "policy_storage.h",
+    "sha256": "71FE3612F58804B95854E30BA0DE2FCD0CAF692BFD135BEE0C97398E5E6D715A",
+    "copiedMatches": true
+  },
+  {
+    "file": "policy_defaults.h",
+    "sha256": "4FA429B38E2D23B9F3795B744164751798BA6FCBDE4225136B053C1A264111CB",
+    "copiedMatches": true
+  },
+  {
+    "file": "camera_settings_runtime.h",
+    "sha256": "0AB8E798D33B95F57E835581D3E5B5C265D69D0D5586739AE9A77C78D0F994E9",
+    "copiedMatches": true
+  },
+  {
+    "file": "debug_page.h",
+    "sha256": "1EF70619FAE4F86D36AF6C1F8559D4357EF76F8CEE786B08FDF5DAEDB2175F60",
+    "copiedMatches": true
+  },
+  {
+    "file": "debug_page.html",
+    "sha256": "BC4BA397C10212D1968CFD6C709F02A13ED15E5A9EC079098705D0B1A066131A",
+    "copiedMatches": true
+  }
+]

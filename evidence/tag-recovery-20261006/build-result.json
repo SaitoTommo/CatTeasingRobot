@@ -1,0 +1,22 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.41_TAG_RECOVERY",
+  "fqbn": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+  "flash": {
+    "bytes": 3802682,
+    "max": 8257536,
+    "percent": 46.0510496109251
+  },
+  "staticRam": {
+    "bytes": 85656,
+    "max": 327680,
+    "percent": 26.14013671875
+  },
+  "applicationBytes": 3802832,
+  "applicationSha256": "1b9a5b091c4d4f99966876cb56344216a5304b1a9b171baf68ec512ef3e074d2",
+  "page": {
+    "rawBytes": 101155,
+    "gzipBytes": 35212
+  },
+  "sourceMatchFiles": 8,
+  "uploadPerformed": false
+}

@@ -55,6 +55,8 @@ d["touchFeedbackBeepMs"]=180;
 d["escapeDistanceCm"]=26;
 d["slowEscapePwm"]=95;
 d["fastEscapePwm"]=210;
+d["tagLossGraceMs"]=1000;
+d["tagRecoveryAngleDeg"]=60;
 d["tagScanMaxFrames"]=3;
 d["catCheckMaxFrames"]=3;
 d["robotActionLimit"]=5;
@@ -137,6 +139,8 @@ if(!d["touchFeedbackBeepMs"].is<float>()||!isfinite(d["touchFeedbackBeepMs"].as<
 if(!d["escapeDistanceCm"].is<float>()||!isfinite(d["escapeDistanceCm"].as<float>())||d["escapeDistanceCm"].as<float>()<1||d["escapeDistanceCm"].as<float>()>60){error="invalid escapeDistanceCm";return false;}
 if(!d["slowEscapePwm"].is<float>()||!isfinite(d["slowEscapePwm"].as<float>())||d["slowEscapePwm"].as<float>()<50||d["slowEscapePwm"].as<float>()>255){error="invalid slowEscapePwm";return false;}
 if(!d["fastEscapePwm"].is<float>()||!isfinite(d["fastEscapePwm"].as<float>())||d["fastEscapePwm"].as<float>()<50||d["fastEscapePwm"].as<float>()>255){error="invalid fastEscapePwm";return false;}
+if(!d["tagLossGraceMs"].is<float>()||!isfinite(d["tagLossGraceMs"].as<float>())||d["tagLossGraceMs"].as<float>()<0||d["tagLossGraceMs"].as<float>()>3000){error="invalid tagLossGraceMs";return false;}
+if(!d["tagRecoveryAngleDeg"].is<float>()||!isfinite(d["tagRecoveryAngleDeg"].as<float>())||d["tagRecoveryAngleDeg"].as<float>()<20||d["tagRecoveryAngleDeg"].as<float>()>120){error="invalid tagRecoveryAngleDeg";return false;}
 if(!d["tagScanMaxFrames"].is<float>()||!isfinite(d["tagScanMaxFrames"].as<float>())||d["tagScanMaxFrames"].as<float>()<1||d["tagScanMaxFrames"].as<float>()>10){error="invalid tagScanMaxFrames";return false;}
 if(!d["catCheckMaxFrames"].is<float>()||!isfinite(d["catCheckMaxFrames"].as<float>())||d["catCheckMaxFrames"].as<float>()<1||d["catCheckMaxFrames"].as<float>()>3){error="invalid catCheckMaxFrames";return false;}
 if(!d["robotActionLimit"].is<float>()||!isfinite(d["robotActionLimit"].as<float>())||d["robotActionLimit"].as<float>()<1||d["robotActionLimit"].as<float>()>100){error="invalid robotActionLimit";return false;}
@@ -192,6 +196,6 @@ for(JsonVariant v:d["floorReference"].as<JsonArray>())if(!v.is<float>()||v.as<fl
 if(d["scanSettleTimeoutMs"].as<float>()<=d["scanMinimumMs"].as<float>()||d["scanSettleTimeoutMs"].as<float>()<=d["scanQuietMs"].as<float>()){error="settle timeout must exceed both windows";return false;}
 if(!d["scanStepPulses"].is<int>()){error="scan step pulses must be integer";return false;}
 if(!d["minimumDrivePwm"].is<int>()){error="minimumDrivePwm must be integer";return false;}
-for(const char *key:{"tagScanMaxFrames","catCheckMaxFrames","robotActionLimit","escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
+for(const char *key:{"tagLossGraceMs","tagScanMaxFrames","catCheckMaxFrames","robotActionLimit","escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
 return true;
 }

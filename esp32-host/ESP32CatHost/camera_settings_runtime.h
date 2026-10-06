@@ -14,7 +14,7 @@ void cameraSettingsSnapshot(JsonDocument &d){
  d["visionBench"]["enabled"]=visionBench;
 }
 void cameraInvalidateFrames(){
- cancelVision();realVision.clear();if(mode=="UART")observation.clear();
+ policyResetTagRecovery();cancelVision();realVision.clear();if(mode=="UART")observation.clear();
  xSemaphoreTake(frameLock,portMAX_DELAY);jpegLen=catPreviewLen=benchJpegLen=0;catPreviewResult=benchResult="";
  catPreviewPreviousStart=0;catPreviewFirstSample=catPreviewCount+1;xSemaphoreGive(frameLock);
  // Reject buffered old frames and frames already being inferred.

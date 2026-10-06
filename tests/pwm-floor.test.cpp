@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include "../esp32-host/ESP32CatHost/pwm_floor.h"
 #include "../esp32-host/ESP32CatHost/policy_defaults.h"
+#include "../esp32-host/ESP32CatHost/policy_storage.h"
 unsigned checks=0;
 #define CHECK(x) do{++checks;if(!(x)){fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
 int main(){
@@ -32,6 +33,11 @@ int main(){
  d["tagStopWidth"]=.25;d["catNearWidth"]=.35;d["catFarWidth"]=.12;d["visionMaxAgeMs"]=1500;d["frontBlockBottom"]=.88;d["floorRoiTop"]=.75;d["floorDifferenceThreshold"]=35;
  d["frontAvoidanceEnabled"]=false;d["frontCalibrated"]=false;d["floorReference"].to<JsonArray>();String error;
  CHECK(d["robotActionLimit"].as<int>()==5);d["robotActionLimit"]=5.5;CHECK(!validateSettings(d,error));d["robotActionLimit"]=5;
+ CHECK(d["tagLossGraceMs"].as<int>()==1000);CHECK(d["tagRecoveryAngleDeg"].as<float>()==60);
+ for(int good:{0,1000,3000}){d["tagLossGraceMs"]=good;CHECK(validateSettings(d,error));}
+ for(float bad:{-1.f,3001.f,1.5f,NAN}){d["tagLossGraceMs"]=bad;CHECK(!validateSettings(d,error));}d["tagLossGraceMs"]=1000;
+ for(float good:{20.f,60.f,120.f}){d["tagRecoveryAngleDeg"]=good;CHECK(validateSettings(d,error));}
+ for(float bad:{19.f,121.f,NAN}){d["tagRecoveryAngleDeg"]=bad;CHECK(!validateSettings(d,error));}d["tagRecoveryAngleDeg"]=60;
  CHECK(d["tagScanMaxFrames"].as<int>()==3);
  for(float bad:{0.f,11.f,1.5f}){d["tagScanMaxFrames"]=bad;CHECK(!validateSettings(d,error));}
  for(int good:{1,3,10}){d["tagScanMaxFrames"]=good;CHECK(validateSettings(d,error));}
@@ -64,5 +70,7 @@ int main(){
  d["escapeMinDistanceCm"]=30;d["escapeMaxDistanceCm"]=101;CHECK(!validateSettings(d,error));
  d["escapeMaxDistanceCm"]=30;CHECK(validateSettings(d,error));
  for(const char *key:{"catInteractionIdleSeconds","catObserveTimeoutSeconds"}){for(float v:{0.f,121.f,NAN}){d[key]=v;CHECK(!validateSettings(d,error));}d[key]=10;CHECK(validateSettings(d,error));}
+ struct Storage{bool fail=false;String stored;size_t putString(const char *,const String &s){if(fail)return 0;stored=s;return s.length();}} storage;
+ JsonDocument active,candidate;active["tagLossGraceMs"]=1000;candidate.set(active);candidate["tagLossGraceMs"]=1500;storage.fail=true;CHECK(!persistPolicySettings(storage,candidate,active));CHECK(active["tagLossGraceMs"].as<int>()==1000);storage.fail=false;CHECK(persistPolicySettings(storage,candidate,active));CHECK(active["tagLossGraceMs"].as<int>()==1500);JsonDocument restored;CHECK(!deserializeJson(restored,storage.stored));CHECK(restored["tagLossGraceMs"].as<int>()==1500);
  printf("actual ESP PWM floor and settings: %u checks passed\n",checks);
 }
