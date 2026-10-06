@@ -61,10 +61,10 @@ void completeConfirmation(bool detected=true){
  stopped();CHECK(action=="CAT_CONFIRM");auto from=commands.size();auto requestCount=requests.size();
  tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(!due);
  tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(due);CHECK(requests.size()==requestCount);
- CHECK(policyVisionMode()=="CAT");auto deadline=due;tick=deadline-1;policyTick();CHECK(requests.size()==requestCount);
+ CHECK(policyVisionMode()=="CAT");auto deadline=due;
  tick=deadline;sideAt[0]=sideAt[1]=tick;policyTick();CHECK(action=="CAT_CONFIRM");CHECK(checkPending);CHECK(requests.size()==requestCount+1);
  for(size_t i=from;i<commands.size();i++)CHECK(!commands[i].text.startsWith("ROTATE ")&&!commands[i].text.startsWith("DRIVE ")&&!commands[i].text.startsWith("SR ")&&!commands[i].text.startsWith("MOTOR "));
- frame(detected,true,observation["frameSeq"].as<unsigned>()+1);policyTick();
+ for(int i=0;i<(detected?1:(config["catCheckMaxFrames"]|3));i++){frame(detected,true,observation["frameSeq"].as<unsigned>()+1);policyTick();}
 }
 void touchFound(unsigned pick){
  policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanNext=="CHOOSE_TOUCH");configDone();scanRequest();frame(true);observation["cat"]["centerX"]=.85;

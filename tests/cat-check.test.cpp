@@ -60,8 +60,26 @@ int main(){
  checkFixture();frame(false,true,50);tick+=(uint32_t)setting("scanVisionTimeoutMs");policyTick();CHECK(phase=="STOPPED");CHECK(!checkPending);CHECK(!motorId);
  // Touch preemption invalidates the old ticket and its sample budget.
  checkFixture();frame(false,true,60);onTouch(3);CHECK(!checkPending);CHECK(initiator=="CAT_TOUCH");
- // CAT_CONFIRM retains its single final frame and configured wait semantics.
+ // Touch and robot confirmation both retry distinct negative frames.
  fixture();config["catCheckMaxFrames"]=3;phase="INTERACTION";initiator="CAT_TOUCH";
- oneFrame("CAT_CONFIRMED");state("CAT_CONFIRM");frame(false,true,70);CHECK(checkReady&&!checkPending);CHECK(catCheckSamples==0);
+ oneFrame("CAT_CONFIRMED");state("CAT_CONFIRM");frame(false,true,70);CHECK(!checkReady&&checkPending);CHECK(catCheckSamples==1);
+ // Complete approach distance is dispatched once, followed by one stopped check.
+ for(bool fast:{false,true}){
+  fixture();phase="INTERACTION";initiator="ROBOT_SEARCH";
+  observation["cat"]["width"]=.1;behavior(fast?"FAST_APPROACH":"SLOW_APPROACH");float goal=remainingCm;
+  policyTick();CHECK(action=="CAT_DRIVE");CHECK(driveCm==goal);
+  CHECK(driveCm>setting("catApproachStepCm"));
+  unsigned pulses=(unsigned)ceilf(goal*400/(2*PI*wheel));
+  md(pulses,pulses);CHECK(remainingCm==0);stopped();settled();
+  frame(true,true,80);policyTick();CHECK(action=="APPROACH_CAT");
+  policyTick();CHECK(robotActions==1);CHECK(action=="WAIT_STOP");
+ }
+ // Confirmation shares early hit / maximum-three semantics with both initiators.
+ for(const char *entry:{"CAT_TOUCH","ROBOT_SEARCH"})for(int hit=1;hit<=3;hit++){
+  fixture();phase="INTERACTION";initiator=entry;config["catCheckMaxFrames"]=3;
+  oneFrame("CAT_CONFIRMED","CAT_CONFIRM");
+  for(int i=1;i<=hit;i++){frame(i==hit,true,90+i);CHECK(catCheckSamples==i);CHECK(checkPending==(i<hit));}
+  CHECK(checkReady);CHECK(!motorId);
+ }
  printf("CAT_CHECK multi-frame policy: %u checks passed\n",checks);
 }

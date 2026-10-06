@@ -157,10 +157,10 @@ test('cat settings preserve drafts, validate relative widths and round trip ever
   const render=patch=>{const d={...base,config,...patch};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
   render({});assert.equal(element('catCfg_catNearWidth').value,'35.0');
   element('catCfg_explorePreyMinimumSeconds').value='45';element('catCfg_captureWaitMaxSeconds').value='25';render({ms:1100});
-  element('catCfg_catConfirmWaitSeconds').value='7';
+
   assert.equal(element('catCfg_explorePreyMinimumSeconds').value,'45');
   vm.runInContext('saveCatSettings()',context);assert.equal(requests.at(-1).config.explorePreyMinimumSeconds,45);assert.equal(requests.at(-1).config.captureWaitMaxSeconds,25);assert.equal(requests.at(-1).config.catNearWidth,.35);
-  assert.equal(requests.at(-1).config.catConfirmWaitSeconds,7);assert.equal(requests.at(-1).config.touchFlashPercent,20);
+  assert.equal(requests.at(-1).config.catConfirmWaitSeconds,undefined);assert.equal(requests.at(-1).config.touchFlashPercent,20);
   assert.equal(requests.at(-1).config.escapeMinDistanceCm,30);assert.equal(requests.at(-1).config.escapeMaxDistanceCm,80);const distanceRequests=requests.length;element('catCfg_escapeMinDistanceCm').value='90';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,distanceRequests);element('catCfg_escapeMinDistanceCm').value='30';
   const probabilityRequests=requests.length;element('catCfg_catConfirmPreyPercent').value='90';element('catCfg_catConfirmExplorePercent').value='20';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,probabilityRequests);element('catCfg_catConfirmPreyPercent').value='20';
   const n=requests.length;element('catCfg_catFarWidth').value='40';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,n);

@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.11 with extended SCAN_V1 VQ; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -190,7 +190,7 @@ void defaults() {
 }
 #include "camera_settings_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
