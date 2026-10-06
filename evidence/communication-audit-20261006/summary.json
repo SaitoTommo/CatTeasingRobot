@@ -1,0 +1,26 @@
+{
+  "source": "D:\\data\\download\\esp32-local-history-2026-10-06T08-01-00-423Z.json",
+  "sha256": "3FFC35F052A6F76D9518633B476B0FD712D5CE54080C4346B74F632FDE351E7F",
+  "exportedAt": "2026-10-06T08:00:58.812Z",
+  "bootId": "4459f5864ed3b973",
+  "lastStateFirmware": "ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW",
+  "recordCount": 2483,
+  "uniqueKeys": 2483,
+  "counting": "Records in selected boot only; not a long-run failure rate",
+  "counts": {
+    "CAT_SEARCH_FAILED": 1,
+    "LINK_RECOVERY": 2,
+    "MOTION_FAILED": 1,
+    "STOP_UNCONFIRMED": 4,
+    "TELEMETRY_TIMEOUT": 13,
+    "UART_BAD_FRAME": 21,
+    "UNO_PROTOCOL_ERROR": 4,
+    "CRC_ERROR": 0,
+    "CRC_MISSING": 0,
+    "TELEMETRY_INCOMPLETE": 0
+  },
+  "sourceCommits": {
+    "maintenance": "9dfc6b284a05755d18802ed4da1584e820c15c14",
+    "main042": "c45e66a5edafbd503e180d2a0326eb84567521d9"
+  }
+}
