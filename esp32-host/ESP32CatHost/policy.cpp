@@ -75,6 +75,7 @@ uint8_t tagRecoveryStage=0;int tagRecoveryDirection=1;float tagRecoverySpent=0;
 uint32_t tagRecheckLastFrame=0,tagRecheckEncoder[2]={};int tagRecheckSamples=0;
 float escapeTargetCm=0;
 float catFailureAngle=0;float wheel=67.5f,track=120,segmentCm=0,remainingCm=0,driveCm=0,turnDeg=0,pulsesL=0,pulsesR=0;
+float escapeFinalTurnDeg=0,escapeCheckpointTurnDeg=0;int escapeProbeDir=0,escapeProbeBudget=0;uint32_t escapeObserveStep=0,escapeObserveAt=0,escapeObserveFrame=0;
 float setting(const char *k){return config[k].as<float>();}
 uint32_t now(){return millis();}
 bool elapsed(uint32_t start,uint32_t ms){return uint32_t(now()-start)>=ms;}
@@ -90,6 +91,18 @@ float scanAngle(){return scanUsed*wheel/20.0f/track*360.0f;}
 float travel(){return (pulsesL+pulsesR)*PI*wheel/400.0f;}
 bool frontClear(){return !frontEnabled()||fresh()&&String(observation["front"]|"INVALID")=="CLEAR";}
 bool closeSide(int i){return sideAt[i]&&!elapsed(sideAt[i],2500)&&side[i]>=0&&side[i]<safe[i];}
+enum Clearance : uint8_t { CLEARANCE_BLOCKED, CLEARANCE_CLEAR, CLEARANCE_UNKNOWN };
+const char *clearanceName(Clearance c){return c==CLEARANCE_BLOCKED?"BLOCKED":c==CLEARANCE_CLEAR?"CLEAR":"UNKNOWN";}
+bool freshSideAfter(int i,uint32_t since){return sideAt[i]&&int32_t(sideAt[i]-since)>0&&!elapsed(sideAt[i],2500)&&side[i]>=0;}
+Clearance sideClearanceAfter(int i,uint32_t since){if(!freshSideAfter(i,since))return CLEARANCE_UNKNOWN;return side[i]<safe[i]?CLEARANCE_BLOCKED:CLEARANCE_CLEAR;}
+Clearance frontClearanceAfter(uint32_t since){
+  if(!fresh()||int32_t(observation["at"].as<uint32_t>()-since)<=0)return CLEARANCE_UNKNOWN;
+  String f=observation["front"]|"INVALID";
+  if(f=="BLOCKED")return CLEARANCE_BLOCKED;
+  if(f=="CLEAR")return CLEARANCE_CLEAR;
+  return CLEARANCE_UNKNOWN;
+}
+void resetEscapePlan(){escapeFinalTurnDeg=escapeCheckpointTurnDeg=0;escapeProbeDir=escapeProbeBudget=0;escapeObserveStep=escapeObserveAt=escapeObserveFrame=0;}
 void state(const String &s){action=s;actionAt=now();logLine("DECISION",phase+" "+s);}
 void resetMotor(){motorId=0;motorConfirmed=motorDispatched=motorRunning=false;leftPwm=rightPwm=0;pulsesL=pulsesR=0;}
 void invalidate(){generation=generation%2147483647+1;scanId=scanStep=scanFrame=0;scanConfigRetryPending=false;checkPending=checkReady=false;cancelVision();}
@@ -161,6 +174,17 @@ void oneFrame(const String &next,const String &checkState="CAT_CHECK"){afterSett
 void move(int l,int r){if(motorId&&leftPwm==l&&rightPwm==r)return;if(motorId){awaitStop("APPROACH_TAG");return;}leftPwm=l;rightPwm=r;pulsesL=pulsesR=0;motorId=sendUno("MOTOR "+String(l)+" "+String(r));motorDispatched=motorConfirmed=motorRunning=false;feedbackAt=now();}
 void drive(float cm,int pwm,const String &s){driveCm=cm;leftPwm=rightPwm=pwm;pulsesL=pulsesR=0;motorId=sendUno("DRIVE "+String(cm,2)+" "+String(pwm));motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(s);}
 void rotate(float degrees,int pwm,const String &s){turnDeg=degrees;leftPwm=degrees>0?pwm:-pwm;rightPwm=-leftPwm;pulsesL=pulsesR=0;motorId=sendUno("ROTATE "+String(degrees,1)+" "+String(pwm));motorConfirmed=motorDispatched=motorRunning=false;feedbackAt=now();state(s);}
+void requestEscapeObservation(){
+  escapeObserveStep=escapeObserveStep%65535+1;checkStep=escapeObserveStep;escapeObserveAt=now();escapeObserveFrame=observation["frameSeq"]|0u;checkPending=true;checkReady=false;
+  requestVision(0,escapeObserveStep,generation,"FLOOR");
+  state("ESCAPE_OBSERVE");
+}
+void beginEscapeTurn(){
+  float target=turnDeg;
+  resetEscapePlan();
+  if(fabs(target)>90.0f){escapeFinalTurnDeg=target;escapeCheckpointTurnDeg=target>0?90.0f:-90.0f;turnDeg=escapeCheckpointTurnDeg;}
+  rotate(turnDeg,(int)setting("searchPwm"),"ESCAPE_TURN");
+}
 uint32_t scanVisionWindow(){return min(uint32_t(60000),uint32_t(setting("scanVisionTimeoutMs"))*(config[scanKind=="TAG"?"tagScanMaxFrames":"catCheckMaxFrames"]|3));}
 void beginScan(const String &kind,const String &next,int flags=0,float spent=0,int localPulses=0){
   invalidate();clearTx();if(responseActive){responsePulse=0;responseStopPending=true;}scanKind=kind;scanNext=next;scanFlags=flags;scanOrigin=spent;scanUsed=spent;scanMeanProgress=false;lastVqUsed=0;scanDoneSeen=false;scanBudget=max(1,(int)lroundf(720.0f*20*track/(360*wheel)));scanAt=now();scanProgressAt=now();scanRecoveryRetries=0;
@@ -299,15 +323,15 @@ void motionFailure(const String &reason){if(reason.startsWith("TOUCH")&&phase=="
 void policyCommandSent(uint32_t id){if(matchesPending(id,motorId)){motorDispatched=true;feedbackAt=now();}}
 void policyStopUnconfirmed(){clearTagRecovery();cancelResponse();if(linkRecovering){retryLink();return;}if(mode=="UART"&&phase!="IDLE"&&(phase!="STOPPED"||lastFault!="operator_stop"&&!lastFault.startsWith("Uno link recovery failed")&&!lastFault.startsWith("STOP_UNCONFIRMED"))){recoverLink();return;}lastFault="STOP_UNCONFIRMED: motor stop has not been confirmed";invalidate();clearTx();resetMotor();stopId=sessionId=0;phase="STOPPED";state("FAULT");}
 void policyResetTagRecovery(){clearTagRecovery();}
-uint32_t policyTelemetryInterval(){return linkRecovering||action=="SETTLE"||action=="CAT_CONFIRM"||action=="TAG_SETTLE"||action=="TAG_RECHECK"?250:2000;}
+uint32_t policyTelemetryInterval(){return linkRecovering||action=="SETTLE"||action=="CAT_CONFIRM"||action=="TAG_SETTLE"||action=="TAG_RECHECK"||action=="ESCAPE_SETTLE"||action=="ESCAPE_OBSERVE"?250:2000;}
 bool policyPreparing(){return phase=="STARTING"||phase=="ENDING"||action=="WAIT_SCAN_CONFIG"||(scanId&&!motorConfirmed);}
 int policyTargetId(){return phase=="PATROL"&&config["route"].size()?config["route"][routeIndex].as<int>():-1;}
 String policyVisionMode(){
-  if((action=="CAT_DRIVE"||action=="PROBE_MOVE"||action=="ESCAPE_MOVE")&&frontEnabled())return "FLOOR";
+  if(action=="ESCAPE_OBSERVE"||(action=="CAT_DRIVE"||action=="PROBE_MOVE"||action=="ESCAPE_MOVE")&&frontEnabled())return "FLOOR";
   // During any scan/slow approach/alignment, CAT is only requested while stopped.
   if(action=="CAT_CONFIRM"&&due&&!checkPending&&!checkReady)return "CAT";
   if(action=="TAG_SETTLE"||action=="TAG_RECHECK")return "OFF";
-  if(action=="CAT_CONFIRM"||scanId||action=="WAIT_SCAN_CONFIG"||action=="SCAN_TAG"||action=="SEARCH_CAT"||action=="ESCAPE_TURN"||action=="APPROACH_CAT"||action=="CAT_DRIVE"||action=="CAT_CHECK"||action=="SETTLE"||action=="WAIT_STOP"||action=="PROBE_DRIVE"||action=="PROBE_MOVE")return "OFF";
+  if(action=="CAT_CONFIRM"||scanId||action=="WAIT_SCAN_CONFIG"||action=="SCAN_TAG"||action=="SEARCH_CAT"||action=="ESCAPE_TURN"||action=="ESCAPE_SETTLE"||action=="APPROACH_CAT"||action=="CAT_DRIVE"||action=="CAT_CHECK"||action=="SETTLE"||action=="WAIT_STOP"||action=="PROBE_DRIVE"||action=="PROBE_MOVE")return "OFF";
   if(phase=="PATROL")return "TAGS";
   if(phase=="INTERACTION")return "CAT";
   return "USER";
@@ -419,7 +443,7 @@ void policyInput(const String &line){
     pulsesL=l;pulsesR=r;motorRunning=false;leftPwm=rightPwm=0;feedbackAt=now();
     if(scanId){if(!scanDoneSeen){scanUsed=min(float(scanBudget),scanUsed+l/2.0f+r/2.0f);scanProgressAt=now();scanRecoveryRetries=0;}scanDoneSeen=true;return;}
     String previous=action;if(previous=="CAT_DRIVE")remainingCm=max(0.0f,remainingCm-travel());resetMotor();
-    awaitStop(previous=="CAT_DRIVE"?"CHECK_APPROACH":previous=="PROBE_MOVE"?"CHECK_PROBE":previous=="ESCAPE_MOVE"?"POST_ESCAPE":previous=="ESCAPE_TURN"?"ESCAPE_DRIVE":"APPROACH_TAG");return;
+    awaitStop(previous=="CAT_DRIVE"?"CHECK_APPROACH":previous=="PROBE_MOVE"?"CHECK_PROBE":previous=="ESCAPE_MOVE"?"POST_ESCAPE":previous=="ESCAPE_TURN"?"ESCAPE_SETTLE":"APPROACH_TAG");return;
   }
   if(line.startsWith("AK ")||line.startsWith("ACK ")){if(sscanf(line.c_str(),line.startsWith("AK ")?"AK %u %c":"ACK %u %c",&id,&extra)==1&&matchesPending(id,motorId))motorConfirmed=true;return;}
   if(line.startsWith("MA ")){char reason[100];if(sscanf(line.c_str(),"MA %u %99s %lu %lu %c",&id,reason,&l,&r,&extra)==4&&matchesPending(id,motorId)){pulsesL=l;pulsesR=r;motionFailure(reason);}return;}
@@ -438,7 +462,7 @@ void policyInput(const String &line){
     if(sscanf(line.c_str(),"DATA %u HW T %7s %d %d %d %11s %c",&id,area,&en,&raw,&pressed,src,&extra)==6&&(pressed==0||pressed==1)){int a=!strcmp(area,"LEFT")?0:!strcmp(area,"RIGHT")?1:!strcmp(area,"REAR")?2:!strcmp(area,"TOP")?3:-1;if(a>=0){if(pressed&&!touch[a])onTouch(a,telemetryUnoAt);else if(!pressed)touch[a]=false;}}
   }
   if(line.startsWith("DONE ")){sscanf(line.c_str(),"DONE %u",&id);
-    if(matchesPending(id,stopId)&&line=="DONE "+String(stopId)+" MOTOR_STOPPED"){stopId=0;if(touchCue){touchCue=false;touchSignalUntil=now()+(uint32_t)setting("signalFlashMs");sendUno("LED FLASH 120 "+String((int)setting("signalFlashMs")));sendUno("BEEP "+String((int)setting("touchFeedbackBeepMs")));logLine("CONTACT_SIGNAL","parallel with search");}state(afterStop);return;}
+    if(matchesPending(id,stopId)&&line=="DONE "+String(stopId)+" MOTOR_STOPPED"){stopId=0;if(touchCue){touchCue=false;touchSignalUntil=now()+(uint32_t)setting("signalFlashMs");sendUno("LED FLASH 120 "+String((int)setting("signalFlashMs")));sendUno("BEEP "+String((int)setting("touchFeedbackBeepMs")));logLine("CONTACT_SIGNAL","parallel with search");}if(afterStop=="ESCAPE_SETTLE"){firstSettleSampleAt=0;quietAt=now();quietEncoder[0]=encoder[0];quietEncoder[1]=encoder[1];}state(afterStop);return;}
     if(!matchesPending(id,sessionId))return;if(action=="WAIT_PATROL_STOP"&&line!="DONE "+String(sessionId)+" MOTOR_STOPPED")return;
     if(action=="WAIT_SCAN_CONFIG"&&line!="DONE "+String(sessionId)+" SCAN_CONFIGURED")return;
     if(action=="WAIT_SESSION_START"&&line!="DONE "+String(sessionId)+" SESSION_STARTED")return;
@@ -523,7 +547,37 @@ void policyTick(){
     if(touchSearch||both&&!directionLocated){touchSearch=false;beginScan("CAT","ESCAPE_DIRECTION_FOUND",both?1:0);return;}
     if(fabs(turnDeg)>=1&&closeSide(turnDeg>0?1:0)){exitInteraction("escape direction blocked");return;}
     if((!sideAt[0]||elapsed(sideAt[0],2500))||(!sideAt[1]||elapsed(sideAt[1],2500))){exitInteraction("escape side observation expired");return;}
-    if(fabs(turnDeg)<1)behavior("ESCAPE_DRIVE");else rotate(turnDeg,(int)setting("searchPwm"),"ESCAPE_TURN");return;
+    if(fabs(turnDeg)<1)behavior("ESCAPE_DRIVE");else beginEscapeTurn();return;
+  }
+  if(action=="ESCAPE_SETTLE"){
+    if(elapsed(actionAt,setting("catSettleTimeoutMs"))){exitInteraction("escape checkpoint settle unavailable");return;}
+    bool sampled=int32_t(encoderAt[0]-actionAt)>0&&int32_t(encoderAt[1]-actionAt)>0;
+    if(sampled&&!firstSettleSampleAt){firstSettleSampleAt=quietAt=now();quietEncoder[0]=encoder[0];quietEncoder[1]=encoder[1];return;}
+    bool second=firstSettleSampleAt&&int32_t(encoderAt[0]-firstSettleSampleAt)>0&&int32_t(encoderAt[1]-firstSettleSampleAt)>0;
+    if(sampled&&second&&encoderRpm[0]==0&&encoderRpm[1]==0&&elapsed(actionAt,setting("scanMinimumMs"))&&elapsed(quietAt,setting("scanQuietMs"))){requestEscapeObservation();}
+    return;
+  }
+  if(action=="ESCAPE_OBSERVE"){
+    if(checkReady){
+      checkReady=false;
+      Clearance front=frontClearanceAfter(escapeObserveAt);
+      Clearance left=sideClearanceAfter(0,escapeObserveAt),right=sideClearanceAfter(1,escapeObserveAt);
+      int rearSide=escapeCheckpointTurnDeg>0?0:1;
+      Clearance rear=fabs(escapeCheckpointTurnDeg)>=179.0f?CLEARANCE_CLEAR:sideClearanceAfter(rearSide,escapeObserveAt);
+      logLine("ESCAPE_CLEARANCE",String("turn=")+String(escapeCheckpointTurnDeg,1)+" rearSide="+String(rearSide?"RIGHT":"LEFT")+" rear="+clearanceName(rear)+" front="+clearanceName(front)+" left="+clearanceName(left)+" right="+clearanceName(right));
+      if(rear==CLEARANCE_BLOCKED||front==CLEARANCE_BLOCKED){
+        if(escapeProbeBudget++>=1){exitInteraction(String("escape path blocked rear=")+clearanceName(rear)+" front="+clearanceName(front));return;}
+        escapeProbeDir=escapeCheckpointTurnDeg>0?-1:1;
+        escapeFinalTurnDeg=escapeProbeDir*90.0f;
+        rotate(escapeProbeDir*180.0f,(int)setting("searchPwm"),"ESCAPE_TURN");
+        return;
+      }
+      if(rear==CLEARANCE_UNKNOWN||front==CLEARANCE_UNKNOWN){exitInteraction(String("escape path unknown rear=")+clearanceName(rear)+" front="+clearanceName(front));return;}
+      float remaining=escapeFinalTurnDeg?escapeFinalTurnDeg-escapeCheckpointTurnDeg:0;
+      if(fabs(remaining)>=1){float next=remaining>0?min(90.0f,remaining):max(-90.0f,remaining);escapeCheckpointTurnDeg+=next;rotate(next,(int)setting("searchPwm"),"ESCAPE_TURN");}
+      else{resetEscapePlan();behavior("ESCAPE_DRIVE");}
+    }else if(elapsed(escapeObserveAt,setting("scanVisionTimeoutMs")))exitInteraction("escape checkpoint vision timeout");
+    return;
   }
   if(action=="WAIT_CHASE"){
     if(!chaseDetected&&(!fresh()||!cat()["valid"].as<bool>())){farAt=leaveFrame=0;if(!chaseUnavailableAt)chaseUnavailableAt=now();if(elapsed(chaseUnavailableAt,setting("scanVisionTimeoutMs")))exitInteraction("cat observation unavailable");return;}
