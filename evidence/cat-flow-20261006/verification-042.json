@@ -1,0 +1,39 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+  "binaryBytes": 3804368,
+  "binaryPath": "evidence/cat-flow-20261006/firmware-042.bin",
+  "nodeTests": 61,
+  "nativeExecutables": 13,
+  "binarySha256": "06D077E9BC6F9176D8167BC82CB43B6F33A0F605126CDCAE4D9ACBA74AE686FE",
+  "uploadPerformed": false,
+  "sourceHashes": [
+    {
+      "file": "ESP32CatHost.ino",
+      "sha256": "7DAB74D6EF68A29239C4A19F135AED6153FD5F90AC923083DA9C1936473D8063"
+    },
+    {
+      "file": "policy.cpp",
+      "sha256": "1B3278BEDE52EA11E819F7E00595332D643F27F67EF1613355AB8C003F928134"
+    },
+    {
+      "file": "policy_defaults.h",
+      "sha256": "4FA429B38E2D23B9F3795B744164751798BA6FCBDE4225136B053C1A264111CB"
+    },
+    {
+      "file": "debug_page.h",
+      "sha256": "EDBB881203AEF7F1F69247E295939BA99900BD53726D5070D21B86F65B4BF5D3"
+    },
+    {
+      "file": "camera_settings_runtime.h",
+      "sha256": "52F98BE75CE76835CC232F082FEA447E07464639DC6CA77347E12689907AD3BC"
+    },
+    {
+      "file": "policy_storage.h",
+      "sha256": "89FC988F1C69183FBB05BE8C2195AB518C028583F03FF8CA38C56A3A67F9DB9B"
+    },
+    {
+      "file": "tag_recovery.h",
+      "sha256": "9577EE0694C71F94D5E03AB6E2ACC7AF255A1BA77920F79637B6D988467B2B45"
+    }
+  ]
+}

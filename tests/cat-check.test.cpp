@@ -46,7 +46,7 @@ int main(){
    frame(false,true,20+sample);
    if(sample<limit){policyTick();CHECK(action=="CAT_CHECK");CHECK(phase=="INTERACTION");CHECK(!motorId);}
   }
-  CHECK(checkReady);policyTick();CHECK(phase=="INTERACTION");CHECK(action=="OBSERVE");CHECK(robotAction=="OBSERVE");CHECK(robotActions==0);CHECK(!motorId);
+  CHECK(checkReady);policyTick();CHECK(phase=="INTERACTION");CHECK(action=="WAIT_SCAN_CONFIG");CHECK(robotActions==0);CHECK(!motorId);
  }
  // Duplicate, superseded, and unrelated frames cannot satisfy the window.
  checkFixture();frame(false,true,30);auto requested=requests.size();frame(false,true,30);

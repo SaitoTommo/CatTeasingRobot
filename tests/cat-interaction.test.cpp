@@ -62,7 +62,7 @@ int main(){
  }
  // Losing the target after a movement does not count an unfinished movement,
  // scan indefinitely, or start another blind DRIVE. Remaining rounds observe.
- fixture();policyControl("alert");stopped();behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,true,30);policyTick();CHECK(action=="OBSERVE");CHECK(phase=="INTERACTION");CHECK(robotActions==0);CHECK(!motorId);
+ fixture();policyControl("alert");stopped();behavior("SLOW_APPROACH");policyTick();md();stopped();settled();frame(false,true,30);policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(phase=="INTERACTION");CHECK(robotActions==0);CHECK(!motorId);
  fixture();policyControl("alert");stopped();behavior("FAST_APPROACH");freshCat(.1,false);policyTick();CHECK(action=="OBSERVE");CHECK(!motorId&&!scanId);CHECK(!robotFast);
  fixture();policyControl("alert");stopped();behavior("PROBE_APPROACH");freshCat(.1,false);policyTick();CHECK(action=="OBSERVE");CHECK(!motorId);
  // New settings reject fractional budgets; existing saved fields retain values.

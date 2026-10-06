@@ -1,0 +1,11 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW",
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "ip": "192.168.137.127",
+  "pageBytes": 97285,
+  "pageMatchesMaintenance": true,
+  "pageSha256": "4245d31daaac0c58383bd33c47d048b86affe61e1d7c9eae4916f47a81625a6e",
+  "motorId": 0,
+  "motorRunning": false
+}

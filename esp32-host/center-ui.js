@@ -53,9 +53,11 @@ function syncTagRecovery(d){
  const value=JSON.stringify([grace,angle]);
  if(available&&tagRecoveryReadback!==value){$('tagLossGraceMs').value=grace;$('tagRecoveryAngleDeg').value=angle;tagRecoveryReadback=value;}
  if(pendingTagRecoverySave){const error=(d.logs||[]).find(x=>x.seq>pendingTagRecoverySave.seq&&x.source==='CONFIG_ERROR');if(error)pendingTagRecoverySave.error=error.line;else if(value===pendingTagRecoverySave.value)pendingTagRecoverySave=null;}
- $('tagRecoveryStatus').textContent=available?`板上已保存：漏检宽限 ${grace} 毫秒，首次局部转向 ${angle}°。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'等待板上标签恢复参数回读';
+ $('tagRecoveryStatus').textContent=available?`板上已保存：漏检宽限 ${grace} 毫秒，猫与标签首次局部转向 ${angle}°。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'等待板上目标恢复参数回读';
  if(pendingTagRecoverySave)$('tagRecoveryStatus').textContent+=' '+(pendingTagRecoverySave.error?'保存失败：'+pendingTagRecoverySave.error:'等待板上保存回读。');
  const p=d.patrolStatus||{},names={GRACE:'短暂漏检，保持直行',SETTLE:'等待停稳',RECHECK:'停车复核',LOCAL_FIRST:'按记忆方向局部寻找',LOCAL_REVERSE:'反向局部寻找',FULL:'使用剩余预算寻找',NONE:'无恢复动作'};
+ const catDirection=p.catMemoryDirection<0?'左':p.catMemoryDirection>0?'右':'无有效方向';
+ $('catRecoveryLive').textContent=`猫恢复：${names[p.catRecoveryStage]||'等待读取'}；记忆方向：${catDirection}`+(['LOCAL_FIRST','LOCAL_REVERSE','FULL'].includes(p.catRecoveryStage)?`；当前转向 ${p.catRecoveryDirection<0?'左':'右'}；预算剩余 ${Number(p.catRecoveryRemainingDegrees||0).toFixed(1)}°`:'');
  const direction=p.tagMemoryDirection<0?'左':p.tagMemoryDirection>0?'右':'无有效方向';
  $('tagRecoveryLive').textContent=`标签恢复：${names[p.tagRecoveryStage]||'等待读取'}；记忆方向：${direction}`+(p.tagRecoveryStage==='GRACE'?`；宽限剩余 ${p.tagLossRemainingMs||0} 毫秒`:'')+(['LOCAL_FIRST','LOCAL_REVERSE','FULL'].includes(p.tagRecoveryStage)?`；当前转向 ${p.tagRecoveryDirection<0?'左':'右'}；总预算剩余 ${Number(p.tagRecoveryRemainingDegrees||0).toFixed(1)}°`:'');
 }

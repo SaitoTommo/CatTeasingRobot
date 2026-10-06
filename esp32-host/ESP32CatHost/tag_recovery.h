@@ -3,12 +3,12 @@
 #include <math.h>
 
 // Target-local observations only: remembered geometry never proves arrival.
-struct TagRecoveryMemory {
+struct TargetRecoveryMemory {
   int target=-1;
   uint32_t frame=0,at=0,lostAt=0,previousFrame=0,previousAt=0;
   float center=.5f,previous=.5f,width=0,previousWidth=0;
   bool hasPrevious=false,losing=false;
-  void clear(){*this=TagRecoveryMemory{};}
+  void clear(){*this=TargetRecoveryMemory{};}
   void observe(int id,uint32_t seq,uint32_t time,float x,float w){
     if(target!=id)clear();
     if(!seq||!isfinite(x)||!isfinite(w)||x<0||x>1||w<=0||w>1)return;
@@ -26,3 +26,5 @@ struct TagRecoveryMemory {
   void miss(uint32_t time){if(!losing){losing=true;lostAt=time;}}
   bool expired(uint32_t time,uint32_t grace) const {return losing&&uint32_t(time-lostAt)>=grace;}
 };
+
+using TagRecoveryMemory=TargetRecoveryMemory;

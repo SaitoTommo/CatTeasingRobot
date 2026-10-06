@@ -427,3 +427,14 @@ test('tag stopped attempts save integer config and wait for board readback',()=>
  draw({...d,stopUnconfirmed:true});assert.equal(element('saveTagScanChecks').disabled,true);
  draw({...d,phase:'PATROL'});assert.equal(element('tagScanMaxFrames').disabled,true);
 });
+
+test('shared target recovery shows cat side, actual search direction and remaining budget',()=>{
+ const d={phase:'INTERACTION',config:{tagLossGraceMs:1000,tagRecoveryAngleDeg:60},patrolStatus:{tagRecoveryStage:'NONE',catRecoveryStage:'LOCAL_REVERSE',catMemoryDirection:1,catRecoveryDirection:-1,catRecoveryRemainingDegrees:500}};
+ vm.runInContext(`syncTagRecovery(${JSON.stringify(d)})`,context);
+ assert.match(element('catRecoveryLive').textContent,/猫恢复：反向局部寻找/);
+ assert.match(element('catRecoveryLive').textContent,/记忆方向：右/);
+ assert.match(element('catRecoveryLive').textContent,/当前转向 左/);
+ assert.match(element('catRecoveryLive').textContent,/500.0°/);
+ assert.equal(element('saveTagRecovery').disabled,true);
+ assert.match(element('tagRecoveryStatus').textContent,/猫与标签首次局部转向 60°/);
+});
