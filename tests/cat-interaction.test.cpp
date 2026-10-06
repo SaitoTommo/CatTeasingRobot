@@ -25,7 +25,7 @@ int main(){
  CHECK(interactionExitReason=="robot action limit reached");endAndResumePatrol();
  // Fast/slow segments share checked motion; segment completion is not a round.
  fixture();policyControl("alert");stopped();freshCat(.1);config["robotFastApproachCm"]=3;config["robotSlowFlashPercent"]=100;
- behavior("FAST_APPROACH");CHECK(robotFast);policyTick();CHECK(action=="CAT_DRIVE");CHECK(commands.back().text=="DRIVE 1.00 180");
+ behavior("FAST_APPROACH");CHECK(robotFast);policyTick();CHECK(action=="CAT_DRIVE");CHECK(commands.back().text=="DRIVE 3.00 180");
  md(1,1);stopped();settled();frame(true,true,20);policyTick();CHECK(!robotActions);CHECK(action=="APPROACH_CAT");
  freshCat(.2);policyTick();CHECK(robotActions==1);CHECK(afterFace=="SLOW_APPROACH");CHECK(!robotFast);stopped();settled();frame(true,true,21);policyTick();CHECK(robotSlowFlash);
  auto flashDraws=draws.size();policyTick();CHECK(action=="CAT_DRIVE");bool flashed=false;for(auto &c:commands)if(c.text.startsWith("LED FLASH 200 "))flashed=true;CHECK(flashed);CHECK(robotActions==1);CHECK(draws.size()==flashDraws);
