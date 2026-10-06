@@ -66,10 +66,10 @@ void completeConfirmation(bool detected=true){
  for(size_t i=from;i<commands.size();i++)CHECK(!commands[i].text.startsWith("ROTATE ")&&!commands[i].text.startsWith("DRIVE ")&&!commands[i].text.startsWith("SR ")&&!commands[i].text.startsWith("MOTOR "));
  for(int i=0;i<(detected?1:(config["catCheckMaxFrames"]|3));i++){frame(detected,true,observation["frameSeq"].as<unsigned>()+1);policyTick();}
 }
-void completeEscapeSettle(){
- md(18,18);stopped();CHECK(action=="ESCAPE_SETTLE");
- tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="ESCAPE_SETTLE");
- tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="ESCAPE_OBSERVE");CHECK(requests.back().mode=="FLOOR");
+void completeEscapeSettle(const char *settleAction,const char *observeAction){
+ if(motorId)md(18,18);stopped();CHECK(action==settleAction);
+ tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action==settleAction);
+ tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action==observeAction);CHECK(requests.back().mode=="FLOOR");
 }
 void escapeFloorFrame(const char *front,float leftCm,float rightCm,unsigned frameNo){
  tick+=50;sideAt[0]=sideAt[1]=tick;side[0]=leftCm;side[1]=rightCm;
@@ -120,19 +120,20 @@ int main(){
  CHECK(sideAt[0]==tick&&sideAt[1]==tick);CHECK(fabs(side[0]-11.6f)<.01f);CHECK(side[1]==-1);
  phase="INTERACTION";initiator="CAT_TOUCH";config["catConfirmPreyPercent"]=0;config["catConfirmExplorePercent"]=0;
  for(unsigned pick:{0u,50u,99u}){draws={pick,0};chooseConfirmedTouch();CHECK(branch==1);CHECK(action=="ESCAPE_DIRECTION");}
- policyTick();CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE "));CHECK(interactionExitReason=="");
+ policyTick();CHECK(action=="WAIT_STOP");CHECK(afterStop=="ESCAPE_PRETURN_SETTLE");CHECK(interactionExitReason=="");
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";config["catConfirmPreyPercent"]=0;config["catConfirmExplorePercent"]=0;
  sideAt[0]=sideAt[1]=0;policyInput("DATA 458 HW SL 1 1 0 11.6 11.6 P");policyInput("DATA 458 HW SR 1 1 0 20.0 20.0 P");
- chooseConfirmedTouch();policyTick();CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE "));
- completeEscapeSettle();CHECK(action=="ESCAPE_OBSERVE");
- escapeFloorFrame("CLEAR",20,20,10);CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE 90.0 "));
- completeEscapeSettle();escapeFloorFrame("CLEAR",20,20,11);CHECK(action=="ESCAPE_DRIVE");
+ chooseConfirmedTouch();policyTick();CHECK(action=="WAIT_STOP");CHECK(afterStop=="ESCAPE_PRETURN_SETTLE");
+ stopped();CHECK(action=="ESCAPE_PRETURN_SETTLE");
+ tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="ESCAPE_PRETURN_OBSERVE");
+ escapeFloorFrame("CLEAR",20,20,10);CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE 180.0 "));
+ completeEscapeSettle("ESCAPE_POSTTURN_SETTLE","ESCAPE_POSTTURN_OBSERVE");escapeFloorFrame("CLEAR",20,20,11);CHECK(action=="ESCAPE_DRIVE");
  policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(commands.back().text.startsWith("DRIVE "));
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";turnDeg=180;state("ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");
- completeEscapeSettle();escapeFloorFrame("CLEAR",.5,20,12);CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE -180.0 "));
- completeEscapeSettle();escapeFloorFrame("CLEAR",20,20,13);CHECK(action=="ESCAPE_DRIVE");
- fixture();phase="INTERACTION";initiator="CAT_TOUCH";turnDeg=180;state("ESCAPE_DIRECTION");policyTick();completeEscapeSettle();
- escapeFloorFrame("INVALID",20,20,14);CHECK(phase=="ENDING");CHECK(interactionExitReason.indexOf("unknown")>=0);
+ fixture();phase="INTERACTION";initiator="CAT_TOUCH";turnDeg=180;state("ESCAPE_DIRECTION");policyTick();CHECK(action=="WAIT_STOP");
+ stopped();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="ESCAPE_PRETURN_OBSERVE");
+ escapeFloorFrame("CLEAR",20,.5,12);CHECK(action=="ESCAPE_NUDGE_MOVE");md(2,2);stopped();CHECK(action=="ESCAPE_PRETURN_SETTLE");
+ fixture();phase="INTERACTION";initiator="CAT_TOUCH";turnDeg=180;state("ESCAPE_DIRECTION");policyTick();stopped();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();
+ escapeFloorFrame("INVALID",20,20,14);CHECK(phase=="ENDING");CHECK(interactionExitReason.indexOf("unsafe")>=0);
  // Malformed rows cannot refresh data or create a top-button press.
  fixture();sideAt[0]=sideAt[1]=0;encoderAt[0]=0;
  for(const char *row:{"DATA 1 HW SL 1 1 0 20 20 P extra","DATA 1 HW SL 1 1 0 20 nan P","DATA 1 HW SL 1 1 0 20 500 P","DATA 1 HW EL 1 1 23 nan P","DATA 1 HW EL 1 1 23 0 P extra","DATA 1 HW T UNKNOWN 1 1 1 P","DATA 1 HW T TOP 1 1 2 P","DATA 1 HW T TOP 1 1 1 P extra"})policyInput(row);
