@@ -129,6 +129,10 @@ int main(){
  escapeFloorFrame("CLEAR",20,20,10);CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE 180.0 "));
  completeEscapeSettle("ESCAPE_POSTTURN_SETTLE","ESCAPE_POSTTURN_OBSERVE");escapeFloorFrame("CLEAR",20,20,11);CHECK(action=="ESCAPE_DRIVE");
  policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(commands.back().text.startsWith("DRIVE "));
+ fixture();phase="INTERACTION";initiator="CAT_TOUCH";turnDeg=180;state("ESCAPE_DIRECTION");policyTick();stopped();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();
+ escapeFloorFrame("CLEAR",20,20,15);CHECK(action=="ESCAPE_TURN");auto turning=motorId;policyInput("MA "+String(turning)+" SIDE_RIGHT_OBSTACLE 6 6");CHECK(action=="WAIT_STOP");CHECK(afterStop=="ESCAPE_POSTTURN_SETTLE");
+ stopped();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="ESCAPE_POSTTURN_OBSERVE");
+ escapeFloorFrame("CLEAR",20,20,16);CHECK(action=="ESCAPE_DRIVE");policyTick();CHECK(action=="ESCAPE_MOVE");
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";turnDeg=180;state("ESCAPE_DIRECTION");policyTick();CHECK(action=="WAIT_STOP");
  stopped();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action=="ESCAPE_PRETURN_OBSERVE");
  escapeFloorFrame("CLEAR",20,.5,12);CHECK(action=="ESCAPE_NUDGE_MOVE");md(2,2);stopped();CHECK(action=="ESCAPE_PRETURN_SETTLE");
