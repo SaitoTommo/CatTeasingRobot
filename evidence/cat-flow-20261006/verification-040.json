@@ -1,0 +1,30 @@
+{
+  "sourceHashes": [
+    {
+      "sha256": "7A314C3804ED05989BDEE327CC7C569D043DAF764DB27F710B22EAAC21D548F2",
+      "file": "ESP32CatHost.ino"
+    },
+    {
+      "sha256": "A2DF284D93895E614E59C95A0F11860B7CBD294E7373CECEC32F5B96882967F2",
+      "file": "policy.cpp"
+    },
+    {
+      "sha256": "C1276510A3B0897C67898A2C91CDDA3A76718415D13E9A0C231EB5624BD4FC56",
+      "file": "policy_defaults.h"
+    },
+    {
+      "sha256": "D48090CAF9C5074F1D7E7BD17D94167B9422583854CDBB37259E47D35DCC56C3",
+      "file": "debug_page.h"
+    },
+    {
+      "sha256": "BCB1158AAF5BF69307FEEA9C656807E98683AEE859154546D8B9AEBCA1837150",
+      "file": "camera_settings_runtime.h"
+    }
+  ],
+  "binaryPath": "C:\\Users\\guoto\\AppData\\Local\\Temp\\codex-esp32-cat-build\\ESP32CatHost.ino.bin",
+  "firmware": "ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW",
+  "binaryBytes": 3793024,
+  "nativeExecutables": 11,
+  "nodeTests": 59,
+  "binarySha256": "159974FE1A5B02DAC8D17E80F421DEE14F75180AF60F726A9FB5A2EA7BC63358"
+}

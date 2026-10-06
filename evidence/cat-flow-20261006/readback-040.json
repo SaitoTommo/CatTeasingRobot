@@ -1,0 +1,10 @@
+{
+  "route": [
+    43,
+    46
+  ],
+  "phase": "IDLE",
+  "configurationChangedFields": [],
+  "firmware": "ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW",
+  "uploadVerified": true
+}
