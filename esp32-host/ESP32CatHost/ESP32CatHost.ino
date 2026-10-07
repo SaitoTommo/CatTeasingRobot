@@ -40,6 +40,7 @@ uint32_t visionOversize=0,visionSuperseded=0,visionRejected=0,visionConsumed=0;
 String policyVisionMode();
 void policyResetTagRecovery();
 void policyVision();
+void completeGroundCalibration(JsonObject v);
 void cancelVision(){visionGate.cancel();visionPayload="";}
 void requestVision(uint32_t scan,uint16_t step,uint32_t generation,const char *selected){
  xSemaphoreTake(frameLock,portMAX_DELAY);uint32_t seq=frameSeq;xSemaphoreGive(frameLock);
@@ -71,7 +72,7 @@ void acceptCamera(JsonDocument &d){
  if(!token&&visionBench){String measured=v["mode"]|"";if(desired=="TAGS"&&measured=="BOTH"){v["mode"]="TAGS";v["cat"]["valid"]=false;v["cat"]["detected"]=false;}else if(desired=="FLOOR"&&measured=="CAT"){v["mode"]="FLOOR";v["cat"]["valid"]=false;v["cat"]["detected"]=false;v["front"]=!v["frontCalibrated"].as<bool>()?"INVALID":v["floorDifference"].as<float>()>(config["floorDifferenceThreshold"]|35.0f)?"BLOCKED":"CLEAR";}else if(desired=="CAT"&&measured=="BOTH")v["mode"]="CAT";}
  if(token){VisionTicket t=visionGate.ticket;t.token=token;t.scan=v["scanId"]|0u;t.step=v["stepId"]|0u;t.generation=v["generation"]|0u;if(!visionGate.finish(t,v["frameSeq"]|0u,v["captureUs"].as<uint64_t>())){visionRejected++;return;}}
  else if(desired=="OFF"||String(v["mode"]|"")!=desired||(v["epoch"]|0u)!=visionGate.serial){visionRejected++;return;}
- realVision=v;visionConsumed++;if(mode=="UART"){observation=realVision;policyVision();}
+ realVision=v;visionConsumed++;completeGroundCalibration(v);if(mode=="UART"){observation=realVision;policyVision();}
 }
 struct Outgoing {String wire;bool physical;};
 std::deque<Outgoing> outgoing;uint32_t lastWrite=0;
@@ -190,8 +191,9 @@ void defaults() {
   config["frontAvoidanceEnabled"]=true;config["frontCalibrated"]=false;config["frontBlockBottom"]=0.88;config["floorRoiTop"]=0.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();
 }
 #include "camera_settings_runtime.h"
+#include "ground_calibration_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
@@ -229,7 +231,7 @@ void handleInput(const Input &in) {
   }
   else if(op=="camera_config"||op=="camera_reset")cameraSettingsInput(d,op=="camera_reset");
   else if(op=="vision_mode") {String m=d["mode"]|"OFF";if(m!="OFF"&&m!="TAGS"&&m!="CAT"&&m!="BOTH"){logLine("INPUT_ERROR","invalid vision mode");return;}visionMode=m;if(policyVisionMode()=="USER"){cancelVision();realVision.clear();if(mode=="UART")observation.clear();}logLine("VISION_MODE",visionMode);}
-  else if(op=="calibrate_front") {if(phase!="IDLE"&&phase!="STOPPED"||stopPendingId||stopUnconfirmed){logLine("CONFIG_ERROR","confirmed stop required first");return;}if(millis()-realVision["at"].as<uint32_t>()>5000||realVision["floorSignature"].size()!=72){logLine("CONFIG_ERROR","no fresh camera signature");return;}config["floorReference"]=realVision["floorSignature"];config["frontCalibrated"]=true;groundReferenceChangedAt=millis();String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CALIBRATION","ground appearance reference captured; experimental qualitative front input");}
+  else if(op=="calibrate_front")startGroundCalibration();
   else if(op=="config") {
     if(phase!="IDLE"&&phase!="STOPPED"||!stopReady()||debugId||manualUntil||configStep>=0){logLine("CONFIG_ERROR","confirmed stop required first");return;}
     JsonObject obj=d["config"].as<JsonObject>();
@@ -327,7 +329,7 @@ void loop() {
   xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);networkTick();xSemaphoreGiveRecursive(stateLock);
   xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);readLines(Serial,usbLine,false);readLines(uno,uartLine,true);static Input in;for(int i=0;i<8&&xQueueReceive(inputs,&in,0)==pdTRUE;i++)handleInput(in);
   if(visionPayload.length()){JsonDocument d;String payload=visionPayload;visionPayload="";if(!deserializeJson(d,payload))acceptCamera(d);else visionRejected++;}
-  debugTick();policyTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
+  debugTick();policyTick();groundCalibrationTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
   if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis();logLine("TELEMETRY_TIMEOUT","retry in 2s");}
   if(!policyPreparing()&&(int32_t)(millis()-lastPoll)>=int32_t(mode=="SIM_UNO"?min(uint32_t(1000),policyTelemetryInterval()):policyTelemetryInterval())&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
   flushTx();
