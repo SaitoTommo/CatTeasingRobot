@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "89e9716",
+  "applicationSha256": "B8B5DB9560581E555840C296A653F5C7A58D95AFC1EACB749103422BE63D1C2F",
+  "applicationBytes": 3805552,
+  "partitionBytes": 3072,
+  "partitionMatches": true,
+  "offset": "0x10000",
+  "partitionBoard": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+  "uploadExitCode": 0,
+  "elapsedSeconds": 33.4962879,
+  "hashVerified": true
+}

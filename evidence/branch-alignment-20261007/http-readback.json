@@ -1,0 +1,12 @@
+{
+  "url": "http://192.168.137.25/api/state",
+  "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+  "configMatchesUsb": true,
+  "groundStatusField": true,
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "stationIP": "192.168.137.25",
+  "groundCalibrated": false,
+  "frontAvoidanceEnabled": false,
+  "referenceLength": 0
+}

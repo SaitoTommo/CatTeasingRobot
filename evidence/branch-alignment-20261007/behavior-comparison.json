@@ -1,0 +1,158 @@
+{
+  "baseline": {
+    "main": "0d9167f",
+    "maintenance": "bb06b96"
+  },
+  "functions": [
+    {
+      "function": "responseTick",
+      "equal": true
+    },
+    {
+      "function": "quietOutputs",
+      "equal": true
+    },
+    {
+      "function": "fail",
+      "equal": true
+    },
+    {
+      "function": "retryLink",
+      "equal": true
+    },
+    {
+      "function": "recoverLink",
+      "equal": true
+    },
+    {
+      "function": "retryScanConfig",
+      "equal": true
+    },
+    {
+      "function": "retryScanStart",
+      "equal": true
+    },
+    {
+      "function": "waitCommand",
+      "equal": true
+    },
+    {
+      "function": "awaitStop",
+      "equal": true
+    },
+    {
+      "function": "requestConfig",
+      "equal": true
+    },
+    {
+      "function": "beginSession",
+      "equal": true
+    },
+    {
+      "function": "finish",
+      "equal": true
+    },
+    {
+      "function": "exitInteraction",
+      "equal": true
+    },
+    {
+      "function": "newInteraction",
+      "equal": true
+    },
+    {
+      "function": "completeRobotAction",
+      "equal": true
+    },
+    {
+      "function": "hold",
+      "equal": true
+    },
+    {
+      "function": "settle",
+      "equal": true
+    },
+    {
+      "function": "oneFrame",
+      "equal": true
+    },
+    {
+      "function": "move",
+      "equal": true
+    },
+    {
+      "function": "drive",
+      "equal": true
+    },
+    {
+      "function": "rotate",
+      "equal": true
+    },
+    {
+      "function": "search",
+      "equal": true
+    },
+    {
+      "function": "confirmCat",
+      "equal": true
+    },
+    {
+      "function": "behavior",
+      "equal": true
+    },
+    {
+      "function": "robotBehavior",
+      "equal": true
+    },
+    {
+      "function": "chooseRobot",
+      "equal": true
+    },
+    {
+      "function": "robotObserveWithoutCat",
+      "equal": true
+    },
+    {
+      "function": "pauseForTouch",
+      "equal": true
+    },
+    {
+      "function": "chooseConfirmedTouch",
+      "equal": true
+    },
+    {
+      "function": "policyStopUnconfirmed",
+      "equal": true
+    },
+    {
+      "function": "frontClear",
+      "equal": true
+    }
+  ],
+  "files": [
+    {
+      "file": "firmware/UnoCatController/UnoCatController.ino",
+      "equal": true
+    },
+    {
+      "file": "core.mjs",
+      "equal": true
+    },
+    {
+      "file": "esp32-host/ESP32CatHost/vision.cpp",
+      "equal": true
+    },
+    {
+      "file": "esp32-host/ESP32CatHost/wire_integrity.h",
+      "equal": true
+    },
+    {
+      "file": "esp32-host/vision-status-ui.js",
+      "equal": true
+    }
+  ],
+  "allowedDifferences": [
+    "cat/tag search, memory, recovery, stationary scan frames, associated telemetry and UI",
+    "firmware identifier and branch evidence"
+  ]
+}

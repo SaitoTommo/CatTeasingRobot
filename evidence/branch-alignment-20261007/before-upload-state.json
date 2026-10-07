@@ -1,0 +1,1282 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW",
+  "deviceId": "c0871ead4f7c",
+  "bootId": "31114eb286f8dbd4",
+  "cameraSettings": {
+    "available": true,
+    "width": 320,
+    "height": 240,
+    "sensorPid": 13920,
+    "revision": 0,
+    "actual": {
+      "quality": 15,
+      "brightness": 1,
+      "contrast": 0,
+      "saturation": 0,
+      "aec_value": 490,
+      "ae_level": 0,
+      "aec2": 0,
+      "agc_gain": 2,
+      "awb_gain": 0,
+      "wb_mode": 0,
+      "raw_gma": 1,
+      "lenc": 1,
+      "hmirror": 0,
+      "vflip": 1,
+      "awb": 1,
+      "aec": 1,
+      "agc": 0,
+      "gainceiling": 248
+    },
+    "persisted": true,
+    "error": "",
+    "requestId": "",
+    "ranges": {
+      "gainceiling": {
+        "min": 0,
+        "max": 1023,
+        "unit": "REGISTER_10_BIT"
+      }
+    }
+  },
+  "visionBench": {
+    "enabled": false
+  },
+  "ms": 152041,
+  "mode": "SIM_UNO",
+  "phase": "IDLE",
+  "unoTelemetry": [],
+  "unoConfig": {
+    "line": "",
+    "at": 0,
+    "source": "SIM_RX"
+  },
+  "debugResult": "",
+  "debugBusy": false,
+  "benchBypass": false,
+  "hostLed": {
+    "pin": "onboard/GPIO21",
+    "on": false,
+    "mode": "OFF",
+    "gpioLevel": 1,
+    "source": "ESP_GPIO_CONTROL"
+  },
+  "patrolStatus": {
+    "robotActionsCompleted": 0,
+    "robotActionLimit": 5,
+    "robotAction": "",
+    "robotSlowFlash": false,
+    "robotFastApproach": false,
+    "interactionInitiator": "",
+    "action": "IDLE",
+    "touchSignalActive": false,
+    "confirmationStage": "NONE",
+    "confirmationRemainingMs": 0,
+    "nextAction": "",
+    "scanPhase": "NONE",
+    "targetId": 43,
+    "visionAgeMs": 4294967295,
+    "frameSeq": 0,
+    "tagStopWidth": 0.15,
+    "routeCount": 2,
+    "tagWidth": -1,
+    "targetIndex": 0,
+    "rounds": 0,
+    "selectedBehavior": "OBSERVE",
+    "interactionBranch": -1,
+    "lightPattern": -1,
+    "responseActive": false,
+    "responseName": "未选择",
+    "responseLight": -1,
+    "responseSound": -1,
+    "probeStep": 0,
+    "escape": "SLOW_STRAIGHT_ESCAPE",
+    "firstTouch": -1,
+    "multipleTouches": false,
+    "simultaneousDetection": false,
+    "touchSearchRequired": false,
+    "lastFault": "",
+    "lastMotionFailure": "",
+    "motorId": 0,
+    "motorConfirmed": false,
+    "motorRunning": false,
+    "minimumDrivePwm": 180,
+    "requestedLeftPwm": 0,
+    "requestedRightPwm": 0,
+    "leftPwm": 0,
+    "rightPwm": 0,
+    "scanId": 0,
+    "scanStep": 0,
+    "generation": 1,
+    "scanAngle": 0,
+    "scanAngleBasis": "MEAN_WHEEL_PULSES",
+    "scanMeanProgressConfirmed": false,
+    "tagScanMaxFrames": 3,
+    "tagScanSamples": 0,
+    "scanBudgetDegrees": 0,
+    "remainingApproachCm": 0,
+    "scanCapability": false,
+    "catFailure": {
+      "message": "",
+      "reason": "",
+      "at": 0,
+      "angle": 0
+    },
+    "unsupportedSettings": [
+      "farCatThresholdCm",
+      "catLeaveDistanceCm",
+      "finalSearchTimeoutMs",
+      "searchTimeoutMs",
+      "postEscapeWaitSeconds",
+      "centerTolerancePercent",
+      "alignPwm",
+      "catApproachStepCm",
+      "catConfirmWaitSeconds"
+    ],
+    "escapeStage": "NONE",
+    "escapeTargetCm": 0,
+    "escapeDistanceCm": 0,
+    "escapeTravelCm": 0,
+    "interactionId": 0,
+    "escapeRounds": 0,
+    "exploreRounds": 0,
+    "catDistance": -1,
+    "interactionExitReason": "",
+    "linkRecovering": false,
+    "linkRecoveryAttempt": 0,
+    "encoderLeftRpm": 0,
+    "encoderRightRpm": 0,
+    "catWidth": -1,
+    "settleElapsedMs": 0,
+    "settleQuietMs": 0,
+    "catCheckMaxFrames": 3,
+    "catCheckSamples": 0,
+    "settleSamples": 0,
+    "exploreElapsedMs": 0,
+    "exploreRemainingMs": 30000,
+    "remainingWaitMs": 0,
+    "departureElapsedMs": 0
+  },
+  "catPreview": {
+    "available": false,
+    "samples": []
+  },
+  "simVisionRequest": {
+    "scanId": 0,
+    "stepId": 0,
+    "generation": 0,
+    "mode": "OFF",
+    "pending": false
+  },
+  "lastUnoAgeMs": 4294967295,
+  "lastRx": "",
+  "lastTx": "C 26 GET_TELEMETRY*54",
+  "stopPendingId": 0,
+  "stopUnconfirmed": false,
+  "cameraOk": true,
+  "frameSeq": 757,
+  "heap": 33172,
+  "psram": 8168892,
+  "actualVisionMode": "OFF",
+  "visionMailbox": {
+    "oversize": 0,
+    "superseded": 0,
+    "rejected": 0,
+    "consumed": 0
+  },
+  "visionMode": "OFF",
+  "visionIntervalMs": 200,
+  "apIP": "192.168.4.1",
+  "stationIP": "0.0.0.0",
+  "network": {
+    "stationConnected": false,
+    "status": 6,
+    "rssiDbm": null,
+    "disconnects": 106,
+    "lastDisconnectReason": 36,
+    "lastDisconnectAt": 150467,
+    "reconnectAttempts": 5,
+    "sleepEnabled": false,
+    "controlMaxSockets": 9,
+    "streamMaxSockets": 4,
+    "sdkMaxSockets": 16,
+    "sharedHttpMaxSockets": 13,
+    "httpInternalSockets": 3,
+    "resetReason": 11,
+    "minFreeHeap": 33088,
+    "largestFreeBlock": 23540
+  },
+  "videoStream": {
+    "path": "/stream",
+    "maxClients": 4,
+    "workerReady": true,
+    "clients": []
+  },
+  "config": {
+    "explorationBranchPercent": 20,
+    "touchFlashPercent": 20,
+    "touchPreyPercent": 20,
+    "touchSlowEscapePercent": 40,
+    "touchFastEscapePercent": 40,
+    "catFollowProbePercent": 5,
+    "catFollowObservePercent": 35,
+    "catFollowPatrolPercent": 60,
+    "endingAfterRounds": 3,
+    "endingInactivitySeconds": 12,
+    "endingPatrolPercent": 40,
+    "endingSilentPercent": 30,
+    "endingSignalPercent": 30,
+    "captureWaitMaxSeconds": 15,
+    "captureCueFlashMs": 2200,
+    "captureCueBeepMs": 360,
+    "robotFarApproachPercent": 85,
+    "robotFarProbePercent": 15,
+    "robotNearSignalPercent": 100,
+    "robotNearObservePercent": 0,
+    "robotNearStayPercent": 0,
+    "catProbeCooldownSeconds": 15,
+    "robotProbeCooldownSeconds": 15,
+    "farCatThresholdCm": 40,
+    "initialLookSeconds": 5,
+    "postEscapeWaitSeconds": 10,
+    "touchDebounceMs": 1000,
+    "catLeaveDistanceCm": 70,
+    "catLeaveSeconds": 5,
+    "sessionLimitSeconds": 60,
+    "decisionIntervalMs": 2500,
+    "searchTimeoutMs": 15000,
+    "finalSearchTimeoutMs": 8000,
+    "alignTimeoutMs": 5000,
+    "touchReleaseTimeoutMs": 4000,
+    "searchPwm": 75,
+    "centerTolerancePercent": 20,
+    "alignPwm": 52,
+    "slowApproachCm": 9,
+    "slowApproachPwm": 95,
+    "probeStep1Cm": 3,
+    "probeStep2Cm": 4,
+    "probeStep3Cm": 3,
+    "probePause1Ms": 700,
+    "probePause2Ms": 900,
+    "probePause3Ms": 600,
+    "probePwm": 90,
+    "signalFlashMs": 1400,
+    "signalBeepMs": 180,
+    "touchFeedbackBeepMs": 180,
+    "escapeDistanceCm": 26,
+    "slowEscapePwm": 95,
+    "fastEscapePwm": 210,
+    "tagScanMaxFrames": 3,
+    "catCheckMaxFrames": 3,
+    "robotActionLimit": 5,
+    "robotFastApproachCm": 5,
+    "robotFastApproachPwm": 180,
+    "robotSlowFlashPercent": 100,
+    "tagCenterTolerancePercent": 20,
+    "catInteractionIdleSeconds": 12,
+    "catObserveTimeoutSeconds": 10,
+    "escapeMinDistanceCm": 23,
+    "escapeMaxDistanceCm": 23,
+    "catConfirmWaitSeconds": 2,
+    "catConfirmPreyPercent": 0,
+    "catConfirmExplorePercent": 0,
+    "escapePreyAfterRounds": 5,
+    "escapePreyPercent": 20,
+    "explorePreyMinimumSeconds": 30,
+    "explorePreyPercent": 20,
+    "minimumDrivePwm": 180,
+    "scanStepPulses": 2,
+    "scanMinimumMs": 800,
+    "scanQuietMs": 100,
+    "scanVisionTimeoutMs": 3000,
+    "scanSettleTimeoutMs": 3000,
+    "catSettleTimeoutMs": 6000,
+    "catApproachStepCm": 1,
+    "route": [
+      43,
+      46
+    ],
+    "patrolSearchPwm": 45,
+    "patrolAlignPwm": 30,
+    "wheelMm": 67.5,
+    "trackMm": 120,
+    "stopMarginCm": 3,
+    "tagStopWidth": 0.15,
+    "catNearWidth": 0.8,
+    "catFarWidth": 0.4,
+    "visionMaxAgeMs": 1500,
+    "frontAvoidanceEnabled": false,
+    "frontCalibrated": false,
+    "frontBlockBottom": 0.88,
+    "floorRoiTop": 0.75,
+    "floorDifferenceThreshold": 35,
+    "floorReference": []
+  },
+  "vision": null,
+  "cameraVision": null,
+  "droppedLogs": 5,
+  "logs": [
+    {
+      "seq": 6,
+      "ms": 3050,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 7,
+      "ms": 5885,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 8,
+      "ms": 5885,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 9,
+      "ms": 6003,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 10,
+      "ms": 7004,
+      "source": "SIM_TX",
+      "line": "C 2 GET_TELEMETRY*3E"
+    },
+    {
+      "seq": 11,
+      "ms": 8720,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 12,
+      "ms": 8721,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 13,
+      "ms": 11555,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 14,
+      "ms": 11556,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 15,
+      "ms": 12004,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 16,
+      "ms": 13005,
+      "source": "SIM_TX",
+      "line": "C 3 GET_TELEMETRY*8B"
+    },
+    {
+      "seq": 17,
+      "ms": 14389,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 18,
+      "ms": 14390,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 19,
+      "ms": 17224,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 20,
+      "ms": 17225,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 21,
+      "ms": 18005,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 22,
+      "ms": 19006,
+      "source": "SIM_TX",
+      "line": "C 4 GET_TELEMETRY*89"
+    },
+    {
+      "seq": 23,
+      "ms": 20060,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 24,
+      "ms": 20061,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 25,
+      "ms": 22895,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 26,
+      "ms": 22896,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 27,
+      "ms": 24006,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 28,
+      "ms": 25007,
+      "source": "SIM_TX",
+      "line": "C 5 GET_TELEMETRY*3C"
+    },
+    {
+      "seq": 29,
+      "ms": 25729,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 30,
+      "ms": 25729,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 31,
+      "ms": 28564,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 32,
+      "ms": 28565,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 33,
+      "ms": 30007,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 34,
+      "ms": 30216,
+      "source": "WIFI_RECONNECT",
+      "line": "station retry=1"
+    },
+    {
+      "seq": 35,
+      "ms": 31009,
+      "source": "SIM_TX",
+      "line": "C 6 GET_TELEMETRY*E4"
+    },
+    {
+      "seq": 36,
+      "ms": 31399,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 37,
+      "ms": 31399,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 38,
+      "ms": 34235,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 39,
+      "ms": 34236,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 40,
+      "ms": 36010,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 41,
+      "ms": 37011,
+      "source": "SIM_TX",
+      "line": "C 7 GET_TELEMETRY*51"
+    },
+    {
+      "seq": 42,
+      "ms": 37069,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 43,
+      "ms": 37070,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 44,
+      "ms": 39904,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 45,
+      "ms": 39905,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 46,
+      "ms": 42011,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 47,
+      "ms": 42739,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 48,
+      "ms": 42740,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 49,
+      "ms": 43013,
+      "source": "SIM_TX",
+      "line": "C 8 GET_TELEMETRY*E0"
+    },
+    {
+      "seq": 50,
+      "ms": 45573,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 51,
+      "ms": 45574,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 52,
+      "ms": 48014,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 53,
+      "ms": 48408,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 54,
+      "ms": 48409,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 55,
+      "ms": 49016,
+      "source": "SIM_TX",
+      "line": "C 9 GET_TELEMETRY*55"
+    },
+    {
+      "seq": 56,
+      "ms": 51244,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 57,
+      "ms": 51245,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 58,
+      "ms": 54017,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 59,
+      "ms": 54080,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 60,
+      "ms": 54080,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 61,
+      "ms": 55019,
+      "source": "SIM_TX",
+      "line": "C 10 GET_TELEMETRY*E5"
+    },
+    {
+      "seq": 62,
+      "ms": 56913,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 63,
+      "ms": 56913,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 64,
+      "ms": 59748,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 65,
+      "ms": 59749,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 66,
+      "ms": 60019,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 67,
+      "ms": 60216,
+      "source": "WIFI_RECONNECT",
+      "line": "station retry=2"
+    },
+    {
+      "seq": 68,
+      "ms": 61021,
+      "source": "SIM_TX",
+      "line": "C 11 GET_TELEMETRY*50"
+    },
+    {
+      "seq": 69,
+      "ms": 62583,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 70,
+      "ms": 62584,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 71,
+      "ms": 65418,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 72,
+      "ms": 65418,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 73,
+      "ms": 66022,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 74,
+      "ms": 67023,
+      "source": "SIM_TX",
+      "line": "C 12 GET_TELEMETRY*88"
+    },
+    {
+      "seq": 75,
+      "ms": 68253,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 76,
+      "ms": 68253,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 77,
+      "ms": 71088,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 78,
+      "ms": 71089,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 79,
+      "ms": 72023,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 80,
+      "ms": 73024,
+      "source": "SIM_TX",
+      "line": "C 13 GET_TELEMETRY*3D"
+    },
+    {
+      "seq": 81,
+      "ms": 73924,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 82,
+      "ms": 73925,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 83,
+      "ms": 76759,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 84,
+      "ms": 76760,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 85,
+      "ms": 78024,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 86,
+      "ms": 79025,
+      "source": "SIM_TX",
+      "line": "C 14 GET_TELEMETRY*3F"
+    },
+    {
+      "seq": 87,
+      "ms": 79593,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 88,
+      "ms": 79593,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 89,
+      "ms": 82429,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 90,
+      "ms": 82430,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 91,
+      "ms": 84026,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 92,
+      "ms": 85027,
+      "source": "SIM_TX",
+      "line": "C 15 GET_TELEMETRY*8A"
+    },
+    {
+      "seq": 93,
+      "ms": 85263,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 94,
+      "ms": 85263,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 95,
+      "ms": 88099,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 96,
+      "ms": 88100,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 97,
+      "ms": 90028,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 98,
+      "ms": 90217,
+      "source": "WIFI_RECONNECT",
+      "line": "station retry=3"
+    },
+    {
+      "seq": 99,
+      "ms": 90933,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 100,
+      "ms": 90934,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 101,
+      "ms": 91029,
+      "source": "SIM_TX",
+      "line": "C 16 GET_TELEMETRY*52"
+    },
+    {
+      "seq": 102,
+      "ms": 93768,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 103,
+      "ms": 93768,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 104,
+      "ms": 96030,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 105,
+      "ms": 96604,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 106,
+      "ms": 96605,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 107,
+      "ms": 97032,
+      "source": "SIM_TX",
+      "line": "C 17 GET_TELEMETRY*E7"
+    },
+    {
+      "seq": 108,
+      "ms": 99438,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 109,
+      "ms": 99439,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 110,
+      "ms": 102033,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 111,
+      "ms": 102273,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 112,
+      "ms": 102274,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 113,
+      "ms": 103035,
+      "source": "SIM_TX",
+      "line": "C 18 GET_TELEMETRY*56"
+    },
+    {
+      "seq": 114,
+      "ms": 105107,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 115,
+      "ms": 105108,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 116,
+      "ms": 107942,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 117,
+      "ms": 107943,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 118,
+      "ms": 108035,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 119,
+      "ms": 109036,
+      "source": "SIM_TX",
+      "line": "C 19 GET_TELEMETRY*E3"
+    },
+    {
+      "seq": 120,
+      "ms": 110778,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 121,
+      "ms": 110779,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 122,
+      "ms": 113613,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 123,
+      "ms": 113614,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 124,
+      "ms": 114036,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 125,
+      "ms": 115037,
+      "source": "SIM_TX",
+      "line": "C 20 GET_TELEMETRY*E3"
+    },
+    {
+      "seq": 126,
+      "ms": 116447,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 127,
+      "ms": 116448,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 128,
+      "ms": 119282,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 129,
+      "ms": 119282,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 130,
+      "ms": 120038,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 131,
+      "ms": 120217,
+      "source": "WIFI_RECONNECT",
+      "line": "station retry=4"
+    },
+    {
+      "seq": 132,
+      "ms": 121040,
+      "source": "SIM_TX",
+      "line": "C 21 GET_TELEMETRY*56"
+    },
+    {
+      "seq": 133,
+      "ms": 122118,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 134,
+      "ms": 122119,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 135,
+      "ms": 124953,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 136,
+      "ms": 124954,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 137,
+      "ms": 126040,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 138,
+      "ms": 127041,
+      "source": "SIM_TX",
+      "line": "C 22 GET_TELEMETRY*8E"
+    },
+    {
+      "seq": 139,
+      "ms": 127787,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 140,
+      "ms": 127787,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 141,
+      "ms": 130623,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 142,
+      "ms": 130624,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 143,
+      "ms": 132042,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 144,
+      "ms": 133043,
+      "source": "SIM_TX",
+      "line": "C 23 GET_TELEMETRY*3B"
+    },
+    {
+      "seq": 145,
+      "ms": 133457,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 146,
+      "ms": 133458,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 147,
+      "ms": 136293,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 148,
+      "ms": 136293,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 149,
+      "ms": 138043,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 150,
+      "ms": 139044,
+      "source": "SIM_TX",
+      "line": "C 24 GET_TELEMETRY*39"
+    },
+    {
+      "seq": 151,
+      "ms": 139128,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 152,
+      "ms": 139129,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 153,
+      "ms": 141963,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 154,
+      "ms": 141964,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 155,
+      "ms": 144044,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 156,
+      "ms": 144798,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 157,
+      "ms": 144799,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 158,
+      "ms": 145046,
+      "source": "SIM_TX",
+      "line": "C 25 GET_TELEMETRY*8C"
+    },
+    {
+      "seq": 159,
+      "ms": 147632,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 160,
+      "ms": 147633,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 161,
+      "ms": 150047,
+      "source": "TELEMETRY_TIMEOUT",
+      "line": "retry in 2s"
+    },
+    {
+      "seq": 162,
+      "ms": 150218,
+      "source": "WIFI_RECONNECT",
+      "line": "station retry=5"
+    },
+    {
+      "seq": 163,
+      "ms": 150467,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=201; AP remains available"
+    },
+    {
+      "seq": 164,
+      "ms": 150467,
+      "source": "WIFI_DISCONNECTED",
+      "line": "reason=36; AP remains available"
+    },
+    {
+      "seq": 165,
+      "ms": 151048,
+      "source": "SIM_TX",
+      "line": "C 26 GET_TELEMETRY*54"
+    }
+  ],
+  "logSeq": 165,
+  "logsFromSeq": 6
+}

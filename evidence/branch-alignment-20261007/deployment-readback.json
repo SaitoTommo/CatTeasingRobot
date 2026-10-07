@@ -1,0 +1,19 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+  "phase": "IDLE",
+  "mode": "SIM_UNO",
+  "previousConfigKeyCount": 95,
+  "configDifferences": [],
+  "cameraDifferences": [],
+  "newConfigKeys": [
+    "tagLossGraceMs",
+    "tagRecoveryAngleDeg"
+  ],
+  "hasGroundReferenceChangedAt": true,
+  "stopUnconfirmed": false,
+  "calibration": {
+    "flag": false,
+    "referenceLength": 0,
+    "frontAvoidanceEnabled": false
+  }
+}

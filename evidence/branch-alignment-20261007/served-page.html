@@ -1,0 +1,661 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>ESP32 猫互动上位机</title>
+<style>body{font:16px system-ui;background:#eef3f1;color:#152c28;margin:24px;max-width:1300px}section{background:white;padding:20px;border-radius:16px;margin:16px 0}button,input,select,textarea{font:inherit;padding:8px;margin:4px}button{cursor:pointer;background:#dbeee7;border:1px solid #87afa0;border-radius:8px}pre{white-space:pre-wrap;max-height:360px;overflow:auto;background:#102923;color:#b9eedc;padding:14px}img{max-width:100%;width:640px}label{display:inline-block}h1{font-size:25px}.stop{background:#ffd4c7}textarea{width:90%;height:120px}</style>
+<h1>ESP32-S3 Sense · 猫互动上位机</h1><p>HTTP 视频与板载识别；关闭网页后控制循环继续。UART 模式需要真实 Uno 接线。测试注入标记为 SIM。</p>
+<style>.mode-buttons button{font-size:20px;font-weight:bold;padding:16px}.mode-buttons button[aria-pressed=true]{background:#145c46;color:white;border:3px solid #082f23}.sensor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.sensor-grid article{background:#eef3f1;border-radius:8px;padding:12px}.sensor-grid p{white-space:pre-line}.sensor-grid .stale{color:#9b481d}.sensor-grid small{color:#526860}button:disabled{opacity:.45;cursor:default}</style>
+<main><div class="workspace-grid" id="primaryWorkspace"><section id="sensorPanel"><h2>Arduino 传感器与输出回报</h2><p>每项单独计时，超过 2.5 秒标为过期。前向避障由 ESP 视觉与开关决定；Uno 前向行仅保留旧协议回读，不参与电机门禁。物理输入、测试注入和关闭状态在读数中标明。</p><div id="sensors" class="sensor-grid"></div></section><section id="controlPanel"><h2>Arduino 串口通路</h2><div class="mode-buttons"><button id="simMode" aria-pressed="false" onclick="switchMode('SIM_UNO')">Simulated UART · 模拟</button><button id="realMode" aria-pressed="false" onclick="switchMode('UART')">Real UART · 真机</button></div><p id="connection" role="status">正在读取板子实际模式…</p><p>切换会停止当前策略与电机；模式选中状态以 ESP32 回读为准。模拟模式需要电脑模拟器提供回报。</p><button onclick="ctl('start')">启动巡游</button><button id="frontAvoidance" aria-pressed="false" onclick="toggleFrontAvoidance()" disabled>前向避障：读取中</button><p id="frontAvoidanceStatus" role="status"></p><button onclick="ctl('alert')">主动找猫（无需先巡游）</button><button class="stop" onclick="ctl('stop')">停止策略与电机</button><button onclick="ctl('resume')">现场确认后恢复</button><button id="exportLocalLogs" onclick="exportLocalLogs()">导出本地全部日志</button><details><summary>浏览器本地日志历史</summary><p id="localLogStatus" role="status">正在读取本地日志…</p><p>仅保存本页面收到的记录。存储属于当前浏览器及网页地址；切换 ESP 地址、浏览器或清除网站数据会影响读取。网页关闭期间不会收集新日志；当前页面保持打开时，ESP 断线也能导出。</p><pre id="localLogs"></pre></details><p id="patrolLive" role="status">即时流程状态：正在读取…</p><p id="patrolProgress" role="status"></p><pre id="patrolTransitions" role="status"></pre><p>电机命令栏显示当前请求；实际引脚输出见下方电机回报。lastTx 和滚动日志是历史发送记录。</p><details><summary>完整设备状态</summary><pre id="status">正在连接…</pre></details></section><section id="cameraPanel"><h2>摄像头与识别</h2><details><summary>调整摄像头参数（猫与标签共用）</summary><p>画面固定 320×240。0 表示关闭、1 表示开启；手动曝光和手动增益在对应自动控制关闭后生效。回读是驱动配置，自动模式下实时曝光数值不由它测量。调整后空地外观参考失效，需要重新采集。</p><div class="sensor-grid" id="cameraSettingsFields"></div><button id="applyCameraSettings" onclick="applyCameraSettings()" disabled>应用并保存到 ESP</button><button id="resetCameraSettings" onclick="applyCameraSettings(true)" disabled>恢复本机启动默认参数并保存</button><p id="cameraSettingsStatus" role="status"></p><details><summary>板上摄像头参数回读</summary><pre id="cameraReadback"></pre></details></details><button onclick="send({op:'vision_mode',mode:'OFF'})">仅预览（默认）</button><button onclick="send({op:'vision_mode',mode:'TAGS'})">只识别标签</button><button onclick="send({op:'vision_mode',mode:'CAT'})">只识别猫</button><button onclick="send({op:'vision_mode',mode:'BOTH'})">猫与标签</button><p>上电默认关闭推理，预览约 5fps；每次识别后休息 0.2 秒，两次识别启动至少间隔 0.35 秒。实际更新间隔包含识别耗时。自主搜索由停车后的新帧请求控制；慢接近猫时只在短距离行进并停稳后识别猫，界面选 CAT/BOTH 也不会开启行进中的猫识别。标签靠近自动持续 TAGS；视频独立。</p><div class="preview-controls"><label><input id="showPreview" type="checkbox" checked onchange="previewOptionsChanged()">显示预览</label><label><input id="showCatBox" type="checkbox" checked onchange="previewOptionsChanged()">显示猫框</label><label>画面 <select id="previewSource" onchange="previewOptionsChanged()"><option value="processed">识别原图（带框）</option><option value="live">实时视频</option></select></label></div><p id="previewVisibility" role="status"></p><p id="catWidthLive" role="status">猫框宽度：等待识别</p><p id="tagWidthLive" role="status">目标标签宽度：等待识别</p><p id="catDetected" role="status">等待猫识别…</p><img id="video" alt="摄像头实时预览"><canvas id="catPreviewCanvas" width="320" height="240" style="display:none" aria-label="猫识别原图和检测框"></canvas><p id="previewFrame"></p><div class="preview-performance"><h3>每次识别耗时</h3><p id="catPreviewPerformance" role="status">等待猫识别…</p><pre id="catPreviewTimes"></pre><p class="muted">解码、推理与总处理均由 ESP32 计时；不含网络传输和浏览器画框。全部本地处理。</p></div><details><summary>识别原始回报</summary><pre id="vision"></pre></details><p>猫框和 AprilTag 来自板载检测；无检测不代表猫离开。前方没有深度传感器，未标定默认 INVALID。</p><p id="groundCalibrationLive" role="status">地面标定状态：等待读取</p><button onclick="send({op:'calibrate_front'})">现场确认空地后采集地面参考（先停止）</button><p>实验性前向外观检查：图像下方、中央一半为警戒区域。需把摄像头固定到实车，在 15cm 标尺位置调整 floorRoiTop。同色障碍可能漏检，尚不能视为已验证的实车避障。重新安装或改变光照后重新标定。</p></section></div><h2 class="row-heading">配置与参数</h2><div class="settings-grid" id="settingsWorkspace"><div class="settings-column"><section><h2>巡游路线与策略参数</h2><label>按顺序循环的 tag36h11 ID 数组 <input id="route" size="42" placeholder="填写你自己的标签 ID 数组"></label><button onclick="saveRoute()">保存路线</button><p>1–128 个路线节点，ID 0–586；可重复访问同一编号。数量和顺序由你保存的数组决定；找到目标并达到停止宽度后停车，停车确认后寻找下一个，末尾回到首个节点。同一编号重复节点需等待它消失或宽度退到停车阈值的 80% 以下再重新计到达。找到与停车宽度是两个判断；找猫和找标签均最多搜索两圈。<span id="savedRoute"></span></p><p><label>标签停车宽度占画面的百分比 <input id="tagStopPercent" type="number" min="2" max="90" step="0.1"></label><button id="saveTagStopWidth" onclick="saveTagStopWidth()" disabled>保存停车宽度</button><span id="tagWidthStatus"></span> 标签出现即算找到；这个百分比只决定停车。</p><p><label>旧猫居中容差（已停用） <input id="centerPercent" type="number" min="1" max="20" step="0.1"></label><button id="saveCenterTolerance" onclick="saveCenterTolerance()" disabled>保存居中容差</button><span id="centerStatus"></span></p><p><label>标签居中容差（标签中心左右各 ±%） <input id="tagCenterPercent" type="number" min="1" max="20" step="0.1"></label><button id="saveTagCenterTolerance" onclick="saveTagCenterTolerance()" disabled>保存标签居中容差</button><span id="tagCenterStatus"></span></p><p><label>每次停稳最多识别标签次数 <input id="tagScanMaxFrames" type="number" min="1" max="10" step="1" disabled></label><button id="saveTagScanChecks" onclick="saveTagScanChecks()" disabled>保存标签识别次数</button><span id="tagScanStatus" role="status"></span></p><p>每次使用新画面寻找当前路线标签；找到立即结束本步，未找到则保持停车继续识别，达到次数上限再转下一步。识别无效或超时仍会停止搜索。</p><p><label>接近标签漏检宽限（毫秒） <input id="tagLossGraceMs" type="number" min="0" max="3000" step="1" disabled></label><label>猫与标签首次局部恢复转向（度） <input id="tagRecoveryAngleDeg" type="number" min="20" max="120" step="0.1" disabled></label><button id="saveTagRecovery" onclick="saveTagRecovery()" disabled>保存标签恢复参数</button><span id="tagRecoveryStatus" role="status"></span></p><p>有效新画面暂时没找到标签时，已确认的直行可保持到宽限结束；无效画面仍立即停车。随后停稳多帧复核，确认丢失后先按标签最后位置局部寻找，再反向寻找，最后使用剩余搜索预算。三个阶段合计最多约两圈。</p><p id="catRecoveryLive" role="status"></p><p id="tagRecoveryLive" role="status"></p><p>标签居中容差判断左右方向，标签停车宽度判断到达距离；猫框宽度判断远近，找猫不检测居中。</p><details><summary>按摄像头视场角换算居中范围</summary><label>换算应用到 <select id="centerTarget"><option value="TAG">标签居中容差</option></select></label><label>水平视场角（度） <input id="centerFov" type="number" min="1" max="179" step="0.1"></label><label>允许偏离光轴（左右各 ±度） <input id="centerAngle" type="number" min="0.1" max="89" step="0.1"></label><button id="convertCenterAngle" onclick="convertCenterAngle()" disabled>换算到居中容差</button><p id="centerConversion"></p><p>按实际镜头水平视场角填写，不能用对角视场角代替。换算采用针孔模型近似，镜头畸变和裁切会影响结果；最终以实际画面标定。只保存居中百分比，辅助角度本身不保存。居中范围与标签停车宽度分别控制方向和到达距离。</p></details><details><summary>全部策略与几何参数</summary><textarea id="settings"></textarea><button onclick="saveConfig()">保存参数（先停止）</button><p>catNearWidth、catFarWidth、tagStopWidth 是归一化框宽，需现场标定；frontCalibrated 默认 false，不能把视频显示成功当作避障已有效。scanStepPulses 是每步编码器脉冲；scanMinimumMs/scanQuietMs 控制停稳等待；scanVisionTimeoutMs 是单次扫描／复核窗口的新画面等待上限。catCheckMaxFrames 默认 3，可选 1–3；SETTLE 后的 CAT_CHECK 任一次找到即通过，全部有效画面未找到才按原流程处理；补测期间保持停车，无效或超时则故障停车。CAT_CONFIRM 的等待与取帧规则暂时保留。catApproachStepCm 为慢接近分段上限；厘米猫距离 farCatThresholdCm/catLeaveDistanceCm 及旧 searchTimeoutMs/finalSearchTimeoutMs 不用于当前 ESP 控制，请用宽度和新扫描参数。改变 floorRoiTop 后地面参考失效，必须重新采集。</p></details></section>
+<section><h2>巡逻转向速度</h2><label>搜索标签 PWM <input id="patrolSearchPwm" type="number" min="30" max="150" step="1" value="45"></label><label>对准标签 PWM <input id="patrolAlignPwm" type="number" min="30" max="150" step="1" value="30"></label><button id="savePatrolTurns" onclick="savePatrolTurns()" disabled>保存转速</button><p>数值越小，转向越慢。先停止巡游再保存，保存后重新启动测试；参数保存在板子上，重启后保留。</p><p id="patrolTurnStatus" role="status">正在读取当前转速。</p></section>
+<section><h2>停车后识别等待时间</h2><label>停车后至少等待（毫秒） <input id="scanMinimumMs" type="number" min="50" max="3000" step="1" disabled></label><button id="saveScanWait" onclick="saveScanWait()" disabled>保存等待时间</button><p id="scanWaitStatus" role="status">正在读取板上保存值。</p><p>范围 50–3000 毫秒，1000 毫秒就是 1 秒。找猫、找标签扫描，以及猫的停稳识别均使用此等待时间；还需满足编码器安静条件。先确认停车再保存，重启保留。必要时保存会同步延长停稳超时上限，避免还未等够就超时。</p></section></div><div class="settings-column"><section><h2>主动找猫：靠近与声光概率</h2><p>用于“主动找猫（无需先巡游）”找到猫后的行为；触碰发起的追逃概率仍在“猫互动配置”中设置。猫远近由下方猫框宽度阈值判断；主动找猫与触碰找猫共用停稳确认，找到猫即可，不检测居中。主动互动找到猫后按完成行为次数退出；猫丢失时静止观察，继续完成次数。追逐观察仍使用猫退出确认时间，重新检出猫清零计时。</p><div id="robotConfigFields"></div><button id="saveRobotSettings" onclick="saveRobotSettings()" disabled>保存主动找猫配置</button><p id="robotConfigStatus"></p><p id="robotLiveStatus"></p><p>远处快→慢／三段试探概率合计100%；近处或接近完成后声光／观察／静止概率合计100%。完整快速接近、缓慢接近、三段试探、声光或观察各计一个动作；短步进、停车复核和动作间等待不计数，默认完成5个行为返回巡游；找到猫后有效无猫不再提前退出，未完成的运动不计次数，改为静止观察继续完成行为。触碰攻击会切入被猫触发互动，运动和通信保护仍可中断。快接近到非远处阈值或距离上限后切慢接近；慢接近按独立概率并行闪灯，各短段结束关灯，下一段继续，不占额外动作。试探冷却时回退到快→慢。修改参数前先停车，保存后回读，重启保留。</p></section>
+<section><h2>最低驱动 PWM</h2><label>非零运动的 PWM 下限 <input id="minimumDrivePwm" type="number" min="1" max="255" step="1" value="140" disabled></label><button id="saveMinimumDrivePwm" onclick="saveMinimumDrivePwm()" disabled>保存最低 PWM</button><p id="minimumDrivePwmStatus" role="status">正在读取板上保存值。</p><p>按当前供电调整，范围 1–255，初始值 140。先确认停车再保存，保存后后续动作立即生效，ESP 重启保留。请求 95、下限 140 时实际下发 140；正反方向不变，PWM 0 仍然停车。巡游、找猫、扫描和手动测试均使用这个下限；要测试更低 PWM，先降低此下限。</p></section></div><div class="settings-column"><section><h2>猫互动配置</h2><p>猫比例＝猫框宽度÷画面宽度。远处阈值必须小于近处阈值；先停车再保存。装死时 MazeBot 灯条由遥控器控制。</p><div id="catConfigFields"></div><button id="saveCatSettings" onclick="saveCatSettings()" disabled>保存猫互动配置</button><p id="catConfigStatus"></p><p id="catProgress"></p><p>探索按每次新按压回应，长按不重复。灯光：不亮、常亮、慢闪、双闪；声音：静音、长响、两声短响、三声短响。两两组合共 15 种，排除不亮且静音；随机顺序用完再重选，相邻不重复。板载灯模拟灯带节奏。</p></section>
+<section><h2>Arduino 限制与几何参数</h2><p id="unoConfigStatus">等待 GET_CONFIG 回报…</p><label>左侧净空 cm <input id="safeLeft" type="number" min="1" max="100" step="0.1"></label><label>右侧净空 cm <input id="safeRight" type="number" min="1" max="100" step="0.1"></label><label>轮径 mm <input id="unoWheel" type="number" min="20" max="150" step="0.1"></label><label>轮距 mm <input id="unoTrack" type="number" min="50" max="300" step="0.1"></label><button id="saveUno" onclick="saveUnoConfig()" disabled>应用到 Arduino 并回读</button><button class="test" onclick="manual('config')">重新读取</button><p>净空范围 1–100 cm；无效或过期测距不会触发 Uno 超声波停车，轮径 20–150 mm，轮距 50–300 mm。逐项等待 Arduino 确认；失败时可能已有部分参数生效，请重新读取核对。当前 Uno 协议在 RAM 中保存这些参数，Arduino 重启后恢复固件默认值。轮径、轮距须与 ESP 策略参数匹配才能巡游。触碰规则仍由 Uno 执行。最低驱动 PWM 在下方 ESP 设置中调整，不需要修改 Uno 固件。</p></section>
+<section><h2>Wi-Fi</h2><input id="ssid" placeholder="2.4GHz Wi-Fi 名称"><input id="password" type="password" placeholder="密码"><button onclick="send({op:'wifi',ssid:ssid.value,password:password.value})">接入 Wi-Fi（保留热点）</button></section></div></div><h2 class="row-heading">动作测试与串口调试</h2><div class="diagnostics-grid"><section><h2>Arduino 动作与输出测试</h2><p id="testMode">正在读取模式…</p><label>测试 PWM <input id="testPwm" type="number" min="1" max="255" step="1" value="150"></label><label>时长 ms <input id="testDuration" type="number" min="50" max="2000" step="1" value="300"></label><div><button id="benchBypass" class="test" aria-pressed="false" onclick="toggleBench()">开启测试：绕过全部避障</button><p id="benchStatus" role="status">正在读取测试避障状态…</p></div><div><button class="test" onclick="manual('forward')">前进</button><button class="test" onclick="manual('backward')">后退</button><button class="test" onclick="manual('left')">左转</button><button class="test" onclick="manual('right')">右转</button><button class="stop" onclick="manual('stop')">停止并锁定会话</button></div><div><button class="test" onclick="manual('left_forward')">左轮正转</button><button class="test" onclick="manual('left_reverse')">左轮反转</button><button class="test" onclick="manual('right_forward')">右轮正转</button><button class="test" onclick="manual('right_reverse')">右轮反转</button></div><div><button class="test" onclick="manual('unlock')">解锁测试会话</button><button id="localLedOn" class="local-led" onclick="manual('led_on')">ESP LED 亮</button><button id="localLedOff" class="local-led" onclick="manual('led_off')">ESP LED 灭</button><button class="test" onclick="manual('beep')">Uno 蜂鸣 180ms</button><button class="test" onclick="manual('ping')">PING</button><button class="test" onclick="manual('status')">查询状态</button><button class="test" onclick="manual('config')">读取 Arduino 配置</button><button class="test" onclick="manual('telemetry')">读取传感器</button></div><p>先停止巡游。打开“绕过全部避障”后，前进、后退、转向和单轮测试忽略前向标定、左右超声波和触碰；每次只运行设定时长，结束后停车并锁定会话。失速停车与急停仍保留。此开关只影响手动测试，自动巡游保留避障；上电、串口模式切换或 Uno 重启后恢复避障。PWM 会应用下方的最低驱动 PWM 设置；实际输出请看电机读数。蜂鸣器测试需先解锁；LED 开关直接控制 ESP，不发送 Uno 串口命令，也无需解锁；LED 由 ESP 板载灯显示，蜂鸣器由 Uno D13 控制。</p><p id="debugResult" role="status"></p><p id="hostLed">正在读取 ESP LED 控制状态…</p></section><section><h2>Uno 接收与发送调试</h2><input id="raw" size="50" placeholder="GET_STATUS"><button id="rawSend" onclick="send({op:'command',command:$('raw').value})">发送 Uno 命令</button><p>真实 UART：D6/GPIO43 → 电平转换 → Uno D12 软件接收；Uno D1/TX → 电平转换 → D7/GPIO44，共地，57600 波特。发送成功只表示命令入队，执行结果请查看 AK / DONE / ERROR 和传感器回报。</p><p>Uno V5.9 诊断：默认每秒简短心跳；详细模式增加命令进入/退出及遥测分段标记。日志中的 EVENT DIAG S 后为十进制步骤和命令编号；H 心跳字段为十六进制，含计时、循环数、最大循环毫秒、遥测编号、分段、等待位、RX 溢出、丢弃命令数。</p><button class="test" onclick="send({op:'command',command:'DEBUG_DIAG 2'})">详细流程诊断</button><button class="test" onclick="send({op:'command',command:'DEBUG_DIAG 1'})">仅诊断心跳</button><button class="test" onclick="send({op:'command',command:'DEBUG_DIAG 0'})">关闭诊断输出</button><pre id="logs"></pre></section></div><section id="performancePanel"><h2>猫识别性能测试（实验分支）</h2><p>现有巡游、主动找猫、串口及动作测试可照常使用。开启后运动和静止期间均持续检测猫；状态机指定的新帧识别优先，测试结果不替代停车复核。高负载可能影响网页和串口响应，请同时观察。设置仅本次上电有效。</p><label>识别完成后的空隙 ms <input id="benchGap" type="number" min="0" max="5000" step="1" value="200" oninput="benchDraft=true"></label><label>采集后的空隙 ms <input id="benchCaptureGap" type="number" min="0" max="2000" step="1" value="200" oninput="benchDraft=true"></label><button onclick="setBench(true)">开启 / 应用间隔</button><button onclick="setBench(false)">关闭测试</button><button onclick="setBench(true,true)">清空并重新计时</button><button onclick="exportBench()">导出逐次耗时 CSV</button><p>0 表示无额外定时空隙，仍等待新帧并让出 CPU；采集空隙也设为 0 才能解除原 5fps 限制。整次处理包含解码、推理和后处理，不含 HTTP 传输；模型推理单独计时。此处保留性能测试原图；右上角识别预览独立运行，无需开启性能测试。图片刷新速度不等同设备识别帧率。</p><canvas id="benchCanvas" width="320" height="240" style="display:none;width:640px;max-width:100%;background:#102923"></canvas><p id="benchFrame"></p><pre id="benchMetrics"></pre><pre id="benchTimes"></pre></section></main>
+
+<style>
+body{margin:0 auto;padding:24px;max-width:1800px;box-sizing:border-box}h1{margin:0 0 8px}h2{font-size:20px;margin:0 0 16px}h3{font-size:16px}p{line-height:1.6}section{margin:0;padding:18px;border:1px solid #d5e2dc;min-width:0}button,input,select,textarea{box-sizing:border-box;max-width:100%}button{margin:4px 2px}pre{font-size:12px;max-height:240px;overflow-wrap:anywhere;border-radius:8px}img,canvas{width:100%;max-width:100%;height:auto;border-radius:10px;background:#102923}label{display:block;font-size:14px;margin:8px 0}label input{width:100%;margin:4px 0}label input[type=checkbox]{width:auto}textarea{width:100%;font-size:12px}details{margin:12px 0}summary{cursor:pointer;color:#315e50}.workspace-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.05fr) minmax(0,1.15fr);gap:16px;align-items:start}.settings-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}.settings-column{display:grid;gap:16px;min-width:0}.diagnostics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}.row-heading{margin:28px 0 14px}.sensor-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sensor-grid article{padding:10px;font-size:13px}.sensor-grid p{margin:6px 0}.mode-buttons{display:flex;flex-wrap:wrap;gap:6px}.mode-buttons button{font-size:16px;padding:12px;flex:1}.preview-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.preview-controls label{margin:0}#catDetected{padding:10px 12px;border-radius:8px;background:#eef3f1}.detected{color:#126840;font-weight:600}.muted{color:#60746c;font-size:13px}#catPreviewTimes{max-height:160px}#catPreviewPerformance{font-variant-numeric:tabular-nums;font-size:14px}.preview-performance{padding:12px;background:#f1f6f3;border-radius:10px;margin-top:12px}#robotConfigFields,#catConfigFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}#performancePanel{margin-top:16px}
+@media(max-width:1100px){body{padding:12px}.workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#sensorPanel{grid-column:1/-1;grid-row:2}.sensor-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.settings-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.workspace-grid,.settings-grid,.diagnostics-grid{grid-template-columns:1fr}#sensorPanel{grid-column:auto;grid-row:auto}.sensor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mode-buttons button{font-size:14px}.row-heading{margin-top:22px}}
+</style><script>
+// TB v1: 50 little-endian bytes, split into three bounded CRC-protected frames.
+function compactCrc(text) {
+  let crc = 0;
+  for (const c of text) { crc ^= c.charCodeAt(0); for (let i=0;i<8;i++) crc=((crc<<1)^(crc&128?7:0))&255; }
+  return crc.toString(16).padStart(2,'0').toUpperCase();
+}
+function expandSnapshot(bytes, id) {
+  const v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(bytes.length!==50||bytes[0]!==1||bytes[5]>15||v.getUint16(6,true)>16383||bytes[16]>15||bytes[17]>3||bytes[42]>3||bytes[43]>3||bytes[44]>15||bytes[45]>15||bytes[46]>15||bytes[47]>7) return null;
+  const bit=(x,b)=>(x>>b)&1, io=b=>bit(v.getUint16(6,true),b), i16=o=>v.getInt16(o,true), u32=o=>v.getUint32(o,true), dist=o=>(i16(o)/10).toFixed(1);
+  if (![26,30].every(o=>Number.isFinite(v.getFloat32(o,true))&&v.getFloat32(o,true)>=0)) return null;
+  const rows=[], row=(kind,...a)=>rows.push(`DATA ${id} HW ${kind} ${a.join(' ')}`);
+  row('STATE',u32(1),bit(bytes[5],0)?'STOPPED':bit(bytes[5],1)?'MOVING':'IDLE',bit(bytes[5],2),bit(bytes[5],3),v.getUint16(6,true));
+  for(let s=0;s<2;s++) row(s?'MR':'ML',i16(8+s*2),i16(12+s*2),Math.abs(i16(12+s*2)),io(s),bit(bytes[16],s*2),bit(bytes[16],s*2+1));
+  for(let s=0;s<2;s++) row(s?'ER':'EL',io(8+s),io(8+s)?bit(bytes[17],s):-1,u32(18+s*4),v.getFloat32(26+s*4,true).toFixed(1),io(8+s)?'P':bit(bytes[5],3)&&!io(s)?'V':'O');
+  for(let s=0;s<2;s++) row(s?'SR':'SL',io(4+s),io(6+s),io(6+s)?bit(bytes[42],s):-1,dist(34+s*4),dist(36+s*4),bit(bytes[43],s)?'I':io(4+s)&&io(6+s)?'P':'O');
+  for(let s=0;s<4;s++) row('T',['TOP','LEFT','RIGHT','REAR'][s],io(10+s),io(10+s)?bit(bytes[44],s):-1,bit(bytes[45],s),bit(bytes[46],s)?'I':io(10+s)?'P':'O');
+  row('OUT',io(2),bit(bytes[47],0),-1,io(3),bit(bytes[47],1),bit(bytes[47],2));
+  row('FRONT',dist(48),bit(bytes[5],3)?'TEST':'HOST');
+  return rows;
+}
+class CompactTelemetry {
+  reset(){this.id=0;this.parts=[];this.at=0;}
+  constructor(){this.reset();}
+  accept(raw,now){
+    const match=/^(TB (\d+) ([012]) ([0-9A-F]+)|DONE (\d+) TELEMETRY)\*([0-9A-Fa-f]{2})$/.exec(raw.trim());
+    if(!match) return null;
+    if(compactCrc(match[1])!==match[6].toUpperCase()){this.reset();return null;}
+    if(this.id&&now-this.at>5000)this.reset();
+    if(match[5]){
+      if(Number(match[5])!==this.id||this.parts.filter(Boolean).length!==3){this.reset();return null;}
+      const bytes=Uint8Array.from(this.parts.join('').match(/../g),x=>parseInt(x,16)),id=this.id;
+      this.reset();return expandSnapshot(bytes,id);
+    }
+    const id=Number(match[2]),part=Number(match[3]),hex=match[4];
+    if(!id||id>65535||hex.length!==(part===2?32:34)){this.reset();return null;}
+    if(id!==this.id){this.reset();this.id=id;this.at=now;}
+    if(this.parts[part]&&this.parts[part]!==hex){this.reset();return null;}
+    this.parts[part]=hex;return null;
+  }
+}
+const IO_CHANNELS = ["MOTOR_LEFT", "MOTOR_RIGHT", "LED", "BUZZER", "SONAR_LEFT_TRIG", "SONAR_RIGHT_TRIG", "SONAR_LEFT_ECHO", "SONAR_RIGHT_ECHO", "ENCODER_LEFT", "ENCODER_RIGHT", "TOUCH_TOP", "TOUCH_LEFT", "TOUCH_RIGHT", "TOUCH_REAR"];
+const lengths = { STATE: 5, ML: 6, MR: 6, EL: 5, ER: 5, SL: 6, SR: 6, T: 5, OUT: 6, FRONT: 2 };
+const sourceNames = { P: "物理输入", V: "虚拟脉冲", I: "测试注入", O: "输入关闭", TEST: "电脑模拟", HOST: "上位机" };
+const source = value => sourceNames[value] || value;
+const level = value => Number(value) === -1 ? "未采样" : Number(value) ? "HIGH" : "LOW";
+const distance = value => Number(value) < 0 ? "无效" : `${value} cm`;
+const direction = value => Number(value) > 0 ? "正转" : Number(value) < 0 ? "反转" : "停止";
+
+// Rows are independently timestamped; a partial reply must not make older rows fresh.
+class HardwareTelemetry {
+  constructor() { this.reset(); }
+  reset() { this.rows = new Map(); this.compact = new CompactTelemetry(); }
+  accept(line, now) {
+    if(line.startsWith('TB ')||/^DONE \d+ TELEMETRY\*/.test(line)) {
+      const rows=this.compact.accept(line,now); if(!rows)return null;
+      for(const row of rows)this.accept(row,now);
+      return this.rows.get('STATE');
+    }
+    const match = /^DATA (\d+) HW (\S+) (.*)$/.exec(line);
+    if (!match || !lengths[match[2]]) return null;
+    const kind = match[2];
+    const values = match[3].split(/\s+/);
+    if (values.length !== lengths[kind]) return null;
+    const textIndexes = kind === "STATE" ? [1] : kind === "T" ? [0, 4] : ["EL", "ER"].includes(kind) ? [4] : ["SL", "SR"].includes(kind) ? [5] : kind === "FRONT" ? [1] : [];
+    if (values.some((value, index) => !textIndexes.includes(index) && !/^-?\d+(?:\.\d+)?$/.test(value))) return null;
+    if (kind === "T" && !["TOP", "LEFT", "RIGHT", "REAR"].includes(values[0])) return null;
+    if (kind === "STATE" && (!["IDLE", "MOVING", "STOPPED"].includes(values[1]) || Number(values[4]) < 0 || Number(values[4]) > 16383)) return null;
+    const key = kind === "T" ? `T_${values[0]}` : kind;
+    const row = { key, kind, values, at: now, id: Number(match[1]) };
+    this.rows.set(key, row);
+    return row;
+  }
+  display(key, now) {
+    const row = this.rows.get(key);
+    if (!row) return { text: "等待 Uno 回报", state: "waiting" };
+    if (now - row.at > 2500) return { text: "读数已过期 · 等待新回报", state: "stale" };
+    const v = row.values;
+    let text;
+    if (["ML", "MR"].includes(key)) text = `输入指令 ${v[0]}（${direction(v[0])}）\n引脚驱动 ${v[1]} · PWM ${v[2]}/255\nIN ${level(v[4])}/${level(v[5])} · 输出${Number(v[3]) ? "开启" : "关闭"}`;
+    else if (["EL", "ER"].includes(key)) text = `${v[2]} 脉冲 · ${v[3]} RPM\n数字输入 ${level(v[1])} · ${source(v[4])}`;
+    else if (["SL", "SR"].includes(key)) text = `物理测距 ${distance(v[3])}\n控制读数 ${distance(v[4])} · ${source(v[5])}\nTRIG ${Number(v[0]) ? "开启" : "关闭"} / ECHO ${Number(v[1]) ? "开启" : "关闭"} · ${level(v[2])}`;
+    else if (key.startsWith("T_")) text = `输入 ${level(v[2])} · ${Number(v[3]) ? "按下" : "松开"}\n${source(v[4])}`;
+    else if (key === "OUT") text = `LED 指令 ${Number(v[1]) ? "亮" : "灭"} → ${Number(v[2])===-1?"交由 ESP 输出":level(v[2])}（${Number(v[0]) ? "开启" : "关闭"}）\n蜂鸣器指令 ${Number(v[4]) ? "响" : "停"} → ${level(v[5])}（${Number(v[3]) ? "开启" : "关闭"}）`;
+    else if (key === "FRONT") text = `${distance(v[0])} · ${source(v[1])}\n通过串口接收前向判定`;
+    else text = `${v[1]} · 运行 ${(Number(v[0]) / 1000).toFixed(1)} s\n调试模式 ${Number(v[2]) ? 'ON' : 'OFF'} · 电机 ${Number(v[3]) ? 'DRY_RUN（禁止物理输出）' : 'LIVE'}\n物理 I/O 掩码 ${v[4]}`;
+    return { text, state: "fresh" };
+  }
+}
+
+// At most one request on the wire; a missing reply triggers a bounded backoff.
+class TelemetryPoller {
+  constructor() { this.reset(); }
+  reset() { this.pending = null; this.nextAt = 0; }
+  due(now, enabled) {
+    if (this.pending && now - this.pending.at >= 5000) { this.pending = null; this.nextAt = now + 2000; }
+    return enabled && !this.pending && now >= this.nextAt;
+  }
+  begin(id, now) { this.pending = { id, at: now }; this.nextAt = now + 250; }
+  settle(id, now) { if (this.pending?.id === id) { this.pending = null; this.nextAt = Math.max(this.nextAt, now + 50); } }
+}
+
+// A valid ACK or terminal event can recover a lost
+// MOTION_STARTED. Never start the scene merely because a command was sent.
+function confirmSceneMotion(pending, active, id, pose, revision, details = "") {
+  let result = active?.id === id ? active : null;
+  const request = pending.get(id);
+  if (request?.renewalOf) { pending.delete(id); return active; }
+  if (!result && request && (!active || active.id < id)) {
+    const terminal = /^EVENT MOTION_(DONE|ABORTED)\b/.test(details);
+    result = { ...request, id, startPose: { ...(terminal ? request.startPose || pose : pose) },
+      manualRobotRevision: request.manualRobotRevision ?? revision };
+    pending.delete(id);
+  }
+  const base = /\bLEFT_BASE=(\d+) RIGHT_BASE=(\d+)/.exec(details);
+  if (result && base) result.encoderBase = base.slice(1).map(Number);
+  return result || active;
+}
+
+function serialCrc8(text) {
+  let crc = 0;
+  for (const byte of new TextEncoder().encode(text)) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i++) crc = ((crc << 1) ^ (crc & 128 ? 7 : 0)) & 255;
+  }
+  return crc.toString(16).padStart(2, "0").toUpperCase();
+}
+
+function encodeSerialCommand(line) {
+  const compact = line.replace(/^(CMD \d+) CAMERA_FRONT\b/, "$1 CF")
+    .replace(/^(CMD \d+) GET_TELEMETRY$/, "$1 GT")
+    .replace(/^(CMD \d+) DEBUG_INJECT SONAR LEFT\b/, "$1 DI S L")
+    .replace(/^(CMD \d+) DEBUG_INJECT SONAR RIGHT\b/, "$1 DI S R")
+    .replace(/^CMD /, "C ");
+  return `${compact}*${serialCrc8(compact)}`;
+}
+
+// Only exact, intact short frames are expanded; damaged bytes are never guessed.
+function decodeSerialFrame(raw) {
+  let line = raw.trim();
+  const star = line.indexOf("*");
+  if (star >= 0) {
+    const payload = line.slice(0, star);
+    if (!/^[0-9A-F]{2}$/.test(line.slice(star + 1)) || serialCrc8(payload) !== line.slice(star + 1)) return null;
+    line = payload;
+  } else if (/^(?:TB|MS|MD|MA|MP|AK|VQ|SD)\b/.test(line)) return null;
+  let match;
+  if ((match = /^MS (\d+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_STARTED ${match[1]} LEFT_BASE=${match[2]} RIGHT_BASE=${match[3]}`;
+  if ((match = /^MD (\d+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_DONE ${match[1]} LEFT_PULSES=${match[2]} RIGHT_PULSES=${match[3]}`;
+  if ((match = /^MP (\d+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_PROGRESS ${match[1]} LEFT_PULSES=${match[2]} RIGHT_PULSES=${match[3]}`;
+  if ((match = /^MA (\d+) ([A-Z_]+) (\d+) (\d+)$/.exec(line))) return `EVENT MOTION_ABORTED ${match[1]} ${match[2]} LEFT_PULSES=${match[3]} RIGHT_PULSES=${match[4]}`;
+  if ((match = /^AK (\d+)$/.exec(line))) return `ACK ${match[1]}`;
+  return line;
+}
+
+function encoderWheelTravel(motion, pulses, wheelMm) {
+  if (motion.lastPulses && pulses.some((count, i) => count < motion.lastPulses[i])) return null;
+  const cmPerPulse = Math.PI * wheelMm / 10 / 20;
+  let leftCm = Math.sign(motion.left) * pulses[0] * cmPerPulse;
+  let rightCm = Math.sign(motion.right) * pulses[1] * cmPerPulse;
+  const travelCm = (Math.abs(leftCm) + Math.abs(rightCm)) / 2;
+  if (motion.left && Math.abs(motion.left) === Math.abs(motion.right)) {
+    leftCm = Math.sign(motion.left) * travelCm;
+    rightCm = Math.sign(motion.right) * travelCm;
+  }
+  return { leftCm, rightCm, travelCm };
+}
+
+const $=id=>document.getElementById(id);let loaded=false,tagWidthLoaded=false,lastMode=null,lastBoot=0,configLine='',pageState=null,pwmFloorReadback=null,scanWaitReadback=null;
+const hw=new HardwareTelemetry(), sensorNames={STATE:'Uno 状态',ML:'左电机',MR:'右电机',EL:'左编码器',ER:'右编码器',SL:'左超声波',SR:'右超声波',T_TOP:'顶部触碰',T_LEFT:'左侧触碰',T_RIGHT:'右侧触碰',T_REAR:'后部触碰',OUT:'灯光与蜂鸣器',FRONT:'前向判定'};
+function diagStepName(step){return ({0:'启动完成',1:'串口接收',2:'触碰读取',3:'超声波状态机',4:'虚拟脉冲',5:'运动与安全检查',6:'轮速计算',7:'灯光与蜂鸣器',8:'遥测调度',9:'诊断心跳',20:'命令处理',21:'校验帧发送',22:'完成回报发送',23:'错误回报发送',24:'命令返回',30:'遥测 STATE',31:'遥测左电机',32:'遥测右电机',33:'遥测左编码器',34:'遥测右编码器',35:'遥测左超声波',36:'遥测右超声波',37:'遥测顶部触碰',38:'遥测左触碰',39:'遥测右触碰',40:'遥测后触碰',41:'遥测声光',42:'遥测前向',70:'声光状态计算',71:'LED 事件准备',72:'LED 事件发送返回',73:'蜂鸣器引脚写入',74:'声光函数返回'})[step]||`步骤 ${step}`;}
+function describeDiag(line){let memory=/^EVENT DIAG M (-?\d+) (\d+) (\d+) (-?\d+) (-?\d+) ([01])$/.exec(line);if(memory){const [,free,min,flags,left,right,latched]=memory;return ` → SRAM 当前余量 ${free} B，采样最低 ${min} B；异常位 ${flags}（1 缓冲边界，2 电机越界，4 余量低）；电机 ${left}/${right}；${latched==='1'?'异常锁定，需复位':'未锁定'}`;}let m=/^EVENT DIAG S (\d+) (\d+)$/.exec(line);if(m)return ` → ${diagStepName(Number(m[1]))}，命令 ${m[2]}`;m=/^EVENT DIAG_BOOT (?:PREV_)?STAGE=(\d+) CMD=(\d+)$/.exec(line);if(m)return ` → 复位前 SRAM 记录：${diagStepName(Number(m[1]))}，命令 ${m[2]}（线索，非根因结论）`;m=/^EVENT DIAG H ([0-9a-f]+) ([0-9a-f]+) ([0-9a-f]+) ([0-9a-f]+) ([0-9a-f]+) ([0-9a-f]+) ([0-9a-f]+) ([0-9a-f]+)$/i.exec(line);if(!m)return '';const [ms,loops,maxMs,id,stage,wait,overflow,dropped]=m.slice(1).map(v=>parseInt(v,16));return ` → Uno ${ms} ms；循环 ${loops}，最长 ${maxMs} ms；遥测 ${id}/${stage}；等待：${wait&1?'超声波 ':''}${wait&2?'TX 空间':'无 TX 等待'}；RX 溢出 ${overflow}，丢弃命令 ${dropped}`;}
+for(const [key,name] of Object.entries(sensorNames)){const a=document.createElement('article'),h=document.createElement('strong'),p=document.createElement('p'),s=document.createElement('small');h.textContent=name;p.id='sensor_'+key;s.id='age_'+key;a.append(h,p,s);$('sensors').append(a);}
+function switchMode(mode){send({op:'mode',mode});$('connection').textContent='正在切换；等待板子回读…';}
+function manual(action){const data={op:'manual_test',action};if(['forward','backward','left','right','left_forward','left_reverse','right_forward','right_reverse'].includes(action)){data.pwm=Number($('testPwm').value);data.durationMs=Number($('testDuration').value);if(!Number.isInteger(data.pwm)||data.pwm<1||data.pwm>255||!Number.isInteger(data.durationMs)||data.durationMs<50||data.durationMs>2000){alert('PWM 请输入 1–255 的整数；时长 50–2000 ms');return;}}send(data);}
+function toggleBench(){if(typeof pageState?.benchBypass!=='boolean')return;send({op:'bench_safety',bypass:!pageState.benchBypass});}
+function saveUnoConfig(){const data={op:'uno_config'},fields={leftCm:['safeLeft',1,100],rightCm:['safeRight',1,100],wheelMm:['unoWheel',20,150],trackMm:['unoTrack',50,300]};for(const [key,[id,min,max]] of Object.entries(fields)){const v=Number($(id).value);if(!$(id).value||!Number.isFinite(v)||v<min||v>max){alert(`${id} 请输入 ${min}–${max}`);return;}data[key]=v;}send(data);}
+function syncUno(d){const changed=d.mode!==lastMode||d.ms<lastBoot;if(changed){for(const k of Object.keys(catReadback))delete catReadback[k];scanWaitReadback=null;pwmFloorReadback=null;tagWidthLoaded=false;hw.reset();configLine='';for(const id of ['safeLeft','safeRight','unoWheel','unoTrack'])$(id).value='';}lastMode=d.mode;lastBoot=d.ms;pageState=d;
+ const real=d.mode==='UART',stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed,age=d.lastUnoAgeMs,live=age<2500;
+ $('simMode').setAttribute('aria-pressed',String(!real));$('realMode').setAttribute('aria-pressed',String(real));$('connection').textContent=(real?'当前：Real UART · 真机串口。':'当前：Simulated UART · 模拟串口。')+(live?`已收到${real?' Uno':'模拟'}回报，距今 ${age} ms。`:`尚无近期${real?' Uno':'模拟'}回报；${real?'请检查接线、供电和波特率。':'请连接电脑模拟器。'}`);
+ $('testMode').textContent=real?'测试指令将通过 GPIO43 发送到真实 Arduino D12 软件接收端（57600）。':'测试指令只发往模拟 UART；不会驱动真实 Arduino。';$('debugResult').textContent=d.debugResult||'';const led=d.hostLed;$('hostLed').textContent=led?`ESP 板载 LED：${led.mode}，${led.on?'亮':'灭'}；${led.pin} 控制电平 ${led.gpioLevel===0?'LOW':'HIGH'}。蜂鸣器输出在 Uno D13。`:'当前固件未提供 ESP LED 控制状态';
+ $('localLedOn').disabled=$('localLedOff').disabled=!['IDLE','STOPPED'].includes(d.phase);
+ document.querySelectorAll('.test').forEach(b=>b.disabled=!stopped||d.debugBusy);$('rawSend').disabled=!stopped||d.debugBusy;$('benchBypass').disabled=!stopped||d.debugBusy||typeof d.benchBypass!=='boolean';$('benchBypass').setAttribute('aria-pressed',String(d.benchBypass===true));$('benchBypass').textContent=d.benchBypass?'恢复测试避障':'开启测试：绕过全部避障';$('benchStatus').textContent=d.benchBypass?'当前手动测试：全部避障已绕过；不需要前向标定。限时停止、急停和失速检查保留。':'当前手动测试：避障开启。可点击上方开关直接测试电机。';
+ hw.reset();for(const row of d.unoTelemetry||[])hw.accept(row.line,row.at);for(const key of Object.keys(sensorNames)){const view=hw.display(key,d.ms),row=hw.rows.get(key);$('sensor_'+key).textContent=view.text;$('sensor_'+key).className=view.state;$('age_'+key).textContent=row?`${real?'真实 UART':'模拟 UART'} · ${Math.max(0,d.ms-row.at)} ms 前`:'尚无回报';}
+ const c=d.unoConfig||{},match=/WHEEL_MM=([\d.]+) TRACK_MM=([\d.]+) SLOTS_PER_REV=(\d+) SAFE_LEFT_CM=([\d.]+) SAFE_RIGHT_CM=([\d.]+)/.exec(c.line||''),fresh=match&&d.ms-c.at<10000;
+ $('saveUno').disabled=!stopped||d.debugBusy||!fresh;$('unoConfigStatus').textContent=match?`Arduino 回读：左 ${match[4]} cm / 右 ${match[5]} cm；轮径 ${match[1]} mm / 轮距 ${match[2]} mm；每圈 ${match[3]} 脉冲。${fresh?'':'回读已过期，请重新读取。'} 来源：${c.source}。`:'等待 Arduino CONFIG 回报，请点击重新读取。';
+ if(match&&configLine!==c.line){configLine=c.line;$('safeLeft').value=match[4];$('safeRight').value=match[5];$('unoWheel').value=match[1];$('unoTrack').value=match[2];}
+}
+let pageReadTail=Promise.resolve();
+async function withPageRead(read){let release;const next=new Promise(resolve=>release=resolve),previous=pageReadTail;pageReadTail=next;await previous;try{return await read();}finally{release();}}
+let deviceOnline=false,pollFailures=0,pageLogAfter=0,pageLogMs=0,pageLogs=[],pageLogBoot=null;
+function mergePageLogs(d){
+ if((pageLogBoot&&d.bootId&&pageLogBoot!==d.bootId)||d.ms<pageLogMs||(Number.isFinite(d.logSeq)&&d.logSeq<pageLogAfter)){pageLogs=[];pageLogAfter=0;}
+ pageLogMs=d.ms;pageLogBoot=d.bootId||null;
+ for(const row of d.logs||[])if(row.seq>pageLogAfter){pageLogs.push(row);pageLogAfter=row.seq;}
+ if(pageLogs.length>160)pageLogs.splice(0,pageLogs.length-160);
+ d.logs=pageLogs.slice();
+}
+async function send(data){let r=await fetch('/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});if(!r.ok)alert(await r.text());}
+function ctl(action){send({op:'control',action});}
+function toggleFrontAvoidance(){const enabled=pageState?.config?.frontAvoidanceEnabled;if(typeof enabled!=='boolean')return;const config={frontAvoidanceEnabled:!enabled};send({op:'config',config});try{const settings=JSON.parse($('settings').value);Object.assign(settings,config);$('settings').value=JSON.stringify(settings,null,2);}catch{}}
+
+const catFields={catCheckMaxFrames:["找猫确认最多识别新画面数（任一次找到即通过）",1,3,1],escapeMinDistanceCm:["逃跑最小距离（厘米）",1,100,1],escapeMaxDistanceCm:["逃跑最大距离（厘米）",1,100,1],touchFlashPercent:['触碰时并行声光概率（%）',0,100,1],catConfirmPreyPercent:['复核后装死概率（%）',0,100,1],catConfirmExplorePercent:['复核后探索概率（%）',0,100,1],catFarWidth:['猫远处阈值：猫框占画面宽度（%）',1,80,100],catNearWidth:['猫近处阈值：猫框占画面宽度（%）',2,90,100],catInteractionIdleSeconds:['探索无互动后重新找猫（秒）',1,120,1],catObserveTimeoutSeconds:['找到猫后观察等待上限（秒）',1,120,1],escapePreyAfterRounds:['逃跑最多完成轮数',1,100,1],escapePreyPercent:['每轮逃跑后装死概率（%）',0,100,1],explorePreyMinimumSeconds:['探索允许装死前最短时间（秒）',0,600,1],explorePreyPercent:['探索周期完成后装死概率（%）',0,100,1],catLeaveSeconds:['追逐观察无猫／装死离开确认时间（秒）',1,30,1],captureWaitMaxSeconds:['装死最长等待（秒）',1,60,1]};
+const catReadback={};let pendingCatSave=null;
+for(const [key,[name,min,max,scale]] of Object.entries(catFields)){const label=document.createElement('label'),input=document.createElement('input');label.textContent=name;input.id='catCfg_'+key;input.type='number';input.min=min;input.max=max;input.step=scale===100?'0.1':'1';label.append(input);$('catConfigFields').append(label);}
+function syncCatSettings(d){const c=d.config||{},ready=Object.keys(catFields).every(k=>Number.isFinite(c[k])),stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;$('saveCatSettings').disabled=!ready||!stopped;for(const [key,[name,min,max,scale]] of Object.entries(catFields)){const v=c[key],input=$('catCfg_'+key);input.disabled=!ready||!stopped;if(Number.isFinite(v)&&catReadback[key]!==v){input.value=scale===100?(v*scale).toFixed(1):v;catReadback[key]=v;}}if(pendingCatSave){const failed=(d.logs||[]).find(x=>x.seq>pendingCatSave.seq&&x.source==='CONFIG_ERROR');if(failed){pendingCatSave.error=failed.line;}else if(Object.entries(pendingCatSave.config).every(([k,v])=>c[k]===v)){pendingCatSave=null;}}$('catConfigStatus').textContent=ready?'板上保存：'+Object.entries(catFields).map(([k,[name,,,scale]])=>name+' '+(c[k]*scale).toFixed(scale===100?1:0)).join('；')+'；复核后逃跑概率 '+(100-c.catConfirmPreyPercent-c.catConfirmExplorePercent).toFixed(0)+'%'+(stopped?'。可修改。':'。请先停车。'):'正在读取配置。';if(pendingCatSave)$('catConfigStatus').textContent+=' '+(pendingCatSave.error?'保存失败：'+pendingCatSave.error:'等待保存回读确认。');}
+function saveCatSettings(){if($('saveCatSettings').disabled)return;const config={};for(const [key,[name,min,max,scale]] of Object.entries(catFields)){const input=$('catCfg_'+key),v=Number(input.value);if(input.value===''||!Number.isFinite(v)||v<min||v>max||(scale===1&&!Number.isInteger(v))){alert(name+' 输入无效');return;}config[key]=v/scale;}if(config.escapeMinDistanceCm>config.escapeMaxDistanceCm){alert("逃跑最小距离不能大于最大距离");return;}if(config.catConfirmPreyPercent+config.catConfirmExplorePercent>100){alert('复核后装死与探索概率之和不能超过100%，剩余为逃跑');return;}if(config.catFarWidth>=config.catNearWidth){alert('远处比例必须小于近处比例');return;}pendingCatSave={config,seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config});$('catConfigStatus').textContent='已提交，等待板上回读确认。';try{const c=JSON.parse($('settings').value);Object.assign(c,config);$('settings').value=JSON.stringify(c,null,2);}catch{}}
+function syncCatProgress(d){const p=d.patrolStatus||{};const names={CAT_CONFIRM:'原地停车复核',ESCAPE_DIRECTION:'寻找逃跑方向',ESCAPE_TURN:'寻找逃跑方向：转向',ESCAPE_DRIVE:'逃跑：准备直行',WAIT_CHASE:'观察猫，等待互动',PREY_WAIT:'装死静止等待',WAIT_TOUCH_RESUME:'触碰停车，等待松开续做',SEARCH_CAT_ACTIVE:'分步寻找猫',FACE_CAT:'停车准备面向猫',ALIGN_CAT:'对准猫',CAT_CHECK:'停车后识别猫',SETTLE:'等待车轮停稳（编码器检查）',LINK_RECOVERY_STOP:'通信重试：确认停车',LINK_RECOVERY_STOPPED:'通信重试：已确认停车',LINK_RECOVERY_SESSION_STOP:'通信重试：清理会话',LINK_RECOVERY_CONFIG:'通信重试：读取配置',LINK_RECOVERY_SESSION_START:'通信重试：重新同步会话',SIGNAL:'声光探索/回应',ESCAPE_MOVE:'逃跑',OBSERVE:'静止观察',FOLLOW_WAIT:'等待下一行为',WAIT_INTERACTION_RELEASE:'等待触碰松开后退出'};$('catProgress').textContent='当前：'+(names[p.action]||p.action||'待命')+'；探索声光 '+(p.responseName||'未选择')+'（'+(p.responseActive?'播放中':'等待新按压')+'）；本轮逃跑目标 '+(p.escapeTargetCm?Number(p.escapeTargetCm).toFixed(1)+' 厘米':'未选择')+'；并行触碰声光：'+(p.touchSignalActive?'进行中':'未激活')+'（'+(p.action||'IDLE')+'）；互动 #'+(p.interactionId||0)+'；逃跑完成 '+(p.escapeRounds||0)+' 轮；探索第 '+(p.exploreRounds||0)+' 轮，已进行 '+((p.exploreElapsedMs||0)/1000).toFixed(1)+' 秒，允许装死前剩余 '+((p.exploreRemainingMs||0)/1000).toFixed(1)+' 秒；状态倒计时 '+((p.remainingWaitMs||0)/1000).toFixed(1)+' 秒；退出确认 '+((p.departureElapsedMs||0)/1000).toFixed(1)+' 秒；'+(p.interactionExitReason||'');}
+
+function syncPatrolStatus(d){const p=d.patrolStatus;if(!p){$('patrolProgress').textContent='';return;}const reason=p.lastFault||p.lastMotionFailure||'无';const linkNote=p.linkRecovering?' 通信恢复第 '+p.linkRecoveryAttempt+'/4 次，等待真实停车及会话确认。':p.action==='FAULT'&&d.lastUnoAgeMs<2500?' 当前已收到 Uno 数据；上述原因是保留的流程故障。':'';const failure=p.catFailure?.message?` 最近一次：${p.catFailure.message}（${p.catFailure.reason}，${p.catFailure.at} ms，${p.catFailure.angle?.toFixed?.(1)??'?'}°）。`:'';$('patrolProgress').textContent=`详细回读步骤：${patrolActionName(p.action)}；停止/拒绝原因：${reason}；电机命令 #${p.motorId||0}：${p.motorId?p.leftPwm||0:0}/${p.motorId?p.rightPwm||0:0}，${p.motorConfirmed?'Uno 已确认':'尚未确认'}。`+(Number.isInteger(p.minimumDrivePwm)&&p.motorId?` 策略请求 ${p.requestedLeftPwm??0}/${p.requestedRightPwm??0}，最低 PWM ${p.minimumDrivePwm}。`:" ")+(d.stopUnconfirmed?' 停车未确认，后续电机命令已阻止；继续请求诊断遥测。':d.stopPendingId?' 等待 Uno 确认停车。':'')+linkNote+failure+` 目标 ID：${p.targetId??'未设置'}，节点 ${(p.targetIndex??0)+1}/${p.routeCount??'?'}；目标宽度 ${p.tagWidth>=0?(p.tagWidth*100).toFixed(1)+'%':'未识别'} / 停车 ${((p.tagStopWidth??0)*100).toFixed(1)}%；观测 ${p.visionAgeMs??'?'} ms 前，帧 ${p.frameSeq??0}；扫描 ${p.scanStep??0} 步 / ${(p.scanAngle??0).toFixed(1)}°（量化上限 ${(p.scanBudgetDegrees??720).toFixed(1)}°）。`+(p.simultaneousDetection?' 多个位置在同一采样检测到，采用 Uno 固定报告顺序中的第一个。':'');}
+function syncTagStopWidth(d){const width=d.config?.tagStopWidth,available=Number.isFinite(width),stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed;$('saveTagStopWidth').disabled=!available||!stopped||!!d.debugBusy;$('tagWidthStatus').textContent=available?`板上保存值 ${(width*100).toFixed(1)}%${stopped?'':'；请先确认停车'}。`:'等待读取';if(available&&!tagWidthLoaded){$('tagStopPercent').value=(width*100).toFixed(1);tagWidthLoaded=true;}}
+function saveTagStopWidth(){const percent=Number($('tagStopPercent').value);if(!$('tagStopPercent').value||!Number.isFinite(percent)||percent<2||percent>90){alert('停车宽度请输入 2–90%');return;}const config={tagStopWidth:percent/100};send({op:'config',config});try{const current=JSON.parse($('settings').value);Object.assign(current,config);$('settings').value=JSON.stringify(current,null,2);}catch{}}
+function syncFrontAvoidance(d){const enabled=d.config?.frontAvoidanceEnabled,available=typeof enabled==='boolean',stopped=['IDLE','STOPPED'].includes(d.phase);$('frontAvoidance').disabled=!available||!stopped||!!d.debugBusy;$('frontAvoidance').setAttribute('aria-pressed',String(enabled===true));$('frontAvoidance').textContent=available?`前向避障：${enabled?'开启（点击关闭）':'关闭（点击开启）'}`:'当前固件不支持前向避障开关';$('frontAvoidanceStatus').textContent=available?(enabled?'前向避障开启；需要有效地面校准。':'前向避障已关闭，无需地面校准；电机按正常巡游指令运行。左右超声波、触碰、失速及通信停车保留。')+(stopped?'':' 请先停止巡游再切换。'):'';$('savedRoute').textContent=` 板上已保存路线：${JSON.stringify(d.config?.route||[])}；当前目标 ID：${d.config?.route?.[d.patrolStatus?.targetIndex??0]??'未设置'}。`;}
+function syncScanWait(d){const value=d.config?.scanMinimumMs,available=Number.isInteger(value)&&value>=50&&value<=3000,stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;$('saveScanWait').disabled=$('scanMinimumMs').disabled=!available||!stopped;$('scanWaitStatus').textContent=available?'板上保存：'+value+' 毫秒；停稳超时上限 '+d.config.scanSettleTimeoutMs+' 毫秒。'+(stopped?'可调整。':'请先停止并等待停车确认。'):'等待读取等待时间。';if(available&&scanWaitReadback!==value){$('scanMinimumMs').value=value;scanWaitReadback=value;}}
+function saveScanWait(){if($('saveScanWait').disabled)return;const value=Number($('scanMinimumMs').value);if(!$('scanMinimumMs').value||!Number.isInteger(value)||value<50||value>3000){alert('等待时间请输入 50–3000 毫秒的整数');return;}const c=pageState?.config;if(!c||!Number.isFinite(c.scanSettleTimeoutMs)||!Number.isFinite(c.scanQuietMs))return;const config={scanMinimumMs:value,scanSettleTimeoutMs:Math.max(c.scanSettleTimeoutMs,value+1000,c.scanQuietMs+1000)};send({op:'config',config});try{const settings=JSON.parse($('settings').value);Object.assign(settings,config);$('settings').value=JSON.stringify(settings,null,2);}catch{}}
+function syncMinimumDrivePwm(d){const value=d.config?.minimumDrivePwm,available=Number.isInteger(value)&&value>=1&&value<=255,stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;$('saveMinimumDrivePwm').disabled=$('minimumDrivePwm').disabled=!available||!stopped;$('minimumDrivePwmStatus').textContent=available?`板上已保存下限：${value}。${stopped?'可调整；保存后用于后续动作。':'请先停止并等待停车确认及当前测试结束。'}`:'当前固件未提供最低 PWM 设置，请更新 ESP 固件。';if(available&&pwmFloorReadback!==value){$('minimumDrivePwm').value=value;pwmFloorReadback=value;}}
+function saveMinimumDrivePwm(){if($('saveMinimumDrivePwm').disabled)return;const value=Number($('minimumDrivePwm').value);if(!$('minimumDrivePwm').value||!Number.isInteger(value)||value<1||value>255){alert('最低 PWM 请输入 1–255 的整数');return;}const config={minimumDrivePwm:value};send({op:'config',config});try{const settings=JSON.parse($('settings').value);Object.assign(settings,config);$('settings').value=JSON.stringify(settings,null,2);}catch{}}
+function syncPatrolTurns(d){const c=d.config,s=c?.patrolSearchPwm,a=c?.patrolAlignPwm,available=Number.isFinite(s)&&Number.isFinite(a),stopped=(d.phase==='IDLE'||d.phase==='STOPPED')&&!d.stopPendingId&&!d.stopUnconfirmed;$('savePatrolTurns').disabled=!available||!stopped;$('patrolTurnStatus').textContent=available?`板上请求值：搜索 ${s}，对准 ${a}；下限 ${d.config.minimumDrivePwm??1}，实际下发至少搜索 ${Math.max(s,d.config.minimumDrivePwm??1)} / 对准 ${Math.max(a,d.config.minimumDrivePwm??1)}。${stopped?'可保存新值。':'请先停止巡游再保存。'}`:'当前固件不支持巡逻转速设置，请更新固件。';if(!loaded&&available){$('patrolSearchPwm').value=s;$('patrolAlignPwm').value=a;}}
+function savePatrolTurns(){try{const config={};for(const key of ['patrolSearchPwm','patrolAlignPwm']){const value=Number($(key).value);if(!Number.isInteger(value)||value<30||value>150)throw Error('转速请输入 30–150 的整数');config[key]=value;}send({op:'config',config});try{const settings=JSON.parse($('settings').value);Object.assign(settings,config);$('settings').value=JSON.stringify(settings,null,2);}catch{} }catch(e){alert(e.message);}}
+function saveRoute(){try{let route=JSON.parse($('route').value);if(!Array.isArray(route)||!route.length||route.length>128||route.some(n=>!Number.isInteger(n)||n<0||n>586))throw Error('请输入 1–128 个有效 ID');send({op:'config',config:{route}});try{const settings=JSON.parse($('settings').value);settings.route=route;$('settings').value=JSON.stringify(settings,null,2);}catch{}}catch(e){alert(e.message);}}
+function saveConfig(){try{send({op:'config',config:JSON.parse($('settings').value)});}catch(e){alert(e.message);}}
+let benchRows=[],benchSeen=0,benchUiEpoch=-1,benchMissed=0,benchActive=false,benchFrameId='',benchDraft=false;
+function benchStats(values){if(!values.length)return null;const sorted=[...values].sort((a,b)=>a-b),n=sorted.length;return {mean:values.reduce((a,b)=>a+b,0)/n,median:n%2?sorted[(n-1)/2]:(sorted[n/2-1]+sorted[n/2])/2,p95:sorted[Math.ceil(.95*n)-1],min:sorted[0],max:sorted[n-1]};}
+function describeBenchStats(s){return s?`平均 ${s.mean.toFixed(1)} / 中位数 ${s.median.toFixed(1)} / P95 ${s.p95.toFixed(1)} / 最低 ${s.min} / 最高 ${s.max} ms`:'尚无样本';}
+function mergeBench(d){
+ if(benchUiEpoch!==d.epoch){benchRows=[];benchSeen=0;benchMissed=0;benchUiEpoch=d.epoch;benchFrameId='';}
+ for(const row of d.samples){if(row[0]<=benchSeen)continue;benchMissed+=Math.max(0,row[0]-benchSeen-1);benchRows.push(row);benchSeen=row[0];}
+ if(benchRows.length>20000)benchRows.splice(0,benchRows.length-20000);
+ if(benchActive!==d.enabled){$('benchCanvas').style.display=d.enabled?'block':'none';}
+ benchActive=d.enabled;
+ if(!benchDraft){$('benchGap').value=d.gapMs;$('benchCaptureGap').value=d.captureGapMs;}
+ $('benchMetrics').textContent=`${d.enabled?'测试中':'测试已停止'}；设备完成 ${d.count} 次，统计窗口 ${benchRows.length} 次；未收到 ${benchMissed} 次（设备仅缓冲最近 128 次）\n整次处理：${describeBenchStats(benchStats(benchRows.map(r=>r[4])))}\n模型推理：${describeBenchStats(benchStats(benchRows.map(r=>r[3])))}\n识别频率：${(()=>{const periods=benchRows.filter(r=>r[5]>0).map(r=>r[5]);return periods.length?(1000/(periods.reduce((a,b)=>a+b,0)/periods.length)).toFixed(2)+' 次/秒':'待测';})()}；统计最多保留最近 20000 次。P95 使用升序第 ceil(0.95×N) 项。`;
+ $('benchTimes').textContent='编号 / 帧号 / 解码 / 推理 / 整次处理 / 启动间隔 / 实际空隙 / 图像到完成（ms） / 同帧含标签识别（0/1）\n'+benchRows.slice(-20).map(r=>r.join(' / ')).join('\n');
+}
+async function setBench(enabled,reset=false){
+ const gap=Number($('benchGap').value),capture=Number($('benchCaptureGap').value);
+ if(!Number.isInteger(gap)||gap<0||gap>5000||!Number.isInteger(capture)||capture<0||capture>2000){alert('识别间隔为 0–5000ms，采集间隔为 0–2000ms，均需整数');return;}
+ await send({op:'vision_bench',enabled,gapMs:gap,captureGapMs:capture,reset});benchDraft=false;
+}
+function exportBench(){const csv='id,frame,decodeMs,modelMs,totalMs,startPeriodMs,idleMs,captureToFinishMs,withTags\n'+benchRows.map(r=>r.join(',')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='cat-vision-bench.csv';a.click();URL.revokeObjectURL(url);}
+async function benchPoll(){
+ try{await (typeof withPageRead==='function'?withPageRead:async read=>read())(async()=>{if(typeof deviceOnline!=='undefined'&&!deviceOnline)return;const r=await fetch('/api/vision-bench',{signal:AbortSignal.timeout(4000)});if(!r.ok)throw Error(r.status);mergeBench(await r.json());});}
+ catch(e){$('benchMetrics').textContent='帧率测试读回失败：'+e.message;}
+ finally{setTimeout(benchPoll,benchActive?600:3000);}
+}
+async function benchFramePoll(){
+ try{await (typeof withPageRead==='function'?withPageRead:async read=>read())(async()=>{if(benchActive&&(typeof deviceOnline==='undefined'||deviceOnline)){const r=await fetch('/vision-bench-frame',{signal:AbortSignal.timeout(4000)});if(r.ok){const meta=JSON.parse(r.headers.get('X-Vision-Result')),id=meta.epoch+':'+meta.id;
+ if(id!==benchFrameId&&meta.epoch===benchUiEpoch){const bitmap=await createImageBitmap(await r.blob());if(meta.epoch!==benchUiEpoch||!benchActive){bitmap.close();throw Error("结果已换轮，等待新帧");}const canvas=$('benchCanvas');canvas.width=meta.width;canvas.height=meta.height;const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);bitmap.close();const cat=meta.cat||{};
+ if(cat.detected&&cat.box){const [x1,y1,x2,y2]=cat.box;ctx.strokeStyle='#00ff55';ctx.lineWidth=2;ctx.strokeRect(x1,y1,x2-x1,y2-y1);ctx.fillStyle='#00ff55';ctx.font='14px sans-serif';ctx.fillText('CAT '+Number(cat.score).toFixed(2),Math.max(0,x1),Math.max(15,y1-3));}
+ $('benchFrame').textContent=`识别原图帧 ${meta.frameSeq}，结果 #${meta.id}；${cat.detected?'检测到猫，框 '+cat.box.join(', '):'未检测到猫'}`;benchFrameId=id;}
+ }} });}
+ catch(e){$('benchFrame').textContent='识别原图读取失败：'+e.message;}
+ setTimeout(benchFramePoll,350);
+}
+benchPoll();benchFramePoll();
+
+let previewFrameId='',previewHasFrame=false,previewBoot=0,previewLastMs=0,previewMeta=null,previewNow=0,previewSettingsIdentity='';
+let previewAvailable=null,previewLatestId=null,previewTimingRows=[],previewTimingSeen=0,previewTimingMissed=0,previewTimingBaselinePending=false;
+function mergePreviewTimings(samples){
+ if(previewTimingBaselinePending&&samples?.length){previewTimingSeen=samples[0][0]-1;previewTimingBaselinePending=false;}
+ for(const row of samples||[]){if(row[0]<=previewTimingSeen)continue;previewTimingMissed+=Math.max(0,row[0]-previewTimingSeen-1);previewTimingSeen=row[0];previewTimingRows.push(row);}
+ if(previewTimingRows.length>500)previewTimingRows.splice(0,previewTimingRows.length-500);
+ $('catPreviewTimes').textContent='编号 / 帧 / 解码 / 模型推理 / 总处理 / 启动间隔（ms）\n'+previewTimingRows.slice(-10).map(row=>row.join(' / ')).join('\n')+(previewTimingMissed?'\n未收到 '+previewTimingMissed+' 条耗时记录':'');
+}
+function describePreviewPerformance(meta){
+ $('catPreviewPerformance').textContent=meta?`最近一次：解码 ${meta.decodeMs} ms · 模型 ${meta.modelMs} ms · 总处理 ${meta.latencyMs} ms；${meta.startPeriodMs?'距上次识别启动 '+meta.startPeriodMs+' ms':'首次识别'}。`:'等待猫识别…';
+}
+function previewPreference(key,fallback){try{return localStorage.getItem(key)??fallback;}catch{return fallback;}}
+$('showPreview').checked=previewPreference('cat-preview-visible','true')==='true';
+$('showCatBox').checked=previewPreference('cat-preview-box','true')==='true';
+$('previewSource').value=previewPreference('cat-preview-source','processed');
+function updatePreviewVisibility(){
+ const visible=$('showPreview').checked,processed=$('previewSource').value==='processed'&&previewHasFrame;
+ $('video').style.display=visible&&!processed?'block':'none';
+ $('catPreviewCanvas').style.display=visible&&processed?'block':'none';
+ const online=typeof deviceOnline==='undefined'||deviceOnline;
+ const url=visible&&!processed&&online?'http://'+location.hostname+'/stream':'';
+ if($('video').getAttribute('src')!==url)$('video').src=url;
+ $('previewVisibility').textContent=visible?(processed?'显示：最近一次猫识别原图':'显示：实时视频（检测框显示在识别原图中）'):'预览已关闭；识别状态继续更新';
+}
+function previewOptionsChanged(){
+ try{localStorage.setItem('cat-preview-visible',String($('showPreview').checked));localStorage.setItem('cat-preview-box',String($('showCatBox').checked));localStorage.setItem('cat-preview-source',$('previewSource').value);}catch{}
+ // Redraw the same matched JPEG when changing the box visibility.
+ previewFrameId='';updatePreviewVisibility();
+}
+function syncCameraPreview(d){
+ const identity=d.bootId?d.bootId+'/'+(d.cameraSettings?.revision??0):'';
+ if(d.ms<previewLastMs||(identity&&previewSettingsIdentity&&identity!==previewSettingsIdentity)){++previewBoot;previewHasFrame=false;previewFrameId='';previewMeta=null;previewTimingRows=[];previewTimingSeen=previewTimingMissed=0;previewTimingBaselinePending=true;$('previewFrame').textContent='摄像头已更新，等待新的识别画面。';}
+ if(identity)previewSettingsIdentity=identity;
+ previewAvailable=d.catPreview?.available??null;previewLatestId=d.catPreview?.id!=null?String(d.catPreview.id):null;
+ previewLastMs=d.ms;previewNow=d.ms;if(d.catPreview?.id)previewMeta=d.catPreview;
+ mergePreviewTimings(d.catPreview?.samples);describePreviewPerformance(previewMeta);
+ const meta=previewMeta,cat=meta?.cat,age=meta?Math.max(0,d.ms-meta.at):0;
+ $('catDetected').textContent=meta?`最近一次猫识别：${cat?.valid!==true?'结果无效':cat.detected?'检测到猫':'未检测到猫'}${cat?.detected&&Number.isFinite(cat.score)?' · 置信度 '+(cat.score*100).toFixed(1)+'%':''}；帧 ${meta.frameSeq}，${(age/1000).toFixed(1)} 秒前${age>(d.config?.visionMaxAgeMs||1500)?'（历史结果）':''}`:'尚无猫识别结果，等待找猫流程或开启猫识别';
+ $('catDetected').className=cat?.valid&&cat.detected&&age<=(d.config?.visionMaxAgeMs||1500)?'detected':'muted';
+ updatePreviewVisibility();
+}
+async function cameraPreviewPoll(){
+ try{await (typeof withPageRead==='function'?withPageRead:async read=>read())(async()=>{
+  if((typeof deviceOnline==='undefined'||deviceOnline)&&$('showPreview').checked&&$('previewSource').value==='processed'&&previewAvailable!==false&&(previewLatestId===null||previewLatestId!==previewFrameId)){
+   const boot=previewBoot,r=await fetch('/cat-preview-frame?after='+encodeURIComponent(previewFrameId),{signal:AbortSignal.timeout(4000)});
+   if(r.ok&&r.status!==204){
+    const meta=JSON.parse(r.headers.get('X-Vision-Result')),id=String(meta.id);
+    if(id!==previewFrameId){
+     const bitmap=await createImageBitmap(await r.blob());
+     if(boot!==previewBoot||(typeof deviceOnline!=='undefined'&&!deviceOnline)||!$('showPreview').checked||$('previewSource').value!=='processed'){bitmap.close();return;}
+     const canvas=$('catPreviewCanvas');canvas.width=meta.width;canvas.height=meta.height;
+     const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);bitmap.close();const cat=meta.cat||{};
+     if($('showCatBox').checked&&cat.valid&&cat.detected&&Array.isArray(cat.box)&&cat.box.length===4&&cat.box.every(Number.isFinite)){
+      const [x1,y1,x2,y2]=cat.box;ctx.strokeStyle='#00ff55';ctx.lineWidth=2;ctx.strokeRect(x1,y1,x2-x1,y2-y1);ctx.fillStyle='#00ff55';ctx.font='14px sans-serif';ctx.fillText('CAT '+Number(cat.score).toFixed(2),Math.max(0,x1),Math.max(15,y1-3));
+     }
+     previewFrameId=id;previewHasFrame=true;previewMeta=meta;
+     describePreviewPerformance(meta);
+     $('previewFrame').textContent=`识别原图帧 ${meta.frameSeq} · ${cat.valid&&cat.detected?'检测到猫':'未检测到猫'} · 处理 ${meta.latencyMs} ms；每次新识别刷新，未检测到时清除旧框。`;
+     updatePreviewVisibility();
+    }
+   }else if(r.status===503){$('previewFrame').textContent='尚无识别原图，暂时显示实时视频。';}
+   else if(!r.ok)throw Error(r.status);
+  }
+ });}catch(e){$('previewFrame').textContent='识别原图读取失败：'+e.message;}
+ finally{setTimeout(cameraPreviewPoll,350);}
+}
+updatePreviewVisibility();cameraPreviewPoll();
+
+// Read-only measurements: never request inference or send control commands.
+function visionAge(d,v){return Number.isFinite(v?.at)?Math.max(0,(d.ms-v.at)>>>0):Infinity;}
+function widthPercent(width){return Number.isFinite(width)&&width>=0&&width<=1?(width*100).toFixed(1)+'%':null;}
+function syncVisionMeasurements(d){
+ const limit=d.config?.visionMaxAgeMs||1500;
+ const v=d.mode==='SIM_UNO'?d.vision:d.cameraVision;
+ const catFrame=d.mode==='SIM_UNO'?d.vision:d.catPreview;
+ const cat=catFrame?.cat,catAge=visionAge(d,catFrame);
+ const ageText=age=>Number.isFinite(age)?` · ${(age/1000).toFixed(1)} 秒前`:'';
+ let catText='等待识别';
+ if(catFrame&&Number.isFinite(catFrame.at))catText=cat?.valid!==true?'检测无效':!cat.detected?'未检测到猫':widthPercent(cat.width)||'宽度无效';
+ $('catWidthLive').textContent='猫框宽度：'+catText+ageText(catAge)+(catAge>limit&&Number.isFinite(catAge)?'（已过期）':'')+(d.mode==='SIM_UNO'?'（模拟）':'');
+ const target=d.patrolStatus?.targetId,route=d.config?.route;
+ const hasTarget=Array.isArray(route)&&route.length>0&&Number.isInteger(target)&&target>=0;
+ const tagAge=visionAge(d,v),tag=v?.tags?.find(t=>t.id===target);
+ let tagText=!hasTarget?'未设置路线':!v||!Number.isFinite(v.at)?'等待识别':v.tagsValid!==true?'检测无效':!tag?'未检测到目标标签':widthPercent(tag.width)||'宽度无效';
+ $('tagWidthLive').textContent=(hasTarget?`目标标签 ID ${target} 宽度：`:'目标标签宽度：')+tagText+(hasTarget?ageText(tagAge):'')+(hasTarget&&tagAge>limit&&Number.isFinite(tagAge)?'（已过期）':'')+(d.mode==='SIM_UNO'?'（模拟）':'');
+ const c=d.config||{},calibrated=c.frontCalibrated===true&&Array.isArray(c.floorReference)&&c.floorReference.length===72&&c.floorReference.every(x=>Number.isFinite(x)&&x>=0&&x<=255);
+ const changed=d.groundReferenceChangedAt||0;
+ const current=v&&Number.isFinite(v.at)&&((v.at-changed)|0)>0&&v.frontCalibrated===true;
+ let result=!calibrated?'未标定，请重新采集地面参考':!current?'等待标定后的新画面':tagAge>limit?'结果已过期':({CLEAR:'前方畅通',BLOCKED:'发现障碍',INVALID:'结果无效'}[v.front]||'结果无效');
+ const difference=current&&Number.isFinite(v.floorDifference)?v.floorDifference.toFixed(1):'—';
+ const threshold=Number.isFinite(c.floorDifferenceThreshold)?c.floorDifferenceThreshold.toFixed(1):'—';
+ $('groundCalibrationLive').textContent=`地面参考：${calibrated?'已标定':'未标定'}；前向避障：${c.frontAvoidanceEnabled===false?'关闭（判断不用于避障）':'开启'}；最新判断：${result}${current?ageText(tagAge):''}；地面差异值 ${difference} / 阈值 ${threshold}。差异值不是厘米距离。`+(d.mode==='SIM_UNO'?'（模拟结果）':'');
+}
+function visionMeasurementsOffline(){
+ for(const [id,name] of [['catWidthLive','猫框宽度'],['tagWidthLive','目标标签宽度'],['groundCalibrationLive','地面标定状态']])$(id).textContent=name+'：连接中断，当前数据不可用';
+}
+
+// Durable journal is independent of the policy panels' current-boot log window.
+class LocalLogArchive {
+  constructor(storage, changed = () => {}) {
+    this.storage = storage; this.changed = changed; this.pending = []; this.tail = Promise.resolve();
+    this.devices = {}; this.latest = null; this.count = 0; this.error = ''; this.recent = [];
+    this.ready = this.tail = this.restore();
+  }
+  async restore() {
+    try {
+      const saved = await this.storage.restore();
+      this.devices = saved.devices || {}; this.latest = saved.latest || null;
+      this.count = saved.count || 0; this.recent = saved.recent || [];
+    } catch (e) { this.error = '本地存储不可用：' + e.message; }
+    this.changed(this);
+  }
+  ingest(snapshot, now = new Date().toISOString()) {
+    // Copy before mergePageLogs changes the snapshot's logs.
+    const d = JSON.parse(JSON.stringify(snapshot));
+    this.tail = this.tail.then(async () => {
+      const device = d.deviceId || 'legacy-device';
+      const prior = this.devices[device];
+      const boot = d.bootId || (prior && d.ms >= prior.ms && d.logSeq >= prior.seq ? prior.boot : 'legacy-' + now);
+      const previous = prior?.boot === boot ? prior.seq : 0;
+      const rows = [], context = { deviceId: device, bootId: boot, receivedAt: now };
+      if (prior?.boot !== boot) rows.push({ ...context, key: device + '/' + boot + '/boot', source: 'LOCAL_BOOT', ms: d.ms,
+        line: '首次收到本次启动的状态', firmware: d.firmware, network: d.network, config: d.config, cameraSettings: d.cameraSettings });
+      const incoming = (d.logs || []).filter(r => Number.isInteger(r.seq) && r.seq > previous).sort((a,b) => a.seq-b.seq);
+      let cursor = previous;
+      for (const row of incoming) {
+        if (row.seq > cursor + 1) rows.push({ ...context, key: device + '/' + boot + '/gap/' + (cursor+1) + '-' + (row.seq-1),
+          source: 'LOCAL_GAP', ms: d.ms, line: '网页未收到日志 seq ' + (cursor+1) + '–' + (row.seq-1) });
+        rows.push({ ...row, ...context, key: device + '/' + boot + '/' + row.seq }); cursor = row.seq;
+      }
+      if (d.cameraSettings?.revision !== prior?.cameraRevision) rows.push({ ...context,
+        key: device + '/' + boot + '/camera/' + d.cameraSettings?.revision, source: 'LOCAL_CAMERA_SETTINGS', ms: d.ms,
+        line: '摄像头参数回读', cameraSettings: d.cameraSettings });
+      for (let i=0;i<rows.length;i++) rows[i].order=i;
+      this.devices[device] = { boot, ms: d.ms, seq: cursor, cameraRevision: d.cameraSettings?.revision };
+      this.latest = d; this.pending.push(...rows);
+      this.recent.push(...rows); this.recent = this.recent.slice(-500);
+      await this.flush(); this.changed(this);
+    }).catch(e => { this.error = e.message; this.changed(this); });
+    return this.tail;
+  }
+  connectionLost(message, now = new Date().toISOString()) {
+    this.tail = this.tail.then(async () => {
+      const row = { key: 'local/disconnect/' + now, receivedAt: now, order:0, source: 'LOCAL_DISCONNECT', line: message };
+      this.pending.push(row); this.recent.push(row); this.recent = this.recent.slice(-500);
+      await this.flush(); this.changed(this);
+    });
+    return this.tail;
+  }
+  async flush() {
+    try {
+      this.count = await this.storage.commit(this.pending, { devices: this.devices, latest: this.latest });
+      this.pending = []; this.error = '';
+    } catch(e) { this.error = '本地保存失败（待保存记录仍可导出）：' + e.message; }
+  }
+  exportChunks() {
+    // Export and ingest share the queue: a concurrent poll must not have its
+    // pending rows cleared by the export's flush, or enter halfway through it.
+    const exported = this.tail.then(() => this.buildExportChunks());
+    this.tail = exported.then(() => {}, () => {});
+    return exported;
+  }
+  async buildExportChunks() {
+    await this.flush(); this.changed(this);
+    const chunks = ['{"format":"esp32-local-history-v1","exportedAt":' + JSON.stringify(new Date().toISOString()) +
+      ',"storageError":' + JSON.stringify(this.error) + ',"lastState":' + JSON.stringify(this.latest) + ',"logs":['];
+    const pendingKeys = new Set(this.pending.map(r => r.key)); let first = true;
+    const append = row => { chunks.push((first ? '' : ',') + JSON.stringify(row)); first = false; };
+    // Read failure must fail export, never silently produce an incomplete archive.
+    await this.storage.visit(row => { if (!pendingKeys.has(row.key)) append(row); });
+    for (const row of this.pending) append(row);
+    chunks.push(']}'); return chunks;
+  }
+}
+
+function indexedLogStorage(indexedDB) {
+  let opening;
+  const open = () => opening ||= new Promise((resolve,reject) => {
+    if (!indexedDB) { reject(Error('浏览器不支持 IndexedDB')); return; }
+    const r = indexedDB.open('esp32-cat-local-history', 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore('logs', {keyPath:'key'}).createIndex('receivedAt',['receivedAt','order']); r.result.createObjectStore('meta'); };
+    r.onerror = () => { opening = null; reject(r.error); };
+    r.onblocked = () => reject(Error('其他页面阻止打开本地数据库，请关闭旧页面后重试'));
+    r.onsuccess = () => { r.result.onversionchange = () => r.result.close(); resolve(r.result); };
+  });
+  return {
+    async restore() {
+      const db = await open();
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(['logs','meta'],'readonly'); let state = {}, count = 0; const recent = [];
+        const m = tx.objectStore('meta').get('state'); m.onsuccess = () => state = m.result || {};
+        const c = tx.objectStore('logs').count(); c.onsuccess = () => count = c.result;
+        const r = tx.objectStore('logs').index('receivedAt').openCursor(null,'prev');
+        r.onsuccess = () => { const cursor = r.result; if(cursor && recent.length < 500) { recent.push(cursor.value); cursor.continue(); } };
+        tx.oncomplete = () => resolve({...state,count,recent:recent.reverse()}); tx.onabort = () => reject(tx.error || Error('本地读取中断'));
+      });
+    },
+    async commit(rows, meta) {
+      const db = await open();
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(['logs','meta'],'readwrite'), store = tx.objectStore('logs'); let count;
+        for(const row of rows) { const r = store.get(row.key); r.onsuccess = () => { if(!r.result)store.put(row); }; }
+        tx.objectStore('meta').put(meta,'state');
+        // Count after all get/put requests have finished, in the same transaction.
+        tx.oncomplete = () => {
+          const read = db.transaction('logs','readonly'); const r = read.objectStore('logs').count();
+          r.onsuccess = () => count = r.result; read.oncomplete = () => resolve(count); read.onabort = () => reject(read.error);
+        };
+        tx.onabort = () => reject(tx.error || Error('本地写入中断'));
+      });
+    },
+    async visit(append) {
+      const db = await open();
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction('logs','readonly'); const r = tx.objectStore('logs').index('receivedAt').openCursor();
+        r.onsuccess = () => { const cursor = r.result; if(cursor){try{append(cursor.value);cursor.continue();}catch(e){reject(e);tx.abort();}} };
+        tx.oncomplete = resolve; tx.onabort = () => reject(tx.error || Error('导出读取中断'));
+      });
+    }
+  };
+}
+let archiveIndexedDB;
+try { archiveIndexedDB=globalThis.indexedDB; } catch { /* Report unavailable storage without breaking controller UI. */ }
+const localLogArchive = new LocalLogArchive(indexedLogStorage(archiveIndexedDB), archive => {
+ $('localLogStatus').textContent = `浏览器本地已保存 ${archive.count} 条，待保存 ${archive.pending.length} 条。` +
+   (archive.error || '断线后仍可导出全部记录。') + ' 页面显示最近 500 条；本地历史不自动裁剪。';
+ $('localLogs').textContent = archive.recent.map(r => `${r.receivedAt} ${r.bootId || ''} ${r.seq || ''} ${r.ms ?? ''}ms [${r.source}] ${r.line}`).join('\n');
+});
+async function exportLocalLogs(){
+ const button=$('exportLocalLogs');button.disabled=true;
+ try {
+   const chunks=await localLogArchive.exportChunks(),blob=new Blob(chunks,{type:'application/json'});
+   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
+   link.download='esp32-local-history-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';link.click();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+ }catch(e){$('localLogStatus').textContent='导出失败，未生成不完整文件：'+e.message;}
+ finally{button.disabled=false;}
+}
+
+const cameraFields={
+ quality:['JPEG 质量数值（越小画质越高）',0,63],brightness:['亮度',-2,2],contrast:['对比度',-2,2],saturation:['饱和度',-2,2],
+ aec:['自动曝光',0,1],ae_level:['自动曝光亮度目标',-2,2],aec2:['AEC2',0,1],aec_value:['手动曝光值（驱动刻度）',0,1200],
+ agc:['自动增益',0,1],agc_gain:['手动增益',0,30],gainceiling:['自动增益上限（范围由传感器回读）',0,6],
+ awb:['自动白平衡',0,1],awb_gain:['白平衡增益',0,1],wb_mode:['白平衡模式（0 自动 / 1 晴 / 2 阴 / 3 办公室 / 4 家居）',0,4],
+ raw_gma:['伽马校正',0,1],lenc:['镜头校正',0,1],hmirror:['水平镜像',0,1],vflip:['垂直翻转',0,1]
+};
+let cameraBoardState=null,cameraDraftRevision=null,cameraPending=null;
+for(const [key,[label,min,max]] of Object.entries(cameraFields)){
+ const row=document.createElement('label'),input=document.createElement('input');row.textContent=label;
+ input.id='cameraCfg_'+key;input.type='number';input.min=min;input.max=max;input.step=1;input.disabled=true;
+ row.append(input);$('cameraSettingsFields').append(row);
+}
+function cameraControlsReady(d){return d.cameraOk&&d.cameraSettings?.available&&['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy&&!d.visionBench?.enabled;}
+function syncCameraSettings(d){
+ cameraBoardState=d;const c=d.cameraSettings,ready=!!cameraControlsReady(d),actual=c?.actual||{};
+ for(const key of Object.keys(cameraFields)){
+  const input=$('cameraCfg_'+key);const range=c?.ranges?.[key];if(range){input.min=range.min;input.max=range.max;}input.disabled=!ready||!Number.isInteger(actual[key]);
+  if(c&&cameraDraftRevision!==d.bootId+'/'+c.revision&&Number.isInteger(actual[key]))input.value=actual[key];
+ }
+ if(c)cameraDraftRevision=d.bootId+'/'+c.revision;
+ // Automatic modes own these values. Their configured values remain visible.
+ if(ready){$('cameraCfg_aec_value').disabled=Number($('cameraCfg_aec').value)!==0;$('cameraCfg_agc_gain').disabled=Number($('cameraCfg_agc').value)!==0;}
+ $('applyCameraSettings').disabled=$('resetCameraSettings').disabled=!ready||!!cameraPending;
+ $('cameraReadback').textContent=c?JSON.stringify(c,null,2):'当前固件未提供摄像头参数回读';
+ let message=c?(c.error?'板上操作失败：'+c.error:`摄像头 PID ${c.sensorPid}；驱动回读版本 ${c.revision}；${c.persisted?'参数已保存到 ESP，重启后恢复':'当前驱动配置尚未确认持久化'}。`):'等待兼容固件回读';
+ if(cameraPending){if(c?.requestId===cameraPending.id){message=c.error?'保存失败：'+c.error:'已应用并保存，驱动实际回读见下方。';cameraPending=null;$('applyCameraSettings').disabled=$('resetCameraSettings').disabled=!ready;}else if(Date.now()-cameraPending.at>10000){message='未收到操作结果，请查看板上回读后重试。';cameraPending=null;}else message='等待板上应用、保存与回读…';}
+ if(c?.ranges?.gainceiling?.unit==='REGISTER_10_BIT')message+=' 增益上限使用 0–1023 寄存器刻度，不能当作 0–6 档位。';
+ $('cameraSettingsStatus').textContent=message+(ready?'':' 请先停止并等待停车确认、关闭识别性能实验。');
+}
+function cameraOffline(){cameraBoardState=null;for(const key of Object.keys(cameraFields))$('cameraCfg_'+key).disabled=true;$('applyCameraSettings').disabled=$('resetCameraSettings').disabled=true;$('cameraSettingsStatus').textContent='ESP32 已断线；保留上次回读，无法应用新参数。';}
+async function applyCameraSettings(reset=false){
+ if(!cameraBoardState||!cameraControlsReady(cameraBoardState)||cameraPending)return;
+ const settings={},actual=cameraBoardState.cameraSettings.actual;
+ try {
+  if(!reset)for(const [key,[label,min,max]] of Object.entries(cameraFields))if(Number.isInteger(actual[key])){
+   const raw=$('cameraCfg_'+key).value,value=Number(raw);if(raw===''||!Number.isInteger(value)||value<(cameraBoardState.cameraSettings.ranges?.[key]?.min??min)||value>(cameraBoardState.cameraSettings.ranges?.[key]?.max??max))throw Error(label+'超出范围或不是整数');settings[key]=value;
+  }
+  const id='camera-'+Date.now();cameraPending={id,at:Date.now()};$('applyCameraSettings').disabled=$('resetCameraSettings').disabled=true;
+  const r=await fetch('/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:reset?'camera_reset':'camera_config',requestId:id,settings,expectedMode:cameraBoardState.mode})});
+  if(!r.ok)throw Error(await r.text());$('cameraSettingsStatus').textContent='等待板上应用、保存与回读…';
+ }catch(e){cameraPending=null;$('cameraSettingsStatus').textContent='保存失败：'+e.message;}
+}
+
+let centerReadback=null,pendingCenterSave=null,tagCenterReadback=null,pendingTagCenterSave=null;
+function patrolActionName(action){const names={TAG_ALIGN:'对准标签（原地转向）',APPROACH_TAG:'标签已找到：判断对准或靠近',SCAN_TAG:'准备搜索标签',SCAN_TAG_ACTIVE:'分步旋转寻找标签',WAIT_STOP:'等待停车确认',TAG_ARRIVAL:'已到达标签',TAG_REARM:'等待重复标签重新进入',TAG_SETTLE:'标签丢失：等待编码器停稳',TAG_RECHECK:'标签丢失：停车多帧复核',FAULT:'故障停车'};return (names[action]||action||'IDLE')+(names[action]?' ['+action+']':'');}
+function syncPatrolTransitions(d){if(d.ms<flowLastMs&&flowLastMs-d.ms<10000)return;const rows=(d.logs||[]).filter(x=>x.source==='DECISION'&&x.line.startsWith('PATROL ')).slice(-8);$('patrolTransitions').textContent=rows.length?'最近巡游状态变化（历史，不代表当前正在执行）：\n'+rows.map(x=>`${Math.max(0,(d.ms-x.ms)/1000).toFixed(1)} 秒前：${patrolActionName(x.line.slice(7))}`).join('\n'):'最近巡游状态变化：暂无记录';}
+function centerPercentFromAngles(fov,angle){if(!Number.isFinite(fov)||!Number.isFinite(angle)||fov<=0||fov>=180||angle<=0||angle>=fov/2)return NaN;return 50*Math.tan(angle*Math.PI/180)/Math.tan(fov*Math.PI/360);}
+function syncCenterTolerance(d){
+ const v=d.config?.centerTolerancePercent,available=Number.isFinite(v)&&v>=1&&v<=20,stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;
+ for(const id of ['centerPercent','saveCenterTolerance'])$(id).disabled=true;
+ for(const id of ['centerFov','centerAngle','convertCenterAngle'])$(id).disabled=!stopped;
+ if(available&&centerReadback!==v){$('centerPercent').value=v;centerReadback=v;}
+ if(pendingCenterSave){const error=(d.logs||[]).find(x=>x.seq>pendingCenterSave.seq&&x.source==='CONFIG_ERROR');if(error)pendingCenterSave.error=error.line;else if(v===pendingCenterSave.value)pendingCenterSave=null;}
+ $('centerStatus').textContent='找猫不再检测居中；旧保存值保留，不参与控制。';
+ if(pendingCenterSave)$('centerStatus').textContent+=' '+(pendingCenterSave.error?'保存失败：'+pendingCenterSave.error:'等待板上保存回读。');
+ const tag=d.config?.tagCenterTolerancePercent,tagAvailable=Number.isFinite(tag)&&tag>=1&&tag<=20;
+ for(const id of ['tagCenterPercent','saveTagCenterTolerance'])$(id).disabled=!tagAvailable||!stopped;
+ $('centerTarget').value='TAG';$('centerTarget').disabled=!tagAvailable||!stopped;
+ if(tagAvailable&&tagCenterReadback!==tag){$('tagCenterPercent').value=tag;tagCenterReadback=tag;}
+ if(pendingTagCenterSave){const error=(d.logs||[]).find(x=>x.seq>pendingTagCenterSave.seq&&x.source==='CONFIG_ERROR');if(error)pendingTagCenterSave.error=error.line;else if(tag===pendingTagCenterSave.value)pendingTagCenterSave=null;}
+ $('tagCenterStatus').textContent=tagAvailable?`板上已保存：标签中心左右各 ${tag.toFixed(1)}%；允许中心位置 ${(50-tag).toFixed(1)}%–${(50+tag).toFixed(1)}%。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'等待读取标签居中容差';
+ if(pendingTagCenterSave)$('tagCenterStatus').textContent+=' '+(pendingTagCenterSave.error?'保存失败：'+pendingTagCenterSave.error:'等待板上保存回读。');
+}
+function saveCenterTolerance(){if($('saveCenterTolerance').disabled)return;const value=Number($('centerPercent').value);if(!$('centerPercent').value||!Number.isFinite(value)||value<1||value>20){alert('居中容差请输入 1–20%');return;}pendingCenterSave={value,seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config:{centerTolerancePercent:value}});try{const c=JSON.parse($('settings').value);c.centerTolerancePercent=value;$('settings').value=JSON.stringify(c,null,2);}catch{}}
+function saveTagCenterTolerance(){if($('saveTagCenterTolerance').disabled)return;const value=Number($('tagCenterPercent').value);if(!$('tagCenterPercent').value||!Number.isFinite(value)||value<1||value>20){alert('标签居中容差请输入 1–20%');return;}pendingTagCenterSave={value,seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config:{tagCenterTolerancePercent:value}});try{const c=JSON.parse($('settings').value);c.tagCenterTolerancePercent=value;$('settings').value=JSON.stringify(c,null,2);}catch{}}
+function convertCenterAngle(){if($('convertCenterAngle').disabled)return;const fov=Number($('centerFov').value),angle=Number($('centerAngle').value),percent=centerPercentFromAngles(fov,angle);if(!Number.isFinite(percent)||percent<1||percent>20){alert('请填写有效水平视场角和允许偏角；换算后的居中容差必须在 1–20% 内');return;}const tag=$('centerTarget').value==='TAG',id=tag?'tagCenterPercent':'centerPercent';$(id).value=Math.round(percent*10)/10;$('centerConversion').textContent=`针孔模型近似：水平视场角 ${fov}°、允许左右偏离 ${angle}° → ${tag?'标签':'猫'}容差 ±${$(id).value}%。尚未保存，请点击对应的保存居中容差。`;}
+let flowLastMs=0;
+function syncFlow(d){flowLastMs=d.ms;$('patrolLive').textContent=`即时流程：${d.phase} · ${patrolActionName(d.action)}；电机命令 #${d.motorId||0}：${d.leftPwm||0}/${d.rightPwm||0}，${d.motorConfirmed?'Uno 已确认':'尚未确认'}。`+(d.stopUnconfirmed?'停车未确认。':d.stopPendingId?'等待停车确认。':'');syncPatrolTransitions(d);}
+async function flowPoll(){let delay=100;try{const d=await withPageRead(async()=>{const r=await fetch('/api/flow',{signal:AbortSignal.timeout(2000)});if(!r.ok)throw Error(r.status);return await r.json();});syncFlow(d);}catch(e){$('patrolLive').textContent='即时流程连接中断：'+e.message;delay=1000;}setTimeout(flowPoll,delay);}
+flowPoll();
+
+let tagScanReadback=null,pendingTagScanSave=null;
+function syncTagScanChecks(d){
+ const value=d.config?.tagScanMaxFrames,available=Number.isInteger(value)&&value>=1&&value<=10;
+ const stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;
+ for(const id of ['tagScanMaxFrames','saveTagScanChecks'])$(id).disabled=!available||!stopped;
+ if(available&&tagScanReadback!==value){$('tagScanMaxFrames').value=value;tagScanReadback=value;}
+ if(pendingTagScanSave){const error=(d.logs||[]).find(x=>x.seq>pendingTagScanSave.seq&&x.source==='CONFIG_ERROR');if(error)pendingTagScanSave.error=error.line;else if(value===pendingTagScanSave.value)pendingTagScanSave=null;}
+ $('tagScanStatus').textContent=available?'板上已保存：每次停稳最多 '+value+' 次。'+(stopped?'可修改并保存。':'请先停止并等待停车确认。'):'等待板上识别次数回读';
+ if(pendingTagScanSave)$('tagScanStatus').textContent+=' '+(pendingTagScanSave.error?'保存失败：'+pendingTagScanSave.error:'等待板上保存回读。');
+}
+function saveTagScanChecks(){
+ if($('saveTagScanChecks').disabled)return;
+ const value=Number($('tagScanMaxFrames').value);
+ if(!$('tagScanMaxFrames').value||!Number.isInteger(value)||value<1||value>10){alert('标签识别次数请输入 1–10 的整数');return;}
+ pendingTagScanSave={value,seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config:{tagScanMaxFrames:value}});
+ try{const c=JSON.parse($('settings').value);c.tagScanMaxFrames=value;$('settings').value=JSON.stringify(c,null,2);}catch{}
+}
+
+let tagRecoveryReadback=null,pendingTagRecoverySave=null;
+function syncTagRecovery(d){
+ const c=d.config||{},grace=c.tagLossGraceMs,angle=c.tagRecoveryAngleDeg;
+ const available=Number.isInteger(grace)&&grace>=0&&grace<=3000&&Number.isFinite(angle)&&angle>=20&&angle<=120;
+ const stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;
+ for(const id of ['tagLossGraceMs','tagRecoveryAngleDeg','saveTagRecovery'])$(id).disabled=!available||!stopped;
+ const value=JSON.stringify([grace,angle]);
+ if(available&&tagRecoveryReadback!==value){$('tagLossGraceMs').value=grace;$('tagRecoveryAngleDeg').value=angle;tagRecoveryReadback=value;}
+ if(pendingTagRecoverySave){const error=(d.logs||[]).find(x=>x.seq>pendingTagRecoverySave.seq&&x.source==='CONFIG_ERROR');if(error)pendingTagRecoverySave.error=error.line;else if(value===pendingTagRecoverySave.value)pendingTagRecoverySave=null;}
+ $('tagRecoveryStatus').textContent=available?`板上已保存：漏检宽限 ${grace} 毫秒，猫与标签首次局部转向 ${angle}°。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'等待板上目标恢复参数回读';
+ if(pendingTagRecoverySave)$('tagRecoveryStatus').textContent+=' '+(pendingTagRecoverySave.error?'保存失败：'+pendingTagRecoverySave.error:'等待板上保存回读。');
+ const p=d.patrolStatus||{},names={GRACE:'短暂漏检，保持直行',SETTLE:'等待停稳',RECHECK:'停车复核',LOCAL_FIRST:'按记忆方向局部寻找',LOCAL_REVERSE:'反向局部寻找',FULL:'使用剩余预算寻找',NONE:'无恢复动作'};
+ const catDirection=p.catMemoryDirection<0?'左':p.catMemoryDirection>0?'右':'无有效方向';
+ $('catRecoveryLive').textContent=`猫恢复：${names[p.catRecoveryStage]||'等待读取'}；记忆方向：${catDirection}`+(['LOCAL_FIRST','LOCAL_REVERSE','FULL'].includes(p.catRecoveryStage)?`；当前转向 ${p.catRecoveryDirection<0?'左':'右'}；预算剩余 ${Number(p.catRecoveryRemainingDegrees||0).toFixed(1)}°`:'');
+ const direction=p.tagMemoryDirection<0?'左':p.tagMemoryDirection>0?'右':'无有效方向';
+ $('tagRecoveryLive').textContent=`标签恢复：${names[p.tagRecoveryStage]||'等待读取'}；记忆方向：${direction}`+(p.tagRecoveryStage==='GRACE'?`；宽限剩余 ${p.tagLossRemainingMs||0} 毫秒`:'')+(['LOCAL_FIRST','LOCAL_REVERSE','FULL'].includes(p.tagRecoveryStage)?`；当前转向 ${p.tagRecoveryDirection<0?'左':'右'}；总预算剩余 ${Number(p.tagRecoveryRemainingDegrees||0).toFixed(1)}°`:'');
+}
+function saveTagRecovery(){
+ if($('saveTagRecovery').disabled)return;
+ const grace=Number($('tagLossGraceMs').value),angle=Number($('tagRecoveryAngleDeg').value);
+ if($('tagLossGraceMs').value===''||!Number.isInteger(grace)||grace<0||grace>3000||$('tagRecoveryAngleDeg').value===''||!Number.isFinite(angle)||angle<20||angle>120){alert('漏检宽限请输入 0–3000 毫秒整数，局部转向请输入 20–120 度');return;}
+ const config={tagLossGraceMs:grace,tagRecoveryAngleDeg:angle};pendingTagRecoverySave={value:JSON.stringify([grace,angle]),seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config});
+ try{const c=JSON.parse($('settings').value);Object.assign(c,config);$('settings').value=JSON.stringify(c,null,2);}catch{}
+}
+
+const robotFields={
+ catCheckMaxFrames:["CAT_CHECK 最多识别新画面数（任一次找到即通过）",1,3],
+ robotActionLimit:["完成行为次数（次）",1,100],robotFastApproachCm:["远处快速接近距离上限（厘米）",1,50],robotFastApproachPwm:["快速接近请求 PWM",50,255],robotSlowFlashPercent:["慢接近并行闪灯概率（%）",0,100],
+ catFarWidth:["远处阈值：猫框占画面宽度（%）",1,80,100],catNearWidth:["近处阈值：猫框占画面宽度（%）",2,90,100],initialLookSeconds:["观察／静止等待时长（秒）",0,30],decisionIntervalMs:["动作间等待（毫秒）",0,10000],
+ robotFarApproachPercent:['远处：快速接近再慢靠近概率（%）',0,100],robotFarProbePercent:['远处：三段试探靠近概率（%）',0,100],
+ robotNearSignalPercent:['近处／接近停下后：原地声光回应概率（%）',0,100],robotNearObservePercent:['近处／接近停下后：原地观察概率（%）',0,100],robotNearStayPercent:['近处／接近停下后：静止等待概率（%）',0,100],
+ robotProbeCooldownSeconds:['试探靠近冷却时间（秒）',0,60],slowApproachCm:['慢靠近计划距离（厘米，实际扣除停车余量）',1,30],slowApproachPwm:['慢靠近请求 PWM',50,255],
+ probePwm:['三段试探请求 PWM',50,255],probeStep1Cm:['试探第一段距离（厘米）',1,20],probeStep2Cm:['试探第二段距离（厘米）',1,20],probeStep3Cm:['试探第三段距离（厘米）',1,20],
+ probePause1Ms:['试探第一段后暂停（毫秒）',0,3000],probePause2Ms:['试探第二段后暂停（毫秒）',0,3000],probePause3Ms:['试探第三段后暂停（毫秒）',0,3000],
+ signalFlashMs:['原地声光：灯光持续（毫秒）',100,5000],signalBeepMs:['原地声光：蜂鸣持续（毫秒）',0,1000]
+};
+let robotReadback={},pendingRobotSave=null;
+for(const [key,[name,min,max]] of Object.entries(robotFields)){const label=document.createElement('label'),input=document.createElement('input');label.textContent=name;input.id='robotCfg_'+key;input.type='number';input.min=min;input.max=max;input.step='any';label.append(input);$('robotConfigFields').append(label);}
+function syncRobotSettings(d){
+ const c=d.config||{},ready=Object.keys(robotFields).every(k=>Number.isFinite(c[k])),stopped=['IDLE','STOPPED'].includes(d.phase)&&!d.stopPendingId&&!d.stopUnconfirmed&&!d.debugBusy;
+ $('saveRobotSettings').disabled=!ready||!stopped;
+ for(const key of Object.keys(robotFields)){const input=$('robotCfg_'+key);input.disabled=!ready||!stopped;if(Number.isFinite(c[key])&&robotReadback[key]!==c[key]){input.value=c[key]*(robotFields[key][3]||1);robotReadback[key]=c[key];}}
+ if(pendingRobotSave){const error=(d.logs||[]).find(x=>x.seq>pendingRobotSave.seq&&x.source==='CONFIG_ERROR');if(error)pendingRobotSave.error=error.line;else if(Object.entries(pendingRobotSave.config).every(([k,v])=>c[k]===v))pendingRobotSave=null;}
+ $('robotConfigStatus').textContent=ready?`板上保存：CAT_CHECK 最多 ${c.catCheckMaxFrames} 张，任一次找到即通过；远处快→慢 ${c.robotFarApproachPercent}%／试探 ${c.robotFarProbePercent}%；近处声光 ${c.robotNearSignalPercent}%／观察 ${c.robotNearObservePercent}%／静止 ${c.robotNearStayPercent}%。完成 ${c.robotActionLimit} 个完整行为后退出；慢接近闪灯 ${c.robotSlowFlashPercent}%；观察 ${c.initialLookSeconds} 秒／灯光 ${c.signalFlashMs} 毫秒／蜂鸣 ${c.signalBeepMs} 毫秒。试探冷却 ${c.robotProbeCooldownSeconds} 秒；最低PWM ${c.minimumDrivePwm??'待读取'}，慢靠近实际至少 ${Math.max(c.slowApproachPwm,c.minimumDrivePwm||1)}，试探实际至少 ${Math.max(c.probePwm,c.minimumDrivePwm||1)}。${stopped?'可修改并保存。':'请先停止并等待停车确认。'}`:'正在读取主动找猫配置。';
+ const p=d.patrolStatus||{},v=d.cameraVision||{},cat=v.cat||{};const age=Number.isFinite(v.at)?d.ms-v.at:Infinity,fresh=age>=0&&age<=(c.visionMaxAgeMs||1500);const valid=fresh&&cat.valid===true,detected=valid&&cat.detected===true;
+ $('robotLiveStatus').textContent=`当前动作：${p.robotAction||p.action||'—'}；完成 ${p.robotActionsCompleted??0}/${p.robotActionLimit??c.robotActionLimit??'—'}。猫框宽度：${detected&&Number.isFinite(cat.width)?(cat.width*100).toFixed(1)+'%':'无有效新鲜检测'}；远≤${(c.catFarWidth*100).toFixed(1)}%／近≥${(c.catNearWidth*100).toFixed(1)}%；控制采用 ${p.catDistance===0?'远':p.catDistance===1?'近':'未分类'}（中间宽度沿用上一档）。实际快接近PWM至少 ${Math.max(c.robotFastApproachPwm||0,c.minimumDrivePwm||1)}／慢接近至少 ${Math.max(c.slowApproachPwm||0,c.minimumDrivePwm||1)}。`;
+ if(pendingRobotSave)$('robotConfigStatus').textContent+=' '+(pendingRobotSave.error?'保存失败：'+pendingRobotSave.error:'等待板上保存回读。');
+}
+function saveRobotSettings(){
+ if($('saveRobotSettings').disabled)return;const config={};
+ for(const [key,[name,min,max,scale=1]] of Object.entries(robotFields)){const input=$('robotCfg_'+key),v=Number(input.value);if(input.value===''||!Number.isFinite(v)||v<min||v>max){alert(name+' 输入无效');return;}config[key]=v/scale;}
+ for(const keys of [['robotFarApproachPercent','robotFarProbePercent'],['robotNearSignalPercent','robotNearObservePercent','robotNearStayPercent']])if(Math.abs(keys.reduce((n,k)=>n+config[k],0)-100)>.01){alert('同组行为概率之和必须为100%');return;}
+ if(!Number.isInteger(config.catCheckMaxFrames)){alert("CAT_CHECK 识别次数必须为整数");return;}if(!Number.isInteger(config.robotActionLimit)){alert("行为次数必须为整数");return;}if(config.catFarWidth>=config.catNearWidth){alert("远处比例必须小于近处比例");return;}
+ pendingRobotSave={config,seq:pageState?.logs?.at(-1)?.seq||0};send({op:'config',config});$('robotConfigStatus').textContent='已提交，等待板上回读确认。';try{const c=JSON.parse($('settings').value);Object.assign(c,config);$('settings').value=JSON.stringify(c,null,2);}catch{}
+}
+
+async function readPageState(){let failure;for(let attempt=0;attempt<2;attempt++){try{return await withPageRead(async()=>{const r=await fetch('/api/state?afterLog='+pageLogAfter+'&logLimit=160&bootId='+encodeURIComponent(pageLogBoot||''),{signal:AbortSignal.timeout(2000)});if(!r.ok)throw Error(r.status);return await r.json();});}catch(e){failure=e;}}throw failure;}
+async function poll(){try{let d=await readPageState();deviceOnline=true;pollFailures=0;localLogArchive.ingest(d);mergePageLogs(d);syncCameraSettings(d);syncUno(d);syncCameraPreview(d);syncVisionMeasurements(d);syncCatSettings(d);syncCatProgress(d);syncScanWait(d);syncMinimumDrivePwm(d);syncPatrolTurns(d);syncFrontAvoidance(d);syncPatrolStatus(d);syncTagStopWidth(d);syncCenterTolerance(d);syncTagScanChecks(d);syncTagRecovery(d);syncRobotSettings(d);syncPatrolTransitions(d);$('status').textContent=JSON.stringify({firmware:d.firmware,mode:d.mode,phase:d.phase,ms:d.ms,cameraOk:d.cameraOk,frameSeq:d.frameSeq,heap:d.heap,psram:d.psram,lastUnoAgeMs:d.lastUnoAgeMs,lastRx:d.lastRx,lastTx:d.lastTx,stationIP:d.stationIP,network:d.network,droppedLogs:d.droppedLogs},null,2);$('vision').textContent=JSON.stringify({camera:d.cameraVision,selected:d.vision,requestedMode:d.visionMode,actualMode:d.actualVisionMode,mailbox:d.visionMailbox},null,2);$('logs').textContent=d.logs.map(x=>`${x.seq} ${x.ms}ms [${x.source}] ${x.line}${describeDiag(x.line)}`).join('\n');if(!loaded){$('route').value=JSON.stringify(d.config.route);const display={...d.config};for(const k of ['postEscapeWaitSeconds','escapeDistanceCm','explorationBranchPercent','endingAfterRounds','endingInactivitySeconds','sessionLimitSeconds','endingPatrolPercent','endingSilentPercent','endingSignalPercent','touchPreyPercent','touchSlowEscapePercent','touchFastEscapePercent','catFollowProbePercent','catFollowObservePercent','catFollowPatrolPercent','touchDebounceMs','touchReleaseTimeoutMs','catProbeCooldownSeconds','captureCueFlashMs','captureCueBeepMs'])delete display[k];$('settings').value=JSON.stringify(display,null,2);loaded=true;}}catch(e){if(deviceOnline)localLogArchive.connectionLost(e.message);cameraOffline();visionMeasurementsOffline();deviceOnline=false;pollFailures++;$('video').src='';$('catDetected').textContent='连接中断，猫识别状态不可用';$('robotLiveStatus').textContent='连接中断，实时数据不可用';$('saveRobotSettings').disabled=true;for(const k of Object.keys(robotFields))$('robotCfg_'+k).disabled=true;$('tagRecoveryLive').textContent='连接中断，标签恢复状态不可用';$('catRecoveryLive').textContent='连接中断，猫恢复状态不可用';for(const id of ['tagLossGraceMs','tagRecoveryAngleDeg','saveTagRecovery','tagScanMaxFrames','saveTagScanChecks','centerPercent','saveCenterTolerance','tagCenterPercent','saveTagCenterTolerance','centerTarget','centerFov','centerAngle','convertCenterAngle'])$(id).disabled=true;$('saveCatSettings').disabled=true;for(const k of Object.keys(catFields))$('catCfg_'+k).disabled=true;$('localLedOn').disabled=$('localLedOff').disabled=true;$('status').textContent='连接中断：'+e.message;$('connection').textContent='ESP32 连接中断，当前 UART 模式未确认';for(const id of ['simMode','realMode'])$(id).setAttribute('aria-pressed','false');document.querySelectorAll('.test').forEach(b=>b.disabled=true);$('scanMinimumMs').disabled=$('saveScanWait').disabled=$('rawSend').disabled=$('saveUno').disabled=$('frontAvoidance').disabled=$('minimumDrivePwm').disabled=$('saveMinimumDrivePwm').disabled=true;for(const key of Object.keys(sensorNames))$('sensor_'+key).textContent='ESP32 连接中断 · 读数不可用';}setTimeout(poll,pollFailures?Math.min(3000,600*2**Math.min(pollFailures,3)):600);}poll();
+</script></html>
+
