@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.11. Boot log: READY UNO_CAT_V6.11.
+// Firmware version: UNO_CAT_V6.12. Boot log: READY UNO_CAT_V6.12.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -7,6 +7,9 @@
 #include <string.h>
 #include <SoftwareSerial.h>
 #include "scan_machine.h"
+#include "straight_balance.h"
+#include "command_hex.h"
+#include "command_integer.h"
 
 // D12 receives the ESP command channel at 57600; D1 remains hardware TX.
 // SoftwareSerial requires a TX pin but its write methods are never used.
@@ -172,6 +175,7 @@ struct Motion {
   bool estimated;
 };
 Motion motion = { MOTION_NONE, 0, 0, 0, 0, 0, { 0, 0 }, { 0, 0 }, { 0, 0 }, 0, false };
+StraightBalance straightBalance;
 // Applies only to one bounded TEST_MOTOR transaction, never patrol commands.
 bool motionBypassAvoidance = false;
 ScanMachine scan;
@@ -266,6 +270,7 @@ void applyMotors(int16_t left, int16_t right) {
   setMotorSide(PIN_R_PWM, PIN_R_IN1, PIN_R_IN2, right);
 }
 void stopOutputs() {
+  straightBalance.reset(0);
   applyMotors(0, 0);
 }
 
@@ -483,15 +488,23 @@ void tickMotion(uint32_t now) {
       return;
     }
   }
+  int16_t leftOutput = motion.left, rightOutput = motion.right;
+  bool adjusted = false;
+  if (straightBalance.enabled) {
+    adjusted = straightBalance.update(now, leftCount - motion.basePulses[0], rightCount - motion.basePulses[1], abs(motion.left));
+    const int8_t sign = motion.left > 0 ? 1 : -1;
+    if (straightBalance.reduction > 0) leftOutput -= sign * straightBalance.reduction;
+    if (straightBalance.reduction < 0) rightOutput += sign * straightBalance.reduction;
+  }
   if (motion.kind == MOTION_PULSES) {
     const bool leftDone = leftCount - motion.basePulses[0] >= motion.targetPulses;
     const bool rightDone = rightCount - motion.basePulses[1] >= motion.targetPulses;
-    applyMotors(leftDone ? 0 : motion.left, rightDone ? 0 : motion.right);
+    applyMotors(leftDone ? 0 : leftOutput, rightDone ? 0 : rightOutput);
     if (leftDone && rightDone) {
       finishMotion();
       return;
     }
-  }
+  } else if (adjusted) applyMotors(leftOutput, rightOutput);
   if (motion.kind != MOTION_CONTINUOUS && deadlineReached(now, motion.deadlineMs)) {
     if (motion.kind == MOTION_PULSES) abortMotion(F("MOTION_TIMEOUT"));
     else finishMotion();
@@ -532,12 +545,7 @@ void tickOutputs(uint32_t now) {
 }
 
 bool parseLong(const char *text, long minValue, long maxValue, long &value) {
-  if (!text || !*text) return false;
-  char *end;
-  const long parsed = strtol(text, &end, 10);
-  if (*end || parsed < minValue || parsed > maxValue) return false;
-  value = parsed;
-  return true;
+  return commandLong(text, minValue, maxValue, value);
 }
 bool parseFloat(const char *text, float minValue, float maxValue, float &value) {
   if (!text || !*text) return false;
@@ -592,6 +600,10 @@ void startMotion(uint16_t id, MotionKind kind, int16_t left, int16_t right,
   motion.deadlineMs = now + durationMs;
   motion.targetPulses = targetPulses;
   motion.estimated = estimated;
+  straightBalance.reset(now);
+  // IO and DRY_RUN changes abort motion before changing their flags.
+  straightBalance.enabled = left != 0 && left == right && !boardDryRun && !bypassAvoidance
+    && physicalIo[MOTOR_LEFT] && physicalIo[MOTOR_RIGHT] && physicalIo[ENCODER_LEFT] && physicalIo[ENCODER_RIGHT];
   getPulses(motion.basePulses[0], motion.basePulses[1]);
   for (uint8_t i = 0; i < 2; ++i) {
     motion.lastPulse[i] = motion.basePulses[i];
@@ -747,11 +759,11 @@ void processCommand(char *line) {
   char *star = strchr(line, '*');
   if (!strncmp_P(line, PSTR("C "), 2) && !star) { diagBadChecksum(line, serialCrc8(line), 0); error(0, F("BAD_CHECKSUM")); return; }
   if (star) {
-    if (strlen(star + 1) != 2 || !isxdigit(star[1]) || !isxdigit(star[2])) {
+    uint8_t received;
+    if (!commandCrcByte(star + 1, received)) {
       diagBadChecksum(line, 0, 0);
       error(0, F("BAD_CHECKSUM")); return;
     }
-    const uint8_t received = static_cast<uint8_t>(strtoul(star + 1, nullptr, 16));
     *star = '\0';
     const uint8_t calculated = serialCrc8(line);
     if (calculated != received) { *star = '*'; diagBadChecksum(line, calculated, received); error(0, F("BAD_CHECKSUM")); return; }
@@ -1300,7 +1312,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.11"));
+  Serial.println(F("READY UNO_CAT_V6.12"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&

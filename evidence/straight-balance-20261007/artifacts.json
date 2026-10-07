@@ -1,0 +1,30 @@
+{
+  "rollbackCommit": "0a5184d",
+  "rollbackTag": "rollback/pre-straight-balance-20261007",
+  "baselineHex": "D:\\data\\SynologyDrive\\文档\\论文+学习\\Embodied behavior design for social context\\output\\straight-balance-20261007\\baseline\\UnoCatController.ino.hex",
+  "baselineSha256": "30229972145A22E201C27B93BDC3452E6457C3EE2725A762B8A6B3213E88A5E4",
+  "newHex": "D:\\data\\SynologyDrive\\文档\\论文+学习\\Embodied behavior design for social context\\output\\straight-balance-20261007\\main\\UnoCatController.ino.hex",
+  "newSha256": "97D51203BD9DD806B48D06B8E05ABBEB711E60B3F889484215A95E8EAC366B58",
+  "inputs": [
+    {
+      "file": "firmware\\UnoCatController\\UnoCatController.ino",
+      "sha256": "E2C6A9E65780D02C1D2A924FC299053423224CD714996D4E951125AFF79F0C25"
+    },
+    {
+      "file": "firmware\\UnoCatController\\straight_balance.h",
+      "sha256": "4EB1847C8ED4B09CFF1B242D60A70572FD6C9E5B5B3559DC471F28C6FF959B71"
+    },
+    {
+      "file": "firmware\\UnoCatController\\command_hex.h",
+      "sha256": "E862DBB57799D82DE6885F455D3397AD59AD3646B5690F388745EBF068B2EDED"
+    },
+    {
+      "file": "firmware\\UnoCatController\\command_integer.h",
+      "sha256": "C2568259B513FFEE6F5DFC7756A4A521C3C3C504979695473A579BF4E91E0570"
+    },
+    {
+      "file": "firmware\\UnoCatController\\scan_machine.h",
+      "sha256": "802C249FE6FE7C490C2CC04790530305A3A513BFC547BB87C81C4DA3991C57C2"
+    }
+  ]
+}

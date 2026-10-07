@@ -1,0 +1,1 @@
+actual Uno straight motion and compact parsers: 68847 checks passed
