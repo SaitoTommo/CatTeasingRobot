@@ -1,0 +1,42 @@
+{
+  "port": "COM10",
+  "stopConfirmed": true,
+  "sessionStopped": true,
+  "pingConfirmed": true,
+  "config": [],
+  "first": {
+    "ms": 71610,
+    "sessionStopped": true,
+    "motionActive": false,
+    "requested": [
+      0,
+      0
+    ],
+    "applied": [
+      0,
+      0
+    ],
+    "leftCount": 0,
+    "rightCount": 0,
+    "ioMask": 16383
+  },
+  "second": {
+    "ms": 71662,
+    "sessionStopped": true,
+    "motionActive": false,
+    "requested": [
+      0,
+      0
+    ],
+    "applied": [
+      0,
+      0
+    ],
+    "leftCount": 0,
+    "rightCount": 0,
+    "ioMask": 16383
+  },
+  "stationaryCountsEqual": true,
+  "badCheckedLines": 0,
+  "ready": []
+}

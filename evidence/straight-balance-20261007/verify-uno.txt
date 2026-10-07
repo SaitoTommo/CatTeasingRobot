@@ -1,0 +1,6 @@
+Setting number of retry attempts to 1
+Verifying 31902 bytes of flash against input file UnoCatController.ino.hex
+Reading | ################################################## | 100% 3.17s
+31902 bytes of flash verified
+
+Avrdude done.  Thank you.

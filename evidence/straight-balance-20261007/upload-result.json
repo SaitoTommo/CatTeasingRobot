@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "39f23c5",
+  "version": "UNO_CAT_V6.12",
+  "port": "COM10",
+  "sha256": "97D51203BD9DD806B48D06B8E05ABBEB711E60B3F889484215A95E8EAC366B58",
+  "verified": true,
+  "exitCode": 0,
+  "rollbackTag": "rollback/pre-straight-balance-20261007"
+}

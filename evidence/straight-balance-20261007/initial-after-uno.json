@@ -1,0 +1,44 @@
+{
+  "port": "COM10",
+  "stopConfirmed": true,
+  "sessionStopped": true,
+  "pingConfirmed": true,
+  "config": [
+    "DATA 64004 CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0"
+  ],
+  "first": {
+    "ms": 3445,
+    "sessionStopped": true,
+    "motionActive": false,
+    "requested": [
+      0,
+      0
+    ],
+    "applied": [
+      0,
+      0
+    ],
+    "leftCount": 0,
+    "rightCount": 0,
+    "ioMask": 16383
+  },
+  "second": {
+    "ms": 3495,
+    "sessionStopped": true,
+    "motionActive": false,
+    "requested": [
+      0,
+      0
+    ],
+    "applied": [
+      0,
+      0
+    ],
+    "leftCount": 0,
+    "rightCount": 0,
+    "ioMask": 16383
+  },
+  "stationaryCountsEqual": true,
+  "badCheckedLines": 0,
+  "ready": []
+}

@@ -1,0 +1,15 @@
+{
+  "espConfigChanged": [],
+  "minimumDrivePwm": 110,
+  "unoStationaryMs": 2189,
+  "countsUnchanged": true,
+  "requested": [
+    0,
+    0
+  ],
+  "applied": [
+    0,
+    0
+  ],
+  "badCheckedLines": 0
+}

@@ -1,0 +1,20 @@
+✔ widths use percentages and only current route target, independent of policy acceptance (1.5015ms)
+✔ negative, invalid, stale, missing, and offline measurements are explicit (0.7103ms)
+✔ calibration needs a complete reference and a frame captured after calibration (0.6354ms)
+✔ camera invalidation, reboot and simulation do not misrepresent old physical results (0.5506ms)
+✔ board reports calibration capture barrier and UI bundle is installed (1.9935ms)
+✔ configuration save applies RAM before NVS and generated page contains measurement code (5.124ms)
+✔ SIM_UNO keeps physical camera widths and ground judgment visible (0.8465ms)
+✔ physical negatives and stale frames cannot be replaced by simulated detections (0.5965ms)
+✔ front controls explain unconfirmed stopping and send no rejected operations (0.8883ms)
+✔ toggle waits for readback and calibration failure is shown inline (0.7541ms)
+✔ calibration success requires new board timestamp and offline disables both buttons (0.5831ms)
+✔ HTTP send failure does not leave controls indefinitely pending (3.9349ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83.7066
