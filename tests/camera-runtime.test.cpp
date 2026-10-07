@@ -9,6 +9,7 @@ constexpr int portMAX_DELAY=0;int cameraSensorLock=1,frameLock=2;bool sensorBusy
 int pdMS_TO_TICKS(int n){return n;}
 int xSemaphoreTake(int,int){return sensorBusy?0:1;}
 constexpr int pdTRUE=1;void xSemaphoreGive(int){}
+uint32_t millis(){return 1000;}
 uint64_t esp_timer_get_time(){return 1000000;}
 sensor_t testSensor=sensor();sensor_t *esp_camera_sensor_get(){return &testSensor;}
 JsonDocument config,realVision,observation;

@@ -1,0 +1,14 @@
+scan core: 287 checks passed
+vision gate: old cache, late inference, duplicate request, cancellation and wraparound passed
+actual cat preview cache and timings: 20 checks passed
+actual ESP wire guard: checked physical STOP/session and all critical motion/scan replies passed
+actual ESP policy core: 1184 checks passed
+CAT_CHECK multi-frame policy: 695 checks passed
+tag stopped checks and mean scan policy: 429 checks passed
+tag approach loss/recheck/recovery: 560 checks passed
+shared cat recovery: 111 checks passed
+continuous cat interaction: 695 checks passed
+action resume: 41 checks passed
+actual ESP PWM floor and settings: 2678 checks passed
+camera driver settings: 82 checks passed
+camera firmware runtime: 66 checks passed

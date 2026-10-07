@@ -197,7 +197,7 @@ String snapshot(uint32_t afterLog,uint16_t logLimit) {
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
   d["actualVisionMode"]=actualVisionMode;d["visionMailbox"]["oversize"]=visionOversize;d["visionMailbox"]["superseded"]=visionSuperseded;d["visionMailbox"]["rejected"]=visionRejected;d["visionMailbox"]["consumed"]=visionConsumed;d["visionMode"]=visionMode;d["visionIntervalMs"]=visionIntervalMs;
-  d["apIP"]=WiFi.softAPIP().toString();d["stationIP"]=WiFi.localIP().toString();networkSnapshot(d);videoSnapshot(d);d["config"]=config;d["vision"]=observation;d["cameraVision"]=realVision;
+  d["apIP"]=WiFi.softAPIP().toString();d["stationIP"]=WiFi.localIP().toString();networkSnapshot(d);videoSnapshot(d);d["groundReferenceChangedAt"]=groundReferenceChangedAt;d["config"]=config;d["vision"]=observation;d["cameraVision"]=realVision;
   d["droppedLogs"]=dropped;JsonArray arr=d["logs"].to<JsonArray>();uint32_t start=logSeq>160?logSeq-160:0;
   if(afterLog<=logSeq)start=max(start,afterLog); // A newer client cursor means ESP rebooted.
   start=max(start,logSeq>logLimit?logSeq-logLimit:0u);
@@ -229,12 +229,12 @@ void handleInput(const Input &in) {
   }
   else if(op=="camera_config"||op=="camera_reset")cameraSettingsInput(d,op=="camera_reset");
   else if(op=="vision_mode") {String m=d["mode"]|"OFF";if(m!="OFF"&&m!="TAGS"&&m!="CAT"&&m!="BOTH"){logLine("INPUT_ERROR","invalid vision mode");return;}visionMode=m;if(policyVisionMode()=="USER"){cancelVision();realVision.clear();if(mode=="UART")observation.clear();}logLine("VISION_MODE",visionMode);}
-  else if(op=="calibrate_front") {if(phase!="IDLE"&&phase!="STOPPED"||stopPendingId||stopUnconfirmed){logLine("CONFIG_ERROR","confirmed stop required first");return;}if(millis()-realVision["at"].as<uint32_t>()>5000||realVision["floorSignature"].size()!=72){logLine("CONFIG_ERROR","no fresh camera signature");return;}config["floorReference"]=realVision["floorSignature"];config["frontCalibrated"]=true;String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CALIBRATION","ground appearance reference captured; experimental qualitative front input");}
+  else if(op=="calibrate_front") {if(phase!="IDLE"&&phase!="STOPPED"||stopPendingId||stopUnconfirmed){logLine("CONFIG_ERROR","confirmed stop required first");return;}if(millis()-realVision["at"].as<uint32_t>()>5000||realVision["floorSignature"].size()!=72){logLine("CONFIG_ERROR","no fresh camera signature");return;}config["floorReference"]=realVision["floorSignature"];config["frontCalibrated"]=true;groundReferenceChangedAt=millis();String saved;serializeJson(config,saved);prefs.putString("config",saved);logLine("CALIBRATION","ground appearance reference captured; experimental qualitative front input");}
   else if(op=="config") {
     if(phase!="IDLE"&&phase!="STOPPED"||!stopReady()||debugId||manualUntil||configStep>=0){logLine("CONFIG_ERROR","confirmed stop required first");return;}
     JsonObject obj=d["config"].as<JsonObject>();
     if(obj["route"].is<JsonArray>()) {auto route=obj["route"].as<JsonArray>();if(!route.size()||route.size()>128){logLine("CONFIG_ERROR","route needs 1..128 IDs");return;}for(JsonVariant v:route)if(!v.is<int>()||v.as<int>()<0||v.as<int>()>586){logLine("CONFIG_ERROR","tag36h11 IDs must be 0..586");return;}}
-    JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}
+    JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){groundReferenceChangedAt=millis();candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}
     config=candidate;String saved;serializeJson(config,saved);prefs.putString("config",saved);policyResetTagRecovery();
     logLine("CONFIG","saved");
   }

@@ -1,6 +1,7 @@
 #pragma once
 #include "camera_settings.h"
 JsonDocument cameraActual,cameraDefaults;
+uint32_t groundReferenceChangedAt=0;
 uint32_t cameraRevision=0;bool cameraPersisted=false;
 String cameraError,cameraRequestId;
 uint64_t cameraSettingsBarrier=0;
@@ -14,6 +15,7 @@ void cameraSettingsSnapshot(JsonDocument &d){
  d["visionBench"]["enabled"]=visionBench;
 }
 void cameraInvalidateFrames(){
+ groundReferenceChangedAt=millis();
  policyResetTagRecovery();cancelVision();realVision.clear();if(mode=="UART")observation.clear();
  xSemaphoreTake(frameLock,portMAX_DELAY);jpegLen=catPreviewLen=benchJpegLen=0;catPreviewResult=benchResult="";
  catPreviewPreviousStart=0;catPreviewFirstSample=catPreviewCount+1;xSemaphoreGive(frameLock);
