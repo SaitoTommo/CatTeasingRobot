@@ -16,7 +16,6 @@
 #include <deque>
 #include "debug_page.h"
 #include "policy_defaults.h"
-#include "policy_storage.h"
 #include "host_types.h"
 SET_LOOP_TASK_STACK_SIZE(16384);
 
@@ -236,7 +235,7 @@ void handleInput(const Input &in) {
     JsonObject obj=d["config"].as<JsonObject>();
     if(obj["route"].is<JsonArray>()) {auto route=obj["route"].as<JsonArray>();if(!route.size()||route.size()>128){logLine("CONFIG_ERROR","route needs 1..128 IDs");return;}for(JsonVariant v:route)if(!v.is<int>()||v.as<int>()<0||v.as<int>()>586){logLine("CONFIG_ERROR","tag36h11 IDs must be 0..586");return;}}
     JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}
-    if(!persistPolicySettings(prefs,candidate,config)){logLine("CONFIG_ERROR","NVS config save failed");return;}policyResetTagRecovery();
+    config=candidate;String saved;serializeJson(config,saved);prefs.putString("config",saved);policyResetTagRecovery();
     logLine("CONFIG","saved");
   }
   else if(op=="wifi") {String ssid=d["ssid"]|"",pass=d["password"]|"";prefs.putString("ssid",ssid);prefs.putString("password",pass);networkBegin(ssid,pass);logLine("WIFI","station connecting; AP remains available");}

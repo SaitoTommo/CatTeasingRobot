@@ -70,7 +70,5 @@ int main(){
  d["escapeMinDistanceCm"]=30;d["escapeMaxDistanceCm"]=101;CHECK(!validateSettings(d,error));
  d["escapeMaxDistanceCm"]=30;CHECK(validateSettings(d,error));
  for(const char *key:{"catInteractionIdleSeconds","catObserveTimeoutSeconds"}){for(float v:{0.f,121.f,NAN}){d[key]=v;CHECK(!validateSettings(d,error));}d[key]=10;CHECK(validateSettings(d,error));}
- struct Storage{bool fail=false;String stored;size_t putString(const char *,const String &s){if(fail)return 0;stored=s;return s.length();}} storage;
- JsonDocument active,candidate;active["tagLossGraceMs"]=1000;candidate.set(active);candidate["tagLossGraceMs"]=1500;storage.fail=true;CHECK(!persistPolicySettings(storage,candidate,active));CHECK(active["tagLossGraceMs"].as<int>()==1000);storage.fail=false;CHECK(persistPolicySettings(storage,candidate,active));CHECK(active["tagLossGraceMs"].as<int>()==1500);JsonDocument restored;CHECK(!deserializeJson(restored,storage.stored));CHECK(restored["tagLossGraceMs"].as<int>()==1500);
  printf("actual ESP PWM floor and settings: %u checks passed\n",checks);
 }
