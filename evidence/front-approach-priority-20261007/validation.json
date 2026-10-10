@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-07",
+  "branch": "main",
+  "firmware": "ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY",
+  "node": {
+    "passed": 155,
+    "failed": 0
+  },
+  "native": {
+    "executables": 18,
+    "passed": true,
+    "approachAssertions": 147,
+    "actualUartStopGatePassed": true
+  },
+  "compile": {
+    "exitCode": 0,
+    "flashBytes": 3814510,
+    "flashMaxBytes": 8257536,
+    "staticRamBytes": 85800,
+    "ramMaxBytes": 327680,
+    "binaryPath": "C:\\Users\\guoto\\.codex\\visualizations\\2026\\10\\07\\01a1165c-b2f1-70f2-b79d-b90eb7661be2\\esp-build\\ESP32CatHost.ino.bin",
+    "binarySha256": "ff9a4271ce0b25943890fa249ff69759b4d57e79a2683c26bcaee55d15949273"
+  },
+  "sourceHashes": {
+    "ESP32CatHost.ino": "d33816044180f6c1a5434d46dc21f3997e2b69cd13048faf751b7d342b004121",
+    "policy.cpp": "63c50bf8b666ed5cd01a01a412ef663a7282fe6daa69d65ceffe6f2168db7d23",
+    "debug_page.h": "84bccced531c7af013d79d59ee158fcfba0c476b6af82df9e0660f67c4d3bcbd",
+    "stop_query_guard.h": "80c1d6861e6237793ee710996d0e184e2891c46cfa87bf88043d57feb6bfebcd"
+  },
+  "flashed": false,
+  "physicalAcceptance": "PENDING"
+}

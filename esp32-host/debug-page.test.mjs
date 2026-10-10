@@ -14,6 +14,35 @@ vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)[1].replace(/\b(?:poll|
 const base={ms:1000,mode:'UART',phase:'STOPPED',lastUnoAgeMs:999999,unoTelemetry:[],unoConfig:{},config:{}};
 const sync=d=>vm.runInContext(`syncUno(${JSON.stringify(d)})`,context);
 
+test('front parameters explain effects, retain drafts and save only after checked parking and board readback',async()=>{
+ const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const state={...base,cameraOk:true,logs:[],config:{frontAvoidanceEnabled:false,floorDifferenceThreshold:35,floorRoiTop:.75,frontBlockBottom:.88,visionMaxAgeMs:1500}};
+ const draw=d=>vm.runInContext(`syncFrontControls(${JSON.stringify(d)})`,context);
+ draw(state);assert.equal(element('frontCfg_floorDifferenceThreshold').value,35);
+ element('frontCfg_floorDifferenceThreshold').value='25';element('frontCfg_floorRoiTop').value='0.8';element('frontCfg_frontBlockBottom').value='0.9';element('frontCfg_visionMaxAgeMs').value='1200';
+ draw(state);assert.equal(element('frontCfg_floorDifferenceThreshold').value,'25');
+ await vm.runInContext('saveFrontParameters()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{floorDifferenceThreshold:25,floorRoiTop:.8,frontBlockBottom:.9,visionMaxAgeMs:1200}});
+ draw(state);assert.match(element('frontParametersStatus').textContent,/等待板上保存回读/);
+ draw({...state,config:{...state.config,...requests.at(-1).config}});assert.match(element('frontParametersStatus').textContent,/回读一致/);
+ for(const override of [{phase:'PATROL'},{stopPendingId:1},{stopUnconfirmed:true},{debugBusy:true},{frontCalibration:{pending:true}}]){draw({...state,...override});const n=requests.length;await vm.runInContext('saveFrontParameters()',context);assert.equal(requests.length,n);}
+ draw(state);element('frontCfg_floorRoiTop').value='0.1';const n=requests.length;await vm.runInContext('saveFrontParameters()',context);assert.equal(requests.length,n);
+ for(const text of ['3×8','调小更敏感','必须重新采集','不参与 FLOOR 判断','不是障碍敏感度'])assert.ok(html.includes(text));
+ vm.runInContext('frontControlsOffline()',context);assert.equal(element('saveFrontParameters').disabled,true);
+ context.fetch=()=>new Promise(()=>{});
+});
+
+test('front parameter failure does not claim persistence and reboot reloads board values',async()=>{
+ context.fetch=async()=>({ok:true});
+ const state={...base,bootId:'front-first',logs:[],config:{frontAvoidanceEnabled:true,floorDifferenceThreshold:35,floorRoiTop:.75,frontBlockBottom:.88,visionMaxAgeMs:1500}};
+ const draw=d=>vm.runInContext(`syncFrontControls(${JSON.stringify(d)})`,context);
+ draw(state);for(const [key,value] of Object.entries(state.config))if(key!=='frontAvoidanceEnabled')element('frontCfg_'+key).value=String(value);
+ element('frontCfg_floorDifferenceThreshold').value='25';await vm.runInContext('saveFrontParameters()',context);
+ draw({...state,config:{...state.config,floorDifferenceThreshold:25},logs:[{seq:1,source:'CONFIG_ERROR',line:'NVS save failed; RAM applied but restart persistence unconfirmed'}]});
+ assert.match(element('frontParametersStatus').textContent,/保存失败.*NVS/);
+ draw({...state,bootId:'front-second'});assert.equal(element('frontCfg_floorDifferenceThreshold').value,35);assert.doesNotMatch(element('frontParametersStatus').textContent,/回读一致|保存失败/);
+ context.fetch=()=>new Promise(()=>{});
+});
+
 test('tag recovery tuning keeps drafts, gates saves on confirmed stop and waits for board readback',async()=>{
  const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
  const state={...base,config:{tagLossGraceMs:1000,tagRecoveryAngleDeg:60},logs:[],patrolStatus:{tagRecoveryStage:'GRACE',tagMemoryDirection:-1,tagLossRemainingMs:800}};
@@ -305,7 +334,7 @@ test('front avoidance switch uses saved board state and is locked while running'
   assert.deepEqual(requests.at(-1),{op:'config',config:{frontAvoidanceEnabled:false}});
   render({...base,phase:'PATROL',config:{frontAvoidanceEnabled:false,route:[586,9,9,0]},vision:{policy:{targetIndex:0}},patrolStatus:{targetIndex:2}});
   assert.equal(element('frontAvoidance').disabled,true);
-  assert.match(element('frontAvoidanceStatus').textContent,/无需地面校准/);
+  assert.match(element('frontAvoidanceStatus').textContent,/接近仍强制检查前向/);
   assert.match(element('savedRoute').textContent,/\[586,9,9,0\].*当前目标 ID：9/);
   render(base);assert.equal(element('frontAvoidance').disabled,true);
 });

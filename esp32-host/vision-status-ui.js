@@ -24,7 +24,7 @@ function syncVisionMeasurements(d){
  const difference=current&&Number.isFinite(v.floorDifference)?v.floorDifference.toFixed(1):'—';
  const threshold=Number.isFinite(c.floorDifferenceThreshold)?c.floorDifferenceThreshold.toFixed(1):'—';
  $('groundRoiDescription').textContent=Number.isFinite(c.floorRoiTop)?`当前采集区域：横向从画面宽度的 25% 到 75%；纵向从画面高度的 ${(c.floorRoiTop*100).toFixed(1)}% 到底边。这个区域必须全部是无障碍地面。`:'采集区域：等待读取板上设置。';
- $('groundCalibrationLive').textContent=`地面参考：${calibrated?'已标定':'未标定'}；前向避障：${c.frontAvoidanceEnabled===false?'关闭（判断不用于避障）':'开启'}；最新判断：${result}${current?ageText(tagAge):''}；地面差异值 ${difference} / 阈值 ${threshold}。差异值不是厘米距离。`+(simulatedVision?'（模拟输入）':'');
+ $('groundCalibrationLive').textContent=`地面参考：${calibrated?'已标定':'未标定'}；前向避障：${c.frontAvoidanceEnabled===false?'总开关关闭（标签／猫接近仍生效）':'开启'}；最新判断：${result}${current?ageText(tagAge):''}；地面差异值 ${difference} / 阈值 ${threshold}。差异值不是厘米距离。`+(simulatedVision?'（模拟输入）':'');
 }
 function visionMeasurementsOffline(){
  for(const [id,name] of [['catWidthLive','猫框宽度'],['tagWidthLive','目标标签宽度'],['groundCalibrationLive','地面标定状态']])$(id).textContent=name+'：连接中断，当前数据不可用';
@@ -38,6 +38,7 @@ function frontStopReason(d){
  return '';
 }
 function syncFrontControls(d){
+ syncFrontParameters(d);
  frontControlState=d;
  if(frontOperation){
   const error=(d.logs||[]).find(l=>l.seq>frontOperation.seq&&l.source==='CONFIG_ERROR');
@@ -51,7 +52,7 @@ function syncFrontControls(d){
  $('frontAvoidance').disabled=!available||!!reason||!!frontOperation||!!d.frontCalibration?.pending;
  $('frontAvoidance').setAttribute('aria-pressed',String(enabled===true));
  $('frontAvoidance').textContent=available?`前向避障：${enabled?'开启（点击关闭）':'关闭（点击开启）'}`:'当前固件不支持前向避障开关';
- $('frontAvoidanceStatus').textContent=(available?(enabled?'前向避障开启；需要有效地面校准。':'前向避障已关闭，无需地面校准。左右超声波、触碰、失速及通信停车保留。'):'等待读取开关状态')+(reason?' '+reason+'。':'');
+ $('frontAvoidanceStatus').textContent=(available?(enabled?'前向避障开启；需要有效地面校准。':'总开关已关闭；标签／猫接近仍强制检查前向，需要有效地面校准。左右超声波、触碰、失速及通信停车保留。'):'等待读取开关状态')+(reason?' '+reason+'。':'');
  $('calibrateFront').disabled=!!reason||!!frontOperation||!!d.frontCalibration?.pending||!d.cameraOk;
  $('frontOperationStatus').textContent=d.frontCalibration?.pending?(d.frontCalibration.status==='VERIFYING'?'空地参考已采集，正在用第二张新画面确认…':'正在采集新画面的空地参考…'):frontOperation?(frontOperation.kind==='calibrate'?'正在请求采集空地参考，等待板子确认…':'正在切换，等待板子回读…'):reason||frontOperationMessage||'请按下方步骤准备空地参考。';
 }
@@ -66,4 +67,29 @@ function startFrontOperation(kind){
  let pending;try{pending=send(data);}catch(e){pending=Promise.reject(e);}
  Promise.resolve(pending).then(ok=>{if(ok===false&&frontOperation===operation){frontOperation=null;frontOperationMessage='请求发送失败，请检查连接后重试';syncFrontControls(frontControlState);}}).catch(e=>{if(frontOperation===operation){frontOperation=null;frontOperationMessage='请求发送失败：'+e.message;syncFrontControls(frontControlState);}});
 }
-function frontControlsOffline(){frontOperation=null;frontOperationMessage='连接中断，操作结果未确认';$('frontAvoidance').disabled=$('calibrateFront').disabled=true;$('frontOperationStatus').textContent=frontOperationMessage;}
+function frontControlsOffline(){for(const k of Object.keys(frontParameterLimits))$('frontCfg_'+k).disabled=true;$('saveFrontParameters').disabled=true;$('frontParametersStatus').textContent='连接中断，保存结果未确认';frontOperation=null;frontOperationMessage='连接中断，操作结果未确认';$('frontAvoidance').disabled=$('calibrateFront').disabled=true;$('frontOperationStatus').textContent=frontOperationMessage;}
+
+const frontParameterLimits={floorDifferenceThreshold:[5,100],floorRoiTop:[.5,.95],frontBlockBottom:[.5,1],visionMaxAgeMs:[100,5000]};
+let frontParametersLoaded=false,frontParametersPending=null,frontParametersMessage='',frontParametersBoot=null;
+function syncFrontParameters(d){
+ if(d.bootId&&d.bootId!==frontParametersBoot){frontParametersBoot=d.bootId;frontParametersLoaded=false;frontParametersPending=null;frontParametersMessage='';}
+ const c=d.config||{},keys=Object.keys(frontParameterLimits),available=keys.every(k=>Number.isFinite(c[k]));
+ if(frontParametersPending){
+  const error=(d.logs||[]).find(l=>l.seq>frontParametersPending.seq&&l.source==='CONFIG_ERROR');
+  if(error){frontParametersMessage='保存失败：'+error.line;frontParametersPending=null;}
+  else if(keys.every(k=>c[k]===frontParametersPending.values[k])){frontParametersMessage='已保存，板上回读一致；重启保留。';frontParametersPending=null;}
+  else if(Date.now()-frontParametersPending.started>10000){frontParametersMessage='保存回读超时，请重新连接核对板上参数。';frontParametersPending=null;}
+ }
+ if(available&&!frontParametersLoaded){for(const k of keys)$('frontCfg_'+k).value=c[k];frontParametersLoaded=true;}
+ const reason=frontStopReason(d),disabled=!available||!!reason||!!frontParametersPending||!!d.frontCalibration?.pending;
+ for(const k of keys)$('frontCfg_'+k).disabled=disabled;
+ $('saveFrontParameters').disabled=disabled;
+ const readback=available?keys.map(k=>k+'='+c[k]).join('；'):'当前固件参数不可用';
+ $('frontParametersStatus').textContent=(frontParametersPending?'等待板上保存回读。':reason||frontParametersMessage||'可修改后保存。')+' 板上实际值：'+readback;
+}
+async function saveFrontParameters(){
+ const d=frontControlState;if(!d||$('saveFrontParameters').disabled||frontParametersPending)return;
+ const values={};for(const [k,[min,max]] of Object.entries(frontParameterLimits)){const raw=$('frontCfg_'+k).value.trim(),v=Number(raw);if(!raw||!Number.isFinite(v)||v<min||v>max){$('frontParametersStatus').textContent=k+' 超出范围 '+min+'–'+max;return;}values[k]=v;}
+ frontParametersPending={values,seq:d.logSeq??d.logs?.at(-1)?.seq??0,started:Date.now()};syncFrontParameters(d);
+ try{if(await send({op:'config',config:values})===false)throw Error('请求发送失败');}catch(e){frontParametersPending=null;frontParametersMessage='保存失败：'+e.message;syncFrontParameters(frontControlState);}
+}

@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.11 with extended SCAN_V1 VQ; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -96,17 +96,21 @@ uint32_t sendUno(const String &command) {
   return id;
 }
 #include "stop_query_guard.h"
+bool policyInteractionStopping();
 void flushTx(){
   if(stopPendingId){
     if(millis()-stopSentAt>=300){
       if(stopRetries<3){stopRetries++;stopSentAt=millis();lastWrite=millis();uno.println(stopWire);logLine("STOP_RETRY",stopWire);}
       else if(!stopUnconfirmed){stopUnconfirmed=true;outgoing.clear();telemetryId=0;hostLedStop();logLine("STOP_UNCONFIRMED","No checked MOTOR_STOPPED reply; further motor commands blocked");policyStopUnconfirmed();}
     }
-    if(!stopUnconfirmed)return;
+    if(!stopUnconfirmed){
+      if(!policyInteractionStopping()||outgoing.empty()||!stopInteractionOutput(outgoing.front().wire.c_str()))return;
+    }else{
     // Keep diagnosis available without allowing queries to clear a failed STOP.
     while(!outgoing.empty()&&(!outgoing.front().physical||(outgoing.front().wire.indexOf(" STOP*")<0&&!stopDiagnosticQuery(outgoing.front().wire.c_str())))){logLine("TX_BLOCKED","stop is unconfirmed: "+outgoing.front().wire);outgoing.pop_front();}
     if(outgoing.empty())return;
     if(outgoing.front().wire.indexOf(" STOP*")>=0)stopPendingId=0;
+    }
   }
   if(outgoing.empty()||millis()-lastWrite<15)return;
   auto o=outgoing.front();outgoing.pop_front();lastWrite=millis();lastTx=o.wire;
@@ -193,7 +197,7 @@ void defaults() {
 #include "camera_settings_runtime.h"
 #include "ground_calibration_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
@@ -237,7 +241,8 @@ void handleInput(const Input &in) {
     JsonObject obj=d["config"].as<JsonObject>();
     if(obj["route"].is<JsonArray>()) {auto route=obj["route"].as<JsonArray>();if(!route.size()||route.size()>128){logLine("CONFIG_ERROR","route needs 1..128 IDs");return;}for(JsonVariant v:route)if(!v.is<int>()||v.as<int>()<0||v.as<int>()>586){logLine("CONFIG_ERROR","tag36h11 IDs must be 0..586");return;}}
     JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){groundReferenceChangedAt=millis();candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}
-    config=candidate;String saved;serializeJson(config,saved);prefs.putString("config",saved);policyResetTagRecovery();
+    config=candidate;String saved;serializeJson(config,saved);size_t savedBytes=prefs.putString("config",saved);policyResetTagRecovery();
+    if(savedBytes!=saved.length()){logLine("CONFIG_ERROR","NVS save failed; RAM applied but restart persistence unconfirmed");return;}
     logLine("CONFIG","saved");
   }
   else if(op=="wifi") {String ssid=d["ssid"]|"",pass=d["password"]|"";prefs.putString("ssid",ssid);prefs.putString("password",pass);networkBegin(ssid,pass);logLine("WIFI","station connecting; AP remains available");}

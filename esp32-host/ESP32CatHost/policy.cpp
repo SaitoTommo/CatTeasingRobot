@@ -21,6 +21,9 @@ String action="IDLE",afterFace="OBSERVE",afterStop,afterSettle,scanKind,scanNext
 bool returnToPatrol=true,startCat=false;
 int robotActions=0;String robotAction;
 bool robotFast=false,robotSlowFlash=false,robotFound=false;
+bool interactionStopPending=false;
+uint32_t interactionStopAt=0,frontUnavailableAt=0;
+String approachEndReason;
 bool linkRecovering=false;uint8_t linkRecoveryAttempts=0;
 String linkResumePhase,linkResumeNext,linkResumeFault;
 int pendingFirstTouch=-1,escapeRounds=0,exploreRounds=0,catDistance=-1;
@@ -89,10 +92,14 @@ float angle(){return (pulsesL+pulsesR)*wheel/20.0f/track*180.0f;}
 float scanAngle(){return scanUsed*wheel/20.0f/track*360.0f;}
 float travel(){return (pulsesL+pulsesR)*PI*wheel/400.0f;}
 bool frontClear(){return !frontEnabled()||fresh()&&String(observation["front"]|"INVALID")=="CLEAR";}
+bool approachFrontValid(){return fresh()&&(observation["frameSeq"]|0u)&&config["frontCalibrated"].as<bool>()&&observation["frontCalibrated"].as<bool>();}
+bool approachFrontBlocked(){return approachFrontValid()&&String(observation["front"]|"INVALID")=="BLOCKED";}
+bool approachFrontClear(){return approachFrontValid()&&String(observation["front"]|"INVALID")=="CLEAR";}
+void approachEnded(const char *reason){approachEndReason=reason;logLine("APPROACH_END",approachEndReason+" frame="+String(observation["frameSeq"]|0u));}
 bool closeSide(int i){return sideAt[i]&&!elapsed(sideAt[i],2500)&&side[i]>=0&&side[i]<safe[i];}
 void state(const String &s){action=s;actionAt=now();logLine("DECISION",phase+" "+s);}
 void resetMotor(){motorId=0;motorConfirmed=motorDispatched=motorRunning=false;leftPwm=rightPwm=0;pulsesL=pulsesR=0;}
-void invalidate(){generation=generation%2147483647+1;scanId=scanStep=scanFrame=0;scanConfigRetryPending=false;checkPending=checkReady=false;cancelVision();}
+void invalidate(){interactionStopPending=false;generation=generation%2147483647+1;scanId=scanStep=scanFrame=0;scanConfigRetryPending=false;checkPending=checkReady=false;cancelVision();}
 void cancelResponse(){responseActive=false;responseStopPending=false;responseCompleted=false;hostLedResponse(false,false);}
 void responseTick(){
   if(!responseActive)return;
@@ -141,7 +148,7 @@ void requestConfig(){geometryConfirmed=false;waitCommand("WAIT_PATROL_CONFIG","G
 void beginSession(){phase="STARTING";waitCommand("WAIT_SESSION_START","SESSION_START");}
 void finish(){clearTagRecovery();touchPaused=false;invalidate();quietOutputs(true);phase="ENDING";awaitStop("END_SESSION");}
 void exitInteraction(const String &reason){interactionExitReason=reason;logLine("INTERACTION_EXIT",reason);finish();}
-void newInteraction(){clearTagRecovery();robotActions=0;robotAction="";robotFast=robotSlowFlash=robotFound=false;escapeTargetCm=0;interactionId++;escapeRounds=exploreRounds=0;exploring=false;exploreAt=0;catDistance=-1;farAt=leaveFrame=0;touchPaused=false;chaseDetected=false;directionLocated=false;interactionExitReason="";}
+void newInteraction(){frontUnavailableAt=0;approachEndReason="";clearTagRecovery();robotActions=0;robotAction="";robotFast=robotSlowFlash=robotFound=false;escapeTargetCm=0;interactionId++;escapeRounds=exploreRounds=0;exploring=false;exploreAt=0;catDistance=-1;farAt=leaveFrame=0;touchPaused=false;chaseDetected=false;directionLocated=false;interactionExitReason="";}
 bool completeRobotAction(){
   if(initiator!="ROBOT_SEARCH"||!robotAction.length())return false;
   ++robotActions;logLine("ROBOT_ACTION_COMPLETE",robotAction+" "+String(robotActions)+"/"+String((int)setting("robotActionLimit")));robotAction="";
@@ -227,6 +234,7 @@ void signal(bool exploration=false){
 }
 void chooseEscapeDistance(){float low=setting("escapeMinDistanceCm"),high=setting("escapeMaxDistanceCm");escapeTargetCm=low==high?low:low+(high-low)*(double(esp_random())/4294967295.0);segmentCm=escapeTargetCm;logLine("ESCAPE_DISTANCE",String(escapeTargetCm,2)+" cm");}
 void behavior(const String &s){
+  if(s=="FAST_APPROACH"||s=="SLOW_APPROACH"||s=="PROBE_APPROACH"){frontUnavailableAt=0;approachEndReason="";}
   if(initiator=="ROBOT_SEARCH"&&(s=="FAST_APPROACH"||s=="SLOW_APPROACH"||s=="PROBE_APPROACH"||s=="STAY_SIGNAL"||s=="OBSERVE"||s=="STAY")){robotAction=s;robotFound=true;}
   if(s=="FAST_APPROACH"){robotFast=true;robotSlowFlash=false;remainingCm=setting("robotFastApproachCm");state("APPROACH_CAT");}
   else if(s=="SLOW_APPROACH"){robotFast=false;robotSlowFlash=initiator=="ROBOT_SEARCH"&&draw()<setting("robotSlowFlashPercent");remainingCm=max(0.0f,setting("slowApproachCm")-setting("stopMarginCm"));state("APPROACH_CAT");}
@@ -243,8 +251,18 @@ void behavior(const String &s){
 }
 void robotBehavior(const String &next,bool confirmed){afterFace=next;if(confirmed)behavior(next);else face(next);}
 void chooseStoppedRobot(bool confirmed=false){int n=draw();robotBehavior(n<setting("robotNearSignalPercent")?"STAY_SIGNAL":n<setting("robotNearSignalPercent")+setting("robotNearObservePercent")?"OBSERVE":"STAY",confirmed);}
+void interactAtFrontObstacle(){
+  approachEnded("FRONT_BLOCKED");frontUnavailableAt=0;
+  remainingCm=segmentCm=0;probeStep=0;robotFast=robotSlowFlash=false;touchPaused=false;
+  // The STOP reply releases only the motion gate, not the interaction
+  // already started. Queue STOP before emitting light and sound commands.
+  awaitStop("OBSERVE");
+  if(completeRobotAction())return;
+  interactionStopPending=true;interactionStopAt=now();
+  if(initiator=="ROBOT_SEARCH")chooseStoppedRobot(true);else behavior("OBSERVE");
+}
 void robotObserveWithoutCat(){robotFast=robotSlowFlash=false;remainingCm=0;quietOutputs();logLine("ROBOT_CAT_MISSING","stay stopped and continue action rounds");behavior("OBSERVE");}
-void chooseRobot(bool confirmed=false){if(!seen()){if(robotFound)robotObserveWithoutCat();else search("CHOOSE_ROBOT");return;}robotFound=true;int range=distanceClass();if(range<0){robotBehavior("SLOW_APPROACH",confirmed);return;}if(range==0){bool probe=draw()<setting("robotFarProbePercent")&&elapsed(lastRobotProbe,setting("robotProbeCooldownSeconds")*1000);if(probe)lastRobotProbe=now();robotBehavior(probe?"PROBE_APPROACH":"FAST_APPROACH",confirmed);}else chooseStoppedRobot(confirmed);}
+void chooseRobot(bool confirmed=false){if(!seen()){if(robotFound)robotObserveWithoutCat();else search("CHOOSE_ROBOT");return;}robotFound=true;if(approachFrontBlocked()){catDistance=1;chooseStoppedRobot(confirmed);return;}int range=distanceClass();if(range<0){robotBehavior("SLOW_APPROACH",confirmed);return;}if(range==0){bool probe=draw()<setting("robotFarProbePercent")&&elapsed(lastRobotProbe,setting("robotProbeCooldownSeconds")*1000);if(probe)lastRobotProbe=now();robotBehavior(probe?"PROBE_APPROACH":"FAST_APPROACH",confirmed);}else chooseStoppedRobot(confirmed);}
 // The stopped cat frame authorizes the next behavior regardless of centerX.
 // Reuse this confirmation when choosing a robot invitation; do not stop/check twice.
 void chooseConfirmedTouch();
@@ -300,10 +318,13 @@ void policyCommandSent(uint32_t id){if(matchesPending(id,motorId)){motorDispatch
 void policyStopUnconfirmed(){clearTagRecovery();cancelResponse();if(linkRecovering){retryLink();return;}if(mode=="UART"&&phase!="IDLE"&&(phase!="STOPPED"||lastFault!="operator_stop"&&!lastFault.startsWith("Uno link recovery failed")&&!lastFault.startsWith("STOP_UNCONFIRMED"))){recoverLink();return;}lastFault="STOP_UNCONFIRMED: motor stop has not been confirmed";invalidate();clearTx();resetMotor();stopId=sessionId=0;phase="STOPPED";state("FAULT");}
 void policyResetTagRecovery(){clearTagRecovery();}
 uint32_t policyTelemetryInterval(){return linkRecovering||action=="SETTLE"||action=="CAT_CONFIRM"||action=="TAG_SETTLE"||action=="TAG_RECHECK"?250:2000;}
+bool policyInteractionStopping(){return interactionStopPending&&phase=="INTERACTION";}
 bool policyPreparing(){return phase=="STARTING"||phase=="ENDING"||action=="WAIT_SCAN_CONFIG"||(scanId&&!motorConfirmed);}
 int policyTargetId(){return phase=="PATROL"&&config["route"].size()?config["route"][routeIndex].as<int>():-1;}
 String policyVisionMode(){
-  if((action=="CAT_DRIVE"||action=="PROBE_MOVE"||action=="ESCAPE_MOVE")&&frontEnabled())return "FLOOR";
+  if(action=="CAT_DRIVE"||action=="PROBE_MOVE")return "FLOOR";
+  if(action=="APPROACH_CAT"||action=="PROBE_DRIVE")return "CAT";
+  if(action=="ESCAPE_MOVE"&&frontEnabled())return "FLOOR";
   // During any scan/slow approach/alignment, CAT is only requested while stopped.
   if(action=="CAT_CONFIRM"&&due&&!checkPending&&!checkReady)return "CAT";
   if(action=="TAG_SETTLE"||action=="TAG_RECHECK")return "OFF";
@@ -312,8 +333,8 @@ String policyVisionMode(){
   if(phase=="INTERACTION")return "CAT";
   return "USER";
 }
-void policyFlowSnapshot(JsonDocument &d){d["action"]=action;d["motorId"]=motorId;d["motorConfirmed"]=motorConfirmed;d["leftPwm"]=motorId?drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm")):0;d["rightPwm"]=motorId?drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm")):0;}
-void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["robotActionsCompleted"]=robotActions;p["robotActionLimit"]=(int)setting("robotActionLimit");p["robotAction"]=robotAction;p["robotSlowFlash"]=robotSlowFlash;p["robotFastApproach"]=robotFast;p["interactionInitiator"]=initiator;p["action"]=action;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanAngleBasis"]=scanStep&&!scanMeanProgress?"LEGACY_MAX_WHEEL":"MEAN_WHEEL_PULSES";p["scanMeanProgressConfirmed"]=scanMeanProgress;p["tagScanMaxFrames"]=config["tagScanMaxFrames"]|3;p["tagScanSamples"]=scanId&&scanKind=="TAG"?scanTagSamples:0;p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["unsupportedSettings"][5]="centerTolerancePercent";p["unsupportedSettings"][6]="alignPwm";p["unsupportedSettings"][7]="catApproachStepCm";p["unsupportedSettings"][8]="catConfirmWaitSeconds";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
+void policyFlowSnapshot(JsonDocument &d){d["action"]=action;d["approachEndReason"]=approachEndReason;d["interactionStopPending"]=interactionStopPending;d["motorId"]=motorId;d["motorConfirmed"]=motorConfirmed;d["leftPwm"]=motorId?drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm")):0;d["rightPwm"]=motorId?drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm")):0;}
+void policySnapshot(JsonDocument &d){auto p=d["patrolStatus"].to<JsonObject>();p["robotActionsCompleted"]=robotActions;p["robotActionLimit"]=(int)setting("robotActionLimit");p["robotAction"]=robotAction;p["robotSlowFlash"]=robotSlowFlash;p["robotFastApproach"]=robotFast;p["interactionInitiator"]=initiator;p["action"]=action;p["approachEndReason"]=approachEndReason;p["interactionStopPending"]=interactionStopPending;p["touchSignalActive"]=touchSignalUntil&&!reached(touchSignalUntil);p["confirmationStage"]=action=="CAT_CONFIRM"?(!due?"SETTLE":checkPending||checkReady?"FRAME":"WAIT"):"NONE";p["confirmationRemainingMs"]=action=="CAT_CONFIRM"&&!reached(due)?due-now():0;p["nextAction"]=afterStop;p["scanPhase"]=scanId?(motorRunning?"TURN":scanWaiting?"VISION":"SETTLE"):"NONE";p["targetId"]=config["route"].size()?config["route"][routeIndex].as<int>():-1;p["visionAgeMs"]=observation["at"].is<uint32_t>()?now()-observation["at"].as<uint32_t>():UINT32_MAX;p["frameSeq"]=observation["frameSeq"]|0u;p["tagStopWidth"]=setting("tagStopWidth");p["routeCount"]=config["route"].size();float width=-1;if(fresh()&&observation["tagsValid"].as<bool>())for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==policyTargetId()){width=t["width"].as<float>();break;}p["tagWidth"]=width;p["targetIndex"]=routeIndex;p["rounds"]=rounds;p["selectedBehavior"]=afterFace;p["interactionBranch"]=branch;p["lightPattern"]=lastPattern;p["responseActive"]=responseActive;p["responseName"]=responseName();p["responseLight"]=lastPattern>=0?responseLight():-1;p["responseSound"]=lastPattern>=0?responseSound():-1;p["probeStep"]=probeStep;p["escape"]=escape;p["firstTouch"]=firstTouch;p["multipleTouches"]=multiTouch;p["simultaneousDetection"]=touchTie;p["touchSearchRequired"]=touchSearch;p["lastFault"]=lastFault;p["lastMotionFailure"]=lastMotionFailure;p["motorId"]=motorId;p["motorConfirmed"]=motorConfirmed;p["motorRunning"]=motorRunning;p["minimumDrivePwm"]=(int)setting("minimumDrivePwm");p["requestedLeftPwm"]=leftPwm;p["requestedRightPwm"]=rightPwm;p["leftPwm"]=drivePwmFloor(leftPwm,(int)setting("minimumDrivePwm"));p["rightPwm"]=drivePwmFloor(rightPwm,(int)setting("minimumDrivePwm"));p["scanId"]=scanId;p["scanStep"]=scanStep;p["generation"]=generation;p["scanAngle"]=scanAngle();p["scanAngleBasis"]=scanStep&&!scanMeanProgress?"LEGACY_MAX_WHEEL":"MEAN_WHEEL_PULSES";p["scanMeanProgressConfirmed"]=scanMeanProgress;p["tagScanMaxFrames"]=config["tagScanMaxFrames"]|3;p["tagScanSamples"]=scanId&&scanKind=="TAG"?scanTagSamples:0;p["scanBudgetDegrees"]=scanBudget*wheel/20/track*360;p["remainingApproachCm"]=remainingCm;p["scanCapability"]=scanCapable;p["catFailure"]["message"]=catFailure;p["catFailure"]["reason"]=catFailureReason;p["catFailure"]["at"]=catFailureAt;p["catFailure"]["angle"]=catFailureAngle;p["unsupportedSettings"][0]="farCatThresholdCm";p["unsupportedSettings"][1]="catLeaveDistanceCm";p["unsupportedSettings"][2]="finalSearchTimeoutMs";p["unsupportedSettings"][3]="searchTimeoutMs";p["unsupportedSettings"][4]="postEscapeWaitSeconds";p["unsupportedSettings"][5]="centerTolerancePercent";p["unsupportedSettings"][6]="alignPwm";p["unsupportedSettings"][7]="catApproachStepCm";p["unsupportedSettings"][8]="catConfirmWaitSeconds";p["escapeStage"]=(action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="WAIT_RELEASE"||scanId&&scanNext=="ESCAPE_DIRECTION_FOUND")?"DIRECTION":(action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE")?"RUN":"NONE";p["escapeTargetCm"]=escapeTargetCm;p["escapeDistanceCm"]=driveCm;p["escapeTravelCm"]=travel();p["interactionId"]=interactionId;p["escapeRounds"]=escapeRounds;p["exploreRounds"]=exploreRounds;p["catDistance"]=distanceClass();p["interactionExitReason"]=interactionExitReason;
   if(action!="ESCAPE_MOVE"){p["escapeTravelCm"]=0;p["escapeDistanceCm"]=action=="ESCAPE_DRIVE"?segmentCm:0;}
   p["linkRecovering"]=linkRecovering;p["linkRecoveryAttempt"]=linkRecoveryAttempts;p["encoderLeftRpm"]=encoderRpm[0];p["encoderRightRpm"]=encoderRpm[1];
   p["catRecoveryStage"]=catRecoveryStage==1?"LOCAL_FIRST":catRecoveryStage==2?"LOCAL_REVERSE":catRecoveryStage==3?"FULL":"NONE";p["catRecoveryDirection"]=catRecoveryStage?scanDirection:0;p["catMemoryDirection"]=catMemory.direction(0,now(),0);p["catMemoryAgeMs"]=catMemory.frame?now()-catMemory.at:UINT32_MAX;p["catScanSamples"]=scanId&&scanKind=="CAT"?scanTagSamples:0;p["catRecoveryRemainingDegrees"]=max(0.0f,(lroundf(720.0f*20*track/(360*wheel))-scanUsed)*wheel/20/track*360);
@@ -438,7 +459,7 @@ void policyInput(const String &line){
     if(sscanf(line.c_str(),"DATA %u HW T %7s %d %d %d %11s %c",&id,area,&en,&raw,&pressed,src,&extra)==6&&(pressed==0||pressed==1)){int a=!strcmp(area,"LEFT")?0:!strcmp(area,"RIGHT")?1:!strcmp(area,"REAR")?2:!strcmp(area,"TOP")?3:-1;if(a>=0){if(pressed&&!touch[a])onTouch(a,telemetryUnoAt);else if(!pressed)touch[a]=false;}}
   }
   if(line.startsWith("DONE ")){sscanf(line.c_str(),"DONE %u",&id);
-    if(matchesPending(id,stopId)&&line=="DONE "+String(stopId)+" MOTOR_STOPPED"){stopId=0;if(touchCue){touchCue=false;touchSignalUntil=now()+(uint32_t)setting("signalFlashMs");sendUno("LED FLASH 120 "+String((int)setting("signalFlashMs")));sendUno("BEEP "+String((int)setting("touchFeedbackBeepMs")));logLine("CONTACT_SIGNAL","parallel with search");}state(afterStop);return;}
+    if(matchesPending(id,stopId)&&line=="DONE "+String(stopId)+" MOTOR_STOPPED"){stopId=0;if(interactionStopPending){interactionStopPending=false;logLine("APPROACH_STOP_CONFIRMED","interaction continues");return;}if(touchCue){touchCue=false;touchSignalUntil=now()+(uint32_t)setting("signalFlashMs");sendUno("LED FLASH 120 "+String((int)setting("signalFlashMs")));sendUno("BEEP "+String((int)setting("touchFeedbackBeepMs")));logLine("CONTACT_SIGNAL","parallel with search");}state(afterStop);return;}
     if(!matchesPending(id,sessionId))return;if(action=="WAIT_PATROL_STOP"&&line!="DONE "+String(sessionId)+" MOTOR_STOPPED")return;
     if(action=="WAIT_SCAN_CONFIG"&&line!="DONE "+String(sessionId)+" SCAN_CONFIGURED")return;
     if(action=="WAIT_SESSION_START"&&line!="DONE "+String(sessionId)+" SESSION_STARTED")return;
@@ -471,6 +492,7 @@ void policyTick(){
     if(elapsed(exploreAt,setting("explorePreyMinimumSeconds")*1000)&&draw()<setting("explorePreyPercent")){prey(false);return;}
   }
   if(action=="WAIT_STOP"){if(elapsed(actionAt,2500))fail("STOP confirmation timeout");return;}
+  if(interactionStopPending){if(elapsed(interactionStopAt,2500))fail("STOP confirmation timeout during interaction");return;}
   if(sessionId){
     if(action=="WAIT_SCAN_CONFIG"){
       if(scanConfigRetryPending){if(elapsed(scanConfigRetryAt,100)){scanConfigRetryPending=false;++sessionRetries;sessionId=sendUno(pendingCommand);sessionCommandAt=now();logLine("SCAN_CONFIG_RETRY",String(sessionRetries)+"/3 command="+String(sessionId)+" reason="+scanConfigRetryReason);}return;}
@@ -546,6 +568,11 @@ void policyTick(){
   }
   if(action=="TAG_RECHECK"){
     if(encoderRpm[0]>0||encoderRpm[1]>0||encoder[0]!=tagRecheckEncoder[0]||encoder[1]!=tagRecheckEncoder[1]){fail("tag recheck wheels moved");return;}
+    if(checkReady&&approachFrontBlocked()){arrivalFrame=observation["frameSeq"]|0u;approachEnded("FRONT_BLOCKED");awaitStop("TAG_ARRIVAL");return;}
+    if(checkReady&&!approachFrontClear()){
+      if(!frontUnavailableAt){frontUnavailableAt=now();approachEnded("FRONT_UNAVAILABLE");}
+      awaitStop("APPROACH_TAG");return;
+    }
     if(checkReady){
       checkReady=false;if(!fresh()||!observation["tagsValid"].as<bool>()){fail("tag recheck invalid or expired frame");return;}
       bool found=false;for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==config["route"][routeIndex].as<int>()){tagMemory.observe(t["id"].as<int>(),observation["frameSeq"]|0u,observation["at"].as<uint32_t>(),t["centerX"].as<float>(),t["width"].as<float>());found=true;}
@@ -558,6 +585,11 @@ void policyTick(){
   if(action=="CHECK_APPROACH"||action=="CHECK_PROBE"){settle(action=="CHECK_APPROACH"?"APPROACH_CAT":"PROBE_DONE");return;}
   if(action=="POST_ESCAPE"){escapeRounds++;if(escapeRounds>=(int)setting("escapePreyAfterRounds")||draw()<setting("escapePreyPercent")){prey(false);return;}search("CHASE_ALIGN");return;}
   if(action=="CAT_CHECK"||action=="CAT_CONFIRM"){
+    if(action=="CAT_CHECK"&&(afterSettle=="APPROACH_CAT"||afterSettle=="PROBE_DONE")&&checkReady&&approachFrontBlocked()){interactAtFrontObstacle();return;}
+    if(action=="CAT_CHECK"&&(afterSettle=="APPROACH_CAT"||afterSettle=="PROBE_DONE")&&checkReady&&!approachFrontClear()){
+      if(!frontUnavailableAt){frontUnavailableAt=now();approachEnded("FRONT_UNAVAILABLE");}
+      awaitStop(afterSettle=="PROBE_DONE"?"PROBE_DRIVE":"APPROACH_CAT");return;
+    }
     if(checkReady){checkReady=false;if(!fresh()){if(action=="CAT_CHECK")fail("cat check stopped frame expired");else catFailed("stopped frame expired");return;}if(!cat()["valid"].as<bool>()){if(action=="CAT_CHECK")fail("cat check invalid cat frame");else catFailed("invalid cat frame");return;}if(!cat()["detected"].as<bool>()){
       if(initiator=="ROBOT_SEARCH"&&robotFound&&afterSettle!="APPROACH_CAT"&&afterSettle!="PROBE_DONE"){robotObserveWithoutCat();return;}
       if(afterSettle=="CAT_CONFIRMED"){if(scanUsed>=max(1,(int)lroundf(720.0f*20*track/(360*wheel)))){catFailed("confirmation lost cat; scan budget exhausted");return;}searchCatTarget(afterFace,scanFlags,scanUsed);}
@@ -578,23 +610,47 @@ void policyTick(){
   }
   if(action=="PROBE_PAUSE"){if(!reached(due))return;probeStep++;if(probeStep>3){if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH")chooseStoppedRobot();else face("OBSERVE");}else{segmentCm=setting(probeStep==2?"probeStep2Cm":"probeStep3Cm");state("PROBE_DRIVE");}return;}
   if(action=="APPROACH_CAT"||action=="PROBE_DRIVE"||action=="ESCAPE_DRIVE"){
-    if(!frontClear()){if(elapsed(actionAt,2000))finish();return;}
-    if(action=="APPROACH_CAT"){if(remainingCm<=0||robotFast&&seen()&&cat()["width"].as<float>()>setting("catFarWidth")){bool wasFast=robotFast;robotFast=robotSlowFlash=false;if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH"){if(wasFast)face("SLOW_APPROACH");else chooseStoppedRobot();}else face("OBSERVE");return;}if(!seen()){if(initiator=="ROBOT_SEARCH"&&robotFound)robotObserveWithoutCat();else beginScan("CAT","RESUME_APPROACH");return;}if(robotSlowFlash)sendUno("LED FLASH 200 "+String((int)setting("signalFlashMs")));drive(remainingCm,(int)setting(robotFast?"robotFastApproachPwm":"slowApproachPwm"),"CAT_DRIVE");}
+    if(action=="APPROACH_CAT"||action=="PROBE_DRIVE"){
+      if(approachFrontBlocked()){interactAtFrontObstacle();return;}
+      if(!approachFrontClear()){
+        if(!frontUnavailableAt){frontUnavailableAt=now();approachEnded("FRONT_UNAVAILABLE");}
+        if(elapsed(frontUnavailableAt,setting("scanVisionTimeoutMs")))fail("front observation unavailable while approaching cat");
+        return;
+      }
+      frontUnavailableAt=0;
+    }else if(!frontClear()){if(elapsed(actionAt,2000))finish();return;}
+    if(action=="APPROACH_CAT"){if(remainingCm<=0||robotFast&&seen()&&cat()["width"].as<float>()>setting("catFarWidth")){approachEnded(remainingCm<=0?"DISTANCE_COMPLETE":"WIDTH_REACHED");bool wasFast=robotFast;robotFast=robotSlowFlash=false;if(completeRobotAction())return;if(initiator=="ROBOT_SEARCH"){if(wasFast)face("SLOW_APPROACH");else chooseStoppedRobot();}else face("OBSERVE");return;}if(!seen()){if(initiator=="ROBOT_SEARCH"&&robotFound)robotObserveWithoutCat();else beginScan("CAT","RESUME_APPROACH");return;}if(robotSlowFlash)sendUno("LED FLASH 200 "+String((int)setting("signalFlashMs")));drive(remainingCm,(int)setting(robotFast?"robotFastApproachPwm":"slowApproachPwm"),"CAT_DRIVE");}
     else if(action=="PROBE_DRIVE"){if(initiator=="ROBOT_SEARCH"&&robotFound&&!seen())robotObserveWithoutCat();else drive(segmentCm,(int)setting("probePwm"),"PROBE_MOVE");}
     else{chooseEscapeDistance();drive(segmentCm,(int)setting(escape=="FAST_STRAIGHT_ESCAPE"?"fastEscapePwm":"slowEscapePwm"),"ESCAPE_MOVE");}return;
   }
 
   if(action=="CAT_DRIVE"||action=="PROBE_MOVE"||action=="ESCAPE_MOVE"){
-    // No CAT inference during a complete DRIVE action. The preceding stopped
-    // frame authorizes the action; touch, link and motion protection remain active.
+    if(action=="CAT_DRIVE"||action=="PROBE_MOVE"){
+      if(approachFrontBlocked()){interactAtFrontObstacle();return;}
+      if(!approachFrontClear()){
+        if(!frontUnavailableAt){frontUnavailableAt=now();approachEnded("FRONT_UNAVAILABLE");}
+        awaitStop(action=="CAT_DRIVE"?"APPROACH_CAT":"PROBE_DRIVE");
+      }return;
+    }
     if(frontEnabled()&&fresh()&&String(observation["front"]|"INVALID")=="BLOCKED")finish();return;
   }
   if(phase=="PATROL"){
     auto route=config["route"].as<JsonArray>();if(!route.size()){fail("empty route");return;}routeIndex%=route.size();int target=route[routeIndex];
     if(action=="SCAN_TAG"){beginScan("TAG","APPROACH_TAG");return;}
     if(action=="TAG_ARRIVAL"){clearTagRecovery();logLine("TAG_REACHED",String(target));int previous=target;routeIndex=(routeIndex+1)%route.size();needRearm=route[routeIndex].as<int>()==previous;state(needRearm?"TAG_REARM":"SCAN_TAG");return;}
+    // Front safety wins over target loss, alignment and target width.
+    if(action=="APPROACH_TAG"||action=="TAG_ALIGN"){
+      uint32_t f=observation["frameSeq"]|0u;
+      bool newFrame=f&&(!lastDecisionFrame||int32_t(f-lastDecisionFrame)>0)&&f!=arrivalFrame;
+      if(newFrame&&approachFrontBlocked()){arrivalFrame=f;approachEnded("FRONT_BLOCKED");awaitStop("TAG_ARRIVAL");return;}
+      if(!approachFrontClear()){
+        if(!frontUnavailableAt){frontUnavailableAt=now();approachEnded("FRONT_UNAVAILABLE");}
+        if(elapsed(frontUnavailableAt,setting("scanVisionTimeoutMs"))){fail("front observation unavailable while approaching tag");return;}
+        if(motorId)awaitStop("APPROACH_TAG");return;
+      }
+      frontUnavailableAt=0;
+    }
     if(!fresh()||!observation["tagsValid"].as<bool>()){if(motorId)stopForTagRecheck("camera invalid or stale");else if(elapsed(actionAt,setting("scanVisionTimeoutMs")))stopForTagRecheck("camera unavailable while approaching");return;}
-    if(action!="TAG_REARM"&&frontEnabled()&&!frontClear()){if(motorId)stopForTagRecheck("front unavailable or blocked");else if(elapsed(actionAt,setting("scanVisionTimeoutMs")))fail("front unavailable or blocked");return;}
     uint32_t frame=observation["frameSeq"]|0u;
     if(!frame||lastDecisionFrame&&int32_t(frame-lastDecisionFrame)<=0||frame==arrivalFrame){if(tagMemory.expired(now(),config["tagLossGraceMs"]|1000))stopForTagRecheck("loss grace expired");return;}lastDecisionFrame=frame;
     JsonVariant tag;for(JsonVariant t:observation["tags"].as<JsonArray>())if(t["id"].as<int>()==target){tag=t;break;}
@@ -607,11 +663,11 @@ void policyTick(){
     if(tagMemory.losing)logLine("TAG_RECOVERY","reacquired during grace; frame="+String(frame)+" lossMs="+String(now()-tagMemory.lostAt));
     tagMemory.observe(target,frame,observation["at"].as<uint32_t>(),tag["centerX"].as<float>(),tag["width"].as<float>());
     // Arrival is checked before alignment and needs a checked STOP before advance.
-    if(tag["width"].as<float>()>=setting("tagStopWidth")){arrivalFrame=frame;awaitStop("TAG_ARRIVAL");return;}
+    if(tag["width"].as<float>()>=setting("tagStopWidth")){approachEnded("WIDTH_REACHED");arrivalFrame=frame;awaitStop("TAG_ARRIVAL");return;}
     if(action=="TAG_ALIGN"){if(elapsed(actionAt,setting("alignTimeoutMs")))fail("tag alignment motion timeout");return;}
     float e=tag["centerX"].as<float>()-.5f;
     if(fabs(e)>setting("tagCenterTolerancePercent")/100){if(motorId){awaitStop("APPROACH_TAG");return;}if(alignSteps++>=8){fail("tag alignment budget exhausted");return;}rotate(e<0?-20.25f:20.25f,(int)setting("patrolAlignPwm"),"TAG_ALIGN");return;}
-    if(!frontClear()){if(motorId)awaitStop("APPROACH_TAG");else if(elapsed(actionAt,setting("scanVisionTimeoutMs")))fail("front unavailable or blocked");return;}
+    if(!approachFrontClear())return;
     move((int)setting("slowApproachPwm"),(int)setting("slowApproachPwm"));
   }
 }
