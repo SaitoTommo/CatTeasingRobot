@@ -1,0 +1,48 @@
+{
+  "reviewedOn": "2026-10-13",
+  "eventWindow": "2026-10-06 through 2026-10-12 Europe/Berlin",
+  "localSessions": [
+    "01a10ce8-1c6f-7440-9496-178313911ee6",
+    "01a10e63-6df0-7ee3-969a-b03f8bdc69af",
+    "01a10e65-3871-7961-ab2e-477641ca98c9",
+    "01a11014-5e1d-7320-98fd-c7fb2179dd70",
+    "01a110aa-1238-7c93-b430-4735032f0bdf",
+    "01a111f3-4e4c-7721-8868-5c0967d0c75d",
+    "01a1156f-2e97-7b11-ba30-228763ab3313",
+    "01a11637-86f2-72d0-9090-657a6fcee068",
+    "01a1165c-b2f1-70f2-b79d-b90eb7661be2",
+    "01a1168d-dde9-7573-abde-aa04904e2bc3",
+    "01a12545-3dc5-72a1-889b-4ce0d7bff6b5",
+    "01a12545-fea1-71f0-be3b-1c7c1c64bf78",
+    "01a127d2-0172-7bb3-8d68-2e7282ae6d47",
+    "01a127ef-b144-7392-9a13-aee63382f504",
+    "01a127ef-e139-75d0-afa7-7a1da1fae51e",
+    "01a127f0-0cde-78b3-b080-b94230510239",
+    "01a1319b-ee24-7d61-bb1f-082a78181e00"
+  ],
+  "localFiles": 19,
+  "excluded": "Internal approval transcripts, unrelated Unity task, duplicated fork messages; no relevant local archived threads found.",
+  "cloudSession": {
+    "id": "01a110a9-37fd-71d5-8d09-64edc9d6007c",
+    "result": "Interrupted question only; no additional implementation or validation result."
+  },
+  "userAcceptance": {
+    "quote": "测试没问题",
+    "scope": "Latest 0.47 task; qualitative feedback, no count or measurement supplied."
+  },
+  "addedTopics": [
+    "Historical approach gates with no DRIVE",
+    "Preview versus inference and algorithm provenance",
+    "Git baseline and stopped v2 training",
+    "0.47 front switch enforcement, storage and draft synchronization",
+    "Acceptance and unresolved issues"
+  ],
+  "alreadyCovered": [
+    "October 6 logging and shared camera controls",
+    "Power/reset and encoder jump diagnoses",
+    "Tag loss recovery and cat flow simplification",
+    "Communication failure audit",
+    "October 7 main deployment, calibration and Uno straight balance",
+    "October 12 remote control, custom route, confirmation format, route NVS and layout"
+  ]
+}
