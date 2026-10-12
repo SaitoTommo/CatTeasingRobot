@@ -51,10 +51,16 @@ test('camera settings revision rejects a late old JPEG and clears stale detectio
  f.run('syncCameraPreview({bootId:"a",ms:2100,cameraSettings:{revision:1},catPreview:{id:10,at:2050,cat:{valid:true,detected:false},samples:[[10,2,10,100,110,0]]}})');assert.equal(f.run('previewTimingMissed'),0);
  f.run('syncCameraPreview({bootId:"b",ms:3000,cameraSettings:{revision:0},catPreview:{available:false,samples:[]}})');assert.equal(f.run('previewSettingsIdentity'),'b/0');
 });
-test('primary panels are sensor/control/camera, settings follow, profiling is last',()=>{
+test('desktop centers camera and avoidance; mobile places UART, camera and remote first',()=>{
  const html=readFileSync(new URL('ESP32CatHost/debug_page.html',import.meta.url),'utf8');
  const main=html.slice(html.indexOf('<main>'),html.indexOf('</main>'));
- assert.ok(main.indexOf('id="sensorPanel"')<main.indexOf('id="controlPanel"'));
+ assert.ok(main.indexOf('id="controlPanel"')<main.indexOf('id="cameraPanel"'));
+ assert.ok(main.indexOf('id="cameraPanel"')<main.indexOf('id="remotePanel"'));
+ assert.ok(html.includes('grid-template-areas:"uart preview remote"'));
+ assert.ok(html.includes('grid-template-areas:"uart" "camera" "remote" "avoidance"'));
+ assert.ok(main.indexOf('id="cameraPanel"')<main.indexOf('id="avoidancePanel"'));
+ assert.ok(main.indexOf('id="avoidancePanel"')<main.indexOf('id="remotePanel"'));
+ assert.ok(main.indexOf('id="tagDetectionPanel"')<main.indexOf('id="sensorPanel"'));
  assert.ok(main.indexOf('id="controlPanel"')<main.indexOf('id="cameraPanel"'));
  assert.ok(main.indexOf('id="cameraPanel"')<main.indexOf('id="settingsWorkspace"'));
  assert.ok(main.lastIndexOf('<section')===main.indexOf('<section id="performancePanel"'));

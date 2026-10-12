@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.12. Boot log: READY UNO_CAT_V6.12.
+// Firmware version: UNO_CAT_V6.13. Boot log: READY UNO_CAT_V6.13.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -160,7 +160,7 @@ uint32_t dryRunAtMs = 0;
 enum MotionKind : uint8_t { MOTION_NONE,
                             MOTION_TIMED,
                             MOTION_PULSES,
-                            MOTION_CONTINUOUS };
+                            MOTION_CONTINUOUS, MOTION_REMOTE };
 struct Motion {
   MotionKind kind;
   uint16_t id;
@@ -279,6 +279,7 @@ void abortMotion(const __FlashStringHelper *reason) {
   // STOP must clear physical outputs even when the motion record is already empty.
   stopOutputs();
   if (motion.kind == MOTION_NONE) return;
+  if(motion.kind==MOTION_REMOTE)sessionStopped=true;
   const uint16_t id = motion.id;
   uint32_t leftPulses, rightPulses;
   getPulses(leftPulses, rightPulses);
@@ -507,7 +508,7 @@ void tickMotion(uint32_t now) {
   } else if (adjusted) applyMotors(leftOutput, rightOutput);
   if (motion.kind != MOTION_CONTINUOUS && deadlineReached(now, motion.deadlineMs)) {
     if (motion.kind == MOTION_PULSES) abortMotion(F("MOTION_TIMEOUT"));
-    else finishMotion();
+    else {if(motion.kind==MOTION_REMOTE)sessionStopped=true;finishMotion();}
   }
 }
 
@@ -617,6 +618,13 @@ void startMotion(uint16_t id, MotionKind kind, int16_t left, int16_t right,
   printProtectedLine(line);
 }
 
+void renewRemote(uint16_t id,int16_t left,int16_t right,uint32_t duration){
+  const uint32_t now=millis();
+  const int16_t requested[2]={left,right},previous[2]={motion.left,motion.right};
+  for(uint8_t i=0;i<2;i++)if((requested[i]>0)!=(previous[i]>0))motion.lastProgressMs[i]=now;
+  motion.id=id;motion.left=left;motion.right=right;motion.deadlineMs=now+duration;
+  applyMotors(left,right);ack(id);
+}
 void tickScan(uint32_t now) {
   uint32_t l,r;getPulses(l,r);
   const ScanMachine::Event event=scan.tick(now,l,r);
@@ -857,7 +865,8 @@ void processCommand(char *line) {
     Serial.print(F(" SAFE_LEFT_CM="));
     Serial.print(safeDistanceCm[0], 1);
     Serial.print(F(" SAFE_RIGHT_CM="));
-    Serial.println(safeDistanceCm[1], 1);
+    Serial.print(safeDistanceCm[1], 1);
+    Serial.println(F(" REMOTE_V1"));
     done(id);
     return;
   }
@@ -1008,13 +1017,19 @@ void processCommand(char *line) {
 #if UNO_ENABLE_DEBUG_COMMANDS
   if (!strcmp_P(verb, PSTR("TEST_MOTOR")) && n == 4) {
     long duration;
+    const bool remote=!strcmp_P(words[6],PSTR("REMOTE"));
     if (!parseLong(a, -255, 255, x) || !parseLong(b, -255, 255, y) || (x == 0 && y == 0)
-        || !parseLong(c, 50, 2000, duration)
-        || (strcmp_P(words[6], PSTR("SAFE")) && strcmp_P(words[6], PSTR("BYPASS")))) {
+        || !parseLong(c, 50, remote?600:2000, duration)
+        || (!remote && strcmp_P(words[6], PSTR("SAFE")) && strcmp_P(words[6], PSTR("BYPASS")))) {
       error(id, F("INVALID_ARGUMENT")); return;
     }
-    startMotion(id, MOTION_TIMED, x, y, duration, 0, false, F("TEST_MOTOR"), false,
-                !strcmp_P(words[6], PSTR("BYPASS")));
+    if(remote&&motion.kind==MOTION_REMOTE){
+      if(deadlineReached(millis(),motion.deadlineMs)){sessionStopped=true;abortMotion(F("MOTION_TIMEOUT"));}
+      if(sessionStopped){error(id,F("SESSION_STOPPED"));return;}
+      renewRemote(id,x,y,duration);return;
+    }
+    startMotion(id, remote?MOTION_REMOTE:MOTION_TIMED, x, y, duration, 0, false, F("TEST_MOTOR"), false,
+                remote||!strcmp_P(words[6], PSTR("BYPASS")));
     return;
   }
   if ((!strcmp_P(verb, PSTR("DEBUG_IO")) && n == 2) || (!strcmp_P(verb, PSTR("DEBUG_OUTPUTS")) && n == 1 && !strcmp_P(a, PSTR("OFF")))) {
@@ -1312,7 +1327,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.12"));
+  Serial.println(F("READY UNO_CAT_V6.13"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&

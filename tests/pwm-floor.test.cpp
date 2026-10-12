@@ -9,6 +9,7 @@ int main(){
   int actual=drivePwmFloor(request,floor);
   CHECK(request==0?actual==0:((actual>0)==(request>0)&&abs(actual)>=floor&&abs(actual)<=255&&abs(actual)>=abs(request)));
  }
+ CHECK(applyDrivePwmFloor("TEST_MOTOR 35 -35 600 REMOTE",140)=="TEST_MOTOR 35 -35 600 REMOTE");
  CHECK(applyDrivePwmFloor("MOTOR 95 -95",140)=="MOTOR 140 -140");
  CHECK(applyDrivePwmFloor("MOTOR 0 75",140)=="MOTOR 0 140");
  CHECK(applyDrivePwmFloor("MOTOR 0 0",255)=="MOTOR 0 0");

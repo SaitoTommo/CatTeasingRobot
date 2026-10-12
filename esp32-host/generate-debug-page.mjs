@@ -13,7 +13,8 @@ const center = await readFile(new URL('./center-ui.js', import.meta.url), 'utf8'
 const robot = await readFile(new URL('./robot-ui.js', import.meta.url), 'utf8');
 const archive = (await readFile(new URL('./log-archive.mjs', import.meta.url), 'utf8')).replace(/^export /gm, '') + await readFile(new URL('./log-archive-ui.js', import.meta.url), 'utf8');
 const cameraSettings = await readFile(new URL('./camera-settings-ui.js', import.meta.url), 'utf8');
-const html = Buffer.from(template.replace('/* HARDWARE_TELEMETRY */', () => compact + telemetry).replace('/* VISION_BENCH_UI */', () => bench).replace('/* CAMERA_PREVIEW_UI */', () => preview).replace('/* VISION_STATUS_UI */', () => measurements).replace('/* CENTER_UI */', () => center).replace('/* ROBOT_UI */', () => robot).replace('/* LOG_ARCHIVE_UI */', () => archive).replace('/* CAMERA_SETTINGS_UI */', () => cameraSettings));
+const remote = await readFile(new URL('./remote-ui.js', import.meta.url), 'utf8');
+const html = Buffer.from(template.replace('/* HARDWARE_TELEMETRY */', () => compact + telemetry).replace('/* VISION_BENCH_UI */', () => bench).replace('/* CAMERA_PREVIEW_UI */', () => preview).replace('/* VISION_STATUS_UI */', () => measurements).replace('/* CENTER_UI */', () => center).replace('/* ROBOT_UI */', () => robot).replace('/* LOG_ARCHIVE_UI */', () => archive).replace('/* CAMERA_SETTINGS_UI */', () => cameraSettings).replace('/* REMOTE_UI */', () => remote));
 const compressed = gzipSync(html, { level: 9 });
 if (!gunzipSync(compressed).equals(html)) throw new Error('Debug page compression round-trip failed');
 const rows = [];

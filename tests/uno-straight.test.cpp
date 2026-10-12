@@ -45,6 +45,17 @@ int main(){
  begin(MOTION_CONTINUOUS,100,100);safety=F("TOUCH");clockMs=200;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&output[0]==0&&!straightBalance.enabled);safety=nullptr;
  begin(MOTION_CONTINUOUS,100,100);clockMs=1201;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&output[0]==0);
  begin(MOTION_TIMED,100,100);abortMotion(F("STOP_COMMAND"));CHECK(!straightBalance.enabled&&straightBalance.reduction==0);
+ // Remote renewals preserve stall detection and bypass only environmental gates.
+ stopOutputs();motion.kind=MOTION_NONE;sessionStopped=false;touch=true;safety=F("OBSTACLE");clockMs=0;counts[0]=counts[1]=0;
+ startMotion(20,MOTION_REMOTE,100,100,600,0,false,F("REMOTE"),false,true);CHECK(motion.kind==MOTION_REMOTE&&!straightBalance.enabled&&output[0]==100);
+ clockMs=150;renewRemote(21,80,80,600);CHECK(output[0]==80&&motion.deadlineMs==750&&motion.lastProgressMs[0]==0);
+ clockMs=300;renewRemote(22,-80,80,600);CHECK(motion.lastProgressMs[0]==300&&motion.lastProgressMs[1]==0&&output[0]==-80);
+ clockMs=500;counts[0]=counts[1]=1;tickMotion(clockMs);CHECK(motion.kind==MOTION_REMOTE);
+ clockMs=899;tickMotion(clockMs);CHECK(motion.kind==MOTION_REMOTE);clockMs=900;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&sessionStopped&&output[0]==0&&output[1]==0);
+ sessionStopped=false;touch=false;safety=nullptr;clockMs=0;motion.kind=MOTION_NONE;startMotion(30,MOTION_REMOTE,100,100,600,0,false,F("REMOTE"),false,true);
+ for(int i=1;i<=8;i++){clockMs=i*150;renewRemote(30+i,100,100,600);tickMotion(clockMs);}CHECK(motion.kind==MOTION_REMOTE&&motion.lastProgressMs[0]==0);
+ clockMs=1201;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&sessionStopped&&output[0]==0);
+ sessionStopped=false;
  StraightBalance b;b.reset(UINT32_MAX-99);CHECK(!b.update(99,3,1,100));CHECK(b.update(100,3,1,100)&&b.reduction==2);b.reset(0);CHECK(b.update(200,uint32_t(1-(UINT32_MAX-1)),uint32_t(0-(UINT32_MAX-1)),255)&&b.reduction==0);
  for(int pwm=1;pwm<=255;pwm++){b.reset(0);for(int i=1;i<=20;i++)b.update(i*200,i*10,i,pwm);CHECK(b.reduction<=32&&b.reduction<=pwm/5&&pwm-b.reduction>0);}
  uint8_t hex=0;for(int a=0;a<256;a++)for(int c=0;c<256;c++){char text[]={char(a),char(c),0};bool valid=a&&c&&std::isxdigit(a)&&std::isxdigit(c);CHECK(commandCrcByte(text,hex)==valid);if(valid)CHECK(hex==std::strtoul(text,nullptr,16));}for(auto s:{"","A","ABC","+1"," 1","G0"})CHECK(!commandCrcByte(s,hex));

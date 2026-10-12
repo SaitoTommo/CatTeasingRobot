@@ -24,7 +24,7 @@ function syncVisionMeasurements(d){
  const difference=current&&Number.isFinite(v.floorDifference)?v.floorDifference.toFixed(1):'—';
  const threshold=Number.isFinite(c.floorDifferenceThreshold)?c.floorDifferenceThreshold.toFixed(1):'—';
  $('groundRoiDescription').textContent=Number.isFinite(c.floorRoiTop)?`当前采集区域：横向从画面宽度的 25% 到 75%；纵向从画面高度的 ${(c.floorRoiTop*100).toFixed(1)}% 到底边。这个区域必须全部是无障碍地面。`:'采集区域：等待读取板上设置。';
- $('groundCalibrationLive').textContent=`地面参考：${calibrated?'已标定':'未标定'}；前向避障：${c.frontAvoidanceEnabled===false?'总开关关闭（标签／猫接近仍生效）':'开启'}；最新判断：${result}${current?ageText(tagAge):''}；地面差异值 ${difference} / 阈值 ${threshold}。差异值不是厘米距离。`+(simulatedVision?'（模拟输入）':'');
+ $('groundCalibrationLive').textContent=`地面参考：${calibrated?'已标定':'未标定'}；前向避障：${c.frontAvoidanceEnabled===false?'关闭（含标签／猫接近）':'开启'}；最新判断：${result}${current?ageText(tagAge):''}；地面差异值 ${difference} / 阈值 ${threshold}。差异值不是厘米距离。`+(simulatedVision?'（模拟输入）':'');
 }
 function visionMeasurementsOffline(){
  for(const [id,name] of [['catWidthLive','猫框宽度'],['tagWidthLive','目标标签宽度'],['groundCalibrationLive','地面标定状态']])$(id).textContent=name+'：连接中断，当前数据不可用';
@@ -37,7 +37,16 @@ function frontStopReason(d){
  if(d.debugBusy)return '请等待手动测试或配置操作结束';
  return '';
 }
+let lastFrontSwitchReadback;
 function syncFrontControls(d){
+ const currentSwitch=d.config?.frontAvoidanceEnabled;
+ if(typeof currentSwitch==='boolean'){
+  if(typeof lastFrontSwitchReadback==='boolean'&&currentSwitch!==lastFrontSwitchReadback){
+   try{const editor=$('settings'),draft=JSON.parse(editor.value);if(typeof draft.frontAvoidanceEnabled==='boolean'){draft.frontAvoidanceEnabled=currentSwitch;editor.value=JSON.stringify(draft,null,2);}}catch{}
+  }
+  lastFrontSwitchReadback=currentSwitch;
+ }
+
  syncFrontParameters(d);
  frontControlState=d;
  if(frontOperation){
@@ -52,7 +61,7 @@ function syncFrontControls(d){
  $('frontAvoidance').disabled=!available||!!reason||!!frontOperation||!!d.frontCalibration?.pending;
  $('frontAvoidance').setAttribute('aria-pressed',String(enabled===true));
  $('frontAvoidance').textContent=available?`前向避障：${enabled?'开启（点击关闭）':'关闭（点击开启）'}`:'当前固件不支持前向避障开关';
- $('frontAvoidanceStatus').textContent=(available?(enabled?'前向避障开启；需要有效地面校准。':'总开关已关闭；标签／猫接近仍强制检查前向，需要有效地面校准。左右超声波、触碰、失速及通信停车保留。'):'等待读取开关状态')+(reason?' '+reason+'。':'');
+ $('frontAvoidanceStatus').textContent=(available?(enabled?'前向避障开启；需要有效地面校准。':'前向拦截已关闭（含标签／猫接近与试探）；检测结果仍显示。左右超声波、触碰、失速及通信停车保留。'):'等待读取开关状态')+(reason?' '+reason+'。':'');
  $('calibrateFront').disabled=!!reason||!!frontOperation||!!d.frontCalibration?.pending||!d.cameraOk;
  $('frontOperationStatus').textContent=d.frontCalibration?.pending?(d.frontCalibration.status==='VERIFYING'?'空地参考已采集，正在用第二张新画面确认…':'正在采集新画面的空地参考…'):frontOperation?(frontOperation.kind==='calibrate'?'正在请求采集空地参考，等待板子确认…':'正在切换，等待板子回读…'):reason||frontOperationMessage||'请按下方步骤准备空地参考。';
 }

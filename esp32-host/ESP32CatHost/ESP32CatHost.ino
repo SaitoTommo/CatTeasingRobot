@@ -1,5 +1,5 @@
-// Firmware version: ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY. Reported by /api/state.
-// Uno pairing: UNO_CAT_V6.11 with extended SCAN_V1 VQ; minimumDrivePwm is web-configurable.
+// Firmware version: ESP32_CAT_HOST_0.47_SWITCH_FIX. Reported by /api/state.
+// Uno pairing: UNO_CAT_V6.13 with extended SCAN_V1 VQ; minimumDrivePwm is web-configurable.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -86,8 +86,9 @@ void resendScanStart(uint32_t id,const String &command){
   String payload="C "+String(id)+" "+command;char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));
   outgoing.push_back({payload+suffix,mode=="UART"});
 }
+bool remoteOwnsOutputs();
 uint32_t sendUno(const String &command) {
-  if(command=="STOP"||command=="SESSION_STOP"||command=="DEBUG_OUTPUTS OFF"||command=="DEBUG_IO LED OFF"||command=="DEBUG_MOTOR_MODE DRY_RUN")hostLedStop();
+  if((command=="STOP"&&!remoteOwnsOutputs())||command=="SESSION_STOP"||command=="DEBUG_OUTPUTS OFF"||command=="DEBUG_IO LED OFF"||command=="DEBUG_MOTOR_MODE DRY_RUN")hostLedStop();
   String applied=applyDrivePwmFloor(command,config["minimumDrivePwm"]|140);
   if(applied!=command)logLine("PWM_FLOOR",command+" -> "+applied);
   cmdSeq=cmdSeq%65535+1;uint32_t id=cmdSeq;String payload="C "+String(id)+" "+applied;char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));
@@ -130,6 +131,10 @@ void policySnapshot(JsonDocument &);
 #include "uno_debug.h"
 #include "compact_telemetry.h"
 CompactTelemetry compactTelemetry;
+void policyResumeFrom(int index);
+#include "remote_control.h"
+#include "route_editor.h"
+#include "front_switch.h"
 void resetLinkState(){uartLine="";compactTelemetry.reset();debugReset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;}
 void acceptUno(String line,bool physical) {
   line.trim(); if(!line.length())return;
@@ -168,7 +173,7 @@ void acceptUno(String line,bool physical) {
   if(line.startsWith("READY "))compactTelemetry.reset();
   if(line.startsWith("TB ")){if(!compactTelemetry.add(line,millis())){logLine("TELEMETRY_BAD_FRAME",line);return;}lastRx=line;lastUnoAt=millis();logLine(physical?"UNO_RX":"SIM_RX",line);return;}
   if(line.startsWith("DONE ")&&line.endsWith(" TELEMETRY")&&compactTelemetry.id){if(!compactTelemetry.finish(line,millis(),[](const String &row){debugAccept(row);policyInput(row);})){logLine("TELEMETRY_INCOMPLETE",line);if(telemetryCompleted(line.c_str(),telemetryId)){telemetryId=0;lastPoll=millis();logLine("TELEMETRY_RETRY","incomplete snapshot ended; retry at policy polling interval");}return;}}
-  lastRx=line;lastUnoAt=millis();if(physical)hostLedAccept(line);logLine(physical?"UNO_RX":"SIM_RX",line);debugAccept(line);if(line.startsWith("DONE ")||line.startsWith("ERROR ")){if(line.substring(line.indexOf(' ')+1).toInt()==telemetryId)telemetryId=0;}policyInput(line);
+  lastRx=line;lastUnoAt=millis();if(physical)hostLedAccept(line);logLine(physical?"UNO_RX":"SIM_RX",line);debugAccept(line);RemoteControl::accept(line);if(line.startsWith("DONE ")||line.startsWith("ERROR ")){if(line.substring(line.indexOf(' ')+1).toInt()==telemetryId)telemetryId=0;}policyInput(line);
 }
 void defaults() {
   policyDefaults(config);
@@ -197,7 +202,7 @@ void defaults() {
 #include "camera_settings_runtime.h"
 #include "ground_calibration_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.47_SWITCH_FIX";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;RemoteControl::snapshot(d);RouteEditor::snapshot(d);debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
@@ -220,11 +225,13 @@ void handleInput(const Input &in) {
   else if(op=="state"){xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);String out=snapshot(0,160);xSemaphoreGiveRecursive(stateLock);emitUsb(out);}
   else if(op=="control") {
     String control=d["action"]|"";
-    debugCancel();policyControl(control);
+    RemoteControl::patrol(d);
   }
+  else if(op=="remote")RemoteControl::input(d);
+  else if(op=="route_save")RouteEditor::input(d);
   else if(op=="manual_test"||op=="uno_config"||op=="bench_safety")debugInput(d);
   else if(op=="command") {if((phase!="IDLE"&&phase!="STOPPED")||debugId||manualUntil||configStep>=0){logLine("INPUT_ERROR","stop policy and finish debug operation before raw commands");return;}String command=d["command"]|"PING";command.trim();if(!stopReady()&&command!="STOP"){logLine("INPUT_ERROR","wait for confirmed STOP");return;}if(!command.length()||command.length()>96||command.indexOf('\n')>=0||command.indexOf('\r')>=0){logLine("INPUT_ERROR","invalid command line");return;}sendUno(command);}
-  else if(op=="mode") {hostLedStop();policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();compactTelemetry.reset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
+  else if(op=="mode") {RemoteControl::abort("source changed");hostLedStop();policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();compactTelemetry.reset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
   else if(op=="vision" && mode=="SIM_UNO") {observation=d["vision"];observation["source"]="SIM_CAMERA";observation["at"]=millis();policyVision();}
   else if(op=="camera"&&in.physical) acceptCamera(d);
   else if(op=="vision_bench") {
@@ -239,10 +246,18 @@ void handleInput(const Input &in) {
   else if(op=="config") {
     if(phase!="IDLE"&&phase!="STOPPED"||!stopReady()||debugId||manualUntil||configStep>=0){logLine("CONFIG_ERROR","confirmed stop required first");return;}
     JsonObject obj=d["config"].as<JsonObject>();
+    if(obj.size()==1&&!obj["frontAvoidanceEnabled"].isNull()){
+      if(!obj["frontAvoidanceEnabled"].is<bool>()){logLine("CONFIG_ERROR","invalid front avoidance flag");return;}
+      String error;bool enabled=obj["frontAvoidanceEnabled"].as<bool>();if(!FrontSwitch::persist(enabled,error)){logLine("CONFIG_ERROR",error);return;}
+      config["frontAvoidanceEnabled"]=enabled;policyResetTagRecovery();logLine("CONFIG","front switch saved and verified");return;
+    }
+    if(obj.size()==1&&obj["route"].is<JsonArray>()){JsonDocument request;request["requestId"]="legacy-route-"+String(millis());request["route"]=obj["route"];RouteEditor::input(request);return;}
     if(obj["route"].is<JsonArray>()) {auto route=obj["route"].as<JsonArray>();if(!route.size()||route.size()>128){logLine("CONFIG_ERROR","route needs 1..128 IDs");return;}for(JsonVariant v:route)if(!v.is<int>()||v.as<int>()<0||v.as<int>()>586){logLine("CONFIG_ERROR","tag36h11 IDs must be 0..586");return;}}
     JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){groundReferenceChangedAt=millis();candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}
     config=candidate;String saved;serializeJson(config,saved);size_t savedBytes=prefs.putString("config",saved);policyResetTagRecovery();
     if(savedBytes!=saved.length()){logLine("CONFIG_ERROR","NVS save failed; RAM applied but restart persistence unconfirmed");return;}
+    if(obj["route"].is<JsonArray>()&&!RouteEditor::persist(obj["route"].as<JsonArray>(),error)){logLine("CONFIG_ERROR",error);return;}
+    if(obj.containsKey("frontAvoidanceEnabled")&&!FrontSwitch::persist(config["frontAvoidanceEnabled"].as<bool>(),error)){logLine("CONFIG_ERROR",error);return;}
     logLine("CONFIG","saved");
   }
   else if(op=="wifi") {String ssid=d["ssid"]|"",pass=d["password"]|"";prefs.putString("ssid",ssid);prefs.putString("password",pass);networkBegin(ssid,pass);logLine("WIFI","station connecting; AP remains available");}
@@ -326,6 +341,7 @@ void setup() {
   heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();cameraSensorLock=xSemaphoreCreateMutex();char identity[24];snprintf(identity,sizeof(identity),"%012llx",(unsigned long long)ESP.getEfuseMac());deviceId=identity;snprintf(identity,sizeof(identity),"%08lx%08lx",(unsigned long)esp_random(),(unsigned long)esp_random());bootId=identity;xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
   prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();migrateCenterSettings(candidate,d);if(!d["catObserveTimeoutSeconds"].is<float>())candidate["catObserveTimeoutSeconds"]=max(1.0f,candidate["postEscapeWaitSeconds"].as<float>());if(!d["escapeMinDistanceCm"].is<float>()||!d["escapeMaxDistanceCm"].is<float>()){float legacy=max(1.0f,candidate["escapeDistanceCm"].as<float>()-candidate["stopMarginCm"].as<float>());candidate["escapeMinDistanceCm"]=legacy;candidate["escapeMaxDistanceCm"]=legacy;}String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
   networkEvents=xQueueCreate(8,sizeof(NetworkEvent));WiFi.onEvent(networkEvent);
+  RouteEditor::restore();FrontSwitch::restore();
   WiFi.mode(WIFI_AP_STA);WiFi.setAutoReconnect(true);WiFi.setSleep(false);WiFi.softAP("ESP32-CatHost","catrobot32");networkBegin(prefs.getString("ssid",""),prefs.getString("password",""));
   logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO");initCamera();startServers();
 }
@@ -334,7 +350,7 @@ void loop() {
   xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);networkTick();xSemaphoreGiveRecursive(stateLock);
   xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);readLines(Serial,usbLine,false);readLines(uno,uartLine,true);static Input in;for(int i=0;i<8&&xQueueReceive(inputs,&in,0)==pdTRUE;i++)handleInput(in);
   if(visionPayload.length()){JsonDocument d;String payload=visionPayload;visionPayload="";if(!deserializeJson(d,payload))acceptCamera(d);else visionRejected++;}
-  debugTick();policyTick();groundCalibrationTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
+  debugTick();RemoteControl::tick();policyTick();groundCalibrationTick();hostLedTick();xSemaphoreGiveRecursive(stateLock);
   if(telemetryId&&millis()-telemetryAt>5000){telemetryId=0;lastPoll=millis();logLine("TELEMETRY_TIMEOUT","retry in 2s");}
   if(!policyPreparing()&&(int32_t)(millis()-lastPoll)>=int32_t(mode=="SIM_UNO"?min(uint32_t(1000),policyTelemetryInterval()):policyTelemetryInterval())&&!telemetryId&&outgoing.size()<4){lastPoll=millis();telemetryAt=millis();telemetryId=sendUno("GET_TELEMETRY");}
   flushTx();

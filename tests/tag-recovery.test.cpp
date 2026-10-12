@@ -42,7 +42,7 @@ int main(){
  // Unconfirmed movement, alignment, stale/invalid capture and obstacle cannot use grace.
  for(int reason=0;reason<5;reason++){
   forwardFixture();switch(reason){case 0:motorConfirmed=false;break;case 1:action="TAG_ALIGN";break;case 2:observation["tagsValid"]=false;break;case 3:tick+=1500;policyInput("MP "+String(motorId)+" 1 1");break;case 4:config["frontAvoidanceEnabled"]=true;targetFrame(3,true);observation["front"]="BLOCKED";break;}
-  if(reason<2)targetFrame(3,false);policyTick();CHECK(action=="WAIT_STOP"&&afterStop==(reason==4?"TAG_ARRIVAL":reason==3?"APPROACH_TAG":"TAG_SETTLE"));CHECK(!tagMemory.losing);
+  if(reason<2)targetFrame(3,false);policyTick();CHECK(action=="WAIT_STOP"&&afterStop==(reason==4?"TAG_ARRIVAL":"TAG_SETTLE"));CHECK(!tagMemory.losing);
  }
  fixture();config["frontAvoidanceEnabled"]=true;observation["front"]="BLOCKED";policyTick();tick+=3000;targetFrame(3,true);policyTick();CHECK(action=="FAULT"&&!motorId);
  // Stationary recheck counts new, matching-generation frames, exits early on success and never advances route from memory.

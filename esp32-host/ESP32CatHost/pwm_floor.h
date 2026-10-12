@@ -25,6 +25,8 @@ inline String applyDrivePwmFloor(const String &command,int minimum){
  }
  if(!count)return command;
  String verb=command.substring(start[0],end[0]);
+ // Remote speed is operator-selected; autonomous and bounded test floors stay intact.
+ if(verb=="TEST_MOTOR"&&count==5&&command.substring(start[4],end[4])=="REMOTE")return command;
  unsigned fields[2],number=1;
  bool signedPwm=false;
  if((verb=="MOTOR"&&count==3)||(verb=="TEST_MOTOR"&&count==5)){fields[0]=1;fields[1]=2;number=2;signedPwm=true;}

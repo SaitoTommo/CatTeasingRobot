@@ -334,7 +334,7 @@ test('front avoidance switch uses saved board state and is locked while running'
   assert.deepEqual(requests.at(-1),{op:'config',config:{frontAvoidanceEnabled:false}});
   render({...base,phase:'PATROL',config:{frontAvoidanceEnabled:false,route:[586,9,9,0]},vision:{policy:{targetIndex:0}},patrolStatus:{targetIndex:2}});
   assert.equal(element('frontAvoidance').disabled,true);
-  assert.match(element('frontAvoidanceStatus').textContent,/接近仍强制检查前向/);
+  assert.match(element('frontAvoidanceStatus').textContent,/前向拦截已关闭（含标签／猫接近与试探）/);
   assert.match(element('savedRoute').textContent,/\[586,9,9,0\].*当前目标 ID：9/);
   render(base);assert.equal(element('frontAvoidance').disabled,true);
 });
