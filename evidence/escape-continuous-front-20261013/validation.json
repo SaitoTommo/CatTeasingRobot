@@ -12,7 +12,7 @@
     "approach-front": 144,
     "front-switch": 8
   },
-  "flashed": false,
+  "flashed": true,
   "physicalAcceptance": false,
   "espCompile": {
     "passed": true,
@@ -20,5 +20,22 @@
     "flashBytes": 3838854,
     "staticRamBytes": 86024,
     "appFileBytes": 3839008
+  },
+  "deployment": {
+    "date": "2026-10-13",
+    "port": "COM11",
+    "applicationOffset": "0x10000",
+    "partitionBytesCompared": 3072,
+    "firmwareVersionReadback": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+    "modeBefore": "UART",
+    "modeAfter": "SIM_UNO",
+    "phase": "IDLE",
+    "cameraOk": true,
+    "configUnchanged": true,
+    "frontAvoidanceEnabled": false,
+    "escapeTurnClearanceCm": 15,
+    "fullApplicationReadback": false,
+    "extraHashVerification": false,
+    "acceptance": "Firmware version readback per user request"
   }
 }

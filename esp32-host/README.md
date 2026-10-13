@@ -1,4 +1,4 @@
-# DEV 候选 ESP32 0.49（2026-10-13，未烧录）
+# DEV ESP32 0.49（2026-10-13，已烧录并回读版本）
 
 `ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT` 修复 0.48 转完后等待前向请求超时的问题：转向停稳后直接读取持续 FLOOR 结果，要求新帧且采集时间晚于本次停稳观察起点。无需单次 FLOOR 请求及 generation/step 匹配；旧画面或非 FLOOR 画面不能授权直跑。侧向 90° 搜索、连续直跑及普通开关不关闭逃跑前向保护的语义保持不变。原因和验证见[持续前向检查修复](../evidence/escape-continuous-front-20261013/README.md)。
 

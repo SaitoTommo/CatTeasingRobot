@@ -12,4 +12,6 @@
 
 测试请求桩已接入真实 VisionGate。新增/调整用例覆盖：无需 FLOOR ticket；旧帧、转后观察起点之前的画面、CAT/TAGS 画面不能发 DRIVE；连续 FLOOR 可以在 generation/step 不匹配时授权直跑；BLOCKED 仍可以继续下一次搜索；未知输入和超时停止。编译和测试结果见 validation.json。
 
-源码基线 42c456a，回滚标签 rollback/pre-escape-continuous-front-20261013。固件版本 ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT。本次只改源码并离线验证，未烧录、未做台架验收。用户后续测试需核对转后新 FLOOR 的 ESCAPE_FRONT_GATE 日志及 DRIVE；旧固件版本回读不能证明修复已运行。
+源码基线 42c456a，回滚标签 rollback/pre-escape-continuous-front-20261013。固件版本 ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT。2026-10-13 用户授权后已在 COM11 烧录：核对 3072 字节分区表一致，仅写 0x10000 应用，按用户要求以重启后的版本号回读验收，没有额外应用哈希或完整应用读回。保留已知 0.48 应用文件用于回滚，此文件不是新的设备读出备份。
+
+回读版本正确，IDLE / SIM_UNO、cameraOk=true、无活动电机或待确认停车命令。烧录前为 UART，重启后按现有启动默认回到 SIM_UNO；未自动切回 UART 或发出运动命令。烧录前后 config 完整 JSON 对比一致，包括 frontAvoidanceEnabled=false、escapeTurnClearanceCm=15、路线 [43,46,51]。证据见 esp-preflash-state.json / esp-after-state.json。台架运动验收仍待用户执行，需切到 UART 并核对转后新 FLOOR 的 ESCAPE_FRONT_GATE 日志及 DRIVE。
