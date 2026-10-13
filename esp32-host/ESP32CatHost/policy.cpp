@@ -180,9 +180,12 @@ void startEscapeSearch(){
   escapeRemainingCm=0;escapeTargetCm=0;
   awaitStop("ESCAPE_SIDE_SETTLE");
 }
-void requestEscapeFront(){
-  checkStep=checkStep%65535+1;escapeObserveAt=now();escapeObserveFrame=observation["frameSeq"]|0u;
-  checkPending=true;checkReady=false;requestVision(0,checkStep,generation,"FLOOR");state("ESCAPE_FRONT_CHECK");
+void beginEscapeFrontMonitor(){
+  // Continuous FLOOR observations need no scan ticket or generation/step match.
+  // Cancel older requested work and require a capture after this settled barrier.
+  cancelVision();checkPending=checkReady=false;
+  escapeObserveAt=now();escapeObserveFrame=observation["frameSeq"]|0u;
+  state("ESCAPE_FRONT_CHECK");
 }
 void continueEscapeSearch(){
   if(escapeTurns>=3){exitInteraction("escape search exhausted three directions");return;}
@@ -398,7 +401,6 @@ void policyVision(){
     if(scanKind=="CAT"&&found)catMemory.observe(0,frame,observation["at"].as<uint32_t>(),cat()["centerX"].as<float>(),cat()["width"].as<float>());
     scanFrame=frame;scanReplyFound=found;scanReplyResult=valid?(found?1:0):2;sendUno("VR "+String(scanId)+" "+String(scanStep)+" "+String(generation)+" "+String(valid?(found?1:0):2)+" "+String(frame));
   }else if(checkPending&&!sid&&step==checkStep){
-    if(action=="ESCAPE_FRONT_CHECK"&&(int32_t(frame-escapeObserveFrame)<=0||int32_t(observation["at"].as<uint32_t>()-escapeObserveAt)<=0))return;
     if(action=="TAG_RECHECK"){
       if(elapsed(checkAt,uint32_t(setting("scanVisionTimeoutMs"))*(config["tagScanMaxFrames"]|3))||tagRecheckLastFrame&&int32_t(frame-tagRecheckLastFrame)<=0)return;
       tagRecheckLastFrame=frame;++tagRecheckSamples;bool valid=observation["tagsValid"].as<bool>(),found=false;
@@ -575,7 +577,7 @@ void policyTick(){
     if(sampled&&!firstSettleSampleAt){firstSettleSampleAt=quietAt=now();quietEncoder[0]=encoder[0];quietEncoder[1]=encoder[1];return;}
     bool second=firstSettleSampleAt&&int32_t(encoderAt[0]-firstSettleSampleAt)>0&&int32_t(encoderAt[1]-firstSettleSampleAt)>0;
     if(sampled&&second&&encoderRpm[0]==0&&encoderRpm[1]==0&&elapsed(actionAt,setting("scanMinimumMs"))&&elapsed(quietAt,setting("scanQuietMs"))){
-      if(action=="ESCAPE_FRONT_SETTLE")requestEscapeFront();
+      if(action=="ESCAPE_FRONT_SETTLE")beginEscapeFrontMonitor();
       else{escapeObserveAt=now();state("ESCAPE_SIDE_CHECK");}
     }
     return;
@@ -601,8 +603,10 @@ void policyTick(){
   }
   if(action=="ESCAPE_FRONT_CHECK"){
     if(touching())return;
-    if(checkReady){
-      checkReady=false;
+    bool newFloor=String(observation["mode"]|"")=="FLOOR"&&
+      int32_t((observation["frameSeq"]|0u)-escapeObserveFrame)>0&&
+      observation["at"].is<uint32_t>()&&int32_t(observation["at"].as<uint32_t>()-escapeObserveAt)>0;
+    if(newFloor){
       if(!fresh()||!config["frontCalibrated"].as<bool>()||!observation["frontCalibrated"].as<bool>()){exitInteraction("escape front observation unavailable");return;}
       String front=observation["front"]|"INVALID";
       logLine("ESCAPE_FRONT_GATE",front+" turn="+String(escapeTurns)+"/3 frame="+String(observation["frameSeq"]|0u));

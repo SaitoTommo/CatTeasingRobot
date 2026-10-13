@@ -9,10 +9,15 @@ int main(){
  // A cat/block in the old forward direction does not prevent a side-gated turn.
  escapeFixture();observation["front"]="BLOCKED";startEscapeTurn();CHECK(escapeTurns==1);CHECK(policyVisionMode()=="FLOOR");
  md(9,9);escapeSettle("ESCAPE_FRONT_CHECK");CHECK(policyVisionMode()=="FLOOR");
- // No repeated frame or capture from before the stopped request may authorize DRIVE.
+ // Real VisionGate has no FLOOR ticket support: use continuous results, not a request.
+ CHECK(!cameraGate.pending);CHECK(!checkPending);for(auto &r:requests)CHECK(r.mode!="FLOOR");
+ // No repeated frame or capture from before the settled barrier may authorize DRIVE.
  auto seq=escapeObserveFrame;observation["generation"]=generation;observation["scanId"]=0;observation["stepId"]=checkStep;
- observation["frameSeq"]=seq;observation["at"]=tick+1;policyVision();CHECK(!checkReady);
- observation["frameSeq"]=seq+1;observation["at"]=escapeObserveAt;policyVision();CHECK(!checkReady);
+ observation["mode"]="FLOOR";observation["frameSeq"]=seq;observation["at"]=tick+1;policyVision();policyTick();CHECK(action=="ESCAPE_FRONT_CHECK");CHECK(!motorId);
+ observation["frameSeq"]=seq+1;observation["at"]=escapeObserveAt;policyVision();policyTick();CHECK(action=="ESCAPE_FRONT_CHECK");CHECK(!motorId);
+ // A new CAT/TAGS observation cannot stand in for the required continuous FLOOR frame.
+ observation["at"]=tick+1;observation["mode"]="CAT";policyTick();CHECK(action=="ESCAPE_FRONT_CHECK");
+ observation["mode"]="TAGS";policyTick();CHECK(action=="ESCAPE_FRONT_CHECK");
  escapeFrontFrame("BLOCKED");CHECK(!motorId);nextQuarter();CHECK(escapeTurns==2);
  finishEscapeTurn();CHECK(escapeTargetCm==23);CHECK(escapeRemainingCm==23);
  CHECK(commands.back().text=="DRIVE 23.00 140");CHECK(policyVisionMode()=="FLOOR");
@@ -53,7 +58,7 @@ int main(){
  }
  // Turn interruption ends this round; it must not silently resume toward an uncertain heading.
  escapeFixture();startEscapeTurn();onTouch(0);stopped();touch[0]=false;policyTick();CHECK(phase=="ENDING");CHECK(!motorId);
- // A timed-out stopped camera request never sends DRIVE.
+ // Missing continuous frames still time out without sending DRIVE.
  escapeFixture();startEscapeTurn();md(9,9);escapeSettle("ESCAPE_FRONT_CHECK");tick+=3000;policyTick();CHECK(phase=="ENDING");
  // New settings are bounded and saved configurations obtain the missing default by overlay.
  fixture();config["wheelMm"]=67.5;config["trackMm"]=120;config["frontBlockBottom"]=.88;config["floorRoiTop"]=.75;config["floorDifferenceThreshold"]=35;config["floorReference"].to<JsonArray>();String error;CHECK(config["escapeTurnClearanceCm"].as<float>()==15);

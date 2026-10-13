@@ -23,8 +23,9 @@ void clearTx(){commands.clear();}
 void resetLinkState(){lastUnoAt=0;}
 void logLine(const char *,const String &){}
 bool stopGate=true;bool stopReady(){return stopGate;}
-void cancelVision(){}
-void requestVision(uint32_t id,uint16_t step,uint32_t gen,const char *m){requests.push_back({id,step,gen,m});}
+VisionGate cameraGate;
+void cancelVision(){cameraGate.cancel();}
+void requestVision(uint32_t id,uint16_t step,uint32_t gen,const char *m){if(cameraGate.request(id,step,gen,m,observation["frameSeq"]|0u,uint64_t(tick)*1000))requests.push_back({id,step,gen,m});}
 #include "../esp32-host/ESP32CatHost/policy_defaults.h"
 #define LED_BUILTIN 21
 #define HIGH 1
@@ -73,7 +74,7 @@ void escapeSettle(const char *next){
 void escapeSideSample(float left=20,float right=20){tick+=50;sideAt[0]=sideAt[1]=tick;side[0]=left;side[1]=right;policyTick();}
 void escapeFrontFrame(const char *front="CLEAR"){
  tick+=50;observation["at"]=tick;observation["frameSeq"]=observation["frameSeq"].as<unsigned>()+1;
- observation["generation"]=generation;observation["scanId"]=0;observation["stepId"]=checkStep;observation["front"]=front;observation["frontCalibrated"]=true;
+ observation["generation"]=generation-1;observation["scanId"]=0;observation["stepId"]=0;observation["ticket"]=0;observation["mode"]="FLOOR";observation["front"]=front;observation["frontCalibrated"]=true;
  policyVision();policyTick();
 }
 void startEscapeTurn(float left=20,float right=20){policyTick();CHECK(action=="WAIT_STOP");escapeSettle("ESCAPE_SIDE_CHECK");escapeSideSample(left,right);CHECK(action=="ESCAPE_TURN");CHECK(fabs(turnDeg)==90);}

@@ -1,0 +1,24 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+  "branch": "DEV",
+  "baseline": "42c456a",
+  "rollbackTag": "rollback/pre-escape-continuous-front-20261013",
+  "nativeChecks": 2395,
+  "nativePrograms": {
+    "escape-search": 266,
+    "policy-core": 1223,
+    "cat-interaction": 713,
+    "action-resume": 41,
+    "approach-front": 144,
+    "front-switch": 8
+  },
+  "flashed": false,
+  "physicalAcceptance": false,
+  "espCompile": {
+    "passed": true,
+    "fqbn": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+    "flashBytes": 3838854,
+    "staticRamBytes": 86024,
+    "appFileBytes": 3839008
+  }
+}
