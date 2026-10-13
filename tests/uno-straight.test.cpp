@@ -17,6 +17,8 @@ uint32_t clockMs=0,counts[2]={};int16_t output[2]={};bool boardDryRun=false,sess
 enum {MOTOR_LEFT,MOTOR_RIGHT,ENCODER_LEFT,ENCODER_RIGHT};bool physicalIo[4]={true,true,true,true};
 constexpr uint32_t ENCODER_STALL_MS=1200;constexpr int SONAR_IDLE=0;int sonarPhase=0;uint32_t motionFeedbackAtMs=0;
 StraightBalance straightBalance;const __FlashStringHelper *safety=nullptr;
+bool receiveWindow=false;
+bool rxWindowActive(){return receiveWindow;}
 struct {int availableForWrite(){return 0;}} Serial;
 struct ScanMachine {enum {ABORTED};uint16_t id=0;bool active(){return false;}void end(int){}void motionStopped(uint32_t,uint32_t,uint32_t){}} scan;
 uint32_t millis(){return clockMs;}bool anyTouchPressed(){return touch;}
@@ -42,7 +44,7 @@ int main(){
  boardDryRun=true;begin(MOTION_CONTINUOUS,100,100);CHECK(!straightBalance.enabled);boardDryRun=false;
  stopOutputs();motion.kind=MOTION_NONE;startMotion(1,MOTION_TIMED,100,100,1000,0,false,F("TEST"),false,true);CHECK(!straightBalance.enabled);abortMotion(F("STOP"));
  begin(MOTION_PULSES,100,100,3);counts[0]=3;counts[1]=1;clockMs=200;tickMotion(clockMs);CHECK(output[0]==0&&output[1]==100);clockMs=400;counts[1]=2;tickMotion(clockMs);CHECK(output[0]==0);counts[1]=3;clockMs=600;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&output[0]==0&&output[1]==0);
- begin(MOTION_CONTINUOUS,100,100);safety=F("TOUCH");clockMs=200;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&output[0]==0&&!straightBalance.enabled);safety=nullptr;
+ begin(MOTION_CONTINUOUS,100,100);safety=F("TOUCH");receiveWindow=true;clockMs=200;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&output[0]==0&&!straightBalance.enabled);safety=nullptr;receiveWindow=false;
  begin(MOTION_CONTINUOUS,100,100);clockMs=1201;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&output[0]==0);
  begin(MOTION_TIMED,100,100);abortMotion(F("STOP_COMMAND"));CHECK(!straightBalance.enabled&&straightBalance.reduction==0);
  // Remote renewals preserve stall detection and bypass only environmental gates.

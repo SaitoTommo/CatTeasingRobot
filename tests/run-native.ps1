@@ -28,3 +28,11 @@ $binary=Join-Path $env:TEMP 'codex-stop-output-test.exe'
 if($LASTEXITCODE -ne 0){throw 'STOP output integration compile failed'}
 & $binary
 if($LASTEXITCODE -ne 0){throw 'STOP output integration assertions failed'}
+$windowSource=Join-Path $env:TEMP 'codex-uno-window-source.inc'
+node (Join-Path $PSScriptRoot 'uart-window-source.mjs') $windowSource
+if($LASTEXITCODE -ne 0){throw 'Uno window gate extraction failed'}
+$binary=Join-Path $env:TEMP 'codex-uno-window-test.exe'
+& $Compiler c++ -std=c++20 -O1 -target x86_64-windows-gnu ('-DUART_WINDOW_SOURCE="'+$windowSource.Replace('\','/')+'"') -I (Join-Path $PSScriptRoot 'native') (Join-Path $PSScriptRoot 'uart-window.test.cpp') -o $binary
+if($LASTEXITCODE -ne 0){throw 'Uno window integration compile failed'}
+& $binary
+if($LASTEXITCODE -ne 0){throw 'Uno window integration assertions failed'}

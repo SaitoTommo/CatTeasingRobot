@@ -1,3 +1,11 @@
+# 接收窗口协议（2026-10-13）
+
+ESP 0.50 配套 Uno V6.14：ESP GPIO43 经电平转换接 Uno D13；Uno D1 回传至 GPIO44。
+普通真实 UART 命令等待 Uno 的一次性 RX available，SIM_UNO 保留原协议。
+停止与停止重试可直接发送，缺少窗口不能解除 STOP_UNCONFIRMED。
+`/api/state` 的 `uartWindow` 显示是否收到许可、当前编号、年龄及队列长度。
+接线及兼容性以 [当前接线表](../SOFT_UART_WIRING.md) 为准；以下旧版接线为历史说明。
+
 # DEV ESP32 0.49（2026-10-13，已烧录并回读版本）
 
 `ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT` 修复 0.48 转完后等待前向请求超时的问题：转向停稳后直接读取持续 FLOOR 结果，要求新帧且采集时间晚于本次停稳观察起点。无需单次 FLOOR 请求及 generation/step 匹配；旧画面或非 FLOOR 画面不能授权直跑。侧向 90° 搜索、连续直跑及普通开关不关闭逃跑前向保护的语义保持不变。原因和验证见[持续前向检查修复](../evidence/escape-continuous-front-20261013/README.md)。

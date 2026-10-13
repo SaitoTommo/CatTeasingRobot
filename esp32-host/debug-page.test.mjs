@@ -369,7 +369,7 @@ test('page reports ESP active-low LED control separately from Uno buzzer',()=>{
   sync({...base,hostLed:{pin:'onboard/GPIO21',on:true,mode:'ON',gpioLevel:0}});
   assert.match(element('hostLed').textContent,/板载 LED：ON，亮/);
   assert.match(element('hostLed').textContent,/控制电平 LOW/);
-  assert.match(element('hostLed').textContent,/蜂鸣器输出在 Uno D13/);
+  assert.match(element('hostLed').textContent,/备用输出在 Uno D12/);
   sync({...base,mode:'SIM_UNO',hostLed:{on:false,mode:'OFF',gpioLevel:1}});
   assert.match(element('hostLed').textContent,/板载 LED：OFF，灭/);
 });

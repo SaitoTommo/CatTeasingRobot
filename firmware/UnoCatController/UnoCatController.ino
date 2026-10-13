@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.13. Boot log: READY UNO_CAT_V6.13.
+// Firmware version: UNO_CAT_V6.14. Boot log: READY UNO_CAT_V6.14.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -11,10 +11,10 @@
 #include "command_hex.h"
 #include "command_integer.h"
 
-// D12 receives the ESP command channel at 57600; D1 remains hardware TX.
+// D13 receives the ESP command channel at 57600; D12 is the spare output.
 // SoftwareSerial requires a TX pin but its write methods are never used.
 // USB commands remain available on D0 with their own line assembly buffer.
-constexpr uint8_t PIN_HOST_RX = 12;
+constexpr uint8_t PIN_HOST_RX = 13;
 SoftwareSerial hostRx(PIN_HOST_RX, 1);
 
 // SRAM breadcrumbs survive some resets, not loss of power. No EEPROM writes,
@@ -25,8 +25,11 @@ struct DiagnosticBreadcrumb {
 };
 volatile DiagnosticBreadcrumb diagBreadcrumb __attribute__((section(".noinit")));
 uint8_t diagMode = 1; // 0 off, 1 heartbeat, 2 command/telemetry trace as well.
-uint16_t diagLoops = 0, diagMaxLoopMs = 0, diagRxOverflow = 0, diagDropped = 0;
-uint32_t diagLastAt = 0;
+uint16_t diagRxOverflow = 0, diagDropped = 0;
+uint16_t rxWindow = 0;
+uint32_t rxWindowAt = 0;
+bool rxQuiet = false, dispatchingPhysical = false, pumpedPhysical = false;
+bool rxWindowActive() { return rxQuiet && millis() - rxWindowAt < 60; }
 
 void diagStage(uint8_t stage) {
   diagBreadcrumb.stage = stage;
@@ -39,7 +42,7 @@ void diagCommand(uint16_t id) {
 void diagWrite(const char *line) {
   const size_t length = strlen(line);
   // Write only a whole line that fits the TX ring; never wait for headroom.
-  if (length + 2 > static_cast<size_t>(Serial.availableForWrite())) return;
+  if (rxWindowActive() || length + 2 > static_cast<size_t>(Serial.availableForWrite())) return;
   Serial.write(reinterpret_cast<const uint8_t *>(line), length);
   Serial.write('\r'); Serial.write('\n');
 }
@@ -63,7 +66,7 @@ constexpr uint8_t PIN_R_IN2 = 7;
 constexpr uint8_t MOTOR_MIN_DRIVE_PWM = 1;
 constexpr uint8_t SONAR_TRIG_PINS[2] = { 10, A4 };  // LEFT, RIGHT
 constexpr uint8_t SONAR_ECHO_PINS[2] = { 11, A5 };
-constexpr uint8_t PIN_BUZZER = 13;  // LED output is delegated to ESP GPIO21.
+constexpr uint8_t PIN_BUZZER = 12;  // Spare output; buzzer removed from this robot.
 constexpr uint8_t TOUCH_PINS[4] = { A0, A1, A2, A3 };
 const char TOUCH_NAMES[4][6] PROGMEM = { "TOP", "LEFT", "RIGHT", "REAR" };
 
@@ -140,7 +143,7 @@ bool debugEnabled = false;
 bool boardDryRun = false; // Allows simulated inputs, independently of physical outputs.
 enum IoChannel : uint8_t { MOTOR_LEFT, MOTOR_RIGHT, LED_OUT, BUZZER_OUT, SONAR_LEFT_TRIG, SONAR_RIGHT_TRIG, SONAR_LEFT_ECHO, SONAR_RIGHT_ECHO, ENCODER_LEFT, ENCODER_RIGHT, TOUCH_TOP, TOUCH_LEFT, TOUCH_RIGHT, TOUCH_REAR, IO_COUNT };
 const char IO_NAMES[IO_COUNT][17] PROGMEM = { "MOTOR_LEFT", "MOTOR_RIGHT", "LED", "BUZZER", "SONAR_LEFT_TRIG", "SONAR_RIGHT_TRIG", "SONAR_LEFT_ECHO", "SONAR_RIGHT_ECHO", "ENCODER_LEFT", "ENCODER_RIGHT", "TOUCH_TOP", "TOUCH_LEFT", "TOUCH_RIGHT", "TOUCH_REAR" };
-bool physicalIo[IO_COUNT] = { true,true,true,true,true,true,true,true,true,true,true,true,true,true };
+bool physicalIo[IO_COUNT] = { true,true,true,false,true,true,true,true,true,true,true,true,true,true };
 bool ledOn = false;
 bool ledFlash = false;
 uint32_t ledFlashUntilMs = 0;
@@ -199,6 +202,13 @@ void getPulses(uint32_t &left, uint32_t &right) {
 
 void pumpSerialIn();  // Forward declaration; see the V5.1 RX-hardening block near readSerial().
 
+// These six reports contain finite, nonnegative distances below 6553 cm.
+// Fixed one-decimal output avoids linking Arduino's general floating printer.
+void printDistance(float value) {
+  uint16_t tenths = static_cast<uint16_t>(value * 10.0f + 0.5f);
+  Serial.print(tenths / 10); Serial.write('.'); Serial.print(tenths % 10);
+}
+
 uint8_t serialCrc8(const char *text) {
   uint8_t crc = 0;
   while (*text) {
@@ -209,6 +219,7 @@ uint8_t serialCrc8(const char *text) {
 }
 
 void printProtectedLine(const char *line) {
+  rxQuiet = false; // Safety/completion events may interrupt a receive window.
   diagStage(21);
   const uint8_t crc = serialCrc8(line);
   Serial.print(line); Serial.print('*');
@@ -230,6 +241,7 @@ void done(uint16_t id, const __FlashStringHelper *suffix = nullptr) {
   printProtectedLine(line);
 }
 void error(uint16_t id, const __FlashStringHelper *reason) {
+  rxQuiet = false;
   diagStage(23);
   Serial.print(F("ERROR "));
   Serial.print(id);
@@ -317,6 +329,7 @@ bool anyTouchPressed() {
 void setTouch(uint8_t index, bool pressed, const __FlashStringHelper *source) {
   TouchState &touch = touches[index];
   if (touch.stable == pressed) return;
+  rxQuiet = false;
   const uint32_t now = millis();
   touch.stable = pressed;
   // Stop before serial reporting, including a scan waiting for vision.
@@ -415,8 +428,9 @@ const __FlashStringHelper *motionSafetyReason(int16_t left, int16_t right, uint3
   if (left < right) {
     if (!currentSideDistance(0, distance, now) || distance >= safeDistanceCm[0]) return nullptr;
     if (report) {
+      rxQuiet = false;
       Serial.print(F("EVENT OBSTACLE_NEAR LEFT "));
-      if (currentSideDistance(0, distance, now)) Serial.println(distance, 1);
+      if (currentSideDistance(0, distance, now)) { printDistance(distance); Serial.println(); }
       else Serial.println(F("INVALID"));
       pumpSerialIn();
     }
@@ -425,8 +439,9 @@ const __FlashStringHelper *motionSafetyReason(int16_t left, int16_t right, uint3
   if (left > right) {
     if (!currentSideDistance(1, distance, now) || distance >= safeDistanceCm[1]) return nullptr;
     if (report) {
+      rxQuiet = false;
       Serial.print(F("EVENT OBSTACLE_NEAR RIGHT "));
-      if (currentSideDistance(1, distance, now)) Serial.println(distance, 1);
+      if (currentSideDistance(1, distance, now)) { printDistance(distance); Serial.println(); }
       else Serial.println(F("INVALID"));
       pumpSerialIn();
     }
@@ -470,7 +485,7 @@ void tickMotion(uint32_t now) {
   getPulses(leftCount, rightCount);
   const uint32_t counts[2] = { leftCount, rightCount };
   // Compact movement feedback only, independent of slow sensor-card polling.
-  if (now - motionFeedbackAtMs >= 200 && sonarPhase == SONAR_IDLE && Serial.availableForWrite() >= 44) {
+  if (!rxWindowActive() && now - motionFeedbackAtMs >= 200 && sonarPhase == SONAR_IDLE && Serial.availableForWrite() >= 44) {
     char line[34];
     snprintf_P(line, sizeof(line), PSTR("MP %u %lu %lu"), motion.id,
       leftCount - motion.basePulses[0], rightCount - motion.basePulses[1]);
@@ -531,7 +546,7 @@ void tickOutputs(uint32_t now) {
     ledOn = false;
   }
   const uint8_t requestedMode = !physicalIo[LED_OUT] ? 0 : ledFlash ? 2 : ledOn ? 1 : 0;
-  if (requestedMode != remoteLedMode || (requestedMode == 2 && (remoteLedDeadline != ledFlashUntilMs || remoteLedInterval != ledFlashIntervalMs))) {
+  if (!rxWindowActive() && (requestedMode != remoteLedMode || (requestedMode == 2 && (remoteLedDeadline != ledFlashUntilMs || remoteLedInterval != ledFlashIntervalMs)))) {
     diagStage(71);
     remoteLedMode = requestedMode; remoteLedDeadline = ledFlashUntilMs; remoteLedInterval = ledFlashIntervalMs;
     char eventLine[64];
@@ -735,7 +750,7 @@ void captureSnapshot(uint32_t now) {
   float d; snapshotPut16(48,snapshotDistance(currentDistance(d,now)?d:-1));
 }
 void tickHardwareTelemetry(uint32_t now) {
-  if(!telemetryId||sonarPhase!=SONAR_IDLE||Serial.availableForWrite()<60)return;
+  if(rxWindowActive()||!telemetryId||sonarPhase!=SONAR_IDLE||Serial.availableForWrite()<60)return;
   diagCommand(telemetryId); diagStage(30+telemetryStage);
   if(telemetryStage==3){char terminal[24];snprintf_P(terminal,sizeof(terminal),PSTR("DONE %u TELEMETRY"),telemetryId);telemetryId=0;printProtectedLine(terminal);return;}
   if(!telemetryStage)captureSnapshot(now);
@@ -765,7 +780,7 @@ void diagBadChecksum(const char *line, uint8_t calculated, uint8_t received) {
 void processCommand(char *line) {
   // Web commands carry CRC-8. Unprotected manual commands remain available.
   char *star = strchr(line, '*');
-  if (!strncmp_P(line, PSTR("C "), 2) && !star) { diagBadChecksum(line, serialCrc8(line), 0); error(0, F("BAD_CHECKSUM")); return; }
+  if ((!strncmp_P(line, PSTR("C "), 2) || !strncmp_P(line, PSTR("R "), 2)) && !star) { diagBadChecksum(line, serialCrc8(line), 0); error(0, F("BAD_CHECKSUM")); return; }
   if (star) {
     uint8_t received;
     if (!commandCrcByte(star + 1, received)) {
@@ -776,6 +791,17 @@ void processCommand(char *line) {
     const uint8_t calculated = serialCrc8(line);
     if (calculated != received) { *star = '*'; diagBadChecksum(line, calculated, received); error(0, F("BAD_CHECKSUM")); return; }
   }
+  bool authorized = !dispatchingPhysical;
+  if (!strncmp_P(line, PSTR("R "), 2)) {
+    char *end = strchr(line + 2, ' ');
+    long window = 0;
+    if (end) { *end = 0; authorized = parseLong(line + 2, 1, 65535, window); *end = ' '; }
+    else authorized = false;
+    authorized = authorized && star && window == rxWindow && rxWindowActive() && !strncmp_P(end, PSTR(" C "), 3);
+    if (!authorized) { rxQuiet = false; error(0, F("RX_WINDOW_EXPIRED")); return; }
+    line = end + 1;
+  }
+  rxQuiet = false;
   char *words[8];
   uint8_t count = 0;
   char *save;
@@ -795,6 +821,7 @@ void processCommand(char *line) {
   diagCommand(id);
   diagTrace(20);
   const char *verb = words[2];
+  if (!authorized && strcmp_P(verb, PSTR("STOP"))) { error(id, F("RX_WINDOW_REQUIRED")); return; }
   const uint8_t n = count - 3;
   const char *a = n > 0 ? words[3] : nullptr;
   const char *b = n > 1 ? words[4] : nullptr;
@@ -857,15 +884,15 @@ void processCommand(char *line) {
     Serial.print(F("DATA "));
     Serial.print(id);
     Serial.print(F(" CONFIG WHEEL_MM="));
-    Serial.print(wheelDiameterMm, 1);
+    printDistance(wheelDiameterMm);
     Serial.print(F(" TRACK_MM="));
-    Serial.print(trackWidthMm, 1);
+    printDistance(trackWidthMm);
     Serial.print(F(" SLOTS_PER_REV="));
     Serial.print(SLOTS_PER_WHEEL_REV);
     Serial.print(F(" SAFE_LEFT_CM="));
-    Serial.print(safeDistanceCm[0], 1);
+    printDistance(safeDistanceCm[0]);
     Serial.print(F(" SAFE_RIGHT_CM="));
-    Serial.print(safeDistanceCm[1], 1);
+    printDistance(safeDistanceCm[1]);
     Serial.println(F(" REMOTE_V1"));
     done(id);
     return;
@@ -1183,7 +1210,8 @@ int8_t assembleInputChar(const char ch, char *buf, uint8_t &len, bool &overflow)
   return 0;
 }
 
-void dispatchCommandLine(char *line) {
+void dispatchCommandLine(char *line, bool physical) {
+  dispatchingPhysical = physical;
   dispatchingCommand = true;
   // ACK/DONE may pump a new line. Its tokens must never alias active arguments.
   strncpy(executingBuffer.data, line, sizeof(executingBuffer.data) - 1);
@@ -1203,13 +1231,14 @@ void processInputByte(const char ch, const uint8_t source) {
   }
   if (result != 1) return;
   if (!dispatchingCommand) {
-    dispatchCommandLine(inputBuffers[source].data);
+    dispatchCommandLine(inputBuffers[source].data, source == 0);
     return;
   }
   if (pumpedReady) { ++diagDropped; return; }
   strncpy(pumpedLine, inputBuffers[source].data, sizeof(pumpedLine) - 1);
   pumpedLine[sizeof(pumpedLine) - 1] = '\0';
   pumpedReady = true;
+  pumpedPhysical = source == 0;
 }
 
 void pumpSerialIn() {
@@ -1235,7 +1264,7 @@ void readSerial() {
   pumpSerialIn();
   while (pumpedReady) {
     pumpedReady = false;
-    dispatchCommandLine(pumpedLine);
+    dispatchCommandLine(pumpedLine, pumpedPhysical);
     pumpSerialIn();
   }
 }
@@ -1268,6 +1297,7 @@ void checkMemoryState() {
 }
 
 void tickMemoryDiagnostics(uint32_t now) {
+  if (rxWindowActive()) return;
   // This is sampled stack/heap headroom, not a historical stack high-water mark.
   if ((!diagMode && !diagMemoryLatched) || static_cast<int32_t>(now - diagMemoryAt) < 1000) return;
   char stack, line[64];
@@ -1287,17 +1317,14 @@ void tickMemoryDiagnostics(uint32_t now) {
 }
 
 void tickDiagnostics(uint32_t now) {
-  if (!diagMode || now - diagLastAt < 1000) return;
-  const uint8_t wait = (sonarPhase != SONAR_IDLE ? 1 : 0) |
-                       (Serial.availableForWrite() < 60 ? 2 : 0);
-  char line[64];
-  // Hex keeps worst-case heartbeat short enough for the 63-byte TX ring.
-  snprintf_P(line, sizeof(line), PSTR("EVENT DIAG H %lx %x %x %x %x %x %x %x"),
-             static_cast<unsigned long>(now), diagLoops, diagMaxLoopMs,
-             telemetryId, telemetryStage, wait, diagRxOverflow, diagDropped);
-  if (strlen(line) + 2 > static_cast<size_t>(Serial.availableForWrite())) return;
-  diagWrite(line);
-  diagLastAt = now; diagLoops = 0; diagMaxLoopMs = 0;
+  if (rxQuiet && now - rxWindowAt >= 60) { rxQuiet = false; inputLength[0] = 0; inputOverflow[0] = false; }
+  // TXC0 requires the final stop bit to leave D1 before advertising a window.
+  if (rxWindowActive() || now - rxWindowAt < 80 || telemetryId || sonarPhase != SONAR_IDLE || inputLength[0] || pumpedReady || !(UCSR0A & _BV(TXC0))) return;
+  rxWindow = rxWindow == 65535 ? 1 : rxWindow + 1;
+  char line[12];
+  snprintf_P(line, sizeof(line), PSTR("RX %u"), rxWindow);
+  printProtectedLine(line);
+  rxWindowAt = millis(); rxQuiet = true;
 }
 
 void setup() {
@@ -1327,7 +1354,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.13"));
+  Serial.println(F("READY UNO_CAT_V6.14"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
@@ -1337,13 +1364,12 @@ void setup() {
   } else Serial.println(F("EVENT DIAG_BOOT NONE"));
   diagBreadcrumb.magic = 0xD159; diagCommand(0); diagStage(0);
   Serial.println(F("EVENT HOST_LED OFF"));
-  Serial.println(F("EVENT UART_SOFT_RX D12 57600 TX=D1"));
+  Serial.println(F("EVENT UART_SOFT_RX D13 57600 TX=D1"));
   // V5.1: keep assembling host commands while Serial.print waits for TX headroom, so
   // command bursts (sensor injections + ROTATE/DRIVE) can no longer overrun the RX ring.
 }
 
 void loop() {
-  const uint32_t loopStart = micros();
   checkMemoryState();
   if (diagMemoryLatched) {
     stopOutputs(); // Keep motor outputs disabled until reset; do not parse corrupt buffers.
@@ -1370,9 +1396,6 @@ void loop() {
   checkMemoryState();
   if (diagMemoryLatched) { tickMemoryDiagnostics(now); return; }
   tickHardwareTelemetry(now);
-  if (diagLoops != UINT16_MAX) ++diagLoops;
-  const uint32_t elapsedMs = (micros() - loopStart) / 1000;
-  if (elapsedMs > diagMaxLoopMs) diagMaxLoopMs = min(elapsedMs, static_cast<uint32_t>(UINT16_MAX));
   diagStage(9);
   tickMemoryDiagnostics(millis());
   tickDiagnostics(millis());

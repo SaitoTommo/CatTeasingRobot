@@ -1,5 +1,5 @@
-// Firmware version: ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT. Reported by /api/state.
-// Uno pairing: UNO_CAT_V6.13 with extended SCAN_V1 VQ; minimumDrivePwm is web-configurable.
+// Firmware version: ESP32_CAT_HOST_0.50_UART_RX_WINDOW. Reported by /api/state.
+// Uno pairing: UNO_CAT_V6.14, D13 RX and one-use receive windows.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -76,6 +76,21 @@ void acceptCamera(JsonDocument &d){
 }
 struct Outgoing {String wire;bool physical;};
 std::deque<Outgoing> outgoing;uint32_t lastWrite=0;
+uint16_t rxGrant=0;uint32_t rxGrantAt=0;bool rxGrantSeen=false;
+// The Uno reserves 60 ms. Budget 45 ms including command wire time.
+bool windowCanSend(const String &wire){
+  uint32_t age=millis()-rxGrantAt;size_t bytes=wire.length()+10;
+  return rxGrant&&age>=3&&age+(bytes*10*1000+57599)/57600+5<=45&&bytes<128;
+}
+bool writeWindowCommand(const String &wire,bool emergency=false){
+  bool granted=windowCanSend(wire);if(!granted&&!emergency)return false;
+  String actual=wire;
+  if(granted){
+    String payload="R "+String(rxGrant)+" "+wire.substring(0,wire.indexOf('*'));
+    char suffix[5];snprintf(suffix,sizeof(suffix),"*%02X",crc8(payload));actual=payload+suffix;
+  }
+  rxGrant=0;uno.println(actual);logLine(granted?"UART_WINDOW_TX":"UART_EMERGENCY_TX",actual);return true;
+}
 uint32_t stopPendingId=0,stopSentAt=0;uint8_t stopRetries=0;bool stopUnconfirmed=false;
 String stopWire;
 bool stopReady(){return !stopPendingId&&!stopUnconfirmed;}
@@ -101,7 +116,7 @@ bool policyInteractionStopping();
 void flushTx(){
   if(stopPendingId){
     if(millis()-stopSentAt>=300){
-      if(stopRetries<3){stopRetries++;stopSentAt=millis();lastWrite=millis();uno.println(stopWire);logLine("STOP_RETRY",stopWire);}
+      if(stopRetries<3){stopRetries++;stopSentAt=millis();lastWrite=millis();writeWindowCommand(stopWire,true);logLine("STOP_RETRY",stopWire);}
       else if(!stopUnconfirmed){stopUnconfirmed=true;outgoing.clear();telemetryId=0;hostLedStop();logLine("STOP_UNCONFIRMED","No checked MOTOR_STOPPED reply; further motor commands blocked");policyStopUnconfirmed();}
     }
     if(!stopUnconfirmed){
@@ -114,11 +129,13 @@ void flushTx(){
     }
   }
   if(outgoing.empty()||millis()-lastWrite<15)return;
-  auto o=outgoing.front();outgoing.pop_front();lastWrite=millis();lastTx=o.wire;
+  if(outgoing.front().physical&&outgoing.front().wire.indexOf(" STOP*")<0&&!windowCanSend(outgoing.front().wire))return;
+  auto o=outgoing.front();
+  if(o.physical&&!writeWindowCommand(o.wire,o.wire.indexOf(" STOP*")>=0))return;
+  outgoing.pop_front();lastWrite=millis();lastTx=o.wire;
   logLine(o.physical?"UNO_TX":"SIM_TX",lastTx);
   if(o.physical){
     if(o.wire.indexOf(" STOP*")>=0){stopPendingId=o.wire.substring(2).toInt();stopWire=o.wire;stopSentAt=millis();stopRetries=0;stopUnconfirmed=false;}
-    uno.println(lastTx);
   }
   if(o.wire.indexOf(" MOTOR ")>=0||o.wire.indexOf(" SR ")>=0||o.wire.indexOf(" DRIVE ")>=0||o.wire.indexOf(" ROTATE ")>=0)policyCommandSent(o.wire.substring(2).toInt());
 }
@@ -135,7 +152,7 @@ void policyResumeFrom(int index);
 #include "remote_control.h"
 #include "route_editor.h"
 #include "front_switch.h"
-void resetLinkState(){uartLine="";compactTelemetry.reset();debugReset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;}
+void resetLinkState(){rxGrant=0;rxGrantSeen=false;uartLine="";compactTelemetry.reset();debugReset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;}
 void acceptUno(String line,bool physical) {
   line.trim(); if(!line.length())return;
   bool pendingStopReply=physical&&stopPendingId&&line.startsWith("DONE "+String(stopPendingId)+" MOTOR_STOPPED*");
@@ -163,12 +180,21 @@ void acceptUno(String line,bool physical) {
       bool checked=star>0&&hex.length()==2&&isxdigit(hex[0])&&isxdigit(hex[1])&&strtoul(hex.c_str(),nullptr,16)==crc8(payload);
       logLine(checked?"UART_LOOPBACK":"UART_BAD_FRAME",line);return;
     }
-    bool known=line.startsWith("VQ ")||line.startsWith("SD ")||line.startsWith("TB ")||line.startsWith("READY ")||line.startsWith("ACK ")||line.startsWith("AK ")||line.startsWith("DONE ")||line.startsWith("ERROR ")||line.startsWith("DATA ")||line.startsWith("EVENT ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MP ")||line.startsWith("MA ");
+    bool known=line.startsWith("RX ")||line.startsWith("VQ ")||line.startsWith("SD ")||line.startsWith("TB ")||line.startsWith("READY ")||line.startsWith("ACK ")||line.startsWith("AK ")||line.startsWith("DONE ")||line.startsWith("ERROR ")||line.startsWith("DATA ")||line.startsWith("EVENT ")||line.startsWith("MS ")||line.startsWith("MD ")||line.startsWith("MP ")||line.startsWith("MA ");
     if(!known){logLine("UART_BAD_FRAME","unknown ASCII reply prefix");return;}
   }
   int star=line.indexOf('*');
   if(star>=0) {String hex=line.substring(star+1);String payload=line.substring(0,star);if(hex.length()!=2||!isxdigit(hex[0])||!isxdigit(hex[1])||strtoul(hex.c_str(),nullptr,16)!=crc8(payload)){if(line.startsWith("TB ")||line.startsWith("DONE "))compactTelemetry.reset();logLine("CRC_ERROR",line);return;}line=payload;}
   else if(protectedReply(line.c_str(),physical,compactTelemetry.id!=0)){logLine("CRC_MISSING",line);return;}
+  if(physical){
+    rxGrant=0;
+    if(line.startsWith("READY "))rxGrantSeen=false;
+    if(line.startsWith("RX ")){
+      unsigned window=0;char extra=0;
+      if(sscanf(line.c_str(),"RX %u %c",&window,&extra)!=1||!window||window>65535){logLine("UART_BAD_FRAME",line);return;}
+      rxGrant=window;rxGrantAt=millis();rxGrantSeen=true;lastRx=line;lastUnoAt=millis();logLine("UART_AVAILABLE",line);return;
+    }
+  }
   if(physical&&stopPendingId&&star>=0&&line=="DONE "+String(stopPendingId)+" MOTOR_STOPPED"){stopPendingId=0;stopUnconfirmed=false;stopWire="";logLine("STOP_CONFIRMED",line);if(mode!="UART")return;}
   if(line.startsWith("READY "))compactTelemetry.reset();
   if(line.startsWith("TB ")){if(!compactTelemetry.add(line,millis())){logLine("TELEMETRY_BAD_FRAME",line);return;}lastRx=line;lastUnoAt=millis();logLine(physical?"UNO_RX":"SIM_RX",line);return;}
@@ -202,10 +228,10 @@ void defaults() {
 #include "camera_settings_runtime.h"
 #include "ground_calibration_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;RemoteControl::snapshot(d);RouteEditor::snapshot(d);debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.50_UART_RX_WINDOW";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;RemoteControl::snapshot(d);RouteEditor::snapshot(d);debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
-  d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
+  d["uartWindow"]["seen"]=rxGrantSeen;d["uartWindow"]["sequence"]=rxGrant;d["uartWindow"]["ageMs"]=rxGrantSeen?millis()-rxGrantAt:UINT32_MAX;d["uartWindow"]["queued"]=outgoing.size();d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
   d["cameraOk"]=cameraOk;d["frameSeq"]=frameSeq;d["heap"]=ESP.getFreeHeap();d["psram"]=ESP.getFreePsram();
   d["actualVisionMode"]=actualVisionMode;d["visionMailbox"]["oversize"]=visionOversize;d["visionMailbox"]["superseded"]=visionSuperseded;d["visionMailbox"]["rejected"]=visionRejected;d["visionMailbox"]["consumed"]=visionConsumed;d["visionMode"]=visionMode;d["visionIntervalMs"]=visionIntervalMs;
   d["apIP"]=WiFi.softAPIP().toString();d["stationIP"]=WiFi.localIP().toString();networkSnapshot(d);videoSnapshot(d);d["groundReferenceChangedAt"]=groundReferenceChangedAt;d["config"]=config;d["vision"]=observation;d["cameraVision"]=realVision;
@@ -231,7 +257,7 @@ void handleInput(const Input &in) {
   else if(op=="route_save")RouteEditor::input(d);
   else if(op=="manual_test"||op=="uno_config"||op=="bench_safety")debugInput(d);
   else if(op=="command") {if((phase!="IDLE"&&phase!="STOPPED")||debugId||manualUntil||configStep>=0){logLine("INPUT_ERROR","stop policy and finish debug operation before raw commands");return;}String command=d["command"]|"PING";command.trim();if(!stopReady()&&command!="STOP"){logLine("INPUT_ERROR","wait for confirmed STOP");return;}if(!command.length()||command.length()>96||command.indexOf('\n')>=0||command.indexOf('\r')>=0){logLine("INPUT_ERROR","invalid command line");return;}sendUno(command);}
-  else if(op=="mode") {RemoteControl::abort("source changed");hostLedStop();policyControl("stop");mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();compactTelemetry.reset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
+  else if(op=="mode") {RemoteControl::abort("source changed");hostLedStop();policyControl("stop");rxGrant=0;rxGrantSeen=false;mode=String(d["mode"]|"SIM_UNO")=="UART"?"UART":"SIM_UNO";debugReset();compactTelemetry.reset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;observation.clear();policyInput("READY SOURCE_CHANGED");sendUno("STOP");sendUno("SESSION_STOP");sendUno("GET_CONFIG");logLine("MODE",mode);}
   else if(op=="vision" && mode=="SIM_UNO") {observation=d["vision"];observation["source"]="SIM_CAMERA";observation["at"]=millis();policyVision();}
   else if(op=="camera"&&in.physical) acceptCamera(d);
   else if(op=="vision_bench") {
@@ -276,7 +302,7 @@ esp_err_t stateHandler(httpd_req_t *r) {
 }
 void policyFlowSnapshot(JsonDocument &);
 esp_err_t flowHandler(httpd_req_t *r){
- JsonDocument d;xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);d["ms"]=millis();d["phase"]=phase;policyFlowSnapshot(d);d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
+ JsonDocument d;xSemaphoreTakeRecursive(stateLock,portMAX_DELAY);d["ms"]=millis();d["phase"]=phase;policyFlowSnapshot(d);d["uartWindow"]["seen"]=rxGrantSeen;d["uartWindow"]["sequence"]=rxGrant;d["uartWindow"]["ageMs"]=rxGrantSeen?millis()-rxGrantAt:UINT32_MAX;d["uartWindow"]["queued"]=outgoing.size();d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
  String recent[8];int n=0;for(uint32_t id=logSeq;id&&logSeq-id<160&&n<8;id--){const String &row=logs[(id-1)%160];if(row.indexOf("\"source\":\"DECISION\"")>=0&&row.indexOf("\"line\":\"PATROL ")>=0)recent[n++]=row;}
  xSemaphoreGiveRecursive(stateLock);auto events=d["logs"].to<JsonArray>();while(n){JsonDocument item;if(!deserializeJson(item,recent[--n]))events.add(item.as<JsonObject>());}
  String out;serializeJson(d,out);httpd_resp_set_type(r,"application/json");httpd_resp_set_hdr(r,"Cache-Control","no-store");return httpd_resp_send(r,out.c_str(),out.length());
