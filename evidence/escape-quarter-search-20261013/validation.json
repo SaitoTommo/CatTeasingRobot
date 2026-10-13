@@ -19,6 +19,21 @@
     "pwm-floor": 2679
   },
   "nodeTests": 43,
-  "flashed": false,
-  "physicalAcceptance": false
+  "flashed": true,
+  "physicalAcceptance": false,
+  "deployment": {
+    "date": "2026-10-13",
+    "port": "COM11",
+    "applicationOffset": "0x10000",
+    "partitionBytesCompared": 3072,
+    "firmwareVersionReadback": "ESP32_CAT_HOST_0.48_ESCAPE_QUARTER_SEARCH",
+    "mode": "SIM_UNO",
+    "phase": "IDLE",
+    "cameraOk": true,
+    "escapeTurnClearanceCm": 15,
+    "fullApplicationReadback": false,
+    "extraHashVerification": false,
+    "acceptance": "Firmware version readback per user request",
+    "rollbackApplication": "Existing known 0.47 artifact; fresh device backup read was interrupted before writing"
+  }
 }
