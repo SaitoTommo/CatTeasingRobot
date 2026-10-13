@@ -101,15 +101,15 @@ int main(){
  // Checked no-cat scan completion also returns to the interrupted target.
  fixture();routeIndex=1;policyControl("alert");stopped();policyTick();configDone();auto failedScan=scanId,failedGen=generation;
  policyInput("SD "+String(failedScan)+" "+String(failedGen)+" 0");CHECK(catFailure.length()>0);endAndResumePatrol();CHECK(routeIndex==1);CHECK(policyTargetId()==10);
- // Explicit direction node -> turn -> checked stop -> actual DRIVE, no camera turn loop.
- fixture();config["escapePreyPercent"]=0;draws={99};onTouch(0);stopped();releaseAll();touchFound(99);CHECK(action=="ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE "));
- md(18,18);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(commands.back().text=="DRIVE 23.00 140");CHECK(escapeRounds==0);
+ // Side gate -> quarter turn -> stopped front observation -> continuous DRIVE.
+ fixture();config["escapePreyPercent"]=0;draws={99};onTouch(0);stopped();releaseAll();touchFound(99);CHECK(action=="ESCAPE_DIRECTION");startEscapeTurn();CHECK(commands.back().text.startsWith("ROTATE 90.0 "));
+ finishEscapeTurn();CHECK(commands.back().text=="DRIVE 23.00 140");CHECK(escapeRounds==0);
  JsonDocument snapshot;policySnapshot(snapshot);CHECK(snapshot["patrolStatus"]["escapeStage"].as<String>()=="RUN");
- // TOP search found -> face cat -> select away direction -> 180-degree turn -> DRIVE.
- fixture();config["escapePreyPercent"]=0;draws={99};onTouch(3);stopped();releaseAll();touchFound(99);CHECK(action=="ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");CHECK(turnDeg==180);md(18,18);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");
+ // TOP search found -> side-selected 90-degree turn -> fresh front gate -> DRIVE.
+ fixture();config["escapePreyPercent"]=0;draws={99};onTouch(3);stopped();releaseAll();touchFound(99);CHECK(action=="ESCAPE_DIRECTION");startEscapeTurn();CHECK(turnDeg==90);finishEscapeTurn();
  // Partial DRIVE contact abort uses checked MA progress, resumes remaining cm once.
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";branch=1;config["escapePreyPercent"]=0;drive(23,95,"ESCAPE_MOVE");auto oldMotor=motorId;
- policyInput("MA "+String(oldMotor)+" TOUCH 5 5");CHECK(touchPaused);CHECK(action=="WAIT_STOP");float left=resumeCm;CHECK(left>17&&left<18);onTouch(0);stopped();CHECK(action=="WAIT_TOUCH_RESUME");policyTick();CHECK(!motorId);releaseAll();policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(driveCm==left);CHECK(escapeRounds==0);
+ policyInput("MA "+String(oldMotor)+" TOUCH 5 5");CHECK(touchPaused);CHECK(action=="WAIT_STOP");float left=resumeCm;CHECK(left>17&&left<18);onTouch(0);stopped();CHECK(action=="WAIT_TOUCH_RESUME");policyTick();CHECK(!motorId);releaseAll();policyTick();resumeEscapeDrive();CHECK(driveCm==left);CHECK(escapeRounds==0);
  md(17,17);stopped();policyTick();CHECK(escapeRounds==1);CHECK(action=="WAIT_STOP");policyInput("MD "+String(oldMotor)+" 23 23");CHECK(escapeRounds==1);
  // Scan aborted while turning retains used angle; old replies are ignored.
  fixture();phase="INTERACTION";beginScan("CAT","OBSERVE");configDone();auto oldScan=scanId,oldGeneration=generation;scanUsed=10;

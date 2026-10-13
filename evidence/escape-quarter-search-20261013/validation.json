@@ -1,0 +1,24 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.48_ESCAPE_QUARTER_SEARCH",
+  "branch": "DEV",
+  "baseline": "87bd46cfe7143296ec7b0154f816638d2b8ab9fc",
+  "rollbackTag": "rollback/pre-escape-quarter-search-20261013",
+  "fqbn": "esp32:esp32:XIAO_ESP32S3:PSRAM=opi,PartitionScheme=max_app_8MB",
+  "flashBytes": 3838746,
+  "staticRamBytes": 86024,
+  "appFileBytes": 3838896,
+  "appSha256": "37A643B5E368BBB4790A6BD59C01CB810CC986DFF76CFC06A92D43AC351AA2FA",
+  "nativeChecks": 5068,
+  "nativePrograms": {
+    "escape-search": 260,
+    "policy-core": 1223,
+    "cat-interaction": 713,
+    "approach-front": 144,
+    "front-switch": 8,
+    "action-resume": 41,
+    "pwm-floor": 2679
+  },
+  "nodeTests": 43,
+  "flashed": false,
+  "physicalAcceptance": false
+}

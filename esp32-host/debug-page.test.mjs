@@ -200,7 +200,7 @@ test('brief tag alignment remains visible as history while current state is appr
 
 test('cat settings preserve drafts, validate relative widths and round trip every timeout',()=>{
   const requests=[];context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
-  const config={catCheckMaxFrames:3,escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+  const config={catCheckMaxFrames:3,escapeMinDistanceCm:30,escapeMaxDistanceCm:80,escapeTurnClearanceCm:15,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
   const render=patch=>{const d={...base,config,...patch};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
   render({});assert.equal(element('catCfg_catNearWidth').value,'35.0');
   element('catCfg_explorePreyMinimumSeconds').value='45';element('catCfg_captureWaitMaxSeconds').value='25';render({ms:1100});
@@ -208,7 +208,7 @@ test('cat settings preserve drafts, validate relative widths and round trip ever
   assert.equal(element('catCfg_explorePreyMinimumSeconds').value,'45');
   vm.runInContext('saveCatSettings()',context);assert.equal(requests.at(-1).config.explorePreyMinimumSeconds,45);assert.equal(requests.at(-1).config.captureWaitMaxSeconds,25);assert.equal(requests.at(-1).config.catNearWidth,.35);
   assert.equal(requests.at(-1).config.catConfirmWaitSeconds,undefined);assert.equal(requests.at(-1).config.touchFlashPercent,20);
-  assert.equal(requests.at(-1).config.escapeMinDistanceCm,30);assert.equal(requests.at(-1).config.escapeMaxDistanceCm,80);const distanceRequests=requests.length;element('catCfg_escapeMinDistanceCm').value='90';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,distanceRequests);element('catCfg_escapeMinDistanceCm').value='30';
+  assert.equal(requests.at(-1).config.escapeMinDistanceCm,30);assert.equal(requests.at(-1).config.escapeMaxDistanceCm,80);assert.equal(requests.at(-1).config.escapeTurnClearanceCm,15);const distanceRequests=requests.length;element('catCfg_escapeMinDistanceCm').value='90';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,distanceRequests);element('catCfg_escapeMinDistanceCm').value='30';
   const probabilityRequests=requests.length;element('catCfg_catConfirmPreyPercent').value='90';element('catCfg_catConfirmExplorePercent').value='20';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,probabilityRequests);element('catCfg_catConfirmPreyPercent').value='20';
   const n=requests.length;element('catCfg_catFarWidth').value='40';vm.runInContext('saveCatSettings()',context);assert.equal(requests.length,n);
   render({config:{...config,explorePreyMinimumSeconds:45,captureWaitMaxSeconds:25}});assert.match(element('catConfigStatus').textContent,/45/);
@@ -221,7 +221,7 @@ test('cat progress names chase and displays separate rounds and time',()=>{
 });
 
 test('cat save failure is reported from board logs rather than assumed successful',()=>{
- const config={catCheckMaxFrames:3,escapeMinDistanceCm:30,escapeMaxDistanceCm:80,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
+ const config={catCheckMaxFrames:3,escapeMinDistanceCm:30,escapeMaxDistanceCm:80,escapeTurnClearanceCm:15,touchFlashPercent:20,catConfirmWaitSeconds:5,catConfirmPreyPercent:20,catConfirmExplorePercent:20,catFarWidth:.12,catNearWidth:.35,catInteractionIdleSeconds:12,catObserveTimeoutSeconds:10,escapePreyAfterRounds:5,escapePreyPercent:20,explorePreyMinimumSeconds:30,explorePreyPercent:20,catLeaveSeconds:5,captureWaitMaxSeconds:15};
  const render=logs=>{const d={...base,config,logs};sync(d);vm.runInContext(`syncCatSettings(${JSON.stringify(d)})`,context);};
  render([{seq:9,source:'CONFIG',line:'saved'}]);
  for(const [k,v] of Object.entries(config))element('catCfg_'+k).value=String(k.includes('Width')?v*100:v);

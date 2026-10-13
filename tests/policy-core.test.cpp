@@ -66,6 +66,19 @@ void completeConfirmation(bool detected=true){
  for(size_t i=from;i<commands.size();i++)CHECK(!commands[i].text.startsWith("ROTATE ")&&!commands[i].text.startsWith("DRIVE ")&&!commands[i].text.startsWith("SR ")&&!commands[i].text.startsWith("MOTOR "));
  for(int i=0;i<(detected?1:(config["catCheckMaxFrames"]|3));i++){frame(detected,true,observation["frameSeq"].as<unsigned>()+1);policyTick();}
 }
+void escapeSettle(const char *next){
+ stopped();tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();
+ tick+=250;encoderAt[0]=encoderAt[1]=tick;policyTick();CHECK(action==next);
+}
+void escapeSideSample(float left=20,float right=20){tick+=50;sideAt[0]=sideAt[1]=tick;side[0]=left;side[1]=right;policyTick();}
+void escapeFrontFrame(const char *front="CLEAR"){
+ tick+=50;observation["at"]=tick;observation["frameSeq"]=observation["frameSeq"].as<unsigned>()+1;
+ observation["generation"]=generation;observation["scanId"]=0;observation["stepId"]=checkStep;observation["front"]=front;observation["frontCalibrated"]=true;
+ policyVision();policyTick();
+}
+void startEscapeTurn(float left=20,float right=20){policyTick();CHECK(action=="WAIT_STOP");escapeSettle("ESCAPE_SIDE_CHECK");escapeSideSample(left,right);CHECK(action=="ESCAPE_TURN");CHECK(fabs(turnDeg)==90);}
+void finishEscapeTurn(){md(9,9);escapeSettle("ESCAPE_FRONT_CHECK");escapeFrontFrame();CHECK(action=="ESCAPE_DRIVE");policyTick();CHECK(action=="ESCAPE_MOVE");}
+void resumeEscapeDrive(){CHECK(action=="WAIT_STOP");escapeSettle("ESCAPE_FRONT_CHECK");escapeFrontFrame();policyTick();CHECK(action=="ESCAPE_MOVE");}
 void touchFound(unsigned pick){
  policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanNext=="CHOOSE_TOUCH");configDone();scanRequest();frame(true);observation["cat"]["centerX"]=.85;
  policyInput("SD "+String(scanId)+" "+String(generation)+" 1");CHECK(action=="WAIT_STOP");draws={pick,0};completeConfirmation();
@@ -87,7 +100,7 @@ int main(){
  auto beforeConfirmation=commands.size();completeConfirmation();CHECK(action=="WAIT_CHASE");CHECK(policyVisionMode()=="CAT");
  for(size_t i=beforeConfirmation;i<commands.size();++i){CHECK(!commands[i].text.startsWith("ROTATE "));CHECK(!commands[i].text.startsWith("DRIVE "));CHECK(!commands[i].text.startsWith("SR "));}
  // A touch starts the next escape immediately after release, without OBSERVE/FOLLOW_WAIT.
- onTouch(0);policyTick();CHECK(action=="WAIT_RELEASE");CHECK(touchNext=="ESCAPE");touch[0]=false;sideAt[0]=sideAt[1]=tick;policyTick();CHECK(action=="ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");
+ onTouch(0);policyTick();CHECK(action=="WAIT_RELEASE");CHECK(touchNext=="ESCAPE");touch[0]=false;sideAt[0]=sideAt[1]=tick;policyTick();CHECK(action=="ESCAPE_DIRECTION");startEscapeTurn();
  // Visual far-to-near chase starts the same next-round path; timeout exits.
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";observation["cat"]["width"]=.2;behavior("WAIT_CHASE");observation["cat"]["width"]=.4;policyTick();CHECK(action=="WAIT_RELEASE");
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";behavior("WAIT_CHASE");tick=due;observation["at"]=tick;policyTick();CHECK(phase=="ENDING");CHECK(interactionExitReason=="chase wait timeout");
@@ -99,7 +112,7 @@ int main(){
  config["escapeMaxDistanceCm"]=30;draws={99};chooseEscapeDistance();CHECK(escapeTargetCm==30);CHECK(draws.size()==1);
  fixture();phase="INTERACTION";state("ESCAPE_DRIVE");config["escapeMinDistanceCm"]=50;config["escapeMaxDistanceCm"]=50;policyTick();CHECK(commands.back().text.startsWith("DRIVE 50.00 "));CHECK(action=="ESCAPE_MOVE");
  // Contact resumes the remaining distance without another random draw.
- initiator="CAT_TOUCH";pulsesL=pulsesR=10;draws={123};pauseForTouch();stopped();CHECK(action=="WAIT_TOUCH_RESUME");policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(escapeTargetCm==50);CHECK(driveCm<50&&driveCm>0);CHECK(draws.size()==1);
+ initiator="CAT_TOUCH";pulsesL=pulsesR=10;draws={123};pauseForTouch();stopped();CHECK(action=="WAIT_TOUCH_RESUME");policyTick();resumeEscapeDrive();CHECK(escapeTargetCm==50);CHECK(driveCm<50&&driveCm>0);CHECK(draws.size()==1);
  // Replay log 23 through the actual compact decoder and policy parser.
  fixture();sideAt[0]=sideAt[1]=0;
  CompactTelemetry batch;
@@ -110,11 +123,11 @@ int main(){
  CHECK(sideAt[0]==tick&&sideAt[1]==tick);CHECK(fabs(side[0]-11.6f)<.01f);CHECK(side[1]==-1);
  phase="INTERACTION";initiator="CAT_TOUCH";config["catConfirmPreyPercent"]=0;config["catConfirmExplorePercent"]=0;
  for(unsigned pick:{0u,50u,99u}){draws={pick,0};chooseConfirmedTouch();CHECK(branch==1);CHECK(action=="ESCAPE_DIRECTION");}
- policyTick();CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE "));CHECK(interactionExitReason=="");
+ policyTick();CHECK(action=="WAIT_STOP");escapeSettle("ESCAPE_SIDE_CHECK");escapeSideSample(11.6,-1);CHECK(action=="ESCAPE_SIDE_CHECK");tick+=2500;policyTick();CHECK(phase=="ENDING");
  fixture();phase="INTERACTION";initiator="CAT_TOUCH";config["catConfirmPreyPercent"]=0;config["catConfirmExplorePercent"]=0;
  sideAt[0]=sideAt[1]=0;policyInput("DATA 458 HW SL 1 1 0 11.6 11.6 P");policyInput("DATA 458 HW SR 1 1 0 20.0 20.0 P");
- chooseConfirmedTouch();policyTick();CHECK(action=="ESCAPE_TURN");CHECK(commands.back().text.startsWith("ROTATE "));
- md();stopped();policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(commands.back().text.startsWith("DRIVE "));
+ chooseConfirmedTouch();startEscapeTurn(11.6,20);CHECK(commands.back().text.startsWith("ROTATE 90.0 "));
+ finishEscapeTurn();CHECK(commands.back().text.startsWith("DRIVE "));
  // Malformed rows cannot refresh data or create a top-button press.
  fixture();sideAt[0]=sideAt[1]=0;encoderAt[0]=0;
  for(const char *row:{"DATA 1 HW SL 1 1 0 20 20 P extra","DATA 1 HW SL 1 1 0 20 nan P","DATA 1 HW SL 1 1 0 20 500 P","DATA 1 HW EL 1 1 23 nan P","DATA 1 HW EL 1 1 23 0 P extra","DATA 1 HW T UNKNOWN 1 1 1 P","DATA 1 HW T TOP 1 1 2 P","DATA 1 HW T TOP 1 1 1 P extra"})policyInput(row);
@@ -205,9 +218,9 @@ int main(){
  // Touch branch pools, first touch, held touches, top/multiple and side boundaries.
  fixture();draws={99,99,50};onTouch(3);CHECK(firstTouch==3);CHECK(rounds==1);onTouch(0);CHECK(firstTouch==3);CHECK(rounds==1);stopped();touch[3]=touch[0]=false;policyTick();policyTick();CHECK(action=="WAIT_SCAN_CONFIG");CHECK(scanFlags==0);
  fixture();draws={99,99,50};onTouch(0);stopped();touch[0]=false;side[0]=side[1]=.5;policyTick();policyTick();CHECK(scanFlags==1);configDone();CHECK(commands.back().text.endsWith(" 1"));CHECK(commands.back().text.indexOf("DRIVE")<0);
- fixture();draws={99};onTouch(0);stopped();touch[0]=false;side[1]=.5;touchFound(99);policyTick();CHECK(phase=="ENDING");
- fixture();draws={99};onTouch(0);stopped();touch[0]=false;side[1]=1;touchFound(99);CHECK(action=="ESCAPE_DIRECTION");policyTick();CHECK(action=="ESCAPE_TURN");CHECK(turnDeg==180);md(18,18);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");
- fixture();draws={99};onTouch(0);stopped();touch[0]=false;touchFound(99);sideAt[0]=sideAt[1]=tick-3000;policyTick();CHECK(phase=="ENDING");
+ fixture();draws={99};onTouch(0);stopped();touch[0]=false;side[1]=.5;touchFound(99);policyTick();escapeSettle("ESCAPE_SIDE_CHECK");escapeSideSample(.5,.5);CHECK(phase=="ENDING");
+ fixture();draws={99};onTouch(0);stopped();touch[0]=false;side[1]=1;touchFound(99);CHECK(action=="ESCAPE_DIRECTION");startEscapeTurn(20,1);CHECK(turnDeg==-90);finishEscapeTurn();
+ fixture();draws={99};onTouch(0);stopped();touch[0]=false;touchFound(99);sideAt[0]=sideAt[1]=tick-3000;policyTick();escapeSettle("ESCAPE_SIDE_CHECK");tick+=2500;policyTick();CHECK(phase=="ENDING");
  fixture();draws={0};onTouch(0);stopped();CHECK(action=="WAIT_RELEASE");CHECK(touchSignalUntil>tick);touch[0]=false;touchFound(25);CHECK(action=="SIGNAL");CHECK(branch==0);CHECK(lastPattern==0);tick=due;observation["at"]=tick;policyTick();CHECK(action=="OBSERVE");
  // CAT-01..18 retained behavior choices and local completion, no camera-only trigger.
  fixture();policyTick();CHECK(phase=="PATROL");CHECK(initiator=="");policyControl("alert");CHECK(initiator=="ROBOT_SEARCH");CHECK(action=="WAIT_STOP");
@@ -297,7 +310,7 @@ int main(){
  fixture();phase="INTERACTION";patterns=4;signal(true);commands.clear();tick+=2000;responseTick();CHECK(commands.empty());
  fixture();mode="UART";lastUnoAt=tick-2501;policyTick();CHECK(phase=="RECOVERING");CHECK(linkRecovering);
  fixture();phase="INTERACTION";motorId=42;policyInput("MA 0 ENCODER_STALL 1 1");CHECK(motorId==42);policyInput("MA 42 ENCODER_STALL 1 1");CHECK(phase=="STOPPED");CHECK(!motorId);CHECK(!leftPwm&&!rightPwm);
- fixture();config["escapePreyPercent"]=0;draws={99};onTouch(2);stopped();touch[2]=false;touchFound(99);policyTick();CHECK(action=="ESCAPE_TURN");md(18,18);stopped();policyTick();CHECK(action=="ESCAPE_MOVE");md(22,22);stopped();policyTick();CHECK(action=="WAIT_STOP");CHECK(afterFace=="CHASE_ALIGN");
+ fixture();config["escapePreyPercent"]=0;draws={99};onTouch(2);stopped();touch[2]=false;touchFound(99);startEscapeTurn();finishEscapeTurn();md(22,22);stopped();policyTick();CHECK(action=="WAIT_STOP");CHECK(afterFace=="CHASE_ALIGN");
  fixture();phase="INTERACTION";routeIndex=1;beginScan("CAT","OBSERVE");configDone();policyInput("SD "+String(scanId)+" "+String(generation)+" 0");stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(routeIndex==1);CHECK(phase=="PATROL");
  fixture();phase="INTERACTION";motorId=42;scanId=42;touch[1]=true;policyInput("READY UNO_CAT_V6.6");CHECK(phase=="STOPPED");CHECK(!scanId&&!motorId&&!touch[1]);CHECK(!scanCapable);
  for(float center:{.0f,.2f,.8f,1.f}){fixture();phase="INTERACTION";afterFace="OBSERVE";observation["cat"]["centerX"]=center;catLocated();CHECK(action=="OBSERVE");CHECK(!motorId);}

@@ -68,6 +68,7 @@ d["catInteractionIdleSeconds"]=12;
 d["catObserveTimeoutSeconds"]=10;
 d["escapeMinDistanceCm"]=23;
 d["escapeMaxDistanceCm"]=23;
+d["escapeTurnClearanceCm"]=15;
 d["catConfirmWaitSeconds"]=5;
 d["catConfirmPreyPercent"]=20;
 d["catConfirmExplorePercent"]=20;
@@ -152,6 +153,7 @@ if(!d["catInteractionIdleSeconds"].is<float>()||!isfinite(d["catInteractionIdleS
 if(!d["catObserveTimeoutSeconds"].is<float>()||!isfinite(d["catObserveTimeoutSeconds"].as<float>())||d["catObserveTimeoutSeconds"].as<float>()<1||d["catObserveTimeoutSeconds"].as<float>()>120){error="invalid catObserveTimeoutSeconds";return false;}
 if(!d["escapeMinDistanceCm"].is<float>()||!isfinite(d["escapeMinDistanceCm"].as<float>())||d["escapeMinDistanceCm"].as<float>()<1||d["escapeMinDistanceCm"].as<float>()>100){error="invalid escapeMinDistanceCm";return false;}
 if(!d["escapeMaxDistanceCm"].is<float>()||!isfinite(d["escapeMaxDistanceCm"].as<float>())||d["escapeMaxDistanceCm"].as<float>()<1||d["escapeMaxDistanceCm"].as<float>()>100){error="invalid escapeMaxDistanceCm";return false;}
+if(!d["escapeTurnClearanceCm"].is<float>()||!isfinite(d["escapeTurnClearanceCm"].as<float>())||d["escapeTurnClearanceCm"].as<float>()<1||d["escapeTurnClearanceCm"].as<float>()>100){error="invalid escapeTurnClearanceCm";return false;}
 if(!d["catConfirmWaitSeconds"].is<float>()||!isfinite(d["catConfirmWaitSeconds"].as<float>())||d["catConfirmWaitSeconds"].as<float>()<0||d["catConfirmWaitSeconds"].as<float>()>30){error="invalid catConfirmWaitSeconds";return false;}
 if(!d["catConfirmPreyPercent"].is<float>()||!isfinite(d["catConfirmPreyPercent"].as<float>())||d["catConfirmPreyPercent"].as<float>()<0||d["catConfirmPreyPercent"].as<float>()>100){error="invalid catConfirmPreyPercent";return false;}
 if(!d["catConfirmExplorePercent"].is<float>()||!isfinite(d["catConfirmExplorePercent"].as<float>())||d["catConfirmExplorePercent"].as<float>()<0||d["catConfirmExplorePercent"].as<float>()>100){error="invalid catConfirmExplorePercent";return false;}
