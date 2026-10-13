@@ -1,0 +1,2 @@
+New upload port: COM10 (serial)
+upload exit=0

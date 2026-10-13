@@ -1,0 +1,1044 @@
+{
+  "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+  "mode": "UART",
+  "phase": "STOPPED",
+  "stopUnconfirmed": false,
+  "debugResult": "等待 Uno 回报",
+  "debugBusy": false,
+  "lastUnoAgeMs": 59,
+  "uartWindow": {
+    "seen": true,
+    "sequence": 3712,
+    "ageMs": 59,
+    "queued": 0
+  },
+  "telemetry": [
+    {
+      "line": "DATA 137 HW STATE 296268 STOPPED 0 0 16375",
+      "at": 336470,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW ML 0 0 0 1 0 0",
+      "at": 336470,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW MR 0 0 0 1 0 0",
+      "at": 336471,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW EL 1 0 0 0.0 P",
+      "at": 336471,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW ER 1 0 0 0.0 P",
+      "at": 336471,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW SL 1 1 0 195.2 195.2 P",
+      "at": 336472,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW SR 1 1 0 61.4 61.4 P",
+      "at": 336472,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW T TOP 1 1 0 P",
+      "at": 336472,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW T LEFT 1 1 0 P",
+      "at": 336472,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW T RIGHT 1 1 0 P",
+      "at": 336473,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW T REAR 1 1 0 P",
+      "at": 336473,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW OUT 1 0 -1 0 0 0",
+      "at": 336473,
+      "source": "UNO_RX"
+    },
+    {
+      "line": "DATA 137 HW FRONT -1.0 HOST",
+      "at": 336473,
+      "source": "UNO_RX"
+    }
+  ],
+  "logs": [
+    {
+      "seq": 4420,
+      "ms": 328411,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3601"
+    },
+    {
+      "seq": 4421,
+      "ms": 328422,
+      "source": "UART_WINDOW_TX",
+      "line": "R 3601 C 132 GET_TELEMETRY*88"
+    },
+    {
+      "seq": 4422,
+      "ms": 328423,
+      "source": "UNO_TX",
+      "line": "C 132 GET_TELEMETRY*87"
+    },
+    {
+      "seq": 4423,
+      "ms": 328432,
+      "source": "UNO_RX",
+      "line": "AK 132"
+    },
+    {
+      "seq": 4424,
+      "ms": 328445,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4425,
+      "ms": 328452,
+      "source": "UNO_RX",
+      "line": "TB 132 0 010E66040000F73F000000000000000000"
+    },
+    {
+      "seq": 4426,
+      "ms": 328461,
+      "source": "UNO_RX",
+      "line": "TB 132 1 0000000000000000000000000000000000"
+    },
+    {
+      "seq": 4427,
+      "ms": 328468,
+      "source": "UNO_RX",
+      "line": "TB 132 2 A307A307F6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 4428,
+      "ms": 328476,
+      "source": "UNO_RX",
+      "line": "DONE 132 TELEMETRY"
+    },
+    {
+      "seq": 4429,
+      "ms": 328491,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3602"
+    },
+    {
+      "seq": 4430,
+      "ms": 328570,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3603"
+    },
+    {
+      "seq": 4431,
+      "ms": 328650,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3604"
+    },
+    {
+      "seq": 4432,
+      "ms": 328730,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3605"
+    },
+    {
+      "seq": 4433,
+      "ms": 328811,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3606"
+    },
+    {
+      "seq": 4434,
+      "ms": 328890,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3607"
+    },
+    {
+      "seq": 4435,
+      "ms": 328971,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3608"
+    },
+    {
+      "seq": 4436,
+      "ms": 329055,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3609"
+    },
+    {
+      "seq": 4437,
+      "ms": 329131,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3610"
+    },
+    {
+      "seq": 4438,
+      "ms": 329210,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3611"
+    },
+    {
+      "seq": 4439,
+      "ms": 329291,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3612"
+    },
+    {
+      "seq": 4440,
+      "ms": 329370,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3613"
+    },
+    {
+      "seq": 4441,
+      "ms": 329438,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4442,
+      "ms": 329451,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3614"
+    },
+    {
+      "seq": 4443,
+      "ms": 329530,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3615"
+    },
+    {
+      "seq": 4444,
+      "ms": 329611,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3616"
+    },
+    {
+      "seq": 4445,
+      "ms": 329692,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3617"
+    },
+    {
+      "seq": 4446,
+      "ms": 329771,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3618"
+    },
+    {
+      "seq": 4447,
+      "ms": 329851,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3619"
+    },
+    {
+      "seq": 4448,
+      "ms": 329930,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3620"
+    },
+    {
+      "seq": 4449,
+      "ms": 330010,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3621"
+    },
+    {
+      "seq": 4450,
+      "ms": 330091,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3622"
+    },
+    {
+      "seq": 4451,
+      "ms": 330170,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3623"
+    },
+    {
+      "seq": 4452,
+      "ms": 330250,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3624"
+    },
+    {
+      "seq": 4453,
+      "ms": 330331,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3625"
+    },
+    {
+      "seq": 4454,
+      "ms": 330417,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3626"
+    },
+    {
+      "seq": 4455,
+      "ms": 330423,
+      "source": "UART_WINDOW_TX",
+      "line": "R 3626 C 133 GET_TELEMETRY*CB"
+    },
+    {
+      "seq": 4456,
+      "ms": 330424,
+      "source": "UNO_TX",
+      "line": "C 133 GET_TELEMETRY*32"
+    },
+    {
+      "seq": 4457,
+      "ms": 330433,
+      "source": "UNO_RX",
+      "line": "AK 133"
+    },
+    {
+      "seq": 4458,
+      "ms": 330438,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4459,
+      "ms": 330447,
+      "source": "UNO_RX",
+      "line": "TB 133 0 01D86D040000F73F000000000000000000"
+    },
+    {
+      "seq": 4460,
+      "ms": 330454,
+      "source": "UNO_RX",
+      "line": "TB 133 1 0000000000000000000000000000000000"
+    },
+    {
+      "seq": 4461,
+      "ms": 330463,
+      "source": "UNO_RX",
+      "line": "TB 133 2 9F079F07F6FFF6FF02000F000000F6FF"
+    },
+    {
+      "seq": 4462,
+      "ms": 330469,
+      "source": "UNO_RX",
+      "line": "DONE 133 TELEMETRY"
+    },
+    {
+      "seq": 4463,
+      "ms": 330491,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3627"
+    },
+    {
+      "seq": 4464,
+      "ms": 330570,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3628"
+    },
+    {
+      "seq": 4465,
+      "ms": 330649,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3629"
+    },
+    {
+      "seq": 4466,
+      "ms": 330730,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3630"
+    },
+    {
+      "seq": 4467,
+      "ms": 330811,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3631"
+    },
+    {
+      "seq": 4468,
+      "ms": 330896,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3632"
+    },
+    {
+      "seq": 4469,
+      "ms": 330971,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3633"
+    },
+    {
+      "seq": 4470,
+      "ms": 331073,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3634"
+    },
+    {
+      "seq": 4471,
+      "ms": 331130,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3635"
+    },
+    {
+      "seq": 4472,
+      "ms": 331217,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3636"
+    },
+    {
+      "seq": 4473,
+      "ms": 331290,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3637"
+    },
+    {
+      "seq": 4474,
+      "ms": 331371,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3638"
+    },
+    {
+      "seq": 4475,
+      "ms": 331436,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4476,
+      "ms": 331451,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3639"
+    },
+    {
+      "seq": 4477,
+      "ms": 331530,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3640"
+    },
+    {
+      "seq": 4478,
+      "ms": 331611,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3641"
+    },
+    {
+      "seq": 4479,
+      "ms": 331690,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3642"
+    },
+    {
+      "seq": 4480,
+      "ms": 331771,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3643"
+    },
+    {
+      "seq": 4481,
+      "ms": 331852,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3644"
+    },
+    {
+      "seq": 4482,
+      "ms": 331929,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3645"
+    },
+    {
+      "seq": 4483,
+      "ms": 332010,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3646"
+    },
+    {
+      "seq": 4484,
+      "ms": 332091,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3647"
+    },
+    {
+      "seq": 4485,
+      "ms": 332171,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3648"
+    },
+    {
+      "seq": 4486,
+      "ms": 332250,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3649"
+    },
+    {
+      "seq": 4487,
+      "ms": 332330,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3650"
+    },
+    {
+      "seq": 4488,
+      "ms": 332411,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3651"
+    },
+    {
+      "seq": 4489,
+      "ms": 332427,
+      "source": "UART_WINDOW_TX",
+      "line": "R 3651 C 134 GET_TELEMETRY*22"
+    },
+    {
+      "seq": 4490,
+      "ms": 332427,
+      "source": "UNO_TX",
+      "line": "C 134 GET_TELEMETRY*30"
+    },
+    {
+      "seq": 4491,
+      "ms": 332436,
+      "source": "UNO_RX",
+      "line": "AK 134"
+    },
+    {
+      "seq": 4492,
+      "ms": 332442,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4493,
+      "ms": 332450,
+      "source": "UNO_RX",
+      "line": "TB 134 0 01AC75040000F73F000000000000000000"
+    },
+    {
+      "seq": 4494,
+      "ms": 332459,
+      "source": "UNO_RX",
+      "line": "TB 134 1 0000000000000000000000000000000000"
+    },
+    {
+      "seq": 4495,
+      "ms": 332486,
+      "source": "UNO_RX",
+      "line": "TB 134 2 A507A5076602660200000F000000F6FF"
+    },
+    {
+      "seq": 4496,
+      "ms": 332494,
+      "source": "UNO_RX",
+      "line": "DONE 134 TELEMETRY"
+    },
+    {
+      "seq": 4497,
+      "ms": 332495,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3652"
+    },
+    {
+      "seq": 4498,
+      "ms": 332573,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3653"
+    },
+    {
+      "seq": 4499,
+      "ms": 332654,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3654"
+    },
+    {
+      "seq": 4500,
+      "ms": 332733,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3655"
+    },
+    {
+      "seq": 4501,
+      "ms": 332814,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3656"
+    },
+    {
+      "seq": 4502,
+      "ms": 332895,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3657"
+    },
+    {
+      "seq": 4503,
+      "ms": 332974,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3658"
+    },
+    {
+      "seq": 4504,
+      "ms": 333054,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3659"
+    },
+    {
+      "seq": 4505,
+      "ms": 333133,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3660"
+    },
+    {
+      "seq": 4506,
+      "ms": 333213,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3661"
+    },
+    {
+      "seq": 4507,
+      "ms": 333294,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3662"
+    },
+    {
+      "seq": 4508,
+      "ms": 333373,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3663"
+    },
+    {
+      "seq": 4509,
+      "ms": 333440,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4510,
+      "ms": 333453,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3664"
+    },
+    {
+      "seq": 4511,
+      "ms": 333533,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3665"
+    },
+    {
+      "seq": 4512,
+      "ms": 333614,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3666"
+    },
+    {
+      "seq": 4513,
+      "ms": 333693,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3667"
+    },
+    {
+      "seq": 4514,
+      "ms": 333774,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3668"
+    },
+    {
+      "seq": 4515,
+      "ms": 333853,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3669"
+    },
+    {
+      "seq": 4516,
+      "ms": 333934,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3670"
+    },
+    {
+      "seq": 4517,
+      "ms": 334013,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3671"
+    },
+    {
+      "seq": 4518,
+      "ms": 334093,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3672"
+    },
+    {
+      "seq": 4519,
+      "ms": 334174,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3673"
+    },
+    {
+      "seq": 4520,
+      "ms": 334195,
+      "source": "UART_WINDOW_TX",
+      "line": "R 3673 C 135 SESSION_STOP*80"
+    },
+    {
+      "seq": 4521,
+      "ms": 334195,
+      "source": "UNO_TX",
+      "line": "C 135 SESSION_STOP*51"
+    },
+    {
+      "seq": 4522,
+      "ms": 334204,
+      "source": "UNO_RX",
+      "line": "AK 135"
+    },
+    {
+      "seq": 4523,
+      "ms": 334209,
+      "source": "UNO_RX",
+      "line": "DONE 135 SESSION_STOPPED"
+    },
+    {
+      "seq": 4524,
+      "ms": 334254,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3674"
+    },
+    {
+      "seq": 4525,
+      "ms": 334334,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3675"
+    },
+    {
+      "seq": 4526,
+      "ms": 334413,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3676"
+    },
+    {
+      "seq": 4527,
+      "ms": 334428,
+      "source": "UART_WINDOW_TX",
+      "line": "R 3676 C 136 GET_TELEMETRY*B9"
+    },
+    {
+      "seq": 4528,
+      "ms": 334429,
+      "source": "UNO_TX",
+      "line": "C 136 GET_TELEMETRY*5D"
+    },
+    {
+      "seq": 4529,
+      "ms": 334437,
+      "source": "UNO_RX",
+      "line": "AK 136"
+    },
+    {
+      "seq": 4530,
+      "ms": 334444,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4531,
+      "ms": 334460,
+      "source": "UNO_RX",
+      "line": "TB 136 0 01847D040001F73F000000000000000000"
+    },
+    {
+      "seq": 4532,
+      "ms": 334466,
+      "source": "UNO_RX",
+      "line": "TB 136 1 0000000000000000000000000000000000"
+    },
+    {
+      "seq": 4533,
+      "ms": 334481,
+      "source": "UNO_RX",
+      "line": "TB 136 2 A307A307F6FFF6FF00000F000000F6FF"
+    },
+    {
+      "seq": 4534,
+      "ms": 334485,
+      "source": "UNO_RX",
+      "line": "DONE 136 TELEMETRY"
+    },
+    {
+      "seq": 4535,
+      "ms": 334492,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3677"
+    },
+    {
+      "seq": 4536,
+      "ms": 334573,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3678"
+    },
+    {
+      "seq": 4537,
+      "ms": 334654,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3679"
+    },
+    {
+      "seq": 4538,
+      "ms": 334733,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3680"
+    },
+    {
+      "seq": 4539,
+      "ms": 334814,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3681"
+    },
+    {
+      "seq": 4540,
+      "ms": 334893,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3682"
+    },
+    {
+      "seq": 4541,
+      "ms": 334974,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3683"
+    },
+    {
+      "seq": 4542,
+      "ms": 335053,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3684"
+    },
+    {
+      "seq": 4543,
+      "ms": 335133,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3685"
+    },
+    {
+      "seq": 4544,
+      "ms": 335214,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3686"
+    },
+    {
+      "seq": 4545,
+      "ms": 335315,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3687"
+    },
+    {
+      "seq": 4546,
+      "ms": 335373,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3688"
+    },
+    {
+      "seq": 4547,
+      "ms": 335443,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4548,
+      "ms": 335454,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3689"
+    },
+    {
+      "seq": 4549,
+      "ms": 335534,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3690"
+    },
+    {
+      "seq": 4550,
+      "ms": 335613,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3691"
+    },
+    {
+      "seq": 4551,
+      "ms": 335693,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3692"
+    },
+    {
+      "seq": 4552,
+      "ms": 335773,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3693"
+    },
+    {
+      "seq": 4553,
+      "ms": 335853,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3694"
+    },
+    {
+      "seq": 4554,
+      "ms": 335934,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3695"
+    },
+    {
+      "seq": 4555,
+      "ms": 336033,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3696"
+    },
+    {
+      "seq": 4556,
+      "ms": 336093,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3697"
+    },
+    {
+      "seq": 4557,
+      "ms": 336174,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3698"
+    },
+    {
+      "seq": 4558,
+      "ms": 336253,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3699"
+    },
+    {
+      "seq": 4559,
+      "ms": 336334,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3700"
+    },
+    {
+      "seq": 4560,
+      "ms": 336413,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3701"
+    },
+    {
+      "seq": 4561,
+      "ms": 336428,
+      "source": "UART_WINDOW_TX",
+      "line": "R 3701 C 137 GET_TELEMETRY*5E"
+    },
+    {
+      "seq": 4562,
+      "ms": 336429,
+      "source": "UNO_TX",
+      "line": "C 137 GET_TELEMETRY*E8"
+    },
+    {
+      "seq": 4563,
+      "ms": 336437,
+      "source": "UNO_RX",
+      "line": "AK 137"
+    },
+    {
+      "seq": 4564,
+      "ms": 336444,
+      "source": "UNO_RX",
+      "line": "EVENT DIAG M 534 534 0 0 0 0"
+    },
+    {
+      "seq": 4565,
+      "ms": 336451,
+      "source": "UNO_RX",
+      "line": "TB 137 0 014C85040001F73F000000000000000000"
+    },
+    {
+      "seq": 4566,
+      "ms": 336460,
+      "source": "UNO_RX",
+      "line": "TB 137 1 0000000000000000000000000000000000"
+    },
+    {
+      "seq": 4567,
+      "ms": 336467,
+      "source": "UNO_RX",
+      "line": "TB 137 2 A007A0076602660200000F000000F6FF"
+    },
+    {
+      "seq": 4568,
+      "ms": 336473,
+      "source": "UNO_RX",
+      "line": "DONE 137 TELEMETRY"
+    },
+    {
+      "seq": 4569,
+      "ms": 336494,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3702"
+    },
+    {
+      "seq": 4570,
+      "ms": 336574,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3703"
+    },
+    {
+      "seq": 4571,
+      "ms": 336653,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3704"
+    },
+    {
+      "seq": 4572,
+      "ms": 336749,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3705"
+    },
+    {
+      "seq": 4573,
+      "ms": 336814,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3706"
+    },
+    {
+      "seq": 4574,
+      "ms": 336894,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3707"
+    },
+    {
+      "seq": 4575,
+      "ms": 336973,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3708"
+    },
+    {
+      "seq": 4576,
+      "ms": 337052,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3709"
+    },
+    {
+      "seq": 4577,
+      "ms": 337133,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3710"
+    },
+    {
+      "seq": 4578,
+      "ms": 337214,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3711"
+    },
+    {
+      "seq": 4579,
+      "ms": 337294,
+      "source": "UART_AVAILABLE",
+      "line": "RX 3712"
+    }
+  ]
+}
