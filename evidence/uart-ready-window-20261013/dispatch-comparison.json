@@ -1,0 +1,260 @@
+{
+  "modeTriggerMs": 130529,
+  "telemetryGrantToTxMs": {
+    "median": 5,
+    "p95": 29,
+    "max": 29,
+    "min": 3,
+    "n": 15
+  },
+  "telemetryGrantToAckMs": {
+    "median": 14,
+    "p95": 38,
+    "max": 38,
+    "min": 12,
+    "n": 15
+  },
+  "telemetryGrantToDoneMs": {
+    "median": 61,
+    "p95": 92,
+    "max": 92,
+    "min": 43,
+    "n": 15
+  },
+  "transactions": [
+    {
+      "id": 32,
+      "window": 1130,
+      "command": "SESSION_STOP",
+      "txMs": 130692,
+      "grantMs": 130687,
+      "grantToTxMs": 5,
+      "grantToAckMs": null,
+      "grantToDoneMs": null,
+      "txToAckMs": null,
+      "txToDoneMs": null
+    },
+    {
+      "id": 33,
+      "window": 1131,
+      "command": "GET_CONFIG",
+      "txMs": 130723,
+      "grantMs": 130720,
+      "grantToTxMs": 3,
+      "grantToAckMs": 12,
+      "grantToDoneMs": 32,
+      "txToAckMs": 9,
+      "txToDoneMs": 29
+    },
+    {
+      "id": 34,
+      "window": 1150,
+      "command": "GET_TELEMETRY",
+      "txMs": 132238,
+      "grantMs": 132233,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 43,
+      "txToAckMs": 9,
+      "txToDoneMs": 38
+    },
+    {
+      "id": 35,
+      "window": 1175,
+      "command": "GET_TELEMETRY",
+      "txMs": 134245,
+      "grantMs": 134240,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 62,
+      "txToAckMs": 9,
+      "txToDoneMs": 57
+    },
+    {
+      "id": 36,
+      "window": 1200,
+      "command": "GET_TELEMETRY",
+      "txMs": 136238,
+      "grantMs": 136234,
+      "grantToTxMs": 4,
+      "grantToAckMs": 13,
+      "grantToDoneMs": 67,
+      "txToAckMs": 9,
+      "txToDoneMs": 63
+    },
+    {
+      "id": 37,
+      "window": 1225,
+      "command": "GET_TELEMETRY",
+      "txMs": 138237,
+      "grantMs": 138234,
+      "grantToTxMs": 3,
+      "grantToAckMs": 12,
+      "grantToDoneMs": 49,
+      "txToAckMs": 9,
+      "txToDoneMs": 46
+    },
+    {
+      "id": 38,
+      "window": 1250,
+      "command": "GET_TELEMETRY",
+      "txMs": 140237,
+      "grantMs": 140232,
+      "grantToTxMs": 5,
+      "grantToAckMs": 15,
+      "grantToDoneMs": 62,
+      "txToAckMs": 10,
+      "txToDoneMs": 57
+    },
+    {
+      "id": 39,
+      "window": 1275,
+      "command": "GET_TELEMETRY",
+      "txMs": 142237,
+      "grantMs": 142234,
+      "grantToTxMs": 3,
+      "grantToAckMs": 12,
+      "grantToDoneMs": 71,
+      "txToAckMs": 9,
+      "txToDoneMs": 68
+    },
+    {
+      "id": 40,
+      "window": 1300,
+      "command": "GET_TELEMETRY",
+      "txMs": 144263,
+      "grantMs": 144234,
+      "grantToTxMs": 29,
+      "grantToAckMs": 38,
+      "grantToDoneMs": 92,
+      "txToAckMs": 9,
+      "txToDoneMs": 63
+    },
+    {
+      "id": 41,
+      "window": 1325,
+      "command": "GET_TELEMETRY",
+      "txMs": 146279,
+      "grantMs": 146274,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 50,
+      "txToAckMs": 9,
+      "txToDoneMs": 45
+    },
+    {
+      "id": 42,
+      "window": 1350,
+      "command": "GET_TELEMETRY",
+      "txMs": 148279,
+      "grantMs": 148274,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 59,
+      "txToAckMs": 9,
+      "txToDoneMs": 54
+    },
+    {
+      "id": 43,
+      "window": 1375,
+      "command": "GET_TELEMETRY",
+      "txMs": 150278,
+      "grantMs": 150273,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 61,
+      "txToAckMs": 9,
+      "txToDoneMs": 56
+    },
+    {
+      "id": 44,
+      "window": 1400,
+      "command": "GET_TELEMETRY",
+      "txMs": 152278,
+      "grantMs": 152273,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 50,
+      "txToAckMs": 9,
+      "txToDoneMs": 45
+    },
+    {
+      "id": 45,
+      "window": 1425,
+      "command": "GET_TELEMETRY",
+      "txMs": 154277,
+      "grantMs": 154272,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 68,
+      "txToAckMs": 9,
+      "txToDoneMs": 63
+    },
+    {
+      "id": 46,
+      "window": 1450,
+      "command": "GET_TELEMETRY",
+      "txMs": 156279,
+      "grantMs": 156274,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 75,
+      "txToAckMs": 9,
+      "txToDoneMs": 70
+    },
+    {
+      "id": 47,
+      "window": 1475,
+      "command": "GET_TELEMETRY",
+      "txMs": 158279,
+      "grantMs": 158274,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 49,
+      "txToAckMs": 9,
+      "txToDoneMs": 44
+    },
+    {
+      "id": 48,
+      "window": 1500,
+      "command": "GET_TELEMETRY",
+      "txMs": 160278,
+      "grantMs": 160273,
+      "grantToTxMs": 5,
+      "grantToAckMs": 14,
+      "grantToDoneMs": 61,
+      "txToAckMs": 9,
+      "txToDoneMs": 56
+    }
+  ],
+  "modeTriggeredCommands": [
+    {
+      "id": 31,
+      "command": "STOP",
+      "triggerToTxMs": 62,
+      "triggerToAckMs": 67,
+      "triggerToDoneMs": 72
+    },
+    {
+      "id": 32,
+      "command": "SESSION_STOP",
+      "triggerToTxMs": 163,
+      "triggerToAckMs": null,
+      "triggerToDoneMs": null,
+      "triggerToErrorMs": 175
+    },
+    {
+      "id": 33,
+      "command": "GET_CONFIG",
+      "triggerToTxMs": 194,
+      "triggerToAckMs": 203,
+      "triggerToDoneMs": 223
+    }
+  ],
+  "notes": [
+    "MODE is trigger proxy, logged just after these commands were enqueued in the same handler; not per-command enqueue timestamp.",
+    "Grant-to-TX/ACK/DONE still excludes waiting before the selected grant.",
+    "ACK is host-observed acknowledgement, not precise Uno instruction-start or physical-output timing.",
+    "No per-command enqueue timestamp exists in either capture. No exact enqueue-to-DONE distribution can be recovered."
+  ]
+}
