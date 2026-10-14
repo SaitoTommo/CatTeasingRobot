@@ -61,7 +61,7 @@ function syncFrontControls(d){
  $('frontAvoidance').disabled=!available||!!reason||!!frontOperation||!!d.frontCalibration?.pending;
  $('frontAvoidance').setAttribute('aria-pressed',String(enabled===true));
  $('frontAvoidance').textContent=available?`前向避障：${enabled?'开启（点击关闭）':'关闭（点击开启）'}`:'当前固件不支持前向避障开关';
- $('frontAvoidanceStatus').textContent=(available?(enabled?'前向避障开启；需要有效地面校准。':'前向拦截已关闭（含标签／猫接近与试探）；检测结果仍显示。左右超声波、触碰、失速及通信停车保留。'):'等待读取开关状态')+(reason?' '+reason+'。':'');
+ $('frontAvoidanceStatus').textContent=(available?(enabled?'前向避障开启；需要有效地面校准。':'前向拦截已关闭（含标签／猫接近、试探和逃跑转向后的前进）；检测结果仍显示。左右超声波、触碰、失速及通信停车保留。'):'等待读取开关状态')+(reason?' '+reason+'。':'');
  $('calibrateFront').disabled=!!reason||!!frontOperation||!!d.frontCalibration?.pending||!d.cameraOk;
  $('frontOperationStatus').textContent=d.frontCalibration?.pending?(d.frontCalibration.status==='VERIFYING'?'空地参考已采集，正在用第二张新画面确认…':'正在采集新画面的空地参考…'):frontOperation?(frontOperation.kind==='calibrate'?'正在请求采集空地参考，等待板子确认…':'正在切换，等待板子回读…'):reason||frontOperationMessage||'请按下方步骤准备空地参考。';
 }

@@ -101,7 +101,7 @@ bool approachFrontBlocked(){return frontEnabled()&&approachFrontValid()&&String(
 bool approachFrontClear(){return !frontEnabled()||approachFrontValid()&&String(observation["front"]|"INVALID")=="CLEAR";}
 void approachEnded(const char *reason){approachEndReason=reason;logLine("APPROACH_END",approachEndReason+" frame="+String(observation["frameSeq"]|0u));}
 bool closeSide(int i){return sideAt[i]&&!elapsed(sideAt[i],2500)&&side[i]>=0&&side[i]<safe[i];}
-bool escapeFrontClear(){return fresh()&&(observation["frameSeq"]|0u)&&config["frontCalibrated"].as<bool>()&&observation["frontCalibrated"].as<bool>()&&String(observation["front"]|"INVALID")=="CLEAR";}
+bool escapeFrontClear(){return !frontEnabled()||fresh()&&(observation["frameSeq"]|0u)&&config["frontCalibrated"].as<bool>()&&observation["frontCalibrated"].as<bool>()&&String(observation["front"]|"INVALID")=="CLEAR";}
 bool escapeSideFresh(int i){return sideAt[i]&&int32_t(sideAt[i]-escapeObserveAt)>0&&!elapsed(sideAt[i],2500)&&isfinite(side[i])&&side[i]>=0;}
 bool escapeSideOpen(int i){return escapeSideFresh(i)&&side[i]>max(setting("escapeTurnClearanceCm"),safe[i]);}
 bool escapeChecking(){return action=="ESCAPE_SIDE_SETTLE"||action=="ESCAPE_SIDE_CHECK"||action=="ESCAPE_FRONT_SETTLE"||action=="ESCAPE_FRONT_CHECK";}
@@ -347,8 +347,8 @@ bool policyInteractionStopping(){return interactionStopPending&&phase=="INTERACT
 bool policyPreparing(){return phase=="STARTING"||phase=="ENDING"||action=="WAIT_SCAN_CONFIG"||(scanId&&!motorConfirmed);}
 int policyTargetId(){return phase=="PATROL"&&config["route"].size()?config["route"][routeIndex].as<int>():-1;}
 String policyVisionMode(){
-  // Front sensing stays active, but side clearance alone authorizes a turn.
-  if(escapeChecking()||action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE"||action=="WAIT_STOP"&&(afterStop=="ESCAPE_SIDE_SETTLE"||afterStop=="ESCAPE_FRONT_SETTLE"))return "FLOOR";
+  // Escape uses front-floor sensing only while the front-avoidance switch is enabled.
+  if(escapeChecking()||action=="ESCAPE_DIRECTION"||action=="ESCAPE_TURN"||action=="ESCAPE_DRIVE"||action=="ESCAPE_MOVE"||action=="WAIT_STOP"&&(afterStop=="ESCAPE_SIDE_SETTLE"||afterStop=="ESCAPE_FRONT_SETTLE"))return frontEnabled()?"FLOOR":"OFF";
   if(action=="CAT_DRIVE"||action=="PROBE_MOVE")return frontEnabled()?"FLOOR":"OFF";
   if(action=="APPROACH_CAT"||action=="PROBE_DRIVE")return "CAT";
   // During any scan/slow approach/alignment, CAT is only requested while stopped.
@@ -610,6 +610,7 @@ void policyTick(){
   }
   if(action=="ESCAPE_FRONT_CHECK"){
     if(touching())return;
+    if(!frontEnabled()){state("ESCAPE_DRIVE");return;}
     bool newFloor=String(observation["mode"]|"")=="FLOOR"&&
       int32_t((observation["frameSeq"]|0u)-escapeObserveFrame)>0&&
       observation["at"].is<uint32_t>()&&int32_t(observation["at"].as<uint32_t>()-escapeObserveAt)>0;
@@ -702,14 +703,16 @@ void policyTick(){
   }
 
   if(action=="ESCAPE_MOVE"){
-    if(!fresh()||!config["frontCalibrated"].as<bool>()||!observation["frontCalibrated"].as<bool>()){exitInteraction("escape front expired or uncalibrated");return;}
-    String front=observation["front"]|"INVALID";
-    if(front=="BLOCKED"){
-      escapeRemainingCm=max(0.0f,driveCm-travel());
-      if(escapeRemainingCm<=0){awaitStop("POST_ESCAPE");return;}
-      continueEscapeSearch();return;
+    if(frontEnabled()){
+      if(!fresh()||!config["frontCalibrated"].as<bool>()||!observation["frontCalibrated"].as<bool>()){exitInteraction("escape front expired or uncalibrated");return;}
+      String front=observation["front"]|"INVALID";
+      if(front=="BLOCKED"){
+        escapeRemainingCm=max(0.0f,driveCm-travel());
+        if(escapeRemainingCm<=0){awaitStop("POST_ESCAPE");return;}
+        continueEscapeSearch();return;
+      }
+      if(front!="CLEAR")exitInteraction("escape front invalid during drive");
     }
-    if(front!="CLEAR")exitInteraction("escape front invalid during drive");
     return;
   }
   if(action=="CAT_DRIVE"||action=="PROBE_MOVE"){
