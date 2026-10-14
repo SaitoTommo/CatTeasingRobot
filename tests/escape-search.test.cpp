@@ -3,7 +3,7 @@
 #include "policy-core.test.cpp"
 #undef main
 
-void escapeFixture(){fixture();phase="INTERACTION";initiator="CAT_TOUCH";branch=1;turnDeg=180;state("ESCAPE_DIRECTION");}
+void escapeFixture(){fixture();config["frontAvoidanceEnabled"]=true;phase="INTERACTION";initiator="CAT_TOUCH";branch=1;turnDeg=180;state("ESCAPE_DIRECTION");}
 void nextQuarter(){CHECK(action=="WAIT_STOP");escapeSettle("ESCAPE_SIDE_CHECK");escapeSideSample();CHECK(action=="ESCAPE_TURN");CHECK(turnDeg==90);}
 int main(){
  // A cat/block in the old forward direction does not prevent a side-gated turn.
@@ -50,14 +50,24 @@ int main(){
  escapeFixture();startEscapeTurn();finishEscapeTurn();auto target=escapeTargetCm;
  pulsesL=pulsesR=5;observation["front"]="BLOCKED";draws={123};policyTick();CHECK(action=="WAIT_STOP");CHECK(!motorId);CHECK(escapeRemainingCm>17&&escapeRemainingCm<18);
  nextQuarter();finishEscapeTurn();CHECK(escapeTurns==2);CHECK(escapeTargetCm==target);CHECK(driveCm>17&&driveCm<18);CHECK(draws.size()==1);
- // The global front switch cannot disable escape sensing or its stop gate.
- for(int kind=0;kind<3;kind++){
-   escapeFixture();config["frontAvoidanceEnabled"]=false;startEscapeTurn();finishEscapeTurn();CHECK(policyVisionMode()=="FLOOR");
-   if(kind==0)observation["front"]="INVALID";if(kind==1)tick+=1500;if(kind==2)observation["frontCalibrated"]=false;
-   policyTick();CHECK(phase=="ENDING");CHECK(!motorId);
+ // With the front switch off, no FLOOR frame or calibration is needed to start or continue escape.
+ for(int kind=0;kind<6;kind++){
+   escapeFixture();config["frontAvoidanceEnabled"]=false;
+   if(kind==0)observation["front"]="BLOCKED";
+   if(kind==1)observation["front"]="INVALID";
+   if(kind==2)observation["at"]=tick-1500;
+   if(kind==3)config["frontCalibrated"]=false;
+   if(kind==4)observation["frontCalibrated"]=false;
+   if(kind==5)observation["frameSeq"]=0;
+   startEscapeTurn();CHECK(policyVisionMode()=="OFF");
+   md(9,9);escapeSettle("ESCAPE_FRONT_CHECK");policyTick();CHECK(action=="ESCAPE_DRIVE");
+   CHECK(escapeFrontClear());policyTick();CHECK(action=="ESCAPE_MOVE");CHECK(policyVisionMode()=="OFF");
+   auto driveId=motorId;policyTick();CHECK(phase=="INTERACTION");CHECK(action=="ESCAPE_MOVE");CHECK(motorId==driveId);
  }
+ // The disabled front switch still requires side clearance before rotating.
+ escapeFixture();config["frontAvoidanceEnabled"]=false;policyTick();escapeSettle("ESCAPE_SIDE_CHECK");escapeSideSample(15,15);CHECK(phase=="ENDING");CHECK(!motorId);
  // Turn interruption ends this round; it must not silently resume toward an uncertain heading.
- escapeFixture();startEscapeTurn();onTouch(0);stopped();touch[0]=false;policyTick();CHECK(phase=="ENDING");CHECK(!motorId);
+ for(bool enabled:{true,false}){escapeFixture();config["frontAvoidanceEnabled"]=enabled;startEscapeTurn();onTouch(0);stopped();touch[0]=false;policyTick();CHECK(phase=="ENDING");CHECK(!motorId);}
  // Missing continuous frames still time out without sending DRIVE.
  escapeFixture();startEscapeTurn();md(9,9);escapeSettle("ESCAPE_FRONT_CHECK");tick+=3000;policyTick();CHECK(phase=="ENDING");
  // New settings are bounded and saved configurations obtain the missing default by overlay.

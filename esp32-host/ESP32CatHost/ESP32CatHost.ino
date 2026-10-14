@@ -1,4 +1,4 @@
-// Firmware version: ESP32_CAT_HOST_0.51_STRAIGHT_BALANCE_INTERVAL. Reported by /api/state.
+// Firmware version: ESP32_CAT_HOST_0.52_FRONT_AVOIDANCE_SWITCH. Reported by /api/state.
 // Uno pairing: UNO_CAT_V6.15, D13 RX and one-use receive windows.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
@@ -229,7 +229,7 @@ void defaults() {
 #include "camera_settings_runtime.h"
 #include "ground_calibration_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.51_STRAIGHT_BALANCE_INTERVAL";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;RemoteControl::snapshot(d);RouteEditor::snapshot(d);debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.52_FRONT_AVOIDANCE_SWITCH";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;RemoteControl::snapshot(d);RouteEditor::snapshot(d);debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["uartWindow"]["seen"]=rxGrantSeen;d["uartWindow"]["sequence"]=rxGrant;d["uartWindow"]["ageMs"]=rxGrantSeen?millis()-rxGrantAt:UINT32_MAX;d["uartWindow"]["queued"]=outgoing.size();d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
