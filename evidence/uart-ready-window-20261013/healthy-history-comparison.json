@@ -1,0 +1,1966 @@
+{
+  "analysisDate": "2026-10-14",
+  "notes": [
+    "Stationary means compact reported movement flag clear and both commanded/output PWMs zero. It is not physical stop confirmation.",
+    "Missing sequence numbers are capture gaps, not UART packet-loss measurements.",
+    "Runs end on sequence capture gaps, telemetry failure, stationary flag/PWM change, MODE, READY or captured link errors. Other traffic may remain.",
+    "MODE-to-GET_CONFIG is trigger proxy only for ordinary mode handler, not precise per-command enqueue time."
+  ],
+  "results": [
+    {
+      "file": "D:/data/download/esp32-local-history-2026-10-06T08-01-00-423Z.json",
+      "sha256": "3ffc35f052a6f76d9518633b476b0fd712d5ce54080c4346b74f632fde351e7f",
+      "firmware": "ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW",
+      "boots": [
+        {
+          "boot": "26ea80cdcbaa8229",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "eventCount": 712,
+          "missingSequenceCount": 0,
+          "sources": {
+            "WIFI_DISCONNECTED": 1,
+            "INPUT_REJECTED": 141,
+            "TELEMETRY_TIMEOUT": 12,
+            "WIFI_GOT_IP": 1,
+            "SIM_TX": 15,
+            "LOCAL_BOOT": 1,
+            "LOCAL_GAP": 1,
+            "LOCAL_CAMERA_SETTINGS": 1,
+            "DECISION": 9,
+            "FAULT": 9,
+            "MODE": 2,
+            "UNO_TX": 89,
+            "UNO_RX": 410,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 16,
+            "HOST_LED_LOCAL": 2
+          }
+        },
+        {
+          "boot": "a88a9356de045bf1",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "eventCount": 94,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 76,
+            "SIM_TX": 7,
+            "WIFI_GOT_IP": 1,
+            "TELEMETRY_TIMEOUT": 6,
+            "LOCAL_BOOT": 1
+          }
+        },
+        {
+          "boot": "72631a5c24fa493c",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "eventCount": 37,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 7,
+            "SIM_TX": 5,
+            "WIFI_GOT_IP": 1,
+            "DECISION": 1,
+            "FAULT": 1,
+            "MODE": 1,
+            "UNO_TX": 3,
+            "UNO_RX": 11,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 1,
+            "LOCAL_BOOT": 1
+          }
+        },
+        {
+          "boot": "3c523e7283a9dee7",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "eventCount": 75,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 15,
+            "SIM_TX": 6,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 1,
+            "DECISION": 1,
+            "FAULT": 1,
+            "MODE": 1,
+            "UNO_TX": 6,
+            "UNO_RX": 36,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 1
+          }
+        },
+        {
+          "boot": "0c1c49558b5fcfda",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "eventCount": 3313,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 77,
+            "SIM_TX": 16,
+            "WIFI_GOT_IP": 1,
+            "TELEMETRY_TIMEOUT": 21,
+            "LOCAL_BOOT": 1,
+            "DECISION": 202,
+            "FAULT": 18,
+            "MODE": 8,
+            "UNO_TX": 433,
+            "UART_LOOPBACK": 20,
+            "STOP_RETRY": 58,
+            "UNO_RX": 2219,
+            "STOP_UNCONFIRMED": 18,
+            "UNO_PROTOCOL_ERROR": 14,
+            "STOP_CONFIRMED": 47,
+            "UART_BAD_FRAME": 81,
+            "CAT_SEARCH_FAILED": 2,
+            "TAG_SCAN_SAMPLE": 15,
+            "VISION_MODE": 1,
+            "LINK_RECOVERY": 8,
+            "TX_BLOCKED": 9,
+            "CAT_CONFIRMED": 4,
+            "PWM_FLOOR": 12,
+            "CAT_CHECK_SAMPLE": 14,
+            "ROBOT_CAT_MISSING": 4,
+            "ROBOT_ACTION_COMPLETE": 3,
+            "SEARCH_ATTACK": 2,
+            "ESCAPE_DISTANCE": 2
+          }
+        },
+        {
+          "boot": "3c1603d092c49dc8",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "eventCount": 2542,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 25,
+            "SIM_TX": 6,
+            "WIFI_GOT_IP": 1,
+            "TELEMETRY_TIMEOUT": 2,
+            "LOCAL_BOOT": 1,
+            "DECISION": 143,
+            "FAULT": 6,
+            "MODE": 1,
+            "UNO_TX": 340,
+            "UNO_RX": 1933,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 32,
+            "CONFIG": 3,
+            "UART_BAD_FRAME": 2,
+            "TELEMETRY_INCOMPLETE": 1,
+            "TELEMETRY_RETRY": 1,
+            "CAT_CONFIRMED": 3,
+            "PWM_FLOOR": 4,
+            "CAT_CHECK_SAMPLE": 17,
+            "ROBOT_CAT_MISSING": 5,
+            "ROBOT_ACTION_COMPLETE": 5,
+            "INTERACTION_EXIT": 1,
+            "TAG_SCAN_SAMPLE": 3,
+            "MOTION_FAILED": 2
+          }
+        },
+        {
+          "boot": "4459f5864ed3b973",
+          "firmware": "ESP32_CAT_HOST_0.40.1_SIMPLE_CAT_FLOW",
+          "eventCount": 2483,
+          "missingSequenceCount": 3,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 23,
+            "WIFI_GOT_IP": 1,
+            "TELEMETRY_TIMEOUT": 13,
+            "LOCAL_BOOT": 1,
+            "UNO_TX": 289,
+            "STOP_RETRY": 12,
+            "STOP_UNCONFIRMED": 4,
+            "DECISION": 78,
+            "LOCAL_GAP": 1,
+            "UART_BAD_FRAME": 21,
+            "UNO_RX": 1947,
+            "FAULT": 11,
+            "MODE": 4,
+            "INPUT_REJECTED": 31,
+            "STOP_CONFIRMED": 26,
+            "VISION_MODE": 3,
+            "CAT_CHECK_SAMPLE": 2,
+            "CAT_CONFIRMED": 2,
+            "PWM_FLOOR": 1,
+            "MOTION_FAILED": 1,
+            "UNO_PROTOCOL_ERROR": 4,
+            "LINK_RECOVERY": 2,
+            "CAT_SEARCH_FAILED": 1,
+            "TAG_SCAN_SAMPLE": 2
+          }
+        }
+      ],
+      "telemetry": {
+        "sent": 573,
+        "complete": 535,
+        "stationaryComplete": 529,
+        "allCompleteTxToDone": {
+          "n": 535,
+          "min": 37,
+          "median": 41,
+          "p95": 61,
+          "max": 90
+        },
+        "stationaryTxToAck": {
+          "n": 529,
+          "min": 7,
+          "median": 9,
+          "p95": 10,
+          "max": 48
+        },
+        "stationaryTxToDone": {
+          "n": 529,
+          "min": 38,
+          "median": 41,
+          "p95": 61,
+          "max": 90
+        },
+        "stationaryGrantToDone": null
+      },
+      "largestStationaryRuns": [
+        {
+          "boot": "3c1603d092c49dc8",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "n": 88,
+          "firstTxMs": 102522,
+          "lastDoneMs": 213576,
+          "txToAck": {
+            "n": 88,
+            "min": 7,
+            "median": 9,
+            "p95": 10,
+            "max": 26
+          },
+          "txToDone": {
+            "n": 88,
+            "min": 38,
+            "median": 41,
+            "p95": 57,
+            "max": 90
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "0c1c49558b5fcfda",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "n": 67,
+          "firstTxMs": 311977,
+          "lastDoneMs": 363793,
+          "txToAck": {
+            "n": 67,
+            "min": 8,
+            "median": 9,
+            "p95": 10,
+            "max": 15
+          },
+          "txToDone": {
+            "n": 67,
+            "min": 39,
+            "median": 41,
+            "p95": 47,
+            "max": 85
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "3c1603d092c49dc8",
+          "firmware": "ESP32_CAT_HOST_0.40_SENSOR_CAMERA_RANGES",
+          "n": 67,
+          "firstTxMs": 220661,
+          "lastDoneMs": 275345,
+          "txToAck": {
+            "n": 67,
+            "min": 8,
+            "median": 9,
+            "p95": 10,
+            "max": 10
+          },
+          "txToDone": {
+            "n": 67,
+            "min": 39,
+            "median": 40,
+            "p95": 57,
+            "max": 85
+          },
+          "grantToDone": null
+        }
+      ],
+      "modeConfigResponses": [
+        {
+          "boot": "26ea80cdcbaa8229",
+          "modeMs": 132262,
+          "id": 29,
+          "triggerToTxMs": 400,
+          "triggerToAckMs": 407,
+          "triggerToDoneMs": 425,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 29"
+        },
+        {
+          "boot": "26ea80cdcbaa8229",
+          "modeMs": 133010,
+          "id": 36,
+          "triggerToTxMs": 94,
+          "triggerToAckMs": 101,
+          "triggerToDoneMs": 121,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 36"
+        },
+        {
+          "boot": "72631a5c24fa493c",
+          "modeMs": 3431,
+          "id": 8,
+          "triggerToTxMs": 399,
+          "triggerToAckMs": 406,
+          "triggerToDoneMs": 424,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 8"
+        },
+        {
+          "boot": "3c523e7283a9dee7",
+          "modeMs": 7672,
+          "id": 9,
+          "triggerToTxMs": 397,
+          "triggerToAckMs": 404,
+          "triggerToDoneMs": 422,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 9"
+        },
+        {
+          "boot": "0c1c49558b5fcfda",
+          "modeMs": 310277,
+          "id": 382,
+          "triggerToTxMs": 95,
+          "triggerToAckMs": 103,
+          "triggerToDoneMs": 123,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 382"
+        },
+        {
+          "boot": "3c1603d092c49dc8",
+          "modeMs": 12759,
+          "id": 9,
+          "triggerToTxMs": 395,
+          "triggerToAckMs": 402,
+          "triggerToDoneMs": 422,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 9"
+        },
+        {
+          "boot": "4459f5864ed3b973",
+          "modeMs": 59227,
+          "id": 41,
+          "triggerToTxMs": 102,
+          "triggerToAckMs": 109,
+          "triggerToDoneMs": 129,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 41"
+        },
+        {
+          "boot": "4459f5864ed3b973",
+          "modeMs": 350074,
+          "id": 274,
+          "triggerToTxMs": 94,
+          "triggerToAckMs": null,
+          "triggerToDoneMs": null,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": null
+        }
+      ]
+    },
+    {
+      "file": "D:/data/download/esp32-local-history-2026-10-07T13-39-09-867Z.json",
+      "sha256": "eefdbdd7df9ceac5d25ec506819e4eae19559c16c77f383db98ef023a7308dbd",
+      "firmware": "ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY",
+      "boots": [
+        {
+          "boot": "445b80e3e996d336",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 1843,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 28,
+            "WIFI_DISCONNECTED": 48,
+            "TELEMETRY_TIMEOUT": 27,
+            "WIFI_RECONNECT": 2,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "LOCAL_CAMERA_SETTINGS": 1,
+            "DECISION": 32,
+            "FAULT": 22,
+            "MODE": 3,
+            "UNO_TX": 212,
+            "STOP_RETRY": 32,
+            "STOP_UNCONFIRMED": 10,
+            "UNO_RX": 1379,
+            "INPUT_REJECTED": 11,
+            "STOP_CONFIRMED": 19,
+            "CONFIG": 1,
+            "CALIBRATION": 3,
+            "UART_BAD_FRAME": 1,
+            "DEBUG_ERROR": 7
+          }
+        },
+        {
+          "boot": "787b4ecc8c1a1222",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 10310,
+          "missingSequenceCount": 72,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 20,
+            "SIM_TX": 6,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 9,
+            "DECISION": 343,
+            "FAULT": 27,
+            "MODE": 1,
+            "UNO_TX": 1180,
+            "UNO_RX": 8143,
+            "UNO_PROTOCOL_ERROR": 2,
+            "STOP_RETRY": 2,
+            "STOP_CONFIRMED": 88,
+            "TAG_SCAN_SAMPLE": 284,
+            "UART_BAD_FRAME": 13,
+            "CONFIG": 5,
+            "PWM_FLOOR": 13,
+            "TAG_TRACK_LOST": 12,
+            "TAG_RECHECK_SAMPLE": 11,
+            "TAG_RECOVERY": 9,
+            "TAG_REACHED": 5,
+            "CAT_SCAN_SAMPLE": 90,
+            "CAT_CHECK_SAMPLE": 17,
+            "CAT_CONFIRMED": 6,
+            "CAT_RECOVERY": 5,
+            "TELEMETRY_INCOMPLETE": 1,
+            "TELEMETRY_RETRY": 1,
+            "CRC_ERROR": 2,
+            "CALIBRATION": 3,
+            "ROBOT_ACTION_COMPLETE": 4,
+            "LOCAL_GAP": 2,
+            "INTERACTION_EXIT": 1
+          }
+        },
+        {
+          "boot": "77215860126b7ac6",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 5375,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 25,
+            "WIFI_GOT_IP": 1,
+            "DECISION": 144,
+            "LOCAL_BOOT": 1,
+            "FAULT": 21,
+            "MODE": 15,
+            "UNO_TX": 608,
+            "STOP_RETRY": 51,
+            "STOP_UNCONFIRMED": 17,
+            "INPUT_ERROR": 1,
+            "TELEMETRY_TIMEOUT": 20,
+            "UNO_RX": 4287,
+            "INPUT_REJECTED": 22,
+            "STOP_CONFIRMED": 28,
+            "TAG_SCAN_SAMPLE": 62,
+            "CONFIG": 2,
+            "PWM_FLOOR": 7,
+            "TAG_TRACK_LOST": 10,
+            "TAG_RECOVERY": 8,
+            "LINK_RECOVERY": 8,
+            "TX_BLOCKED": 14,
+            "TAG_RECHECK_SAMPLE": 10,
+            "UART_BAD_FRAME": 5,
+            "TAG_REACHED": 4,
+            "MOTION_FAILED": 1
+          }
+        },
+        {
+          "boot": "b271bcb082f2cb7d",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 176,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 5,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "DECISION": 2,
+            "FAULT": 1,
+            "MODE": 1,
+            "UNO_TX": 25,
+            "STOP_RETRY": 3,
+            "STOP_UNCONFIRMED": 1,
+            "TELEMETRY_TIMEOUT": 10,
+            "UART_BAD_FRAME": 2,
+            "UNO_RX": 119,
+            "TELEMETRY_INCOMPLETE": 1,
+            "TELEMETRY_RETRY": 1
+          }
+        },
+        {
+          "boot": "6a534b00f91423a3",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 45,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 5,
+            "SIM_TX": 5,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "DECISION": 1,
+            "FAULT": 1,
+            "MODE": 1,
+            "UNO_RX": 20,
+            "UNO_TX": 4,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 1
+          }
+        },
+        {
+          "boot": "dacf4d06cc305899",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 9,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 3,
+            "SIM_TX": 1,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1
+          }
+        },
+        {
+          "boot": "8987e7387bb12e20",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 66,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 7,
+            "SIM_TX": 5,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "DECISION": 1,
+            "FAULT": 1,
+            "MODE": 1,
+            "UNO_TX": 6,
+            "UNO_RX": 37,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 1
+          }
+        },
+        {
+          "boot": "16ed9ddc5d19bc8a",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 2820,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 14,
+            "SIM_TX": 6,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 4,
+            "DECISION": 90,
+            "FAULT": 8,
+            "MODE": 2,
+            "UNO_TX": 324,
+            "UNO_RX": 2221,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 26,
+            "TAG_SCAN_SAMPLE": 75,
+            "CONFIG": 1,
+            "CAT_SCAN_SAMPLE": 6,
+            "CAT_CHECK_SAMPLE": 3,
+            "CAT_RECOVERY": 1,
+            "PWM_FLOOR": 7,
+            "TAG_TRACK_LOST": 9,
+            "TAG_RECHECK_SAMPLE": 5,
+            "TAG_RECOVERY": 4,
+            "TAG_REACHED": 2,
+            "MOTION_FAILED": 1,
+            "UART_BAD_FRAME": 2,
+            "VISION_MODE": 2
+          }
+        },
+        {
+          "boot": "9cc3540ebb74c0a6",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 3109,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 19,
+            "SIM_TX": 6,
+            "WIFI_GOT_IP": 1,
+            "TELEMETRY_TIMEOUT": 1,
+            "LOCAL_BOOT": 1,
+            "DECISION": 18,
+            "FAULT": 2,
+            "MODE": 1,
+            "UNO_TX": 319,
+            "UNO_RX": 2708,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 5,
+            "UART_BAD_FRAME": 1,
+            "TAG_SCAN_SAMPLE": 14,
+            "PWM_FLOOR": 2,
+            "TAG_TRACK_LOST": 3,
+            "TAG_RECOVERY": 1,
+            "TAG_REACHED": 1,
+            "TAG_RECHECK_SAMPLE": 1
+          }
+        },
+        {
+          "boot": "d344f1adf9c01de7",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "eventCount": 796,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 327,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 327,
+            "INPUT_REJECTED": 119,
+            "OVERFLOW": 18
+          }
+        },
+        {
+          "boot": "602826922cf25db8",
+          "firmware": "ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY",
+          "eventCount": 8,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 2,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 1
+          }
+        },
+        {
+          "boot": "5437f057450724f3",
+          "firmware": "ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY",
+          "eventCount": 8970,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 15,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 26,
+            "DECISION": 349,
+            "FAULT": 27,
+            "MODE": 5,
+            "UNO_TX": 1018,
+            "STOP_RETRY": 42,
+            "STOP_UNCONFIRMED": 14,
+            "UART_BAD_FRAME": 21,
+            "UNO_RX": 6852,
+            "INPUT_REJECTED": 10,
+            "STOP_CONFIRMED": 79,
+            "TELEMETRY_INCOMPLETE": 3,
+            "TELEMETRY_RETRY": 3,
+            "CALIBRATION": 3,
+            "CONFIG": 6,
+            "TAG_SCAN_SAMPLE": 337,
+            "APPROACH_END": 24,
+            "TAG_REACHED": 24,
+            "PWM_FLOOR": 23,
+            "TAG_TRACK_LOST": 21,
+            "TAG_RECOVERY": 10,
+            "TAG_RECHECK_SAMPLE": 21,
+            "CRC_ERROR": 1,
+            "LINK_RECOVERY": 8,
+            "TX_BLOCKED": 5,
+            "MOTION_FAILED": 2,
+            "CAT_SCAN_SAMPLE": 16
+          }
+        },
+        {
+          "boot": "d970c7ed18ba9833",
+          "firmware": "ESP32_CAT_HOST_0.42_FRONT_APPROACH_PRIORITY",
+          "eventCount": 731,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 5,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "DECISION": 59,
+            "FAULT": 7,
+            "MODE": 3,
+            "UNO_TX": 107,
+            "STOP_RETRY": 12,
+            "STOP_UNCONFIRMED": 4,
+            "UNO_RX": 476,
+            "UART_BAD_FRAME": 1,
+            "TELEMETRY_TIMEOUT": 1,
+            "STOP_CONFIRMED": 13,
+            "CAT_SCAN_SAMPLE": 10,
+            "CAT_CHECK_SAMPLE": 10,
+            "CAT_CONFIRMED": 4,
+            "CAT_RECOVERY": 1,
+            "APPROACH_END": 1,
+            "ROBOT_ACTION_COMPLETE": 3,
+            "APPROACH_STOP_CONFIRMED": 1,
+            "ROBOT_CAT_MISSING": 1,
+            "SEARCH_ATTACK": 1,
+            "PWM_FLOOR": 1,
+            "TAG_SCAN_SAMPLE": 5
+          }
+        }
+      ],
+      "telemetry": {
+        "sent": 2339,
+        "complete": 2241,
+        "stationaryComplete": 2199,
+        "allCompleteTxToDone": {
+          "n": 2241,
+          "min": 37,
+          "median": 41,
+          "p95": 64,
+          "max": 108
+        },
+        "stationaryTxToAck": {
+          "n": 2198,
+          "min": 7,
+          "median": 9,
+          "p95": 10,
+          "max": 40
+        },
+        "stationaryTxToDone": {
+          "n": 2199,
+          "min": 37,
+          "median": 41,
+          "p95": 64,
+          "max": 108
+        },
+        "stationaryGrantToDone": null
+      },
+      "largestStationaryRuns": [
+        {
+          "boot": "77215860126b7ac6",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "n": 343,
+          "firstTxMs": 156656,
+          "lastDoneMs": 816512,
+          "txToAck": {
+            "n": 343,
+            "min": 7,
+            "median": 9,
+            "p95": 10,
+            "max": 15
+          },
+          "txToDone": {
+            "n": 343,
+            "min": 38,
+            "median": 41,
+            "p95": 64,
+            "max": 71
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "9cc3540ebb74c0a6",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "n": 279,
+          "firstTxMs": 37095,
+          "lastDoneMs": 572419,
+          "txToAck": {
+            "n": 279,
+            "min": 7,
+            "median": 9,
+            "p95": 9,
+            "max": 40
+          },
+          "txToDone": {
+            "n": 279,
+            "min": 38,
+            "median": 40,
+            "p95": 61,
+            "max": 74
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "787b4ecc8c1a1222",
+          "firmware": "ESP32_CAT_HOST_0.42_SHARED_TARGET_RECOVERY",
+          "n": 132,
+          "firstTxMs": 1046281,
+          "lastDoneMs": 1308451,
+          "txToAck": {
+            "n": 132,
+            "min": 9,
+            "median": 9,
+            "p95": 10,
+            "max": 16
+          },
+          "txToDone": {
+            "n": 132,
+            "min": 40,
+            "median": 41,
+            "p95": 66,
+            "max": 72
+          },
+          "grantToDone": null
+        }
+      ],
+      "modeConfigResponses": [
+        {
+          "boot": "445b80e3e996d336",
+          "modeMs": 137412,
+          "id": 50,
+          "triggerToTxMs": 95,
+          "triggerToAckMs": 109,
+          "triggerToDoneMs": 123,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 50"
+        },
+        {
+          "boot": "787b4ecc8c1a1222",
+          "modeMs": 10194,
+          "id": 9,
+          "triggerToTxMs": 396,
+          "triggerToAckMs": 404,
+          "triggerToDoneMs": 422,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 9"
+        },
+        {
+          "boot": "77215860126b7ac6",
+          "modeMs": 35468,
+          "id": 34,
+          "triggerToTxMs": 101,
+          "triggerToAckMs": 108,
+          "triggerToDoneMs": 127,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 34"
+        },
+        {
+          "boot": "77215860126b7ac6",
+          "modeMs": 109437,
+          "id": 124,
+          "triggerToTxMs": 116,
+          "triggerToAckMs": 124,
+          "triggerToDoneMs": 144,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 124"
+        },
+        {
+          "boot": "6a534b00f91423a3",
+          "modeMs": 2943,
+          "id": 8,
+          "triggerToTxMs": 396,
+          "triggerToAckMs": 405,
+          "triggerToDoneMs": 423,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 8"
+        },
+        {
+          "boot": "8987e7387bb12e20",
+          "modeMs": 3438,
+          "id": 8,
+          "triggerToTxMs": 397,
+          "triggerToAckMs": 405,
+          "triggerToDoneMs": 423,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 8"
+        },
+        {
+          "boot": "16ed9ddc5d19bc8a",
+          "modeMs": 8653,
+          "id": 9,
+          "triggerToTxMs": 398,
+          "triggerToAckMs": 405,
+          "triggerToDoneMs": 423,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 9"
+        },
+        {
+          "boot": "16ed9ddc5d19bc8a",
+          "modeMs": 209864,
+          "id": 259,
+          "triggerToTxMs": 93,
+          "triggerToAckMs": 101,
+          "triggerToDoneMs": 121,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 259"
+        },
+        {
+          "boot": "9cc3540ebb74c0a6",
+          "modeMs": 9432,
+          "id": 9,
+          "triggerToTxMs": 396,
+          "triggerToAckMs": null,
+          "triggerToDoneMs": 422,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 9"
+        },
+        {
+          "boot": "5437f057450724f3",
+          "modeMs": 46479,
+          "id": 31,
+          "triggerToTxMs": 101,
+          "triggerToAckMs": 109,
+          "triggerToDoneMs": 128,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 31"
+        }
+      ]
+    },
+    {
+      "file": "D:/data/download/esp32-local-history-2026-10-12T21-25-49-766Z.json",
+      "sha256": "405ea7a7f0e23fe6f2199df1fa5a78032c0ee6fe09b648dd0b57d640b10f016d",
+      "firmware": "ESP32_CAT_HOST_0.46_CONTROL_LAYOUT",
+      "boots": [
+        {
+          "boot": "d92993d07b734761",
+          "firmware": "ESP32_CAT_HOST_0.43_REMOTE_RESUME",
+          "eventCount": 7293,
+          "missingSequenceCount": 823,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 52,
+            "SIM_TX": 16,
+            "WIFI_GOT_IP": 1,
+            "TELEMETRY_TIMEOUT": 30,
+            "LOCAL_BOOT": 1,
+            "LOCAL_CAMERA_SETTINGS": 1,
+            "DECISION": 26,
+            "FAULT": 23,
+            "REMOTE_STOP": 12,
+            "MODE": 5,
+            "UNO_TX": 120,
+            "UNO_RX": 4311,
+            "STOP_RETRY": 9,
+            "STOP_UNCONFIRMED": 3,
+            "TX_BLOCKED": 4,
+            "UART_BAD_FRAME": 2633,
+            "STOP_CONFIRMED": 15,
+            "LOCAL_GAP": 26,
+            "CRC_ERROR": 2
+          }
+        },
+        {
+          "boot": "5ec488378d7b72d5",
+          "firmware": "ESP32_CAT_HOST_0.43_REMOTE_RESUME",
+          "eventCount": 65314,
+          "missingSequenceCount": 7737,
+          "sources": {
+            "INPUT_REJECTED": 835,
+            "SIM_TX": 5,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "LOCAL_GAP": 256,
+            "DECISION": 4,
+            "FAULT": 4,
+            "REMOTE_STOP": 2,
+            "MODE": 1,
+            "UART_BAD_FRAME": 26767,
+            "UNO_RX": 37085,
+            "UNO_TX": 277,
+            "UNO_PROTOCOL_ERROR": 10,
+            "CRC_ERROR": 63,
+            "STOP_CONFIRMED": 1,
+            "TELEMETRY_INCOMPLETE": 1,
+            "TELEMETRY_RETRY": 1
+          }
+        },
+        {
+          "boot": "a05962c32eae743c",
+          "firmware": "ESP32_CAT_HOST_0.44_ROUTE_EDITOR",
+          "eventCount": 2422,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 564,
+            "SIM_TX": 51,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 46,
+            "DECISION": 4,
+            "FAULT": 4,
+            "REMOTE_STOP": 2,
+            "MODE": 1,
+            "UNO_TX": 214,
+            "UNO_RX": 1515,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 8,
+            "REMOTE_REJECTED": 4,
+            "CONFIG_ERROR": 2
+          }
+        },
+        {
+          "boot": "fec2dc35f3d75b47",
+          "firmware": "ESP32_CAT_HOST_0.44_ROUTE_EDITOR",
+          "eventCount": 838,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 714,
+            "SIM_TX": 60,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 59
+          }
+        },
+        {
+          "boot": "c873ab5ac2e9799c",
+          "firmware": "ESP32_CAT_HOST_0.45_ROUTE_STORAGE",
+          "eventCount": 11,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 4,
+            "SIM_TX": 1,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "ROUTE": 1
+          }
+        },
+        {
+          "boot": "6b1c8c15c012e4df",
+          "firmware": "ESP32_CAT_HOST_0.45_ROUTE_STORAGE",
+          "eventCount": 3605,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 1175,
+            "SIM_TX": 189,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 189,
+            "DECISION": 14,
+            "FAULT": 7,
+            "REMOTE_STOP": 4,
+            "MODE": 1,
+            "UNO_TX": 219,
+            "STOP_RETRY": 3,
+            "UNO_RX": 1778,
+            "STOP_UNCONFIRMED": 1,
+            "STOP_CONFIRMED": 8,
+            "REMOTE_REJECTED": 4,
+            "TAG_SCAN_SAMPLE": 7,
+            "CRC_ERROR": 1
+          }
+        },
+        {
+          "boot": "deb76f003ba1177d",
+          "firmware": "ESP32_CAT_HOST_0.45_ROUTE_STORAGE",
+          "eventCount": 344,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 290,
+            "SIM_TX": 25,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 24
+          }
+        },
+        {
+          "boot": "6f52d2cc51f8722d",
+          "firmware": "ESP32_CAT_HOST_0.46_CONTROL_LAYOUT",
+          "eventCount": 4417,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 120,
+            "SIM_TX": 14,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 9,
+            "DECISION": 103,
+            "FAULT": 11,
+            "REMOTE_STOP": 4,
+            "MODE": 1,
+            "UNO_TX": 441,
+            "UNO_RX": 3353,
+            "UNO_PROTOCOL_ERROR": 1,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 25,
+            "TAG_SCAN_SAMPLE": 298,
+            "UART_BAD_FRAME": 2,
+            "APPROACH_END": 9,
+            "TAG_REACHED": 9,
+            "VISION_MODE": 1,
+            "CONFIG_ERROR": 1,
+            "PWM_FLOOR": 2,
+            "TAG_TRACK_LOST": 2,
+            "TAG_RECHECK_SAMPLE": 3,
+            "TAG_RECOVERY": 2
+          }
+        }
+      ],
+      "telemetry": {
+        "sent": 916,
+        "complete": 863,
+        "stationaryComplete": 859,
+        "allCompleteTxToDone": {
+          "n": 863,
+          "min": 38,
+          "median": 43,
+          "p95": 78,
+          "max": 102
+        },
+        "stationaryTxToAck": {
+          "n": 859,
+          "min": 7,
+          "median": 9,
+          "p95": 16,
+          "max": 40
+        },
+        "stationaryTxToDone": {
+          "n": 859,
+          "min": 38,
+          "median": 43,
+          "p95": 79,
+          "max": 102
+        },
+        "stationaryGrantToDone": null
+      },
+      "largestStationaryRuns": [
+        {
+          "boot": "a05962c32eae743c",
+          "firmware": "ESP32_CAT_HOST_0.44_ROUTE_EDITOR",
+          "n": 152,
+          "firstTxMs": 283415,
+          "lastDoneMs": 586924,
+          "txToAck": {
+            "n": 152,
+            "min": 7,
+            "median": 9,
+            "p95": 10,
+            "max": 35
+          },
+          "txToDone": {
+            "n": 152,
+            "min": 38,
+            "median": 41,
+            "p95": 52,
+            "max": 69
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "5ec488378d7b72d5",
+          "firmware": "ESP32_CAT_HOST_0.43_REMOTE_RESUME",
+          "n": 131,
+          "firstTxMs": 345986,
+          "lastDoneMs": 606150,
+          "txToAck": {
+            "n": 131,
+            "min": 7,
+            "median": 9,
+            "p95": 10,
+            "max": 16
+          },
+          "txToDone": {
+            "n": 131,
+            "min": 39,
+            "median": 42,
+            "p95": 54,
+            "max": 64
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "6f52d2cc51f8722d",
+          "firmware": "ESP32_CAT_HOST_0.46_CONTROL_LAYOUT",
+          "n": 105,
+          "firstTxMs": 175610,
+          "lastDoneMs": 389991,
+          "txToAck": {
+            "n": 105,
+            "min": 7,
+            "median": 9,
+            "p95": 11,
+            "max": 17
+          },
+          "txToDone": {
+            "n": 105,
+            "min": 39,
+            "median": 42,
+            "p95": 56,
+            "max": 67
+          },
+          "grantToDone": null
+        }
+      ],
+      "modeConfigResponses": [
+        {
+          "boot": "d92993d07b734761",
+          "modeMs": 254629,
+          "id": 106,
+          "triggerToTxMs": 101,
+          "triggerToAckMs": 110,
+          "triggerToDoneMs": 129,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 106"
+        },
+        {
+          "boot": "5ec488378d7b72d5",
+          "modeMs": 5213,
+          "id": 12,
+          "triggerToTxMs": 393,
+          "triggerToAckMs": 404,
+          "triggerToDoneMs": 424,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 12"
+        },
+        {
+          "boot": "a05962c32eae743c",
+          "modeMs": 281715,
+          "id": 58,
+          "triggerToTxMs": 419,
+          "triggerToAckMs": 426,
+          "triggerToDoneMs": 446,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 58"
+        },
+        {
+          "boot": "6f52d2cc51f8722d",
+          "modeMs": 59905,
+          "id": 21,
+          "triggerToTxMs": 398,
+          "triggerToAckMs": 405,
+          "triggerToDoneMs": 425,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 21"
+        }
+      ]
+    },
+    {
+      "file": "D:/data/download/esp32-local-history-2026-10-13T13-04-59-623Z.json",
+      "sha256": "e626ef2546f70fba698f0bf28ee0de470da57fb225ff2906f0b73218dff0bc95",
+      "firmware": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+      "boots": [
+        {
+          "boot": "b962231f2f5d3811",
+          "firmware": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+          "eventCount": 8018,
+          "missingSequenceCount": 1065,
+          "sources": {
+            "UNO_RX": 5923,
+            "WIFI_DISCONNECTED": 56,
+            "UNO_TX": 977,
+            "UART_BAD_FRAME": 22,
+            "DECISION": 227,
+            "FAULT": 104,
+            "STOP_CONFIRMED": 67,
+            "REMOTE_STOP": 61,
+            "STOP_RETRY": 141,
+            "REMOTE_REJECTED": 31,
+            "TELEMETRY_TIMEOUT": 96,
+            "WIFI_RECONNECT": 2,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "LOCAL_GAP": 5,
+            "LOCAL_CAMERA_SETTINGS": 1,
+            "VISION_MODE": 4,
+            "MODE": 9,
+            "STOP_UNCONFIRMED": 42,
+            "LINK_RECOVERY": 19,
+            "INPUT_REJECTED": 25,
+            "SIM_TX": 8,
+            "UNO_PROTOCOL_ERROR": 9,
+            "ROUTE": 1,
+            "TAG_SCAN_SAMPLE": 161,
+            "LINK_RECOVERED": 2,
+            "TX_BLOCKED": 13,
+            "TELEMETRY_INCOMPLETE": 1,
+            "TELEMETRY_RETRY": 1,
+            "PWM_FLOOR": 2,
+            "TAG_TRACK_LOST": 2,
+            "CONFIG": 1,
+            "APPROACH_END": 1,
+            "TAG_REACHED": 1,
+            "TAG_RECOVERY": 1
+          }
+        },
+        {
+          "boot": "2fcf1053357ae5a6",
+          "firmware": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+          "eventCount": 3152,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 19,
+            "SIM_TX": 6,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 53,
+            "DECISION": 101,
+            "FAULT": 40,
+            "REMOTE_STOP": 24,
+            "MODE": 8,
+            "UNO_TX": 353,
+            "UNO_RX": 2294,
+            "UNO_PROTOCOL_ERROR": 2,
+            "STOP_RETRY": 83,
+            "STOP_CONFIRMED": 14,
+            "UART_BAD_FRAME": 12,
+            "TAG_SCAN_SAMPLE": 83,
+            "LINK_RECOVERY": 14,
+            "STOP_UNCONFIRMED": 26,
+            "LINK_RECOVERED": 2,
+            "APPROACH_END": 1,
+            "TAG_REACHED": 1,
+            "TX_BLOCKED": 8,
+            "TELEMETRY_INCOMPLETE": 1,
+            "TELEMETRY_RETRY": 1,
+            "VISION_MODE": 1
+          }
+        }
+      ],
+      "telemetry": {
+        "sent": 762,
+        "complete": 580,
+        "stationaryComplete": 576,
+        "allCompleteTxToDone": {
+          "n": 580,
+          "min": 38,
+          "median": 43,
+          "p95": 60,
+          "max": 90
+        },
+        "stationaryTxToAck": {
+          "n": 574,
+          "min": 7,
+          "median": 9,
+          "p95": 10,
+          "max": 33
+        },
+        "stationaryTxToDone": {
+          "n": 576,
+          "min": 38,
+          "median": 43,
+          "p95": 60,
+          "max": 90
+        },
+        "stationaryGrantToDone": null
+      },
+      "largestStationaryRuns": [
+        {
+          "boot": "2fcf1053357ae5a6",
+          "firmware": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+          "n": 100,
+          "firstTxMs": 569465,
+          "lastDoneMs": 767307,
+          "txToAck": {
+            "n": 100,
+            "min": 7,
+            "median": 9,
+            "p95": 10,
+            "max": 19
+          },
+          "txToDone": {
+            "n": 100,
+            "min": 39,
+            "median": 47,
+            "p95": 58,
+            "max": 87
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "b962231f2f5d3811",
+          "firmware": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+          "n": 57,
+          "firstTxMs": 582746,
+          "lastDoneMs": 701378,
+          "txToAck": {
+            "n": 57,
+            "min": 7,
+            "median": 9,
+            "p95": 11,
+            "max": 18
+          },
+          "txToDone": {
+            "n": 57,
+            "min": 39,
+            "median": 41,
+            "p95": 47,
+            "max": 57
+          },
+          "grantToDone": null
+        },
+        {
+          "boot": "b962231f2f5d3811",
+          "firmware": "ESP32_CAT_HOST_0.49_ESCAPE_CONTINUOUS_FRONT",
+          "n": 54,
+          "firstTxMs": 1202095,
+          "lastDoneMs": 1308162,
+          "txToAck": {
+            "n": 54,
+            "min": 8,
+            "median": 9,
+            "p95": 9,
+            "max": 10
+          },
+          "txToDone": {
+            "n": 54,
+            "min": 39,
+            "median": 42,
+            "p95": 63,
+            "max": 65
+          },
+          "grantToDone": null
+        }
+      ],
+      "modeConfigResponses": [
+        {
+          "boot": "b962231f2f5d3811",
+          "modeMs": 851754,
+          "id": 515,
+          "triggerToTxMs": 95,
+          "triggerToAckMs": 102,
+          "triggerToDoneMs": 123,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 515"
+        },
+        {
+          "boot": "b962231f2f5d3811",
+          "modeMs": 997845,
+          "id": 605,
+          "triggerToTxMs": 96,
+          "triggerToAckMs": 104,
+          "triggerToDoneMs": 124,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 605"
+        },
+        {
+          "boot": "2fcf1053357ae5a6",
+          "modeMs": 9276,
+          "id": 13,
+          "triggerToTxMs": 697,
+          "triggerToAckMs": 705,
+          "triggerToDoneMs": 726,
+          "stopRetryCount": 2,
+          "windowExpiredCount": 0,
+          "result": "DONE 13"
+        }
+      ]
+    },
+    {
+      "file": "D:/data/download/esp32-local-history-2026-10-14T07-57-36-468Z.json",
+      "sha256": "133460663bddf63bb86e7a31a48fd942a1086fe2efe4d144a09a505a7726f940",
+      "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+      "boots": [
+        {
+          "boot": "6a2246fabb78a00f",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "eventCount": 6209,
+          "missingSequenceCount": 0,
+          "sources": {
+            "INPUT_REJECTED": 183,
+            "TELEMETRY_TIMEOUT": 3,
+            "SIM_TX": 6,
+            "LOCAL_BOOT": 1,
+            "LOCAL_GAP": 1,
+            "LOCAL_CAMERA_SETTINGS": 1,
+            "DECISION": 32,
+            "FAULT": 8,
+            "REMOTE_STOP": 4,
+            "MODE": 1,
+            "UART_AVAILABLE": 4146,
+            "UART_EMERGENCY_TX": 9,
+            "UNO_TX": 225,
+            "UNO_RX": 1325,
+            "STOP_CONFIRMED": 11,
+            "UART_WINDOW_TX": 218,
+            "TAG_SCAN_SAMPLE": 27,
+            "PWM_FLOOR": 2,
+            "APPROACH_END": 2,
+            "TAG_REACHED": 2,
+            "STOP_RETRY": 2
+          }
+        },
+        {
+          "boot": "5d2b097fc7ee0174",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "eventCount": 165,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 19,
+            "SIM_TX": 8,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 3,
+            "DECISION": 2,
+            "FAULT": 2,
+            "REMOTE_STOP": 1,
+            "MODE": 1,
+            "UART_EMERGENCY_TX": 1,
+            "UNO_TX": 6,
+            "UNO_RX": 30,
+            "UNO_PROTOCOL_ERROR": 1,
+            "UART_AVAILABLE": 78,
+            "UART_WINDOW_TX": 6,
+            "STOP_RETRY": 1,
+            "STOP_CONFIRMED": 1
+          }
+        },
+        {
+          "boot": "f18e9032097095ca",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "eventCount": 21196,
+          "missingSequenceCount": 2899,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "SIM_TX": 10,
+            "INPUT_REJECTED": 288,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "TELEMETRY_TIMEOUT": 30,
+            "DECISION": 234,
+            "FAULT": 47,
+            "REMOTE_STOP": 29,
+            "MODE": 14,
+            "UART_EMERGENCY_TX": 111,
+            "UNO_TX": 800,
+            "UNO_RX": 4606,
+            "UNO_PROTOCOL_ERROR": 6,
+            "UART_AVAILABLE": 13805,
+            "STOP_RETRY": 74,
+            "STOP_CONFIRMED": 51,
+            "UART_WINDOW_TX": 763,
+            "TAG_SCAN_SAMPLE": 67,
+            "APPROACH_END": 7,
+            "TAG_REACHED": 4,
+            "PWM_FLOOR": 6,
+            "TAG_TRACK_LOST": 1,
+            "CAT_SCAN_SAMPLE": 133,
+            "CAT_CHECK_SAMPLE": 24,
+            "CAT_RECOVERY": 9,
+            "SCAN_CONFIG_RETRY_WAIT": 2,
+            "SCAN_CONFIG_RETRY": 2,
+            "CONFIG": 2,
+            "CAT_CONFIRMED": 6,
+            "ROBOT_ACTION_COMPLETE": 5,
+            "INTERACTION_EXIT": 1,
+            "LOCAL_GAP": 4,
+            "UART_BAD_FRAME": 3,
+            "ESCAPE_SIDE_GATE": 3,
+            "ESCAPE_FRONT_GATE": 1,
+            "STOP_UNCONFIRMED": 23,
+            "LINK_RECOVERY": 8,
+            "TX_BLOCKED": 12
+          }
+        },
+        {
+          "boot": "5b8ca35c9a305a89",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "eventCount": 1214,
+          "missingSequenceCount": 0,
+          "sources": {
+            "READY": 1,
+            "CAMERA": 1,
+            "CAMERA_CONFIG": 1,
+            "INPUT_REJECTED": 63,
+            "SIM_TX": 5,
+            "WIFI_GOT_IP": 1,
+            "LOCAL_BOOT": 1,
+            "DECISION": 6,
+            "FAULT": 4,
+            "REMOTE_STOP": 3,
+            "MODE": 1,
+            "UART_AVAILABLE": 994,
+            "UART_WINDOW_TX": 17,
+            "UNO_TX": 14,
+            "UNO_RX": 80,
+            "STOP_RETRY": 6,
+            "UART_EMERGENCY_TX": 3,
+            "STOP_UNCONFIRMED": 2,
+            "TELEMETRY_TIMEOUT": 10,
+            "UART_BAD_FRAME": 1
+          }
+        }
+      ],
+      "telemetry": {
+        "sent": 688,
+        "complete": 636,
+        "stationaryComplete": 631,
+        "allCompleteTxToDone": {
+          "n": 636,
+          "min": 21,
+          "median": 46,
+          "p95": 69,
+          "max": 85
+        },
+        "stationaryTxToAck": {
+          "n": 631,
+          "min": 3,
+          "median": 9,
+          "p95": 11,
+          "max": 50
+        },
+        "stationaryTxToDone": {
+          "n": 631,
+          "min": 21,
+          "median": 46,
+          "p95": 69,
+          "max": 85
+        },
+        "stationaryGrantToDone": {
+          "n": 629,
+          "min": 43,
+          "median": 55,
+          "p95": 84,
+          "max": 103
+        }
+      },
+      "largestStationaryRuns": [
+        {
+          "boot": "f18e9032097095ca",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "n": 147,
+          "firstTxMs": 202620,
+          "lastDoneMs": 446662,
+          "txToAck": {
+            "n": 147,
+            "min": 8,
+            "median": 9,
+            "p95": 11,
+            "max": 39
+          },
+          "txToDone": {
+            "n": 147,
+            "min": 39,
+            "median": 45,
+            "p95": 68,
+            "max": 84
+          },
+          "grantToDone": {
+            "n": 147,
+            "min": 43,
+            "median": 53,
+            "p95": 83,
+            "max": 91
+          }
+        },
+        {
+          "boot": "6a2246fabb78a00f",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "n": 130,
+          "firstTxMs": 286604,
+          "lastDoneMs": 553424,
+          "txToAck": {
+            "n": 130,
+            "min": 9,
+            "median": 9,
+            "p95": 10,
+            "max": 39
+          },
+          "txToDone": {
+            "n": 130,
+            "min": 38,
+            "median": 47,
+            "p95": 60,
+            "max": 82
+          },
+          "grantToDone": {
+            "n": 130,
+            "min": 43,
+            "median": 53,
+            "p95": 74,
+            "max": 103
+          }
+        },
+        {
+          "boot": "f18e9032097095ca",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "n": 78,
+          "firstTxMs": 776517,
+          "lastDoneMs": 930665,
+          "txToAck": {
+            "n": 78,
+            "min": 9,
+            "median": 9,
+            "p95": 10,
+            "max": 10
+          },
+          "txToDone": {
+            "n": 78,
+            "min": 40,
+            "median": 47,
+            "p95": 71,
+            "max": 72
+          },
+          "grantToDone": {
+            "n": 78,
+            "min": 45,
+            "median": 61.5,
+            "p95": 85,
+            "max": 90
+          }
+        }
+      ],
+      "modeConfigResponses": [
+        {
+          "boot": "6a2246fabb78a00f",
+          "modeMs": 284895,
+          "id": 59,
+          "triggerToTxMs": 189,
+          "triggerToAckMs": 196,
+          "triggerToDoneMs": 217,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 59"
+        },
+        {
+          "boot": "5d2b097fc7ee0174",
+          "modeMs": 19086,
+          "id": 15,
+          "triggerToTxMs": 499,
+          "triggerToAckMs": 508,
+          "triggerToDoneMs": 527,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 15"
+        },
+        {
+          "boot": "f18e9032097095ca",
+          "modeMs": 7218,
+          "id": 13,
+          "triggerToTxMs": 488,
+          "triggerToAckMs": 495,
+          "triggerToDoneMs": 516,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 13"
+        },
+        {
+          "boot": "f18e9032097095ca",
+          "modeMs": 653775,
+          "id": 526,
+          "triggerToTxMs": 188,
+          "triggerToAckMs": 197,
+          "triggerToDoneMs": 217,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 0,
+          "result": "DONE 526"
+        },
+        {
+          "boot": "f18e9032097095ca",
+          "modeMs": 1114780,
+          "id": 898,
+          "triggerToTxMs": 458,
+          "triggerToAckMs": 467,
+          "triggerToDoneMs": 487,
+          "stopRetryCount": 1,
+          "windowExpiredCount": 0,
+          "result": "DONE 898"
+        }
+      ]
+    },
+    {
+      "file": "evidence/uart-ready-window-20261013/uart-stationary-capture.json",
+      "sha256": "af09c6150849d7a3e4e2ecf7d6a70663ef5c49b54239246899498e4fee4a475f",
+      "firmware": null,
+      "boots": [
+        {
+          "boot": "single",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "eventCount": 679,
+          "missingSequenceCount": 0,
+          "sources": {
+            "INPUT_REJECTED": 141,
+            "SIM_TX": 6,
+            "TELEMETRY_TIMEOUT": 1,
+            "DECISION": 2,
+            "FAULT": 2,
+            "REMOTE_STOP": 1,
+            "MODE": 1,
+            "UART_AVAILABLE": 376,
+            "UART_EMERGENCY_TX": 1,
+            "UNO_TX": 18,
+            "UNO_RX": 111,
+            "STOP_CONFIRMED": 1,
+            "UART_WINDOW_TX": 17,
+            "UNO_PROTOCOL_ERROR": 1
+          }
+        }
+      ],
+      "telemetry": {
+        "sent": 15,
+        "complete": 15,
+        "stationaryComplete": 15,
+        "allCompleteTxToDone": {
+          "n": 15,
+          "min": 38,
+          "median": 56,
+          "p95": 70,
+          "max": 70
+        },
+        "stationaryTxToAck": {
+          "n": 15,
+          "min": 9,
+          "median": 9,
+          "p95": 10,
+          "max": 10
+        },
+        "stationaryTxToDone": {
+          "n": 15,
+          "min": 38,
+          "median": 56,
+          "p95": 70,
+          "max": 70
+        },
+        "stationaryGrantToDone": {
+          "n": 15,
+          "min": 43,
+          "median": 61,
+          "p95": 92,
+          "max": 92
+        }
+      },
+      "largestStationaryRuns": [
+        {
+          "boot": "single",
+          "firmware": "ESP32_CAT_HOST_0.50_UART_RX_WINDOW",
+          "n": 15,
+          "firstTxMs": 132238,
+          "lastDoneMs": 160334,
+          "txToAck": {
+            "n": 15,
+            "min": 9,
+            "median": 9,
+            "p95": 10,
+            "max": 10
+          },
+          "txToDone": {
+            "n": 15,
+            "min": 38,
+            "median": 56,
+            "p95": 70,
+            "max": 70
+          },
+          "grantToDone": {
+            "n": 15,
+            "min": 43,
+            "median": 61,
+            "p95": 92,
+            "max": 92
+          }
+        }
+      ],
+      "modeConfigResponses": [
+        {
+          "boot": "single",
+          "modeMs": 130529,
+          "id": 33,
+          "triggerToTxMs": 194,
+          "triggerToAckMs": 203,
+          "triggerToDoneMs": 223,
+          "stopRetryCount": 0,
+          "windowExpiredCount": 1,
+          "result": "DONE 33"
+        }
+      ]
+    }
+  ]
+}
