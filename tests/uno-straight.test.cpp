@@ -58,8 +58,26 @@ int main(){
  for(int i=1;i<=8;i++){clockMs=i*150;renewRemote(30+i,100,100,600);tickMotion(clockMs);}CHECK(motion.kind==MOTION_REMOTE&&motion.lastProgressMs[0]==0);
  clockMs=1201;tickMotion(clockMs);CHECK(motion.kind==MOTION_NONE&&sessionStopped&&output[0]==0);
  sessionStopped=false;
+ // Configured intervals govern the first and subsequent updates, surviving STOP/reset.
+ for(uint16_t interval:{20,50,100,200,1000}){
+   straightBalance.intervalMs=interval;begin(MOTION_CONTINUOUS,100,100);counts[0]=3;counts[1]=1;
+   clockMs=interval-1;tickMotion(clockMs);CHECK(output[0]==100);
+   clockMs=interval;tickMotion(clockMs);CHECK(output[0]==98);
+   clockMs=interval*2-1;tickMotion(clockMs);CHECK(output[0]==98);
+   counts[0]++;counts[1]++;clockMs=interval*2;tickMotion(clockMs);CHECK(output[0]==96);
+   stopOutputs();CHECK(straightBalance.intervalMs==interval&&!straightBalance.enabled);
+ }
+ straightBalance.intervalMs=200;
  StraightBalance b;b.reset(UINT32_MAX-99);CHECK(!b.update(99,3,1,100));CHECK(b.update(100,3,1,100)&&b.reduction==2);b.reset(0);CHECK(b.update(200,uint32_t(1-(UINT32_MAX-1)),uint32_t(0-(UINT32_MAX-1)),255)&&b.reduction==0);
  for(int pwm=1;pwm<=255;pwm++){b.reset(0);for(int i=1;i<=20;i++)b.update(i*200,i*10,i,pwm);CHECK(b.reduction<=32&&b.reduction<=pwm/5&&pwm-b.reduction>0);}
+ // Equivalence of compact step arithmetic across the full reachable correction range.
+ for(int pwm=1;pwm<=255;pwm++)for(int error=-12;error<=12;error++)for(int reduction=-32;reduction<=32;reduction++){
+   int target=std::clamp(error,-9,9);if(target>0)--target;if(target<0)++target;target*=4;
+   int limit=std::min(pwm/5,32);target=std::clamp(target,-limit,limit);
+   if((reduction>0&&target<0)||(reduction<0&&target>0))target=0;
+   int expected=reduction;for(int i=0;i<2&&expected!=target;i++)expected+=expected<target?1:-1;
+   b.reset(0);b.reduction=reduction;b.update(200,error+12,12,pwm);CHECK(b.reduction==expected);
+ }
  uint8_t hex=0;for(int a=0;a<256;a++)for(int c=0;c<256;c++){char text[]={char(a),char(c),0};bool valid=a&&c&&std::isxdigit(a)&&std::isxdigit(c);CHECK(commandCrcByte(text,hex)==valid);if(valid)CHECK(hex==std::strtoul(text,nullptr,16));}for(auto s:{"","A","ABC","+1"," 1","G0"})CHECK(!commandCrcByte(s,hex));
  int32_t n=42;for(auto s:{"","+","-","1x","1 ","2147483648","-2147483649","99999999999999999999"}){CHECK(!commandLong(s,INT32_MIN,INT32_MAX,n));CHECK(n==42);}CHECK(commandLong("2147483647",INT32_MIN,INT32_MAX,n)&&n==INT32_MAX);CHECK(commandLong("-2147483648",INT32_MIN,INT32_MAX,n)&&n==INT32_MIN);CHECK(commandLong(" \t+001",1,65535,n)&&n==1);
  for(int x=-1000;x<=1000;x++){auto s=std::to_string(x);CHECK(commandLong(s.c_str(),-255,255,n)==(x>=-255&&x<=255));if(x>=-255&&x<=255)CHECK(n==x);}

@@ -129,6 +129,14 @@ int main(){
  sideAt[0]=sideAt[1]=0;policyInput("DATA 458 HW SL 1 1 0 11.6 11.6 P");policyInput("DATA 458 HW SR 1 1 0 20.0 20.0 P");
  chooseConfirmedTouch();startEscapeTurn(11.6,20);CHECK(commands.back().text.startsWith("ROTATE 90.0 "));
  finishEscapeTurn();CHECK(commands.back().text.startsWith("DRIVE "));
+ // Nondefault interval is frozen and its checked transaction completes before session start.
+ fixture();config["straightBalanceIntervalMs"]=50;geometryConfirmed=true;state("WAIT_PATROL_CONFIG");sessionId=123;
+ policyInput("DONE 123 CONFIG");CHECK(action=="WAIT_PATROL_BALANCE");CHECK(commands.back().text=="SB 50");
+ policyInput("DONE "+String(sessionId+1));CHECK(action=="WAIT_PATROL_BALANCE");
+ policyInput("AK "+String(sessionId));CHECK(action=="WAIT_PATROL_BALANCE");
+ policyInput("DONE "+String(sessionId)+" SB 50 extra");CHECK(action=="WAIT_PATROL_BALANCE");
+ policyInput("DONE "+String(sessionId));CHECK(balanceConfirmedMs==50);CHECK(action=="WAIT_SESSION_START");
+ policyInput("READY UNO_REBOOT");CHECK(!balanceConfirmedMs);
  // Malformed rows cannot refresh data or create a top-button press.
  fixture();sideAt[0]=sideAt[1]=0;encoderAt[0]=0;
  for(const char *row:{"DATA 1 HW SL 1 1 0 20 20 P extra","DATA 1 HW SL 1 1 0 20 nan P","DATA 1 HW SL 1 1 0 20 500 P","DATA 1 HW EL 1 1 23 nan P","DATA 1 HW EL 1 1 23 0 P extra","DATA 1 HW T UNKNOWN 1 1 1 P","DATA 1 HW T TOP 1 1 2 P","DATA 1 HW T TOP 1 1 1 P extra"})policyInput(row);
@@ -136,7 +144,7 @@ int main(){
  fixture();rotate(20,52,"ALIGN_CAT");auto protocolMotor=motorId;
  for(const char *verb:{"AK ","ACK ","MS ","MP ","MD "}){String row=String(verb)+String(protocolMotor);if(strcmp(verb,"AK ")&&strcmp(verb,"ACK "))row+=" 1 1";policyInput(row+" extra");}
  CHECK(!motorConfirmed);CHECK(motorId==protocolMotor);CHECK(action=="ALIGN_CAT");
- for(const char *waiting:{"WAIT_SESSION_START","WAIT_SESSION_STOP","WAIT_PATROL_GEOMETRY","WAIT_PATROL_CONFIG"}){
+ for(const char *waiting:{"WAIT_SESSION_START","WAIT_SESSION_STOP","WAIT_PATROL_GEOMETRY","WAIT_PATROL_CONFIG","WAIT_PATROL_BALANCE"}){
    fixture();state(waiting);sessionId=123;policyInput("DONE 123 WRONG_RESULT");CHECK(sessionId==123);CHECK(action==waiting);
  }
  // Independent search opens a session directly; a tag route is not needed.
@@ -146,7 +154,7 @@ int main(){
   policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");
   policyInput("DONE "+String(sessionId)+" GEOMETRY_SET");
   policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
-  policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");
+  policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId));policyInput("DONE "+String(sessionId)+" SESSION_STARTED");
   CHECK(phase=="INTERACTION");CHECK(initiator=="ROBOT_SEARCH");CHECK(afterFace=="CHOOSE_ROBOT");
   finish();stopped();policyTick();policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(phase=="STOPPED");CHECK(action=="FAULT");CHECK(lastFault.startsWith("empty route:"));
  }
@@ -157,7 +165,9 @@ int main(){
    policyControl(control);CHECK(phase=="STARTING");CHECK(action=="WAIT_PATROL_STOP");CHECK(!scanCapable);
    policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");CHECK(action=="WAIT_PATROL_CONFIG");
    policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
-   policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(action=="WAIT_SESSION_START");
+   policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(action=="WAIT_PATROL_BALANCE");CHECK(commands.back().text=="SB 200");
+   policyInput("DONE "+String(sessionId)+" WRONG_RESULT");CHECK(action=="WAIT_PATROL_BALANCE");CHECK(!balanceConfirmedMs);
+   policyInput("DONE "+String(sessionId));CHECK(action=="WAIT_SESSION_START");CHECK(balanceConfirmedMs==200);
    policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="PATROL");
    policyTick();CHECK(action=="WAIT_SCAN_CONFIG");configDone();CHECK(commands.back().text.startsWith("SR "));CHECK(!scanCapable);
  }
@@ -352,7 +362,7 @@ int main(){
  auto recoveryStop=stopId;policyInput("DONE "+String(recoveryStop)+" TELEMETRY");CHECK(stopId==recoveryStop);
  stopped();policyTick();CHECK(action=="LINK_RECOVERY_SESSION_STOP");
  policyInput("DONE "+String(sessionId)+" SESSION_STOPPED");CHECK(action=="LINK_RECOVERY_CONFIG");
- policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(action=="LINK_RECOVERY_SESSION_START");
+ policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);policyInput("DONE "+String(sessionId)+" CONFIG");CHECK(action=="LINK_RECOVERY_BALANCE");policyInput("DONE "+String(sessionId));CHECK(action=="LINK_RECOVERY_SESSION_START");
  lastUnoAt=tick;policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(!linkRecovering);
  CHECK(phase=="INTERACTION");CHECK(action=="WAIT_STOP");CHECK(afterFace=="CHASE_ALIGN");CHECK(branch==1);
  // Diagnostics alone never release recovery or authorize motion. Bounded failure.
@@ -374,7 +384,7 @@ int main(){
  auto recoveryConfig=sessionId;
  for(const char *bad:{"CONFIG WHEEL_MM=67.5 TRACK_MM=120.0","CONFIG WHEEL_MM=nan TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=19 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=0.0 SAFE_RIGHT_CM=1.0","CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0 EXTRA"}){policyInput("DATA "+String(recoveryConfig)+" "+bad);CHECK(!geometryConfirmed);}
  policyInput("DATA "+String(recoveryConfig+1)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(!geometryConfirmed);
- policyInput("DATA "+String(recoveryConfig)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);policyInput("DONE "+String(recoveryConfig));CHECK(action=="LINK_RECOVERY_SESSION_START");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(!linkRecovering);CHECK(phase=="INTERACTION");CHECK(branch==1);
+ policyInput("DATA "+String(recoveryConfig)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");CHECK(geometryConfirmed);policyInput("DONE "+String(recoveryConfig));CHECK(action=="LINK_RECOVERY_BALANCE");policyInput("DONE "+String(sessionId));CHECK(action=="LINK_RECOVERY_SESSION_START");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(!linkRecovering);CHECK(phase=="INTERACTION");CHECK(branch==1);
  // Legacy cat tolerance is ignored; tag tolerance still controls tag alignment.
  fixture();config["centerTolerancePercent"]=2;config["tagCenterTolerancePercent"]=15;observation["tags"][0]["id"]=9;observation["tags"][0]["width"]=.1;observation["tags"][0]["centerX"]=.6;policyTick();CHECK(action=="APPROACH_TAG");CHECK(leftPwm>0&&leftPwm==rightPwm);
  fixture();config["centerTolerancePercent"]=15;config["tagCenterTolerancePercent"]=2;observation["tags"][0]["id"]=9;observation["tags"][0]["width"]=.1;observation["tags"][0]["centerX"]=.6;policyTick();CHECK(action=="TAG_ALIGN");

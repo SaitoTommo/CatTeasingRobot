@@ -1,5 +1,5 @@
-// Firmware version: ESP32_CAT_HOST_0.50_UART_RX_WINDOW. Reported by /api/state.
-// Uno pairing: UNO_CAT_V6.14, D13 RX and one-use receive windows.
+// Firmware version: ESP32_CAT_HOST_0.51_STRAIGHT_BALANCE_INTERVAL. Reported by /api/state.
+// Uno pairing: UNO_CAT_V6.15, D13 RX and one-use receive windows.
 // Board: XIAO_ESP32S3, OPI PSRAM, max_app_8MB. UART: 57600; USB log: 115200.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -152,6 +152,7 @@ void policyResumeFrom(int index);
 #include "remote_control.h"
 #include "route_editor.h"
 #include "front_switch.h"
+#include "balance_settings.h"
 void resetLinkState(){rxGrant=0;rxGrantSeen=false;uartLine="";compactTelemetry.reset();debugReset();lastRx="";lastTx="";lastUnoAt=0;telemetryId=0;lastPoll=millis()-300;}
 void acceptUno(String line,bool physical) {
   line.trim(); if(!line.length())return;
@@ -228,7 +229,7 @@ void defaults() {
 #include "camera_settings_runtime.h"
 #include "ground_calibration_runtime.h"
 String snapshot(uint32_t afterLog,uint16_t logLimit) {
-  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.50_UART_RX_WINDOW";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;RemoteControl::snapshot(d);RouteEditor::snapshot(d);debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
+  JsonDocument d;d["firmware"]="ESP32_CAT_HOST_0.51_STRAIGHT_BALANCE_INTERVAL";d["deviceId"]=deviceId;d["bootId"]=bootId;cameraSettingsSnapshot(d);d["ms"]=millis();d["mode"]=mode;d["phase"]=phase;RemoteControl::snapshot(d);RouteEditor::snapshot(d);debugSnapshot(d);hostLedSnapshot(d);policySnapshot(d);catPreviewSnapshot(d);groundCalibrationSnapshot(d);
   if(mode=="SIM_UNO"){auto t=d["simVisionRequest"].to<JsonObject>();t["scanId"]=visionGate.ticket.scan;t["stepId"]=visionGate.ticket.step;t["generation"]=visionGate.ticket.generation;t["mode"]=visionGate.ticket.mode;t["pending"]=visionGate.pending;}
   d["lastUnoAgeMs"]=lastUnoAt?millis()-lastUnoAt:UINT32_MAX;d["lastRx"]=lastRx;d["lastTx"]=lastTx;
   d["uartWindow"]["seen"]=rxGrantSeen;d["uartWindow"]["sequence"]=rxGrant;d["uartWindow"]["ageMs"]=rxGrantSeen?millis()-rxGrantAt:UINT32_MAX;d["uartWindow"]["queued"]=outgoing.size();d["stopPendingId"]=stopPendingId;d["stopUnconfirmed"]=stopUnconfirmed;
@@ -272,6 +273,12 @@ void handleInput(const Input &in) {
   else if(op=="config") {
     if(phase!="IDLE"&&phase!="STOPPED"||!stopReady()||debugId||manualUntil||configStep>=0){logLine("CONFIG_ERROR","confirmed stop required first");return;}
     JsonObject obj=d["config"].as<JsonObject>();
+    if(obj.size()==1&&obj.containsKey("straightBalanceIntervalMs")){
+      if(!obj["straightBalanceIntervalMs"].is<int>()||obj["straightBalanceIntervalMs"].as<int>()<20||obj["straightBalanceIntervalMs"].as<int>()>1000){logLine("CONFIG_ERROR","balance interval must be an integer from 20 to 1000 ms");return;}
+      String error;uint16_t value=obj["straightBalanceIntervalMs"].as<uint16_t>();
+      if(!BalanceSettings::persist(value,error)){logLine("CONFIG_ERROR",error);return;}
+      config["straightBalanceIntervalMs"]=value;logLine("CONFIG","balance interval saved and verified");return;
+    }
     if(obj.size()==1&&!obj["frontAvoidanceEnabled"].isNull()){
       if(!obj["frontAvoidanceEnabled"].is<bool>()){logLine("CONFIG_ERROR","invalid front avoidance flag");return;}
       String error;bool enabled=obj["frontAvoidanceEnabled"].as<bool>();if(!FrontSwitch::persist(enabled,error)){logLine("CONFIG_ERROR",error);return;}
@@ -280,8 +287,19 @@ void handleInput(const Input &in) {
     if(obj.size()==1&&obj["route"].is<JsonArray>()){JsonDocument request;request["requestId"]="legacy-route-"+String(millis());request["route"]=obj["route"];RouteEditor::input(request);return;}
     if(obj["route"].is<JsonArray>()) {auto route=obj["route"].as<JsonArray>();if(!route.size()||route.size()>128){logLine("CONFIG_ERROR","route needs 1..128 IDs");return;}for(JsonVariant v:route)if(!v.is<int>()||v.as<int>()<0||v.as<int>()>586){logLine("CONFIG_ERROR","tag36h11 IDs must be 0..586");return;}}
     JsonDocument candidate;candidate.set(config);for(JsonPair kv:obj){if(config[kv.key()].isNull()){logLine("CONFIG_ERROR",String("unknown setting ")+kv.key().c_str());return;}candidate[kv.key()]=kv.value();}String error;if(!validateSettings(candidate,error)){logLine("CONFIG_ERROR",error);return;}if(candidate["floorRoiTop"].as<float>()!=config["floorRoiTop"].as<float>()){groundReferenceChangedAt=millis();candidate["frontCalibrated"]=false;candidate["floorReference"].to<JsonArray>();logLine("CALIBRATION","ROI changed; ground reference invalidated");}
-    config=candidate;String saved;serializeJson(config,saved);size_t savedBytes=prefs.putString("config",saved);policyResetTagRecovery();
-    if(savedBytes!=saved.length()){logLine("CONFIG_ERROR","NVS save failed; RAM applied but restart persistence unconfirmed");return;}
+    const bool balanceChange=obj.containsKey("straightBalanceIntervalMs");
+    if(!balanceChange)config=candidate;
+    String saved;serializeJson(candidate,saved);size_t savedBytes=prefs.putString("config",saved);
+    if(savedBytes!=saved.length()){logLine("CONFIG_ERROR",balanceChange?"balance interval NVS save failed; previous RAM value retained":"NVS save failed; RAM applied but restart persistence unconfirmed");return;}
+    if(balanceChange){
+      JsonDocument stored;
+      if(deserializeJson(stored,prefs.getString("config",""))||!stored["straightBalanceIntervalMs"].is<int>()||stored["straightBalanceIntervalMs"].as<int>()!=candidate["straightBalanceIntervalMs"].as<int>()){
+        logLine("CONFIG_ERROR","balance interval NVS readback mismatch; previous RAM value retained");return;
+      }
+      if(!BalanceSettings::persist(candidate["straightBalanceIntervalMs"].as<uint16_t>(),error)){logLine("CONFIG_ERROR",error);return;}
+      config=candidate;
+    }
+    policyResetTagRecovery();
     if(obj["route"].is<JsonArray>()&&!RouteEditor::persist(obj["route"].as<JsonArray>(),error)){logLine("CONFIG_ERROR",error);return;}
     if(obj.containsKey("frontAvoidanceEnabled")&&!FrontSwitch::persist(config["frontAvoidanceEnabled"].as<bool>(),error)){logLine("CONFIG_ERROR",error);return;}
     logLine("CONFIG","saved");
@@ -367,7 +385,7 @@ void setup() {
   heap_caps_malloc_extmem_enable(1024);Serial.setTxBufferSize(4096);Serial.setRxBufferSize(8192);Serial.setTxTimeoutMs(20);Serial.begin(115200);uno.begin(57600,SERIAL_8N1,44,43);inputs=xQueueCreate(8,sizeof(Input));usbPackets=xQueueCreate(12,sizeof(String*));stateLock=xSemaphoreCreateRecursiveMutex();frameLock=xSemaphoreCreateMutex();cameraSensorLock=xSemaphoreCreateMutex();char identity[24];snprintf(identity,sizeof(identity),"%012llx",(unsigned long long)ESP.getEfuseMac());deviceId=identity;snprintf(identity,sizeof(identity),"%08lx%08lx",(unsigned long)esp_random(),(unsigned long)esp_random());bootId=identity;xTaskCreate(usbTask,"usb-log",4096,nullptr,1,nullptr);
   prefs.begin("cat-host",false);defaults();String saved=prefs.getString("config","");if(saved.length()){JsonDocument d;if(!deserializeJson(d,saved)){JsonDocument candidate;candidate.set(config);for(JsonPair kv:d.as<JsonObject>())candidate[kv.key()]=kv.value();migrateCenterSettings(candidate,d);if(!d["catObserveTimeoutSeconds"].is<float>())candidate["catObserveTimeoutSeconds"]=max(1.0f,candidate["postEscapeWaitSeconds"].as<float>());if(!d["escapeMinDistanceCm"].is<float>()||!d["escapeMaxDistanceCm"].is<float>()){float legacy=max(1.0f,candidate["escapeDistanceCm"].as<float>()-candidate["stopMarginCm"].as<float>());candidate["escapeMinDistanceCm"]=legacy;candidate["escapeMaxDistanceCm"]=legacy;}String error;if(validateSettings(candidate,error))config=candidate;else logLine("CONFIG_ERROR","saved config rejected: "+error);}}
   networkEvents=xQueueCreate(8,sizeof(NetworkEvent));WiFi.onEvent(networkEvent);
-  RouteEditor::restore();FrontSwitch::restore();
+  RouteEditor::restore();FrontSwitch::restore();BalanceSettings::restore();
   WiFi.mode(WIFI_AP_STA);WiFi.setAutoReconnect(true);WiFi.setSleep(false);WiFi.softAP("ESP32-CatHost","catrobot32");networkBegin(prefs.getString("ssid",""),prefs.getString("password",""));
   logLine("READY","ESP32_CAT_HOST AP=192.168.4.1 HTTP=80 STREAM=81 UART_RX=44 TX=43 BAUD=57600 mode=SIM_UNO");initCamera();startServers();
 }

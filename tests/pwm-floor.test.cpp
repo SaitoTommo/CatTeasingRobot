@@ -53,6 +53,12 @@ int main(){
  for(float bad:{0.f,256.f,140.5f,NAN,INFINITY}){d["minimumDrivePwm"]=bad;CHECK(!validateSettings(d,error));CHECK(error.indexOf("minimumDrivePwm")>=0);}
  d["minimumDrivePwm"]="140";CHECK(!validateSettings(d,error));d["minimumDrivePwm"]=true;CHECK(!validateSettings(d,error));
  d["minimumDrivePwm"]=140;
+ CHECK(d["straightBalanceIntervalMs"].as<int>()==200);
+ for(int value:{20,50,200,1000}){d["straightBalanceIntervalMs"]=value;CHECK(validateSettings(d,error));}
+ for(float value:{0.f,19.f,1001.f,50.5f,NAN,INFINITY}){d["straightBalanceIntervalMs"]=value;CHECK(!validateSettings(d,error));}
+ d["straightBalanceIntervalMs"]="200";CHECK(!validateSettings(d,error));d["straightBalanceIntervalMs"]=true;CHECK(!validateSettings(d,error));
+ JsonDocument old;old["minimumDrivePwm"]=100;JsonDocument restored;policyDefaults(restored);for(JsonPair kv:old.as<JsonObject>())restored[kv.key()]=kv.value();CHECK(restored["straightBalanceIntervalMs"].as<int>()==200);
+ d["straightBalanceIntervalMs"]=200;
  CHECK(d["escapePreyAfterRounds"].as<int>()==5);CHECK(d["explorePreyMinimumSeconds"].as<int>()==30);
  for(const char *key:{"escapePreyPercent","explorePreyPercent"}){
    for(int value:{0,20,100}){d[key]=value;CHECK(validateSettings(d,error));}

@@ -6,7 +6,7 @@ import {IO_CHANNELS} from './hardware-telemetry.mjs';
 export const SIM_PROTOCOL='SIM_UNO_TB_V1_SCAN_V1';
 const integer=(v,min,max)=>/^[-+]?\d+$/.test(String(v))&&Number(v)>=min&&Number(v)<=max;
 export class FirmwareUnoSimulator {
-  constructor(world,emit){this.emit=emit;this.scan=new ScanSimulator();this.motionBase=[0,0];this.now=0;this.bootAt=0;this.lastProgress=0;this.rpm=[0,0];this.ioMask=0;this.model=new MockUno(world,line=>this.modelEvent(line));this.model.trackWidthMm=120;}
+  constructor(world,emit){this.emit=emit;this.scan=new ScanSimulator();this.motionBase=[0,0];this.balanceIntervalMs=200;this.now=0;this.bootAt=0;this.lastProgress=0;this.rpm=[0,0];this.ioMask=0;this.model=new MockUno(world,line=>this.modelEvent(line));this.model.trackWidthMm=120;}
   get active(){return this.model.active;}
   get encoder(){return this.model.encoder;}
   counts(){return [Math.floor(this.encoder.left),Math.floor(this.encoder.right)];}
@@ -15,7 +15,7 @@ export class FirmwareUnoSimulator {
   ack(id){this.out(`AK ${id}`);}
   done(id,text=''){this.out(`DONE ${id}${text?' '+text:''}`);}
   error(id,text){this.out(`ERROR ${id} ${text}`);}
-  boot(now){this.now=this.bootAt=this.lastProgress=now;this.scan=new ScanSimulator();this.ioMask=0;this.rpm=[0,0];this.motionBase=[0,0];this.model.reset(now);this.model.trackWidthMm=120;this.out('EVENT CAPABILITIES SCAN_V1');}
+  boot(now){this.balanceIntervalMs=200;this.now=this.bootAt=this.lastProgress=now;this.scan=new ScanSimulator();this.ioMask=0;this.rpm=[0,0];this.motionBase=[0,0];this.model.reset(now);this.model.trackWidthMm=120;this.out('EVENT CAPABILITIES SCAN_V1');}
   modelEvent(line){
     let m;
     if(line.startsWith('READY ')){this.out(`READY ${SIM_PROTOCOL}`);return;}
@@ -55,6 +55,11 @@ export class FirmwareUnoSimulator {
     const id=Number(match[1]),words=match[2].split(/\s+/),verb=words[0],a=words.slice(1),n=a.map(Number),m=this.model;
     if(['GET_TELEMETRY','GET_STATUS','GET_DISTANCE','GET_ENCODER'].includes(verb)&&!a.length){this.telemetry(id);return;}
     if(verb==='PING'&&!a.length){this.ack(id);this.done(id,'PONG');this.out('EVENT CAPABILITIES SCAN_V1');return;}
+    if(verb==='SB'){
+      if(a.length!==1||!integer(a[0],20,1000)){this.error(id,'INVALID_ARGUMENT');return;}
+      if(m.active){this.error(id,'BUSY');return;}
+      this.balanceIntervalMs=n[0];this.done(id);return;
+    }
     if(['SC','SCAN_CONFIG'].includes(verb)){
       const ranges=[[50,3000],[50,3000],[500,60000],[1000,600000],[100,10000]];
       if(a.length!==5||a.some((x,i)=>!integer(x,...ranges[i]))){this.error(id,'INVALID_SCAN_FRAME');return;}

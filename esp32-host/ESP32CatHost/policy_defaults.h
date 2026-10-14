@@ -77,6 +77,7 @@ d["escapePreyPercent"]=20;
 d["explorePreyMinimumSeconds"]=30;
 d["explorePreyPercent"]=20;
 d["minimumDrivePwm"]=140;
+d["straightBalanceIntervalMs"]=200;
 d["scanStepPulses"]=2;
 d["scanMinimumMs"]=200;
 d["scanQuietMs"]=100;
@@ -162,6 +163,7 @@ if(!d["escapePreyPercent"].is<float>()||!isfinite(d["escapePreyPercent"].as<floa
 if(!d["explorePreyMinimumSeconds"].is<float>()||!isfinite(d["explorePreyMinimumSeconds"].as<float>())||d["explorePreyMinimumSeconds"].as<float>()<0||d["explorePreyMinimumSeconds"].as<float>()>600){error="invalid explorePreyMinimumSeconds";return false;}
 if(!d["explorePreyPercent"].is<float>()||!isfinite(d["explorePreyPercent"].as<float>())||d["explorePreyPercent"].as<float>()<0||d["explorePreyPercent"].as<float>()>100){error="invalid explorePreyPercent";return false;}
 if(!d["minimumDrivePwm"].is<float>()||!isfinite(d["minimumDrivePwm"].as<float>())||d["minimumDrivePwm"].as<float>()<1||d["minimumDrivePwm"].as<float>()>255){error="invalid minimumDrivePwm";return false;}
+if(!d["straightBalanceIntervalMs"].is<float>()||!isfinite(d["straightBalanceIntervalMs"].as<float>())||d["straightBalanceIntervalMs"].as<float>()<20||d["straightBalanceIntervalMs"].as<float>()>1000){error="invalid straightBalanceIntervalMs";return false;}
 if(!d["scanStepPulses"].is<float>()||!isfinite(d["scanStepPulses"].as<float>())||d["scanStepPulses"].as<float>()<1||d["scanStepPulses"].as<float>()>64){error="invalid scanStepPulses";return false;}
 if(!d["scanMinimumMs"].is<float>()||!isfinite(d["scanMinimumMs"].as<float>())||d["scanMinimumMs"].as<float>()<50||d["scanMinimumMs"].as<float>()>3000){error="invalid scanMinimumMs";return false;}
 if(!d["scanQuietMs"].is<float>()||!isfinite(d["scanQuietMs"].as<float>())||d["scanQuietMs"].as<float>()<50||d["scanQuietMs"].as<float>()>3000){error="invalid scanQuietMs";return false;}
@@ -198,6 +200,6 @@ for(JsonVariant v:d["floorReference"].as<JsonArray>())if(!v.is<float>()||v.as<fl
 if(d["scanSettleTimeoutMs"].as<float>()<=d["scanMinimumMs"].as<float>()||d["scanSettleTimeoutMs"].as<float>()<=d["scanQuietMs"].as<float>()){error="settle timeout must exceed both windows";return false;}
 if(!d["scanStepPulses"].is<int>()){error="scan step pulses must be integer";return false;}
 if(!d["minimumDrivePwm"].is<int>()){error="minimumDrivePwm must be integer";return false;}
-for(const char *key:{"tagLossGraceMs","tagScanMaxFrames","catCheckMaxFrames","robotActionLimit","escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
+for(const char *key:{"straightBalanceIntervalMs","tagLossGraceMs","tagScanMaxFrames","catCheckMaxFrames","robotActionLimit","escapePreyAfterRounds","explorePreyMinimumSeconds"})if(!d[key].is<int>()){error="integer required";return false;}
 return true;
 }

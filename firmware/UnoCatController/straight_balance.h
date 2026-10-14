@@ -4,12 +4,13 @@
 // Positive reduction slows the left wheel; negative slows the right wheel.
 // Counts are unsigned increments from this motion's baseline (including wrap).
 struct StraightBalance {
+  uint16_t intervalMs = 200;
   uint32_t at = 0;
   int8_t reduction = 0;
   bool enabled = false;
   void reset(uint32_t now) { at = now; reduction = 0; enabled = false; }
   bool update(uint32_t now, uint32_t left, uint32_t right, uint8_t pwm) {
-    if (uint32_t(now - at) < 200) return false;
+    if (uint32_t(now - at) < intervalMs) return false;
     at = now;
     int32_t error = int32_t(left - right);
     if (error > 9) error = 9;
@@ -24,7 +25,10 @@ struct StraightBalance {
     if (target < -limit) target = -limit;
     // Cross zero before correcting the other wheel.
     if ((reduction > 0 && target < 0) || (reduction < 0 && target > 0)) target = 0;
-    for (uint8_t i = 0; i < 2 && reduction != target; ++i) reduction += reduction < target ? 1 : -1;
+    int8_t delta = target - reduction;
+    if (delta > 2) delta = 2;
+    else if (delta < -2) delta = -2;
+    reduction += delta;
     return true;
   }
 };

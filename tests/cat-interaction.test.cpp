@@ -95,7 +95,7 @@ int main(){
   fixture();config["robotActionLimit"]=1;phase=initial;routeIndex=1;needRearm=true;arrivalFrame=99;policyControl("alert");CHECK(returnToPatrol);CHECK(routeIndex==0);CHECK(!needRearm);CHECK(!arrivalFrame);
   policyInput("DONE "+String(sessionId)+" MOTOR_STOPPED");policyInput("DONE "+String(sessionId)+" GEOMETRY_SET");
   policyInput("DATA "+String(sessionId)+" CONFIG WHEEL_MM=67.5 TRACK_MM=120.0 SLOTS_PER_REV=20 SAFE_LEFT_CM=1.0 SAFE_RIGHT_CM=1.0");
-  policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="INTERACTION");
+  policyInput("DONE "+String(sessionId)+" CONFIG");policyInput("DONE "+String(sessionId));policyInput("DONE "+String(sessionId)+" SESSION_STARTED");CHECK(phase=="INTERACTION");
   stopped();behavior("OBSERVE");tick=due;freshCat(.4);policyTick();endAndResumePatrol();CHECK(action=="SCAN_TAG");CHECK(policyTargetId()==9);
  }
  // Checked no-cat scan completion also returns to the interrupted target.

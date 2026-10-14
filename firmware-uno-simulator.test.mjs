@@ -42,3 +42,11 @@ test('extended stopped window config is accepted and still bounded',()=>{
  const {send,lines}=bench();send(1,'SC 200 100 60000 600000 3000');assert.ok(lines.some(r=>r.startsWith('DONE 1 SCAN_CONFIGURED')));
  send(2,'SC 200 100 60001 600000 3000');assert.ok(lines.some(r=>r.startsWith('ERROR 2 INVALID_SCAN_FRAME')));
 });
+
+test('balance configuration validates integers, refuses motion and resets on boot',()=>{
+ const {uno,lines,send}=bench();assert.equal(uno.balanceIntervalMs,200);
+ for(const [id,value] of [[71,20],[72,50],[73,1000]]){send(id,'SB '+value);assert.equal(uno.balanceIntervalMs,value);assert.ok(lines.some(r=>r.startsWith('DONE '+id+'*')));}
+ for(const value of ['19','1001','50.5','nan','20 extra']){send(74,'SB '+value);assert.equal(uno.balanceIntervalMs,1000);assert.ok(lines.at(-1).startsWith('ERROR 74 INVALID_ARGUMENT'));}
+ uno.model.active={};send(75,'SB 50');assert.equal(uno.balanceIntervalMs,1000);assert.ok(lines.at(-1).startsWith('ERROR 75 BUSY'));uno.model.active=null;
+ uno.boot(500);assert.equal(uno.balanceIntervalMs,200);
+});

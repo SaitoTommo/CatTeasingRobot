@@ -467,3 +467,17 @@ test('shared target recovery shows cat side, actual search direction and remaini
  assert.equal(element('saveTagRecovery').disabled,true);
  assert.match(element('tagRecoveryStatus').textContent,/猫与标签首次局部转向 60°/);
 });
+
+test('straight balance interval saves checked integers, retains drafts and separates Uno confirmation',()=>{
+ const requests=[];context.send=x=>requests.push(JSON.parse(JSON.stringify(x)));context.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true};};
+ const state={...base,config:{straightBalanceIntervalMs:200},patrolStatus:{straightBalanceConfirmedMs:0}};
+ const draw=d=>vm.runInContext('syncStraightBalance('+JSON.stringify(d)+')',context);
+ draw(state);assert.equal(element('straightBalanceIntervalMs').value,200);assert.equal(element('saveStraightBalance').disabled,false);assert.match(element('straightBalanceStatus').textContent,/尚未确认/);
+ element('straightBalanceIntervalMs').value='50';draw(state);assert.equal(element('straightBalanceIntervalMs').value,'50');
+ vm.runInContext('saveStraightBalance()',context);assert.deepEqual(requests.at(-1),{op:'config',config:{straightBalanceIntervalMs:50}});
+ draw(state);assert.match(element('straightBalanceStatus').textContent,/已保存：200/);
+ draw({...state,config:{straightBalanceIntervalMs:50}});assert.equal(element('straightBalanceIntervalMs').value,50);assert.match(element('straightBalanceStatus').textContent,/尚未确认/);
+ draw({...state,patrolStatus:{straightBalanceConfirmedMs:200}});assert.match(element('straightBalanceStatus').textContent,/已确认相同值/);
+ for(const value of ['','0','19','1001','50.5','abc']){element('straightBalanceIntervalMs').value=value;const count=requests.length;vm.runInContext('saveStraightBalance()',context);assert.equal(requests.length,count);}
+ for(const patch of [{phase:'PATROL'},{phase:'REMOTE'},{stopPendingId:1},{stopUnconfirmed:true},{debugBusy:true},{config:{}}]){draw({...state,...patch});assert.equal(element('saveStraightBalance').disabled,true);const count=requests.length;vm.runInContext('saveStraightBalance()',context);assert.equal(requests.length,count);}
+});

@@ -1,4 +1,4 @@
-// Firmware version: UNO_CAT_V6.14. Boot log: READY UNO_CAT_V6.14.
+// Firmware version: UNO_CAT_V6.15. Boot log: READY UNO_CAT_V6.15.
 // Build with firmware/build-uno.ps1; the default IDE build exceeds Uno Flash.
 // ESP pairing: SCAN_V1-capable host. UART/USB command link: 57600.
 #include <Arduino.h>
@@ -913,6 +913,12 @@ void processCommand(char *line) {
     done(id, F("CAMERA_FRONT_SET"));
     return;
   }
+  if (!strcmp_P(verb, PSTR("SB")) && n == 1 && parseLong(a, 20, 1000, x)) {
+    if (motion.kind != MOTION_NONE) { error(id, F("BUSY")); return; }
+    straightBalance.intervalMs = x;
+    done(id);
+    return;
+  }
   if (!strcmp_P(verb, PSTR("SET_GEOMETRY")) && n == 2 && parseFloat(a, 20, 150, f) && parseFloat(b, 50, 300, g)) {
     if (motion.kind != MOTION_NONE) {
       error(id, F("BUSY"));
@@ -1354,7 +1360,7 @@ void setup() {
   Serial.begin(57600);
   rpmAtMs = millis();
   dryRunAtMs = millis();
-  Serial.println(F("READY UNO_CAT_V6.14"));
+  Serial.println(F("READY UNO_CAT_V6.15"));
   Serial.println(F("EVENT CAPABILITIES SCAN_V1"));
   if (diagBreadcrumb.magic == 0xD159 &&
       static_cast<uint8_t>(~diagBreadcrumb.stage) == diagBreadcrumb.stageInverse &&
