@@ -1,0 +1,136 @@
+{
+  "notes": [
+    "Capture completeness is not a controlled UART loss rate.",
+    "TX-to-DONE excludes enqueue-to-TX waiting and physical stopping."
+  ],
+  "old": {
+    "doneMs": {
+      "n": 2,
+      "min": 41,
+      "max": 52,
+      "p95": 52,
+      "median": 46.5
+    },
+    "ackMs": {
+      "n": 2,
+      "min": 9,
+      "max": 9,
+      "p95": 9,
+      "median": 9
+    },
+    "stopConfirmedMs": null,
+    "eventStartMs": 221,
+    "eventEndMs": 344939,
+    "grantIntervalMs": null,
+    "completeIds": [
+      "117",
+      "122"
+    ],
+    "eventCount": 654,
+    "requests": 47,
+    "sources": {
+      "READY": 1,
+      "INPUT_REJECTED": 4,
+      "SIM_TX": 9,
+      "UART_BAD_FRAME": 1,
+      "LOCAL_CAMERA_SETTINGS": 1,
+      "UNO_RX": 458,
+      "WIFI_DISCONNECTED": 6,
+      "STOP_UNCONFIRMED": 5,
+      "UNO_TX": 52,
+      "CAMERA": 1,
+      "MODE": 7,
+      "REMOTE_STOP": 7,
+      "CAMERA_CONFIG": 1,
+      "DECISION": 19,
+      "LOCAL_BOOT": 1,
+      "FAULT": 14,
+      "WIFI_GOT_IP": 1,
+      "TX_BLOCKED": 5,
+      "TELEMETRY_TIMEOUT": 46,
+      "STOP_RETRY": 15
+    },
+    "complete": 2,
+    "txIntervalMs": {
+      "n": 46,
+      "min": 2000,
+      "max": 7692,
+      "p95": 7004,
+      "median": 7002
+    }
+  },
+  "percentile": "nearest-rank",
+  "oldSha256": "9454CB3183BAC7AB7AA64ED7EDFCCB4B26135DACE5B48EC87FCE94031A2ECFC7",
+  "current": {
+    "doneMs": {
+      "n": 15,
+      "min": 38,
+      "max": 70,
+      "p95": 70,
+      "median": 56
+    },
+    "ackMs": {
+      "n": 15,
+      "min": 8,
+      "max": 9,
+      "p95": 9,
+      "median": 9
+    },
+    "stopConfirmedMs": {
+      "n": 1,
+      "min": 10,
+      "max": 10,
+      "p95": 10,
+      "median": 10
+    },
+    "eventStartMs": 130529,
+    "eventEndMs": 160594,
+    "grantIntervalMs": {
+      "n": 375,
+      "min": 33,
+      "max": 133,
+      "p95": 91,
+      "median": 80
+    },
+    "completeIds": [
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "47",
+      "48"
+    ],
+    "eventCount": 530,
+    "requests": 15,
+    "sources": {
+      "UART_EMERGENCY_TX": 1,
+      "UNO_PROTOCOL_ERROR": 1,
+      "UNO_TX": 18,
+      "STOP_CONFIRMED": 1,
+      "MODE": 1,
+      "UART_AVAILABLE": 376,
+      "SIM_TX": 4,
+      "UNO_RX": 111,
+      "UART_WINDOW_TX": 17
+    },
+    "complete": 15,
+    "txIntervalMs": {
+      "n": 14,
+      "min": 1993,
+      "max": 2026,
+      "p95": 2026,
+      "median": 2000
+    }
+  },
+  "analysisDate": "2026-10-14",
+  "oldPath": "D:/data/download/esp32-local-history-2026-10-13T15-41-52-587Z.json"
+}
