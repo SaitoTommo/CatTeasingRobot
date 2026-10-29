@@ -149,7 +149,7 @@ export class MockUno {
     this.now = now;
     this.sideOverrides = { LEFT: undefined, RIGHT: undefined };
     this.sideOverrideAt = { LEFT: -Infinity, RIGHT: -Infinity };
-    this.safeSideCm = { LEFT: 1, RIGHT: 1 };
+    this.safeSideCm = { LEFT: 3, RIGHT: 3 };
     this.touch = Object.fromEntries(TOUCH_AREAS.map(area => [area, false]));
     this.touchStarted = {};
     this.autoArea = null;

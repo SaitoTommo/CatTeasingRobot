@@ -26,7 +26,7 @@ USB 原协议仍可使用。详细接线和诊断含义见 [当前接线表](../
 
 # Arduino Uno 固件：UnoCatController
 
-当前 V6.4：左右超声波安全距离默认 1 cm，可设置范围 1–100 cm。Uno 仅在对应方向收到有效且新鲜的测距、距离严格小于阈值时停车或拒绝动作；无回波、无效和过期读数不停车，遥测仍如实显示无效，不伪造远距离。停车原因改为 SIDE_LEFT_OBSTACLE / SIDE_RIGHT_OBSTACLE。阈值保存在 RAM，复位恢复默认 1 cm。ESP 判断前向并发 STOP；触碰、编码器失速检查、会话关闭和限时动作仍有效。MOTOR 无 KEEP 和续租截止时间。下文旧版本的 5 cm 最小值及无效输入停车描述属于历史记录。
+当前 V6.4：左右超声波安全距离默认 3 cm，可设置范围 1–100 cm。Uno 仅在对应方向收到有效且新鲜的测距、距离严格小于阈值时停车或拒绝动作；无回波、无效和过期读数不停车，遥测仍如实显示无效，不伪造远距离。停车原因改为 SIDE_LEFT_OBSTACLE / SIDE_RIGHT_OBSTACLE。阈值保存在 RAM，复位恢复默认 3 cm。ESP 判断前向并发 STOP；触碰、编码器失速检查、会话关闭和限时动作仍有效。MOTOR 无 KEEP 和续租截止时间。下文旧版本的 5 cm 最小值及无效输入停车描述属于历史记录。
 
 2026-10-03 本轮更新：用户指定默认轮距为 **120 mm**，源码 `trackWidthMm=120.0f`。复位后恢复此默认值；`SET_GEOMETRY` 仍可临时覆盖。这是用户指定配置，不是本轮实测。此前默认 0 会使 ESP 巡游的几何检查失败，现已避免这一默认配置问题。ESP32 0.8 的前向避障开关见 [ESP 使用说明](../esp32-host/README.md)，不影响 Uno 内存诊断和通信停车。
 
@@ -127,7 +127,7 @@ V5.1 加固了串口接收：`ack`/`done`/`error` 等输出原语在 `Serial.pri
 | `GET_STATUS` / `GET_DISTANCE` / `GET_ENCODER` / `GET_CONFIG` | 读取状态、距离、累计编码器与速度、几何参数 | `DATA <id> ...` 后 `DONE <id>` |
 | `CAMERA_FRONT <CLEAR\|BLOCKED\|INVALID\|0..400>` | ESP32 发送前方障碍判定；若经标定可给出最近障碍距离（cm） | `CLEAR`/`BLOCKED` 分别对应安全/阻挡，`INVALID` 或 500 ms 未更新则禁止前进；`GET_DISTANCE` 中的 `DISTANCE` 为此前向值 |
 | `SET_GEOMETRY <wheel_mm> <track_mm>` | 轮直径 20..150 mm、轮中心距 50..300 mm | 当前通电周期有效；运动中不能修改 |
-| `SET_SAFE_DISTANCE LEFT\|RIGHT <cm>` | 设置对应侧转向所需的最小超声波净空，5..100 cm，默认各 5 cm | 空闲时可设；成功回 `DONE <id> SAFE_DISTANCE_SET`，运动中回 `BUSY`；`GET_CONFIG` 回 `SAFE_LEFT_CM`、`SAFE_RIGHT_CM`；仅本次上电有效 |
+| `SET_SAFE_DISTANCE LEFT\|RIGHT <cm>` | 设置对应侧转向所需的最小超声波净空，1..100 cm，默认各 3 cm | 空闲时可设；成功回 `DONE <id> SAFE_DISTANCE_SET`，运动中回 `BUSY`；`GET_CONFIG` 回 `SAFE_LEFT_CM`、`SAFE_RIGHT_CM`；仅本次上电有效 |
 
 例如 ESP32 客户端确定测试场地左侧允许 10 cm 最小净空时，向 Uno 发送 `CMD 21 SET_SAFE_DISTANCE LEFT 10`；收到 `ACK 21` 和 `DONE 21 SAFE_DISTANCE_SET` 后，可用 `CMD 22 GET_CONFIG` 核对。该命令配置的是安全阈值，不提供实时距离；左转时仍以 Uno 左侧超声波的有效读数作最终判断。
 
